@@ -2,7 +2,7 @@
 
 Updated: 2026-10-17 (Europe/London).
 
-Status: **M0 (I00 to I05) and M1 (I10, I11, I12) done, see [docs/m1/results.md](docs/m1/results.md); I20, I21, I30 and I31 done, see [docs/m2/results.md](docs/m2/results.md); I40 done, see [docs/m4/results.md](docs/m4/results.md)**; I41 onwards not started. This file splits future implementation into bounded work
+Status: **M0 (I00 to I05) and M1 (I10, I11, I12) done, see [docs/m1/results.md](docs/m1/results.md); I20, I21, I30 and I31 done, see [docs/m2/results.md](docs/m2/results.md); I40 done, see [docs/m4/results.md](docs/m4/results.md); I41 done, see [docs/acceptance/WA-results-2026-10-17.md](docs/acceptance/WA-results-2026-10-17.md)**; I50 onwards not started. This file splits future implementation into bounded work
 packages. It is a progress and dependency register, not a claim that feasibility
 spikes, builds, tests or Windows acceptance have run.
 
@@ -31,7 +31,7 @@ write-capable delegation or have Claude return reviewable patches for Codex to a
 | I30 | M2: production IPC, admission gate and live MCP tools | Codex; Claude review | I11, I20, I21 | done | 15 IPC + 9 MCP + 11 admission + 8 live-control tests; `docs/m2/results.md` |
 | I31 | M3: semantic queries, render snapshots and layout feedback | Codex | I12, I20, I30 | done | 9 layout + 6 render-planning + 7 browser pixel tests + 2 image-content + live visual loop; `docs/m3/evidence/I31/` |
 | I40 | M4: production VSDX mappings and compatibility diagnostics | Codex; Claude review | I01, I20, I30, I31 | done | Feature matrix and supported-subset round-trip tests |
-| I41 | M4: Visio/Word manual acceptance suite | Windows tester + Codex | I40 | not started | Editable objects, glue, UUID retention, Word activation |
+| I41 | M4: Visio/Word manual acceptance suite | Windows tester + Codex | I40 | done | Editable objects, glue, UUID retention, Word activation |
 | I50 | M5: multipage/layers and approved asset library | Codex; Claude review | I20, I40 | not started | Page/layer operations; one-logo and global-replace tests |
 | I51 | M5: durable recovery, security limits and failure handling | Codex; Claude review | I11, I30, I40, I50 | not started | Crash recovery and hostile-input boundary tests |
 | I52 | M5: performance measurements and complete demo | Codex + Windows tester | I31, I41, I50, I51 | not started | Spec §23 demo; every §27 criterion evidenced |

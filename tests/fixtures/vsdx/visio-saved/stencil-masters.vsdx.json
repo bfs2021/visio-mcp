@@ -1,0 +1,6 @@
+{
+  "producer": "Microsoft Visio 16.0 build 20430 (Microsoft 365), saved through COM automation",
+  "date": "2026-10-17",
+  "content": "two Rectangles dropped from the Basic Shapes stencil (BASIC_M.VSSX); instances hold only PinX and PinY, everything else is inherited from the master",
+  "purpose": "I41: master inheritance in the importer"
+}

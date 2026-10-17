@@ -1,0 +1,33 @@
+{
+  "checks": [
+    {
+      "title": "Visio-saved file reopens in the application; agent ids resolve and human edits are kept",
+      "status": "PASS",
+      "detail": "12 original ids resolve; 1 repaired (the Visio duplicate); text, fill, move and glue kept"
+    }
+  ],
+  "status": "PASS",
+  "ran": "2026-10-17T20:08:09.7818822Z",
+  "facts": {
+    "identity": {
+      "Preserved": 16,
+      "Generated": 0,
+      "Repaired": 1,
+      "Notes": [
+        "shape at page0/shape13 repeats the id 43873cf6-95b6-4b91-8284-965a8c0279f7 (a copied shape); it was given a new id."
+      ]
+    },
+    "diagnostics": [
+      {
+        "severity": "warning",
+        "code": "alias_repeated",
+        "message": "The alias \u0022crm\u0022 is already used on this page; the later shape lost it.",
+        "pageId": "b3a1a25d-63aa-4921-83e6-802028fa6a2c",
+        "elementId": "2dad23d4-c10a-563f-9af9-442c447dda8e",
+        "sourceShape": "13",
+        "action": "alias dropped"
+      }
+    ],
+    "erpMovedPt": -53.999999999999986
+  }
+}

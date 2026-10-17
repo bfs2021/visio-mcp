@@ -82,6 +82,76 @@ public sealed class NativeVsdxImporter : IVsdxImporter
         }
         static string Shorten(string s) => s.Length > 60 ? s[..60] + "…" : s;
 
+        // ---------------------------------------------------------------- masters (stencil shapes)
+        string? mastersPart;
+        readonly Dictionary<string, XElement?> masterShapes = new();
+        readonly HashSet<string> masterNotes = new();
+
+        XElement? MasterRoot(string masterId)
+        {
+            if (masterShapes.TryGetValue(masterId, out var cached)) return cached;
+            XElement? found = null;
+            if (mastersPart is not null && pkg.Has(mastersPart))
+            {
+                var el = Xml(mastersPart).Descendants(V + "Master").FirstOrDefault(x => (string?)x.Attribute("ID") == masterId);
+                var rid = (string?)el?.Element(V + "Rel")?.Attribute(R + "id");
+                var part = RelsOf(mastersPart).FirstOrDefault(r => r.Id == rid)?.Target;
+                if (part is not null && pkg.Has(part)) found = Xml(part).Root?.Element(V + "Shapes")?.Elements(V + "Shape").FirstOrDefault();
+                if (found is not null && masterNotes.Add(masterId))
+                    Note("master_inlined", $"Shapes from the Visio stencil master '{(string?)el?.Attribute("NameU") ?? masterId}' were imported as ordinary shapes; their link to the master is not kept.", severity: "info");
+            }
+            return masterShapes[masterId] = found;
+        }
+
+        /// <summary>A shape dropped from a stencil stores only what differs from its master. Fill in the rest from the master so size, outline and ports are known.</summary>
+        void InheritFromMasters(IEnumerable<XElement> top, int depth = 0)
+        {
+            foreach (var s in top) Inherit(s, null, depth);
+        }
+
+        void Inherit(XElement s, XElement? parentSrc, int depth)
+        {
+            if (depth > 64) return;
+            XElement? src = null;
+            if ((string?)s.Attribute("Master") is { } m) src = MasterRoot(m);
+            else if (parentSrc is not null && (string?)s.Attribute("MasterShape") is { } ms) src = parentSrc.DescendantsAndSelf(V + "Shape").FirstOrDefault(x => (string?)x.Attribute("ID") == ms);
+            if (src is not null) MergeFromMaster(s, src);
+            foreach (var c in s.Element(V + "Shapes")?.Elements(V + "Shape") ?? []) Inherit(c, src ?? parentSrc, depth + 1);
+        }
+
+        static void MergeFromMaster(XElement s, XElement src)
+        {
+            foreach (var a in new[] { "LineStyle", "FillStyle", "TextStyle" })
+                if (s.Attribute(a) is null && src.Attribute(a) is { } av) s.SetAttributeValue(a, av.Value);
+            var have = s.Elements(V + "Cell").Select(c => (string?)c.Attribute("N")).ToHashSet();
+            var added = new List<XElement>();
+            foreach (var c in src.Elements(V + "Cell"))
+                if (!have.Contains((string?)c.Attribute("N"))) { var copy = new XElement(c); s.Add(copy); added.Add(copy); }
+            foreach (var sec in src.Elements(V + "Section"))
+            {
+                var key = (string?)sec.Attribute("N"); var ix = (string?)sec.Attribute("IX");
+                var mine = s.Elements(V + "Section").FirstOrDefault(x => (string?)x.Attribute("N") == key && (string?)x.Attribute("IX") == ix);
+                if (mine is null) { var copy = new XElement(sec); s.Add(copy); added.Add(copy); continue; }
+                foreach (var row in sec.Elements(V + "Row"))
+                {
+                    var t = (string?)row.Attribute("T"); var rix = (string?)row.Attribute("IX"); var rn = (string?)row.Attribute("N");
+                    if (!mine.Elements(V + "Row").Any(r => (string?)r.Attribute("T") == t && (string?)r.Attribute("IX") == rix && (string?)r.Attribute("N") == rn)) { var copy = new XElement(row); mine.Add(copy); added.Add(copy); }
+                }
+            }
+            // inherited cells hold the master's values; where they are proportional to the shape's size, restate them for this instance
+            double Size(string n) => double.TryParse(Own(s, n), System.Globalization.NumberStyles.Float, Inv, out var v) ? v : 0;
+            var w = Size("Width"); var h = Size("Height");
+            foreach (var cell in added.SelectMany(e => e.Name == V + "Cell" ? new[] { e } : e.Descendants(V + "Cell")))
+            {
+                var f = (string?)cell.Attribute("F");
+                if (f is null) continue;
+                var m = System.Text.RegularExpressions.Regex.Match(f, @"^(Width|Height)(?:\*(-?[0-9.]+))?$");
+                if (!m.Success) continue;
+                var factor = m.Groups[2].Success ? double.Parse(m.Groups[2].Value, Inv) : 1.0;
+                cell.SetAttributeValue("V", ((m.Groups[1].Value == "Width" ? w : h) * factor).ToString("R", Inv));
+            }
+        }
+
         // ---------------------------------------------------------------- styles and cells
         sealed record Style(string? BasedOn, Dictionary<string, string> Cells, Dictionary<string, string> Char);
 
@@ -162,6 +232,7 @@ public sealed class NativeVsdxImporter : IVsdxImporter
             }
 
             var docRels = RelsOf(mainPart);
+            mastersPart = docRels.FirstOrDefault(r => r.Type.EndsWith("/masters", StringComparison.Ordinal))?.Target;
             var pagesPart = docRels.FirstOrDefault(r => r.Type.EndsWith("/pages", StringComparison.Ordinal))?.Target ?? throw new ImportFailure("invalid_request", "the package has no pages part");
             var pagesXml = Xml(pagesPart);
             var pageRels = RelsOf(pagesPart);
@@ -279,6 +350,7 @@ public sealed class NativeVsdxImporter : IVsdxImporter
                 var content = rd.Xml(part);
                 rels = rd.RelsOf(part);
                 var top = content.Root?.Element(V + "Shapes")?.Elements(V + "Shape").ToList() ?? [];
+                rd.InheritFromMasters(top);
                 var all = new List<XElement>();
                 void Collect(XElement s) { all.Add(s); foreach (var c in s.Element(V + "Shapes")?.Elements(V + "Shape") ?? []) Collect(c); }
                 foreach (var s in top) Collect(s);

@@ -49,7 +49,8 @@ Every export is read back before it is saved: the same pages, element ids and co
 |---|---|---|
 | Files made by this application, or saved again by Visio | Identity, geometry, layers, glue and pictures restored | |
 | Other simple shapes, text, 1-D connectors, groups, layers, pictures | Imported as editable objects | |
-| Shape with an unrecognised master or geometry | A placeholder rectangle at the right position, original name kept as metadata | `unsupported_shape` |
+| Shape dropped from a Visio stencil (master) | Size, outline and ports taken from the master and imported as an ordinary shape; the link to the master is not kept | `master_inlined` (info, once per master) |
+| Shape with no outline, or whose master cannot be found | A placeholder rectangle at the right position, original name kept as metadata | `unsupported_shape` |
 | Outline converted to a polyline or path | Imported as a custom shape | `outline_converted` |
 | Picture that is not a supported bitmap | Replaced by a labelled placeholder | `picture_replaced` |
 | Picture whose bytes no longer match the recorded hash | The new bytes are used and the change reported | `picture_moved` |
@@ -58,7 +59,9 @@ Every export is read back before it is saved: the same pages, element ids and co
 | Layers | Matched by name | |
 | Macros and embedded objects | Never read or run; listed only | `inert_part_ignored` |
 
-**Unproven:** import of files made by other tools than this application and Visio's own save (no corpus yet; I41 owns the manual acceptance suite), 3-D, shadows, themes, data graphics, multi-page background pages, and any master-based stencil shape. They fall to the placeholder row above.
+**Proven in real Visio (I41):** the app's own export edited in Visio, a Visio duplicate, a resized group, multi-layer shapes, Word embedding, and plain stencil rectangles (`docs/acceptance/WA-results-2026-10-17.md`).
+
+**Unproven:** files from tools other than this application and Visio, complex stencil masters (groups, connectors, theme colours), 3-D, shadows, data graphics, and background pages. Anything with no outline falls to the placeholder row above.
 
 ## Refusals (file is never half-opened)
 

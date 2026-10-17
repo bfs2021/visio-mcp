@@ -1,0 +1,22 @@
+{
+  "checks": [
+    {
+      "title": "Native group resize scales members",
+      "status": "PASS",
+      "detail": "group width x1.5, member width ratios 1.500, 1.500"
+    },
+    {
+      "title": "Group resize survives into the application",
+      "status": "PASS",
+      "detail": "group width ratio 1.500; members scaled with it"
+    }
+  ],
+  "status": "PASS",
+  "ran": "2026-10-17T20:08:09.7814101Z",
+  "facts": {
+    "ratios": [
+      1.5000000000000002,
+      1.5000000000000002
+    ]
+  }
+}
