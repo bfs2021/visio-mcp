@@ -1,0 +1,7 @@
+-> {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"probe-client","version":"0"}}}
+<- {"result":{"protocolVersion":"2025-06-18","capabilities":{"logging":{},"tools":{"listChanged":true}},"serverInfo":{"name":"McpProbe","version":"1.0.0.0"}},"id":1,"jsonrpc":"2.0"}
+-> {"jsonrpc":"2.0","method":"notifications/initialized"}
+-> {"jsonrpc":"2.0","id":2,"method":"tools/list"}
+<- {"result":{"tools":[{"name":"get_document_summary","description":"Returns the open document\u0027s id, revision, page count and title.","inputSchema":{"type":"object","properties":{}}}]},"id":2,"jsonrpc":"2.0"}
+-> {"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"get_document_summary","arguments":{}}}
+<- {"result":{"content":[{"type":"text","text":"{\u0022documentId\u0022:\u002200000000-0000-4000-8000-000000000001\u0022,\u0022revision\u0022:7,\u0022pageCount\u0022:1,\u0022title\u0022:\u0022Probe\u0022}"}],"structuredContent":{"documentId":"00000000-0000-4000-8000-000000000001","revision":7,"pageCount":1,"title":"Probe"}},"id":3,"jsonrpc":"2.0"}

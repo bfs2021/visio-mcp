@@ -10,7 +10,7 @@ production code: no `src/` project or production solution may reference these fo
 | `contract-tests/` | I00 | Vitest + Ajv checks of the envelope schema. |
 | `vsdx/`, `vsdx.tests/` | I01 | Editable native-file round trip (done; G1 PASS with backend caveat). |
 | `canvas/` | I02 | maxGraph interaction and PNG preview (done; G2 PASS). Run with `npm --prefix spikes/canvas run test:browser`. |
-| `ipc/`, `mcp/`, `ipc.tests/` | I03 | Planned: stdio MCP → framed pipe → test host. |
+| `ipc/`, `mcp/`, `ipc.tests/` | I03 | Stdio MCP → framed pipe → test host (done; G3 PASS, second-user check NOT RUN). |
 | `webview/`, `webview.tests/` | I04 | Planned: WebView2 → live canvas operation. |
 
 Pinned versions, licences and hashes: [docs/m0/dependencies.json](../docs/m0/dependencies.json).
