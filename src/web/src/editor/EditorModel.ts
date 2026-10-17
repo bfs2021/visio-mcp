@@ -8,6 +8,7 @@ import { createSnapshotProjector } from '../canvas/SnapshotProjector';
 import { collapseToGroups, expandToGroups, leavesOfTargets } from '../canvas/selection';
 import { deleteOperations, findElement, intentOperations, nudgeOperations, pageContaining, pageOf, type Intent } from '../canvas/intents';
 import { fail, ok, type Result } from '../model/result';
+import { drawScriptCompiler, validateScript, type ValidationReport } from '../script/compiler';
 import { toPoints, type Unit } from '../model/validate';
 
 /** What the page needs from the host. In a plain browser (tests, dev) a stub stands in. */
@@ -28,6 +29,13 @@ const DEFAULT_SIZE: Record<string, { w: number; h: number }> = {
   hexagon: { w: 108, h: 72 }, parallelogram: { w: 120, h: 60 }, cylinder: { w: 72, h: 96 }, cloud: { w: 120, h: 80 }, callout: { w: 120, h: 80 },
 };
 
+export type ScriptReport =
+  | ({ ok: true; source: string } & ValidationReport)
+  | { ok: false; source: string; revision: number; message: string; line?: number; column?: number; hint?: string };
+export type ScriptOutcome =
+  | { ok: true; transactionId: string; revision: number; created: string[]; changed: string[]; deleted: string[]; noChange: boolean; warnings: string[] }
+  | { ok: false; message: string; code: string; line?: number; column?: number; hint?: string };
+
 export interface Status { text: string; kind: 'info' | 'warning' | 'error' }
 
 /**
@@ -43,6 +51,15 @@ export class EditorModel {
   private version = 0;
   private clipboard: ClipboardData | null = null;
   private pastes = 0;
+
+  /** The script and transaction drawer. */
+  drawerOpen = false;
+  drawerTab: 'script' | 'transactions' = 'script';
+  scriptText = '';
+  scriptReport: ScriptReport | null = null;
+  scriptOutcome: ScriptOutcome | null = null;
+  /** What each script transaction ran, so the transaction drawer can show its source. */
+  readonly scriptSources = new Map<string, string>();
 
   host: HostApi = noHost;
   selection: string[] = [];
@@ -247,6 +264,56 @@ export class EditorModel {
     this.bump();
   }
 
+  // ------------------------------------------------------------------ script and transaction drawer
+  toggleDrawer(tab?: 'script' | 'transactions'): void {
+    if (tab) { this.drawerTab = tab; this.drawerOpen = true; } else this.drawerOpen = !this.drawerOpen;
+    this.bump();
+  }
+
+  private scriptContext() {
+    return { snapshot: this.snapshot, newUuid: () => crypto.randomUUID(), pageId: this.currentPage.id };
+  }
+
+  /** Compiles and plans against the current revision without committing anything. */
+  validateScriptText(): void {
+    const source = this.scriptText;
+    const snapshot = this.snapshot;
+    const r = validateScript(source, this.scriptContext());
+    this.scriptOutcome = null;
+    if (r.ok) {
+      const { compiled: _compiled, ...report } = r.value;
+      this.scriptReport = { ok: true, source, ...report };
+    } else {
+      this.scriptReport = { ok: false, source, revision: snapshot.revision, message: r.error.message, ...diagnosticOf(r.error.details), };
+    }
+    this.bump();
+  }
+
+  /** Runs the script as one atomic transaction. If it was validated and the document has moved on since, the engine refuses it rather than guess. */
+  async runScriptText(): Promise<void> {
+    const source = this.scriptText;
+    const validated = this.scriptReport?.ok && this.scriptReport.source === source ? this.scriptReport.revision : null;
+    const transactionId = crypto.randomUUID();
+    const r = await this.engine.executeScript({
+      ...this.engine.scope(), transactionId, baseRevision: validated ?? this.engine.revision, pageId: this.currentPage.id, atomic: true, script: source,
+    }, drawScriptCompiler);
+    if (r.ok) {
+      this.scriptSources.set(transactionId, source);
+      this.scriptOutcome = { ok: true, transactionId, revision: r.value.revision, created: r.value.created, changed: r.value.changed, deleted: r.value.deleted, noChange: r.value.noChange, warnings: r.value.warnings.map(w => w.message) };
+      this.scriptReport = null;
+      if (r.value.noChange) this.say('The script changed nothing.', 'info');
+      else this.say(`Script ran as revision ${r.value.revision}.`, 'info');
+    } else {
+      const stale = r.error.code === 'revision_conflict';
+      this.scriptOutcome = {
+        ok: false, code: r.error.code,
+        message: stale ? `The document changed after you validated (now at revision ${this.engine.revision}). Validate again, then run.` : r.error.message,
+        ...diagnosticOf(r.error.details),
+      };
+    }
+    this.bump();
+  }
+
   // ------------------------------------------------------------------ groups, arrangement, stacking
   /** Runs one structural operation on the current targets as a single transaction and keeps the members selected. */
   private async arrangeWith(build: (targets: string[]) => Operation, minimum: number, what: string): Promise<Result<TransactionResult> | null> {
@@ -361,4 +428,12 @@ function snapCreate(op: Operation, grid: { snap: boolean; spacingPt: number }): 
   const s = (v: number) => Math.round(v / g) * g;
   const b = op.bounds;
   return { ...op, bounds: { x: s(b.x), y: s(b.y), width: Math.max(g, s(b.width)), height: Math.max(g, s(b.height)) } };
+}
+
+function diagnosticOf(details: Record<string, unknown> | undefined): { line?: number; column?: number; hint?: string } {
+  const out: { line?: number; column?: number; hint?: string } = {};
+  if (typeof details?.line === 'number') out.line = details.line;
+  if (typeof details?.column === 'number') out.column = details.column;
+  if (typeof details?.hint === 'string') out.hint = details.hint;
+  return out;
 }

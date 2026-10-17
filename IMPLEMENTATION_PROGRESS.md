@@ -2,7 +2,7 @@
 
 Updated: 2026-10-17 (Europe/London).
 
-Status: **M0 (I00 to I05) and M1 (I10, I11, I12) done, see [docs/m1/results.md](docs/m1/results.md)**; I20 onwards not started. This file splits future implementation into bounded work
+Status: **M0 (I00 to I05) and M1 (I10, I11, I12) done, see [docs/m1/results.md](docs/m1/results.md); I20 and I21 done, see [docs/m2/results.md](docs/m2/results.md)**; I30 onwards not started. This file splits future implementation into bounded work
 packages. It is a progress and dependency register, not a claim that feasibility
 spikes, builds, tests or Windows acceptance have run.
 
@@ -26,8 +26,8 @@ write-capable delegation or have Claude return reviewable patches for Codex to a
 | I10 | M1: minimal canonical store, transaction engine, inverse history | Codex | I05 | done | 115 vitest + 24 C# parity tests; `docs/m1/results.md` |
 | I11 | M1: WPF/WebView2 shell and JSON debug save/load | Codex; Claude review | I05, I10 | done | 69 host + 10 Windows tests; `docs/m1/evidence/I11/editor-in-webview2.png` |
 | I12 | M1: one-page canvas, basic elements and inspector | Codex | I10, I11 | done | 9 Playwright tests; `docs/m1/evidence/I12/editor.png` |
-| I20 | M2: full model and operations, groups, arrange, target resolution | Codex | I12 | not started | Every mutation tested with unaffected-object assertions |
-| I21 | M2: DrawScript parser/compiler and transaction drawer | Codex; Claude review | I20 | not started | Script/API equivalence and source error locations |
+| I20 | M2: full model and operations, groups, arrange, target resolution | Codex | I12 | done | 65 engine tests plus 5 browser tests; `docs/m2/evidence/I20/grouped-and-aligned.png` |
+| I21 | M2: DrawScript parser/compiler and transaction drawer | Codex; Claude review | I20 | done | 31 script tests plus 2 browser tests; `docs/m2/evidence/I21/script-and-transactions.png` |
 | I30 | M3: production IPC routing and stdio MCP tools | Codex; Claude review | I11, I20, I21 | not started | Live GUI control, retry/conflict/session isolation |
 | I31 | M3: render snapshots, layout checks and change queries | Codex | I12, I20, I30 | not started | Revision-labelled previews and bounded history recovery |
 | I40 | M4: production VSDX mappings and compatibility diagnostics | Codex; Claude review | I01, I20, I30, I31 | not started | Feature matrix and supported-subset round-trip tests |
@@ -75,6 +75,10 @@ M1 (2026-10-17, same Windows machine): I10 to I12 built test-first. The engine, 
 browser tests, the host has 69 C# tests and the real WPF/WebView2 shell has 10. Two bugs were found only by running the real thing (a bundle import
 that broke inside WebView2, and shapes painted underneath the page sheet); both are fixed and now covered. Known gaps are listed in
 [docs/m1/results.md](docs/m1/results.md). The M0 second-user pipe check remains open.
+
+M2 so far (2026-10-17, same Windows machine): I20 and I21 built test-first. The engine and script suites have 216 vitest tests in total, the editor 16 browser
+tests; the C# suites are unchanged in count (24, 69, 10) and still pass against the regenerated contracts. Details, decisions and known gaps are in
+[docs/m2/results.md](docs/m2/results.md). The M0 second-user pipe check remains open.
 
 For each completed package record: exact dependency
 versions, commands, environment, fixture paths, observed results and remaining

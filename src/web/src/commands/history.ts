@@ -46,6 +46,9 @@ export class History {
   moveUndoToRedo(): void { const r = this.undoStack.pop(); if (r) this.redoStack.push(r); }
   moveRedoToUndo(): void { const r = this.redoStack.pop(); if (r) this.undoStack.push(r); }
 
+  /** The newest summaries, newest last. */
+  recent(limit: number): TransactionSummary[] { return this.records.slice(-limit).map(r => r.summary); }
+
   since(revision: number): TransactionSummary[] | null {
     if (revision < this.base) return null;
     return this.records.filter(r => r.summary.revision > revision).map(r => r.summary);

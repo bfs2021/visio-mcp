@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import type { EditorModel } from './editor/EditorModel';
+import { Drawer } from './components/Drawer';
 import { Inspector } from './components/Inspector';
 import { PageCanvas } from './components/PageCanvas';
 import { ShapesPanel } from './components/ShapesPanel';
@@ -51,6 +52,7 @@ export function App({ model }: { model: EditorModel }) {
       <ShapesPanel model={model} />
       <PageCanvas model={model} />
       <Inspector model={model} />
+      <Drawer model={model} />
       <StatusBar model={model} />
     </div>
   );

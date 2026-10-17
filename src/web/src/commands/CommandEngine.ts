@@ -6,7 +6,8 @@ import { canonicalSerialize } from '../model/canonical';
 import { fail, ok, type Result } from '../model/result';
 import { sha256Hex } from '../model/sha256';
 import { DocumentStore } from '../model/store';
-import { validateDocument, validateMutationRequest, validateScriptRequest, validateUndoRequest } from '../model/validate';
+import { validateDocument, validateMutationRequest, validateOperation, validateScriptRequest, validateUndoRequest } from '../model/validate';
+import { withSpan, type SourceSpan } from '../script/compiler';
 import { applyDiff, type DiffBody } from './diff';
 import { History } from './history';
 import { planPatch } from './planPatch';
@@ -123,14 +124,30 @@ export class CommandEngine {
     if (!v.ok) return Promise.resolve(v);
     // Source and prepared refs are the caller's input; compiled UUIDs are not, so they stay out of the hash.
     const hash = this.hashOf('script', req, { script: req.script, preparedAssetRefs: req.preparedAssetRefs ?? null });
+    let spans: SourceSpan[] | undefined;
     return this.enqueue(() => this.runMutation('script', req, 'script', hash, snapshot => {
       const ctx: Parameters<ScriptCompiler>[2] = {};
       if (req.pageId) ctx.pageId = req.pageId;
       if (req.preparedAssetRefs) ctx.preparedAssetRefs = req.preparedAssetRefs;
       const compiled = compile(req.script, snapshot, ctx);
-      return compiled.ok ? ok(compiled.value.operations) : compiled;
-    }));
+      if (!compiled.ok) return compiled;
+      spans = compiled.value.sourceSpans as SourceSpan[] | undefined;
+      // A script is bounded and typed exactly like an apply request, whatever produced the operations.
+      if (compiled.value.operations.length > 1000) return fail('limit_exceeded', `a script can produce at most 1000 operations, this one produced ${compiled.value.operations.length}`, { details: { limit: 1000, actual: compiled.value.operations.length } });
+      for (const [i, op] of compiled.value.operations.entries()) {
+        const valid = validateOperation(op);
+        if (!valid.ok) return withSpan(fail(valid.error.code, valid.error.message, { details: { ...valid.error.details, operationIndex: i } }), spans);
+      }
+      return ok(compiled.value.operations);
+    }, () => spans));
   }
+
+  /** The newest transaction summaries (including undo and redo records), newest last. A read: it does not enter the queue. */
+  recentTransactions(limit = 50): TransactionSummary[] { return this.history.recent(limit); }
+
+  /** The transaction an undo would take back now, if any. Only this one can be undone: there is no selective undo across later changes. */
+  undoHead(): TransactionSummary | undefined { return this.history.peekUndo()?.summary; }
+  redoHead(): TransactionSummary | undefined { return this.history.peekRedo()?.summary; }
 
   undo(req: UndoRequest): Promise<Result<TransactionResult>> { return this.replay('undo', req); }
   redo(req: UndoRequest): Promise<Result<TransactionResult>> { return this.replay('redo', req); }
@@ -166,6 +183,7 @@ export class CommandEngine {
     source: TransactionSource | 'gui' | 'script' | 'mcp',
     hash: string,
     produce: (snapshot: Snapshot) => Result<Operation[]>,
+    spans?: () => SourceSpan[] | undefined,
   ): Promise<Result<TransactionResult>> {
     const early = this.admit(req, hash);
     if (early) return early;
@@ -173,7 +191,7 @@ export class CommandEngine {
     const ops = produce(before);
     if (!ops.ok) return ops;
     const planned = planPatch(before.document, ops.value, { newId: this.newId, ...(req.pageId ? { pageId: req.pageId } : {}) });
-    if (!planned.ok) return planned;
+    if (!planned.ok) return spans ? withSpan(planned, spans()) : planned;
     const plan = planned.value;
     const previousRevision = before.revision;
 

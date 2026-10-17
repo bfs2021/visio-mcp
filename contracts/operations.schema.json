@@ -895,6 +895,10 @@
         "keepAliases": {
           "type": "boolean",
           "description": "Copies keep their source's alias, made unique on the page by a numeric suffix (a, a-2, a-3); otherwise copies have no alias. Ignored for the copy named by as."
+        },
+        "id": {
+          "$ref": "document.schema.json#/$defs/Uuid",
+          "description": "UUID of the copy; only valid for a single target."
         }
       }
     },

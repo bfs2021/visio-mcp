@@ -431,6 +431,7 @@ export interface DuplicateOp {
   offset?: Delta;
   keepExternalLinks?: boolean;
   keepAliases?: boolean;
+  id?: Uuid;
 }
 
 export interface GroupOp {

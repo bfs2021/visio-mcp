@@ -258,10 +258,16 @@ class Planner {
 
   // ---------------------------------------------------------------- batch
   run(operations: Operation[]): Plan {
-    for (const op of operations) {
+    for (const [index, op] of operations.entries()) {
       this.touched = new Set();
-      this.apply(op);
-      this.refreshGroups();
+      try {
+        this.apply(op);
+        this.refreshGroups();
+      } catch (e) {
+        // Say which operation failed, so a script can point at the line it came from.
+        if (e instanceof Failure && !e.result.ok) e.result.error.details = { ...e.result.error.details, operationIndex: index };
+        throw e;
+      }
     }
     this.finalValidate();
     return this.buildPlan(operations);
@@ -754,7 +760,8 @@ class Planner {
     const wanted = new Set<string>();
     for (const id of ids) { wanted.add(id); for (const d of this.descendants(byId, id)) wanted.add(d); }
     const source = page.elements.filter(e => wanted.has(e.id));
-    const idMap = new Map(source.map(e => [e.id, this.newElementId(undefined)] as const));
+    if (op.id !== undefined && ids.length !== 1) refuse('id_needs_single_target', 'id= names one copy, so duplicate exactly one target', { count: ids.length });
+    const idMap = new Map(source.map(e => [e.id, this.newElementId(e.id === ids[0] ? op.id : undefined)] as const));
     const shiftPoint: PointMap = p => ({ x: p.x + dx, y: p.y + dy });
     const remapEnd = (ep: Endpoint, connectorId: string): Endpoint => {
       if (ep.glue === 'none') return { ...ep, point: shiftPoint(ep.point!) };

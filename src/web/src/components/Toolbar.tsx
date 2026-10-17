@@ -51,6 +51,9 @@ export function Toolbar({ model }: { model: EditorModel }) {
       'sep',
       { id: 'grid', label: 'Show grid', checked: page.grid.visible, run: () => void model.toggleGrid('visible') },
       { id: 'snap', label: 'Snap to grid', checked: page.grid.snap, run: () => void model.toggleGrid('snap') },
+      'sep',
+      { id: 'script-drawer', label: 'Script drawer', checked: model.drawerOpen && model.drawerTab === 'script', run: () => model.toggleDrawer('script') },
+      { id: 'transaction-drawer', label: 'Transactions', checked: model.drawerOpen && model.drawerTab === 'transactions', run: () => model.toggleDrawer('transactions') },
     ] },
   ];
 
@@ -82,6 +85,7 @@ export function Toolbar({ model }: { model: EditorModel }) {
         {tool('connector', 'Connector', model.tool.kind === 'connector', () => model.setTool(model.tool.kind === 'connector' ? { kind: 'select' } : { kind: 'connector' }))}
         {tool('text', 'Text', model.tool.kind === 'place' && model.tool.what === 'text', () => model.setTool({ kind: 'place', what: 'text' }))}
         {tool('picture', 'Picture', false, () => void model.insertPicture())}
+        {tool('script', 'Script', model.drawerOpen, () => model.toggleDrawer())}
         <span className="sep" />
         {tool('undo', 'Undo', false, () => void model.undo())}
         {tool('redo', 'Redo', false, () => void model.redo())}

@@ -504,6 +504,7 @@ public sealed record DuplicateOp : Operation
     [JsonPropertyName("offset")] public Delta? Offset { get; init; }
     [JsonPropertyName("keepExternalLinks")] public bool? KeepExternalLinks { get; init; }
     [JsonPropertyName("keepAliases")] public bool? KeepAliases { get; init; }
+    [JsonPropertyName("id")] public string? Id { get; init; }
 }
 
 public sealed record GroupOp : Operation
