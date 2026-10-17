@@ -1,8 +1,10 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Diagram.Core.Contracts/Diagram.Core.Contracts.csproj" />
+    <Project Path="src/Diagram.Host.Core/Diagram.Host.Core.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Diagram.Contracts.Tests/Diagram.Contracts.Tests.csproj" />
+    <Project Path="tests/Diagram.Host.Tests/Diagram.Host.Tests.csproj" />
   </Folder>
 </Solution>

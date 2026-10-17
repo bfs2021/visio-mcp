@@ -1,29 +1,21 @@
-import Ajv2020, { type ValidateFunction } from 'ajv/dist/2020.js';
-import addFormats from 'ajv-formats';
-import documentSchema from '../../../../contracts/document.schema.json';
-import operationsSchema from '../../../../contracts/operations.schema.json';
-import protocolSchema from '../../../../contracts/protocol.schema.json';
 import type { DiagramDocument, MutationRequest, Operation, RequestEnvelope, ScriptRequest, UndoRequest } from '../contracts/generated';
 import { fail, ok, type Result } from './result';
+import * as V from './validators.generated.js';
 
-const ajv = new Ajv2020({ allErrors: false, strict: false });
-addFormats(ajv);
-ajv.addSchema(documentSchema);
-ajv.addSchema(operationsSchema);
-ajv.addSchema(protocolSchema);
+// Validators are precompiled at build time (tools/generate-contracts.mjs), so nothing here builds code at runtime and the page
+// can run under a CSP without 'unsafe-eval'.
+type ValidateFn = V.ValidateFn;
+const vDocument = V.DiagramDocument;
+const vOperation = V.Operation;
+const vMutation = V.MutationRequest;
+const vScript = V.ScriptRequest;
+const vUndo = V.UndoRequest;
+const vEnvelope = V.RequestEnvelope;
 
-const compile = <T>(id: string, def: string) => ajv.getSchema(`${id}#/$defs/${def}`) as ValidateFunction<T>;
-const vDocument = compile<DiagramDocument>('document.schema.json', 'DiagramDocument');
-const vOperation = compile<Operation>('operations.schema.json', 'Operation');
-const vMutation = compile<MutationRequest>('protocol.schema.json', 'MutationRequest');
-const vScript = compile<ScriptRequest>('protocol.schema.json', 'ScriptRequest');
-const vUndo = compile<UndoRequest>('protocol.schema.json', 'UndoRequest');
-const vEnvelope = compile<RequestEnvelope>('protocol.schema.json', 'RequestEnvelope');
-
-const opNames = ['CreateShape', 'CreateText', 'CreateImage', 'CreateConnector', 'Set', 'Move', 'Resize', 'Rotate', 'Delete', 'RegisterAsset'];
-const opValidators = new Map<string, ValidateFunction>(
-  opNames.map(n => [n, ajv.getSchema(`operations.schema.json#/$defs/${n}`) as ValidateFunction]),
-);
+const opValidators = new Map<string, ValidateFn>([
+  ['CreateShape', V.CreateShape], ['CreateText', V.CreateText], ['CreateImage', V.CreateImage], ['CreateConnector', V.CreateConnector],
+  ['Set', V.Set], ['Move', V.Move], ['Resize', V.Resize], ['Rotate', V.Rotate], ['Delete', V.Delete], ['RegisterAsset', V.RegisterAsset],
+]);
 const opByTag: Record<string, string> = { createShape: 'CreateShape', createText: 'CreateText', createImage: 'CreateImage', createConnector: 'CreateConnector', set: 'Set', move: 'Move', resize: 'Resize', rotate: 'Rotate', delete: 'Delete', registerAsset: 'RegisterAsset' };
 
 /** A oneOf failure only reports its first branch; validate against the branch the operation names so the error is about the right fields. */
@@ -57,7 +49,7 @@ function nonFinitePath(value: unknown, path = ''): string | null {
 const finiteError = (p: string): Result<never> =>
   fail('invalid_request', `${p} is not a finite number`, { details: { path: p, keyword: 'finite', params: {} } });
 
-function schemaError(v: ValidateFunction, value?: unknown): Result<never> {
+function schemaError(v: ValidateFn, value?: unknown): Result<never> {
   const top = v.errors?.[0];
   const ops = (value as { operations?: unknown; params?: { operations?: unknown } } | undefined);
   const explained = top && /operations/.test(top.instancePath) || top?.keyword === 'oneOf'
@@ -148,8 +140,8 @@ export function validateMutationRequest(value: unknown): Result<MutationRequest>
   const nf = nonFinitePath(value);
   if (nf) return finiteError(nf);
   if (!vMutation(value)) return schemaError(vMutation, value);
-  const dup = checkBatch(value.operations);
-  return dup ?? ok(value);
+  const request = value as MutationRequest;
+  return checkBatch(request.operations) ?? ok(request);
 }
 
 export function validateScriptRequest(value: unknown): Result<ScriptRequest> {
@@ -189,19 +181,3 @@ export function toPoints(value: number, unit: Unit): number {
   return value * f;
 }
 
-const defFile = new Map<string, string>();
-for (const s of [documentSchema, operationsSchema, protocolSchema]) {
-  for (const name of Object.keys((s as { $defs: object }).$defs)) defFile.set(name, (s as { $id: string }).$id);
-}
-
-/** Validates a value against any named schema definition (for fixtures and generic tooling). */
-export function validateDef(def: string, value: unknown): { valid: boolean; message?: string } {
-  const id = defFile.get(def);
-  if (!id) throw new Error(`unknown schema definition ${def}`);
-  const v = ajv.getSchema(`${id}#/$defs/${def}`)!;
-  const nf = nonFinitePath(value);
-  if (nf) return { valid: false, message: `${nf} is not finite` };
-  return v(value) ? { valid: true } : { valid: false, message: `${v.errors?.[0]?.instancePath} ${v.errors?.[0]?.message}` };
-}
-
-export const schemaDefinitionNames = (): string[] => [...defFile.keys()];

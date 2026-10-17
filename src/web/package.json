@@ -2,20 +2,22 @@
   "name": "diagram-web",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=24.14.0" },
+  "engines": {
+    "node": ">=24.14.0"
+  },
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "generate": "node ../../tools/generate-contracts.mjs",
-    "generate:check": "node ../../tools/generate-contracts.mjs --check"
-  },
-  "dependencies": {
-    "ajv": "8.20.0",
-    "ajv-formats": "3.0.1"
+    "generate:check": "node ../../tools/generate-contracts.mjs --check",
+    "build": "vite build",
+    "dev": "vite --port 5373 --strictPort"
   },
   "devDependencies": {
     "@types/node": "24.0.0",
+    "ajv": "8.20.0",
     "typescript": "7.0.2",
+    "vite": "8.3.2",
     "vitest": "5.0.3"
   }
 }

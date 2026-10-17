@@ -128,7 +128,7 @@ describe('document validation', () => {
 });
 
 import { samples } from './support/samples';
-import { schemaDefinitionNames, validateDef } from '../src/model/validate';
+import { schemaDefinitionNames, validateDef } from './support/schemaCheck';
 
 describe('shared DTO samples', () => {
   const defOf = (key: string) => (key === 'ResponseEnvelopeError' ? 'ResponseEnvelope' : key);

@@ -20,8 +20,8 @@ public sealed class AtomicFileWriter
         {
             await using (var fs = new FileStream(temp, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, FileOptions.WriteThrough))
             {
-                await fs.WriteAsync(bytes, ct);
-                await fs.FlushAsync(ct);
+                await fs.WriteAsync(bytes, ct).ConfigureAwait(false);
+                await fs.FlushAsync(ct).ConfigureAwait(false);
                 fs.Flush(flushToDisk: true);
             }
             BeforeReplace?.Invoke();
@@ -62,13 +62,21 @@ public sealed class BlobStore
     {
         var sha = HashOf(bytes.Span);
         var path = PathFor(sha);
-        if (!File.Exists(path)) await writer.WriteAsync(path, bytes, ct);
+        if (!File.Exists(path)) await writer.WriteAsync(path, bytes, ct).ConfigureAwait(false);
         return sha;
+    }
+
+    /// <summary>Synchronous read for callers that must answer on a UI thread (serving an asset to the page). Never block on <see cref="ReadAsync"/> there.</summary>
+    public byte[] Read(string sha)
+    {
+        var bytes = File.ReadAllBytes(PathFor(sha));
+        if (HashOf(bytes) != sha) throw new IOException($"blob {sha} is corrupt");
+        return bytes;
     }
 
     public async Task<ReadOnlyMemory<byte>> ReadAsync(string sha, CancellationToken ct)
     {
-        var bytes = await File.ReadAllBytesAsync(PathFor(sha), ct);
+        var bytes = await File.ReadAllBytesAsync(PathFor(sha), ct).ConfigureAwait(false);
         if (HashOf(bytes) != sha) throw new IOException($"blob {sha} is corrupt");
         return bytes;
     }
