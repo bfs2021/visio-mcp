@@ -162,9 +162,13 @@ export class MaxGraphAdapter implements CanvasAdapter {
   }
 
   // ------------------------------------------------------------------ projection
-  project(snapshot: Snapshot, pageId?: string): Result<void> {
+  /** The page shown. A page that no longer exists falls back to the first. */
+  pageId: string | undefined;
+
+  project(snapshot: Snapshot, pageId: string | undefined = this.pageId): Result<void> {
     if (this.disposed) return ok(undefined);
     const page = pageOf(snapshot, pageId);
+    this.pageId = page.id;
     const selected = this.getSelection();
     this.projecting = true;
     const model = this.graph.getDataModel();
@@ -418,11 +422,11 @@ export class MaxGraphAdapter implements CanvasAdapter {
   }
 
   /** Connector routes and visual bounds as maxGraph resolved them for the snapshot just projected. Derived data: never written back. */
-  readProjection(snapshot: Snapshot): import('../contracts/generated').Projection {
+  readProjection(snapshot: Snapshot, pageId?: string): import('../contracts/generated').Projection {
     const connectors: Record<string, { routePoints: Array<{ x: number; y: number }>; visualBounds: { x: number; y: number; width: number; height: number } }> = {};
     const s = this.graph.view.scale;
     const t = this.graph.view.translate;
-    const page = pageOf(snapshot);
+    const page = pageOf(snapshot, pageId);
     for (const el of page.elements) {
       if (el.kind !== 'connector') continue;
       const cell = this.graph.getDataModel().getCell(el.id);

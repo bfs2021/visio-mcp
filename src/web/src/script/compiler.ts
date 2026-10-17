@@ -2,6 +2,7 @@ import type {
   Asset, Bounds, Element, EndpointInput, Operation, Paint, PreparedAssetRef, Snapshot, TextBlock,
 } from '../contracts/generated';
 import type { ScriptCompiler } from '../commands/CommandEngine';
+import { prepareDocumentAsset } from '../commands/assetVersions';
 import { defaultScope, lookupTarget } from '../commands/resolveTarget';
 import { planPatch } from '../commands/planPatch';
 import { fail, ok, type Result } from '../model/result';
@@ -112,6 +113,9 @@ class Compiler {
   private readonly spans: SourceSpan[] = [];
   private readonly scene = new Scene();
   private activePageId: string | undefined;
+  /** An imported picture whose id the document already pins to different bytes is registered as a separate version; later commands in the same script mean that version. */
+  private readonly assetRemap = new Map<string, string>();
+  private readonly importedAssets: Asset[] = [];
   private current!: Command;
   private readonly lines: string[];
 
@@ -467,7 +471,7 @@ class Compiler {
     }
     this.finish([...base, 'asset', 'fit', 'opacity']);
     const assetN = this.need('asset');
-    const assetId = this.str(assetN);
+    const assetId = this.mapAsset(this.str(assetN));
     if (!this.scene.assets.has(assetId)) this.err(`unknown asset "${assetId}"`, assetN.value, 'import it first with: asset import prepared=<name>');
     const op: Operation = { op: 'createImage', ...common, bounds: this.bounds(), assetId };
     if (this.has('fit')) op.fit = this.enumValue(this.raw('fit')!, ['contain', 'cover', 'stretch'] as const);
@@ -594,7 +598,7 @@ class Compiler {
     if (this.has('asset')) {
       const n = this.raw('asset')!;
       if (known.kind !== 'image') this.err('asset= applies to images only', n.keyToken, 'to restyle other things use fill, stroke and text');
-      const assetId = this.str(n);
+      const assetId = this.mapAsset(this.str(n));
       if (!this.scene.assets.has(assetId)) this.err(`unknown asset "${assetId}"`, n.value);
       patch.assetId = assetId; handled.add('asset');
     }
@@ -801,6 +805,8 @@ class Compiler {
     this.emit(op);
   }
 
+  private mapAsset(id: string): string { return this.assetRemap.get(id) ?? id; }
+
   // ---- asset
   private cmdAsset(cmd: Command): void {
     const action = this.sub(cmd, ['import', 'replace', 'replace-all']);
@@ -812,20 +818,21 @@ class Compiler {
       const key = this.wordOrString(n);
       const ref = this.ctx.preparedAssetRefs?.[key];
       if (!ref) this.err(`no prepared asset called "${key}"`, n.value, `prepared assets: ${Object.keys(this.ctx.preparedAssetRefs ?? {}).join(', ') || 'none supplied'}`);
-      const asset: Asset = ref!.asset;
-      this.emit({ op: 'registerAsset', asset });
-      this.scene.assets.add(asset.id);
+      const plan = prepareDocumentAsset({ ...this.ctx.snapshot, document: { ...this.ctx.snapshot.document, assets: [...this.ctx.snapshot.document.assets, ...this.importedAssets] } }, ref!);
+      for (const op of plan.operations) { this.emit(op); if (op.op === 'registerAsset') this.importedAssets.push(op.asset); }
+      this.assetRemap.set(ref!.asset.id, plan.resolvedAssetId);
+      this.scene.assets.add(plan.resolvedAssetId);
       return;
     }
     if (action === 'replace-all') {
       this.finish(['from', 'to']);
-      const from = this.str(this.need('from')), to = this.str(this.need('to'));
+      const from = this.str(this.need('from')), to = this.mapAsset(this.str(this.need('to')));
       if (!this.scene.assets.has(to)) this.err(`unknown asset "${to}"`, this.raw('to')!.value);
       this.emit({ op: 'replaceAsset', from, to });
       return;
     }
     this.finish(['to']);
-    const to = this.str(this.need('to'));
+    const to = this.mapAsset(this.str(this.need('to')));
     if (!this.scene.assets.has(to)) this.err(`unknown asset "${to}"`, this.raw('to')!.value);
     if (!this.args.pos.length) this.err('asset replace needs the images to change; use asset replace-all from= to= for every reference', cmd.span);
     // images that point at different assets need one operation each

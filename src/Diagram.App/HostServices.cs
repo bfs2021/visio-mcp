@@ -8,7 +8,7 @@ using Microsoft.Win32;
 namespace Diagram.App;
 
 /// <summary>Answers page-initiated host.* requests: native dialogs, file IO and approved image bytes. The page never sees a path it did not choose.</summary>
-public sealed class HostServices(MainWindow window)
+public sealed partial class HostServices(MainWindow window)
 {
     static readonly Dictionary<string, string> ImageTypes = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -33,6 +33,7 @@ public sealed class HostServices(MainWindow window)
                 "host.pickImage" => await PickImageAsync(request, ct),
                 "host.openVsdx" => await OpenVsdxAsync(request, ct),
                 "host.exportVsdx" => await ExportVsdxAsync(request, ct),
+                var m when m.StartsWith("host.library.", StringComparison.Ordinal) => await LibraryAsync(request, ct),
                 _ => Err(request, "method_not_found", $"unknown host method {request.Method}"),
             };
         }

@@ -168,6 +168,19 @@ public sealed class AssetPreparer
         return file.Length > 128 ? file[..128] : file;
     }
 
+    /// <summary>Issues a preparation for bytes that are already stored and approved (a library asset), so a document can pin them the same way as a fresh upload.</summary>
+    public Result<PreparedUpload> PrepareExisting(Asset asset, int width, int height)
+    {
+        if (!blobs.Contains(asset.Sha256)) return Result<PreparedUpload>.Fail("not_found", $"the bytes for {asset.Id} are not in the store");
+        var preparationId = "prep-" + Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant();
+        var expires = now() + Lifetime;
+        preparations[preparationId] = (asset.Sha256, expires);
+        return Result<PreparedUpload>.Ok(new PreparedUpload(new PreparedAssetRef { PreparationId = preparationId, Asset = asset, ExpiresAt = expires.ToString("O") }, Array.Empty<string>(), width, height));
+    }
+
+    /// <summary>The identifier stem for a file name: lower case words joined by hyphens.</summary>
+    public static string SlugOf(string display) => Slug(display);
+
     static string Slug(string display)
     {
         var stem = Path.GetFileNameWithoutExtension(display);

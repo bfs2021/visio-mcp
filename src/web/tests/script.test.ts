@@ -172,6 +172,17 @@ set-gap vertical elexon dip 20mm`;
     expect(r[2]).toEqual({ op: 'replaceAsset', from: 'asset:logo', to: 'asset:fresh', targets: [id(961)] });
     expect(r[3]).toEqual({ op: 'replaceAsset', from: 'asset:logo-v2', to: 'asset:fresh' });
   });
+
+  it('assets: a library picture whose id the document pins to other bytes is registered as a separate version, and the script means that version', async () => {
+    const t = await scene();
+    const asset = { id: 'asset:logo', name: 'Logo', mimeType: 'image/png' as const, sha256: 'e'.repeat(64), tags: [] as string[] };
+    const ref: PreparedAssetRef = { preparationId: 'prep-2', expiresAt: '2030-01-01T00:00:00Z', asset };
+    const versionId = `asset:logo~${'e'.repeat(64)}`;
+    const r = ops(t, ['asset import prepared=lib', 'add image id=new asset="asset:logo" x=0mm y=0mm w=10mm h=10mm', 'asset replace logoimg to="asset:logo"'].join('\n'), { preparedAssetRefs: { lib: ref } });
+    expect(r[0]).toEqual({ op: 'registerAsset', asset: { ...asset, id: versionId } });
+    expect(r[1]).toMatchObject({ op: 'createImage', assetId: versionId });
+    expect(r[2]).toEqual({ op: 'replaceAsset', from: 'asset:logo', to: versionId, targets: [id(961)] });
+  });
 });
 
 describe('compiler: typing, syntax rules and diagnostics', () => {

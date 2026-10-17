@@ -8,6 +8,8 @@ import { createSnapshotProjector } from '../canvas/SnapshotProjector';
 import { collapseToGroups, expandToGroups, leavesOfTargets } from '../canvas/selection';
 import { deleteOperations, findElement, intentOperations, nudgeOperations, pageContaining, pageOf, type Intent } from '../canvas/intents';
 import { fail, ok, type Result } from '../model/result';
+import { canDeleteAsset, prepareDocumentAsset, imagesUsing, replaceEverywhere, replaceOneImage } from '../commands/assetVersions';
+import { effectiveState } from '../canvas/cellMapping';
 import { drawScriptCompiler, validateScript, type ValidationReport } from '../script/compiler';
 import { toPoints, type Unit } from '../model/validate';
 
@@ -16,11 +18,19 @@ export interface HostApi {
   pickImage(): Promise<Result<{ cancelled: true } | { ref: PreparedAssetRef; notes: string[]; width: number; height: number }>>;
   openJson(): Promise<Result<{ cancelled?: true; path?: string; notes?: string[] }>>;
   saveJson(saveAs: boolean): Promise<Result<{ cancelled?: true; path?: string; revision?: number }>>;
+  libraryList(query?: string, tags?: string[]): Promise<Result<{ assets: LibraryEntry[] }>>;
+  libraryImport(): Promise<Result<{ cancelled?: true; asset?: LibraryEntry; created?: boolean; idWasTaken?: boolean; notes?: string[] }>>;
+  /** Resolves a library picture to an approved preparation (optionally one specific version) a document can pin. */
+  libraryUse(id: string, hash?: string): Promise<Result<{ ref: PreparedAssetRef; notes: string[]; width: number; height: number }>>;
+  libraryReplaceSource(id: string): Promise<Result<{ cancelled?: true; asset?: LibraryEntry }>>;
+  librarySetMetadata(id: string, patch: { name?: string; tags?: string[] }): Promise<Result<{ asset: LibraryEntry }>>;
+  libraryDelete(id: string): Promise<Result<{ deleted: string }>>;
   openVsdx(): Promise<Result<NativeOutcome>>;
   /** `path` repeats a choice the person already made when they agree to a lossy export. */
   exportVsdx(opts: { acceptLoss?: boolean; path?: string }): Promise<Result<NativeOutcome>>;
 }
 
+export interface LibraryEntry { id: string; name: string; tags: string[]; mimeType: string; sha256: string; width: number; height: number; version: number; scope: 'library' }
 export interface DiagnosticItem { severity: 'info' | 'warning' | 'error'; code: string; message: string; elementId?: string; pageId?: string; action?: string }
 export interface NativeOutcome { cancelled?: true; path?: string; summary?: string; diagnostics?: DiagnosticItem[]; lossy?: boolean; revision?: number; bytes?: number }
 
@@ -28,6 +38,12 @@ export interface NativeOutcome { cancelled?: true; path?: string; summary?: stri
 export interface CompatibilityView { title: string; summary: string; diagnostics: DiagnosticItem[]; confirm?: { label: string; run: () => void } }
 
 export const noHost: HostApi = {
+  libraryList: async () => fail('not_running', 'there is no host to read the picture library'),
+  libraryImport: async () => fail('not_running', 'there is no host to add pictures'),
+  libraryUse: async () => fail('not_running', 'there is no host to read the picture library'),
+  libraryReplaceSource: async () => fail('not_running', 'there is no host to add pictures'),
+  librarySetMetadata: async () => fail('not_running', 'there is no host to change the picture library'),
+  libraryDelete: async () => fail('not_running', 'there is no host to change the picture library'),
   openVsdx: async () => fail('not_running', 'there is no host to open files'),
   exportVsdx: async () => fail('not_running', 'there is no host to save files'),
   pickImage: async () => fail('not_running', 'there is no host to choose a picture'),
@@ -88,13 +104,13 @@ export class EditorModel {
     this.controller = new GestureController(engine);
     this.controller.onGestureState = a => this.onGestureState(a);
     this.controller.onDiscard = reason => {
-      this.adapter?.project(this.engine.store.snapshot()); // show committed state again
+      this.showCommitted(); // show committed state again
       if (reason) this.say(reason, 'warning');
       this.bump();
     };
-    engine.setProjector(snapshot => this.adapter ? this.adapter.project(snapshot) : ok(undefined));
+    engine.setProjector(snapshot => this.adapter ? this.adapter.project(snapshot, this.pageId) : ok(undefined));
     engine.setSnapshotProjector(this.projector.project);
-    engine.onCommitted(() => { this.syncGroupFrames(); this.bump(); });
+    engine.onCommitted(() => { this.pruneSelection(); this.syncGroupFrames(); this.bump(); });
   }
 
   // ------------------------------------------------------------------ React subscription
@@ -104,7 +120,9 @@ export class EditorModel {
   say(text: string, kind: Status['kind'] = 'info'): void { this.status = { text, kind }; this.bump(); }
 
   get snapshot(): Snapshot { return this.engine.store.snapshot(); }
-  get currentPage() { return pageOf(this.snapshot); }
+  /** The page being edited. A page that was deleted (or never existed) falls back to the first. */
+  pageId: string | undefined;
+  get currentPage() { return pageOf(this.snapshot, this.pageId); }
   /** What the user has selected, with every complete group standing for its members. The canvas itself only ever holds the members. */
   get targets(): string[] { return collapseToGroups(this.snapshot, this.selection); }
   selectedElements(): Element[] { return this.targets.map(id => findElement(this.snapshot, id)).filter((e): e is Element => !!e); }
@@ -138,7 +156,7 @@ export class EditorModel {
       onViewport: v => { this.viewport = v; this.syncGroupFrames(); this.bump(); },
       onPlace: (what, at) => void this.place(what, at),
     }, id => this.assetUrlIn(this.snapshot, id));
-    this.adapter.project(this.snapshot);
+    this.adapter.project(this.snapshot, this.pageId);
     this.adapter.setTool(this.tool);
     queueMicrotask(() => this.adapter?.zoomToFit());
     return this.adapter;
@@ -165,7 +183,7 @@ export class EditorModel {
     if (!planned.ok) { this.controller.cancel(token); this.say(planned.error.message, 'warning'); return; }
     const r = await this.controller.commit(token);
     if (!r.ok) { if (r.error.code !== 'revision_conflict') this.say(r.error.message, 'warning'); return; }
-    if (r.value.noChange) this.adapter?.project(this.engine.store.snapshot()); // a snapped-back drag changes nothing: redraw committed state
+    if (r.value.noChange) this.showCommitted(); // a snapped-back drag changes nothing: redraw committed state
     if (oneShot && intent.type === 'connect') this.setTool({ kind: 'select' });
   }
 
@@ -370,7 +388,8 @@ export class EditorModel {
   async nudge(dx: number, dy: number): Promise<void> { await this.apply('nudge', nudgeOperations(this.snapshot, this.selection, dx, dy)); }
 
   selectAll(): void {
-    const ids = this.currentPage.elements.filter(e => e.kind !== 'group').map(e => e.id);
+    const page = this.currentPage;
+    const ids = page.elements.filter(e => e.kind !== 'group' && effectiveState(e, page.layers).visible).map(e => e.id); // a hidden object cannot be picked, even in bulk
     this.selection = ids;
     this.canvas?.setSelection(ids);
     this.bump();
@@ -396,7 +415,7 @@ export class EditorModel {
     if (!r.ok) { this.say(r.error.message, 'error'); return; }
     if (r.value.cancelled) return;
     this.selection = [];
-    this.adapter?.project(this.engine.store.snapshot());
+    this.showCommitted();
     this.say(`Opened ${r.value.path ?? 'file'}.${r.value.notes?.length ? ' ' + r.value.notes.join('; ') : ''}`, 'info');
   }
 
@@ -405,7 +424,7 @@ export class EditorModel {
     if (!r.ok) { this.say(r.error.message, 'error'); return; }
     if (r.value.cancelled) return;
     this.selection = [];
-    this.adapter?.project(this.engine.store.snapshot());
+    this.showCommitted();
     const items = r.value.diagnostics ?? [];
     this.say(`Opened ${r.value.path ?? 'file'}. ${r.value.summary ?? ''}`.trim(), r.value.lossy ? 'warning' : 'info');
     if (items.length) this.report = { title: 'Opened a Visio drawing', summary: r.value.summary ?? '', diagnostics: items };
@@ -445,10 +464,226 @@ export class EditorModel {
     this.say(`Saved ${r.value.path ?? ''}.`, 'info');
   }
 
+  private showCommitted(): void { this.adapter?.project(this.engine.store.snapshot(), this.pageId); }
+
+  /** Anything selected that no longer exists, or is hidden, is let go: a hidden object cannot stay picked. */
+  private pruneSelection(): void {
+    const page = this.currentPage;
+    const live = new Set(page.elements.filter(e => effectiveState(e, page.layers).visible).map(e => e.id));
+    const next = this.selection.filter(id => live.has(id));
+    if (next.length === this.selection.length) return;
+    this.selection = next;
+    this.canvas?.setSelection(next);
+  }
+
+  // ------------------------------------------------------------------ pages
+  setCurrentPage(id: string): void {
+    if (!this.snapshot.document.pages.some(p => p.id === id) || id === this.currentPage.id) return;
+    this.pageId = id;
+    this.selection = [];
+    this.canvas?.setSelection([]);
+    this.adapter?.project(this.snapshot, id);
+    queueMicrotask(() => this.adapter?.zoomToFit());
+    this.say(`Page: ${this.currentPage.name}`, 'info');
+  }
+
+  async addPage(size?: { widthPt: number; heightPt: number }): Promise<void> {
+    const id = crypto.randomUUID();
+    const n = this.snapshot.document.pages.length + 1;
+    const r = await this.apply('create', [{ op: 'addPage', id, name: `Page ${n}`, ...(size ?? { widthPt: this.currentPage.widthPt, heightPt: this.currentPage.heightPt }) }]);
+    if (r.ok) this.setCurrentPage(id);
+  }
+
+  async renamePage(pageId: string, name: string): Promise<void> {
+    const trimmed = name.trim();
+    if (!trimmed) { this.say('A page needs a name.', 'warning'); return; }
+    if (trimmed === this.snapshot.document.pages.find(p => p.id === pageId)?.name) return;
+    await this.apply('inspector', [{ op: 'setPage', pageId, patch: { name: trimmed } }]);
+  }
+
+  async movePage(pageId: string, by: -1 | 1): Promise<void> {
+    const pages = this.snapshot.document.pages;
+    const at = pages.findIndex(p => p.id === pageId);
+    const to = at + by;
+    if (at < 0 || to < 0 || to >= pages.length) return;
+    await this.apply('inspector', [{ op: 'reorderPage', pageId, index: to }]);
+  }
+
+  async duplicatePage(pageId: string): Promise<void> {
+    const id = crypto.randomUUID();
+    const r = await this.apply('create', [{ op: 'duplicatePage', pageId, id }]);
+    if (r.ok) this.setCurrentPage(id);
+  }
+
+  async deletePage(pageId: string): Promise<void> {
+    const pages = this.snapshot.document.pages;
+    if (pages.length <= 1) { this.say('A document keeps at least one page.', 'warning'); return; }
+    const at = pages.findIndex(p => p.id === pageId);
+    const r = await this.apply('inspector', [{ op: 'deletePage', pageId }]);
+    if (r.ok && this.currentPage.id !== pages[Math.max(0, at - 1)]!.id && this.pageId === pageId) this.setCurrentPage(pages[Math.max(0, at - 1)]!.id);
+  }
+
+  async setPageSize(pageId: string, widthPt: number, heightPt: number): Promise<void> {
+    if (!(widthPt > 0 && heightPt > 0)) { this.say('A page needs a positive width and height.', 'warning'); return; }
+    await this.apply('inspector', [{ op: 'setPage', pageId, patch: { widthPt, heightPt } }]);
+  }
+
+  // ------------------------------------------------------------------ layers
+  async addLayer(name: string): Promise<void> {
+    const trimmed = name.trim() || `Layer ${this.currentPage.layers.length + 1}`;
+    await this.apply('create', [{ op: 'addLayer', pageId: this.currentPage.id, id: crypto.randomUUID(), name: trimmed }]);
+  }
+
+  async setLayer(layerId: string, patch: { name?: string; visible?: boolean; locked?: boolean; printable?: boolean }): Promise<void> {
+    if (patch.name !== undefined && !patch.name.trim()) { this.say('A layer needs a name.', 'warning'); return; }
+    await this.apply('inspector', [{ op: 'setLayer', layerId, patch }]);
+  }
+
+  async deleteLayer(layerId: string): Promise<void> {
+    if (this.currentPage.layers.length <= 1) { this.say('A page keeps at least one layer.', 'warning'); return; }
+    await this.apply('inspector', [{ op: 'deleteLayer', layerId }]);
+  }
+
+  /** Puts the selection in (or takes it out of) a layer. An object may belong to several layers. */
+  async assignSelectionToLayer(layerId: string, member: boolean): Promise<void> {
+    const targets = this.targets;
+    if (!targets.length) { this.say('Select something first.', 'info'); return; }
+    await this.apply('inspector', [{ op: 'assignLayers', targets, layerIds: [layerId], mode: member ? 'add' : 'remove' }]);
+  }
+
+  // ------------------------------------------------------------------ pictures: the document's and the library's
+  /** Library entries as last read from the host. */
+  library: LibraryEntry[] = [];
+  libraryNote = '';
+
+  /** What this document pins, with how many images use each. */
+  documentAssets() {
+    const doc = this.snapshot.document;
+    return doc.assets.map(a => ({ ...a, usedBy: imagesUsing(this.snapshot, a.id).length, inLibrary: this.library.some(l => l.id === a.id), newerInLibrary: this.library.some(l => l.id === a.id && l.sha256 !== a.sha256) }));
+  }
+
+  async refreshLibrary(): Promise<void> {
+    const r = await this.host.libraryList();
+    if (!r.ok) { this.libraryNote = r.error.code === 'not_running' ? 'No host: the library is not available here.' : r.error.message; this.library = []; this.bump(); return; }
+    this.library = r.value.assets;
+    this.libraryNote = '';
+    this.bump();
+  }
+
+  async importToLibrary(): Promise<void> {
+    const r = await this.host.libraryImport();
+    if (!r.ok) { this.say(r.error.message, 'error'); return; }
+    if (r.value.cancelled) return;
+    await this.refreshLibrary();
+    const a = r.value.asset!;
+    this.say(r.value.created ? `Added ${a.name} to the library as ${a.id}.${r.value.idWasTaken ? ' That name was taken by a different picture, so it has its own version id.' : ''}` : `${a.name} is already in the library as ${a.id}.`, r.value.idWasTaken ? 'warning' : 'info');
+  }
+
+  async renameAsset(scope: 'document' | 'library', id: string, name: string): Promise<void> {
+    const trimmed = name.trim();
+    if (!trimmed) { this.say('A picture needs a name.', 'warning'); return; }
+    if (scope === 'library') {
+      const r = await this.host.librarySetMetadata(id, { name: trimmed });
+      if (!r.ok) { this.say(r.error.message, 'error'); return; }
+      await this.refreshLibrary();
+      return;
+    }
+    await this.apply('inspector', [{ op: 'setAsset', assetId: id, patch: { name: trimmed } }]);
+  }
+
+  async tagAsset(scope: 'document' | 'library', id: string, tags: string[]): Promise<void> {
+    const clean = [...new Set(tags.map(t => t.trim().toLowerCase()).filter(Boolean))];
+    if (scope === 'library') {
+      const r = await this.host.librarySetMetadata(id, { tags: clean });
+      if (!r.ok) { this.say(r.error.message, 'error'); return; }
+      await this.refreshLibrary();
+      return;
+    }
+    await this.apply('inspector', [{ op: 'setAsset', assetId: id, patch: { tags: clean } }]);
+  }
+
+  /** Deleting a document picture that images still use is refused with the reason; the library entry can always go (documents keep their own copy). */
+  async deleteAsset(scope: 'document' | 'library', id: string): Promise<void> {
+    if (scope === 'library') {
+      const r = await this.host.libraryDelete(id);
+      if (!r.ok) { this.say(r.error.message, 'error'); return; }
+      await this.refreshLibrary();
+      this.say(`Removed ${id} from the library. Documents that use it keep their own copy.`, 'info');
+      return;
+    }
+    const check = canDeleteAsset(this.snapshot, id);
+    if (!check.ok) { this.say(`${id} is still used by ${check.imageIds.length} picture(s). Replace those first.`, 'warning'); return; }
+    await this.apply('inspector', [{ op: 'removeAsset', assetId: id }]);
+  }
+
+  async copyAssetId(id: string): Promise<void> {
+    try {
+      // the clipboard can wait forever for permission or focus; do not leave the person with no answer
+      await Promise.race([navigator.clipboard.writeText(id), new Promise((_, no) => setTimeout(() => no(new Error('clipboard timeout')), 1500))]);
+      this.say(`Copied ${id}.`, 'info');
+    } catch { this.say(`${id} (the clipboard is not available here; select and copy it by hand)`, 'info'); }
+  }
+
+  async replaceLibrarySource(id: string): Promise<void> {
+    const r = await this.host.libraryReplaceSource(id);
+    if (!r.ok) { this.say(r.error.message, 'error'); return; }
+    if (r.value.cancelled) return;
+    await this.refreshLibrary();
+    this.say(`${id} now points at the new picture. Documents keep what they pinned until you choose to update them.`, 'info');
+  }
+
+  /** The approved preparation for a library picture, or the document's own pinned asset as a stand-in so one code path serves both. */
+  private async prepared(source: { scope: 'library' | 'document'; id: string; hash?: string }): Promise<Result<{ ref: PreparedAssetRef; width: number; height: number }>> {
+    if (source.scope === 'library') {
+      const r = await this.host.libraryUse(source.id, source.hash);
+      return r.ok ? ok({ ref: r.value.ref, width: r.value.width, height: r.value.height }) : r;
+    }
+    const asset = this.snapshot.document.assets.find(a => a.id === source.id);
+    if (!asset) return fail('not_found', `the document has no picture ${source.id}`);
+    return ok({ ref: { preparationId: 'document', expiresAt: '', asset }, width: 0, height: 0 });
+  }
+
+  /** Puts a picture on the page (registering it in the document in the same transaction). */
+  async placeAsset(source: { scope: 'library' | 'document'; id: string; hash?: string }, at?: { x: number; y: number }): Promise<void> {
+    const p = await this.prepared(source);
+    if (!p.ok) { this.say(p.error.message, 'error'); return; }
+    const plan = prepareDocumentAsset(this.snapshot, p.value.ref);
+    const page = this.currentPage;
+    const natW = p.value.width ? toPoints(p.value.width, 'px') : 96, natH = p.value.height ? toPoints(p.value.height, 'px') : 96;
+    const k = Math.min(1, page.widthPt / 2 / natW, page.heightPt / 2 / natH);
+    const w = natW * k, h = natH * k;
+    const r = await this.apply('create', [...plan.operations, { op: 'createImage', assetId: plan.resolvedAssetId, name: p.value.ref.asset.name, bounds: { x: (at?.x ?? page.widthPt / 2) - w / 2, y: (at?.y ?? page.heightPt / 2) - h / 2, width: w, height: h }, fit: 'contain', preserveAspectRatio: true }]);
+    if (r.ok && r.value.created.length) { this.selection = [r.value.created[r.value.created.length - 1]!]; this.canvas?.setSelection(this.selection); this.bump(); }
+  }
+
+  /** Changes the picture of the selected image only. Its twins that share the old picture keep it. */
+  async useForSelectedImage(source: { scope: 'library' | 'document'; id: string; hash?: string }): Promise<void> {
+    const images = this.selectedElements().filter(e => e.kind === 'image');
+    if (images.length !== 1 || this.selectedElements().length !== 1) { this.say('Select one picture on the page first.', 'info'); return; }
+    const p = await this.prepared(source);
+    if (!p.ok) { this.say(p.error.message, 'error'); return; }
+    const plan = replaceOneImage(this.snapshot, images[0]!.id, p.value.ref);
+    if ('error' in plan) { this.say(plan.error, 'warning'); return; }
+    if (!plan.operations.length) { this.say('That picture already shows this image.', 'info'); return; }
+    const r = await this.apply('inspector', plan.operations);
+    if (r.ok) this.say(`Changed one picture to ${plan.resolvedAssetId}.`, 'info');
+  }
+
+  /** Changes every use of a document picture. Says how many pictures changed. */
+  async replaceEverywhere(fromAssetId: string, source: { scope: 'library' | 'document'; id: string; hash?: string }): Promise<void> {
+    const p = await this.prepared(source);
+    if (!p.ok) { this.say(p.error.message, 'error'); return; }
+    const plan = replaceEverywhere(this.snapshot, fromAssetId, p.value.ref);
+    if ('error' in plan) { this.say(plan.error, 'warning'); return; }
+    if (!plan.operations.length) { this.say('Nothing to change: that is already the picture in use.', 'info'); return; }
+    const r = await this.apply('inspector', plan.operations);
+    if (r.ok) this.say(`Replaced ${fromAssetId} with ${plan.resolvedAssetId} in ${plan.affectedImageIds.length} picture${plan.affectedImageIds.length === 1 ? '' : 's'}.`, 'info');
+  }
+
   /** Called when the host replaced the document (open) and the engine started a new session. */
   sessionReplaced(): void {
     this.selection = [];
-    this.adapter?.project(this.engine.store.snapshot());
+    this.showCommitted();
     this.bump();
   }
 

@@ -28,8 +28,14 @@ export function createSnapshotProjector(assetUrl: (snapshot: Snapshot, assetId: 
       try {
         const a = ensure();
         current = snapshot;
-        a.project(snapshot);
-        return ok(a.readProjection(snapshot) as Projection);
+        // routes are derived page by page: a connector on the second page needs its own pass
+        let merged: Projection | null = null;
+        for (const page of snapshot.document.pages) {
+          a.project(snapshot, page.id);
+          const one = a.readProjection(snapshot, page.id) as Projection;
+          merged = merged ? ({ ...(merged as object), connectors: { ...(merged.connectors as object), ...(one.connectors as object) } } as Projection) : one;
+        }
+        return ok(merged!);
       } catch (e) {
         return fail('projection_failed', e instanceof Error ? e.message : String(e));
       }

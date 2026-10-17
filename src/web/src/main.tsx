@@ -14,6 +14,12 @@ function hostApi(host: HostServices | null): HostApi {
     pickImage: () => host.call('host.pickImage'),
     openJson: () => host.call('host.openJson'),
     saveJson: saveAs => host.call('host.saveJson', { saveAs }),
+    libraryList: (query, tags) => host.call('host.library.list', { query, tags }),
+    libraryImport: () => host.call('host.library.import'),
+    libraryUse: (id, hash) => host.call('host.library.use', { id, hash }),
+    libraryReplaceSource: id => host.call('host.library.replaceSource', { id }),
+    librarySetMetadata: (id, patch) => host.call('host.library.setMetadata', { id, ...patch }),
+    libraryDelete: id => host.call('host.library.delete', { id }),
     openVsdx: () => host.call('host.openVsdx'),
     exportVsdx: opts => host.call('host.exportVsdx', opts),
   };

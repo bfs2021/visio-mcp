@@ -1,8 +1,11 @@
 import { useEffect } from 'react';
 import type { EditorModel } from './editor/EditorModel';
+import { AssetsPanel } from './components/AssetsPanel';
 import { CompatibilityDialog } from './components/CompatibilityDialog';
 import { Drawer } from './components/Drawer';
 import { Inspector } from './components/Inspector';
+import { LayersPanel } from './components/LayersPanel';
+import { PageTabs } from './components/PageTabs';
 import { PageCanvas } from './components/PageCanvas';
 import { ShapesPanel } from './components/ShapesPanel';
 import { StatusBar } from './components/StatusBar';
@@ -50,9 +53,14 @@ export function App({ model }: { model: EditorModel }) {
   return (
     <div className="app">
       <Toolbar model={model} />
-      <ShapesPanel model={model} />
+      <div className="left-stack">
+        <ShapesPanel model={model} />
+        <LayersPanel model={model} />
+        <AssetsPanel model={model} />
+      </div>
       <PageCanvas model={model} />
       <Inspector model={model} />
+      <PageTabs model={model} />
       <Drawer model={model} />
       <CompatibilityDialog model={model} />
       <StatusBar model={model} />

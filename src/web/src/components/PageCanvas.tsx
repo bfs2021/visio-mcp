@@ -21,11 +21,14 @@ export function PageCanvas({ model }: { model: EditorModel }) {
 
   const onDrop = (e: React.DragEvent) => {
     const what = e.dataTransfer.getData('application/x-diagram-shape');
-    if (!what) return;
+    const picture = e.dataTransfer.getData('application/x-diagram-asset');
+    if (!what && !picture) return;
     e.preventDefault();
     const vp = model.canvas!.getViewport();
     const rect = host.current!.getBoundingClientRect();
-    void model.place(what, { x: (e.clientX - rect.left + vp.scrollLeft) / vp.scale - vp.marginPt, y: (e.clientY - rect.top + vp.scrollTop) / vp.scale - vp.marginPt });
+    const at = { x: (e.clientX - rect.left + vp.scrollLeft) / vp.scale - vp.marginPt, y: (e.clientY - rect.top + vp.scrollTop) / vp.scale - vp.marginPt };
+    if (picture) { try { void model.placeAsset(JSON.parse(picture) as { scope: 'library' | 'document'; id: string }, at); } catch { /* not ours */ } return; }
+    void model.place(what, at);
   };
 
   return (
@@ -35,7 +38,7 @@ export function PageCanvas({ model }: { model: EditorModel }) {
       <Ruler horizontal={false} viewport={model.viewport} unit={model.unit} length={size.h} />
       <div
         className="canvas-host" data-testid="canvas" ref={host}
-        onDragOver={e => { if (e.dataTransfer.types.includes('application/x-diagram-shape')) e.preventDefault(); }}
+        onDragOver={e => { if (e.dataTransfer.types.includes('application/x-diagram-shape') || e.dataTransfer.types.includes('application/x-diagram-asset')) e.preventDefault(); }}
         onDrop={onDrop}
         onContextMenu={e => { e.preventDefault(); setMenuAt({ x: e.clientX, y: e.clientY }); }}
       />

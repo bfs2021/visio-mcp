@@ -122,8 +122,10 @@ export class CommandEngine {
   executeScript(req: ScriptRequest, compile: ScriptCompiler): Promise<Result<TransactionResult>> {
     const v = validateScriptRequest(req);
     if (!v.ok) return Promise.resolve(v);
-    // Source and prepared refs are the caller's input; compiled UUIDs are not, so they stay out of the hash.
-    const hash = this.hashOf('script', req, { script: req.script, preparedAssetRefs: req.preparedAssetRefs ?? null });
+    // Source and the pictures it may import are the caller's input; compiled UUIDs are not, so they stay out of the hash. A preparation id is
+    // issued fresh for every request, so only the approved descriptors count: retrying the same script must hash the same.
+    const pictures = req.preparedAssetRefs ? Object.fromEntries(Object.entries(req.preparedAssetRefs).map(([k, r]) => [k, r.asset])) : null;
+    const hash = this.hashOf('script', req, { script: req.script, preparedAssetRefs: pictures });
     let spans: SourceSpan[] | undefined;
     return this.enqueue(() => this.runMutation('script', req, 'script', hash, snapshot => {
       const ctx: Parameters<ScriptCompiler>[2] = {};

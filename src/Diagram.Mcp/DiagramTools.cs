@@ -142,12 +142,14 @@ public sealed class DiagramTools(PipeClient app)
         [Description("DrawScript source, one command per line.")] string script,
         [Description("Page used for names and aliases when the script does not say 'page use'.")] string? pageId = null,
         [Description("Must be true.")] bool atomic = true,
+        [Description("Library pictures the script may import, by id (\"asset:logo\") or id and version hash (\"asset:logo@<sha256>\"). In the script write: asset import prepared=\"asset:logo\" and then use that id. If the document already holds different bytes under that id, a separate version asset:<name>~<sha256> is registered and the script means that version. See list_assets.")] string[]? libraryAssets = null,
         CancellationToken ct = default)
     {
         if (Check(("documentId", documentId), ("sessionId", sessionId), ("transactionId", transactionId)) is { } bad) return ToolErrors.Fail("invalid_request", bad);
         if (!atomic) return ToolErrors.Fail("invalid_request", "only atomic scripts are supported");
         var r = await Send("doc.executeScript", documentId, sessionId,
-            Obj(("transactionId", transactionId), ("baseRevision", baseRevision), ("atomic", true), ("script", script), ("pageId", pageId)), Mutate, ct);
+            Obj(("transactionId", transactionId), ("baseRevision", baseRevision), ("atomic", true), ("script", script), ("pageId", pageId),
+                ("libraryAssets", libraryAssets is null ? null : new JsonArray(libraryAssets.Select(a => (JsonNode)JsonValue.Create(a)!).ToArray()))), Mutate, ct);
         if (r.Error is not null) return ToolErrors.Fail(r.Error);
         var body = JsonNode.Parse(r.Result!.Value.GetRawText())!.AsObject();
         var t = body["transaction"]!;
@@ -199,7 +201,7 @@ public sealed class DiagramTools(PipeClient app)
         return Finish(await Send("doc.inspectLayout", documentId, sessionId, Obj(("pageId", pageId)), Read, ct));
     }
 
-    [McpServerTool(Name = "list_assets"), Description("The document's image assets (ids, names, types, tags, how many images use each). Prefer these ids when placing a logo. " + Identity)]
+    [McpServerTool(Name = "list_assets"), Description("Image assets: those pinned in the document (scope \"document\": ids, names, types, tags, how many images use each) and those in the user's approved library (scope \"library\"). A document entry wins an exact id match and says newerInLibrary when the library has changed. To place a library picture pass its id in execute_script libraryAssets. " + Identity)]
     public async Task<CallToolResult> ListAssets(
         [Description("The document id from get_document_summary.")] string documentId,
         [Description("The session id from get_document_summary.")] string sessionId,
