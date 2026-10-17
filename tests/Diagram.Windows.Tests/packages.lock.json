@@ -194,6 +194,7 @@
         "dependencies": {
           "Diagram.Host.Core": "[1.0.0, )",
           "Diagram.Ipc": "[1.0.0, )",
+          "Diagram.Visio": "[1.0.0, )",
           "Microsoft.Web.WebView2": "[1.0.4258.31, 1.0.4258.31]"
         }
       },
@@ -210,6 +211,18 @@
         "type": "Project",
         "dependencies": {
           "Diagram.Core.Contracts": "[1.0.0, )"
+        }
+      },
+      "diagram.visio": {
+        "type": "Project",
+        "dependencies": {
+          "Diagram.Visio.Abstractions": "[1.0.0, )"
+        }
+      },
+      "diagram.visio.abstractions": {
+        "type": "Project",
+        "dependencies": {
+          "Diagram.Host.Core": "[1.0.0, )"
         }
       }
     }

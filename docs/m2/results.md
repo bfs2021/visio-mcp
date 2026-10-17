@@ -89,7 +89,7 @@ New operations, all in the schema bundle and generated into both languages: `dup
 - **Debug mode** draws each visible element's dashed bounds and a small chip with its alias or short id, after the picture and only in debug.
 - **Layout inspection** (`src/web/src/layout/inspectLayout.ts`): `OUTSIDE_PAGE`, `ZERO_SIZE`, `TEXT_OVERFLOW`, `OVERLAP` (ignores containment and members of one group), `UNGLUED_CONNECTOR_END`, `DANGLING_CONNECTOR`, `CONNECTOR_CROSSES_SHAPE` (resolved routes when the editor has them, ignoring the connector's own ends and their groups),
   `IMAGE_DISTORTION` (when the natural size is known), `LOW_CONTRAST` and a quiet `HIDDEN_OBJECT`. Every issue has element ids, page, bounds, message and the numbers it was judged by. The report states that text sizes are estimates. It is a pure read: hashes and revision are unchanged.
-- **Tools**: `render_page` and `render_region` return a real MCP image block plus a JSON description (revision shown, pixel size, crop in points) and never repeat the base64 as text; `inspect_layout` returns the issues. Only `export_document` still answers `not_ready`.
+- **Tools**: `render_page` and `render_region` return a real MCP image block plus a JSON description (revision shown, pixel size, crop in points) and never repeat the base64 as text; `inspect_layout` returns the issues. `export_document` arrived with I40.
 - **Live loop** on the real stack: inspect finds the overflowing label, render_region returns a PNG of just that element at the right revision, a one-object resize fixes it, every other object is byte for byte unchanged, and a second inspect and render show the new revision.
 
 ## Bugs and design decisions found while building
@@ -100,7 +100,7 @@ New operations, all in the schema bundle and generated into both languages: `dup
 - A one-line shell heredoc kept failing in this environment, so larger files were written with the file tool.
 
 ## Known gaps, carried forward
-0. Export is `not_ready` until I40, and the library catalogue arrives with I50.
+0. The library catalogue arrives with I50.
    The gesture hold is covered by fake-clock tests and by a test that a human commit bypasses it, but not by a real mouse drag with a real MCP client in flight (production builds have no test window to start one).
 1. DrawScript has no `if`, loops or variables by design. Layer, asset and page references are by name or id; there is no way yet to list prepared assets for the script from the GUI (the host passes `preparedAssetRefs`; I50 adds the catalogue UI).
 2. The inspector has no page-tab strip, layer panel or asset catalogue yet (the operations exist; I50 owns the UI).

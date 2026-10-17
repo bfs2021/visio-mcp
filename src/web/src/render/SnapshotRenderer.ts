@@ -13,7 +13,7 @@ const MAX_SCALE = 8;
 export interface RenderParams {
   scope: 'page' | 'region';
   pageId?: string;
-  format?: 'png' | 'jpeg';
+  format?: 'png' | 'jpeg' | 'svg';
   mode?: 'clean' | 'debug';
   maxWidth?: number;
   maxHeight?: number;
@@ -23,7 +23,7 @@ export interface RenderParams {
 }
 
 export interface RenderResult {
-  mimeType: 'image/png' | 'image/jpeg';
+  mimeType: 'image/png' | 'image/jpeg' | 'image/svg+xml';
   /** Base64 of the encoded image. */
   base64: string;
   byteLength: number;
@@ -33,7 +33,7 @@ export interface RenderResult {
   cropPt: Bounds;
   pageId: string;
   mode: 'clean' | 'debug';
-  format: 'png' | 'jpeg';
+  format: 'png' | 'jpeg' | 'svg';
   /** The snapshot this image shows, not whatever the live document has become since. */
   documentId: string;
   sessionId: string;
@@ -45,9 +45,9 @@ type Dims = { crop: Bounds; widthPx: number; heightPx: number; scale: number };
 const finitePositive = (n: unknown, max = 100000): n is number => typeof n === 'number' && Number.isFinite(n) && n > 0 && n <= max;
 
 /** Validates the request and works out what to crop and how big to make it. Pure, so it is tested without a browser. */
-export function planRender(snapshot: Snapshot, projection: Projection | undefined, p: RenderParams): Result<{ page: Page; dims: Dims; format: 'png' | 'jpeg'; mode: 'clean' | 'debug' }> {
+export function planRender(snapshot: Snapshot, projection: Projection | undefined, p: RenderParams): Result<{ page: Page; dims: Dims; format: 'png' | 'jpeg' | 'svg'; mode: 'clean' | 'debug' }> {
   const format = p.format ?? 'png', mode = p.mode ?? 'clean';
-  if (format !== 'png' && format !== 'jpeg') return fail('invalid_request', 'format must be png or jpeg');
+  if (format !== 'png' && format !== 'jpeg' && format !== 'svg') return fail('invalid_request', 'format must be png, jpeg or svg');
   if (mode !== 'clean' && mode !== 'debug') return fail('invalid_request', 'mode must be clean or debug');
   const maxWidth = p.maxWidth ?? 1600, maxHeight = p.maxHeight ?? 1200;
   if (!finitePositive(maxWidth, 8192) || !finitePositive(maxHeight, 8192)) return fail('invalid_request', 'maxWidth and maxHeight must be between 1 and 8192');
@@ -179,6 +179,24 @@ export function createSnapshotRenderer(deps: RendererDeps) {
       svg.setAttribute('style', 'overflow:hidden;background:none');
       await document.fonts.ready;
 
+      if (format === 'svg') {
+        // a vector file: the page background, then the drawing, with the same inlined pictures
+        const bgColour = page.background.kind === 'solid' ? page.background.colour : null;
+        if (bgColour) {
+          const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          for (const [k, v] of Object.entries({ x: String(dims.crop.x + MARGIN_PT), y: String(dims.crop.y + MARGIN_PT), width: String(dims.crop.width), height: String(dims.crop.height), fill: bgColour })) rect.setAttribute(k, v);
+          svg.insertBefore(rect, svg.firstChild);
+        }
+        svg.setAttribute('style', '');
+        const text = new XMLSerializer().serializeToString(svg);
+        const bytes = new TextEncoder().encode(text);
+        if (bytes.length > MAX_BYTES) return fail('limit_exceeded', `the drawing is ${bytes.length} bytes as SVG; the limit is ${MAX_BYTES}`);
+        return ok({
+          mimeType: 'image/svg+xml', base64: toBase64(bytes), byteLength: bytes.length, widthPx: dims.widthPx, heightPx: dims.heightPx, cropPt: dims.crop, pageId: page.id, mode,
+          format: 'svg', documentId: snapshot.documentId, sessionId: snapshot.sessionId, revision: snapshot.revision,
+        });
+      }
+
       const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], { type: 'image/svg+xml;charset=utf-8' }));
       const image = new Image();
       try {
@@ -195,12 +213,12 @@ export function createSnapshotRenderer(deps: RendererDeps) {
       g.drawImage(image, 0, 0, dims.widthPx, dims.heightPx);
       if (mode === 'debug') drawDebug(g, snapshot, page, projection, dims);
 
-      const blob: Blob | null = await new Promise(res => canvas.toBlob(res, format === 'png' ? 'image/png' : 'image/jpeg', 0.9));
+      const blob: Blob | null = await new Promise(res => canvas.toBlob(res, format === 'jpeg' ? 'image/jpeg' : 'image/png', 0.9));
       if (!blob) return fail('internal_error', 'the image could not be encoded');
       if (blob.size > MAX_BYTES) return fail('limit_exceeded', `the image is ${blob.size} bytes; the limit is ${MAX_BYTES}`, { details: { bytes: blob.size, limit: MAX_BYTES } });
       const bytes = new Uint8Array(await blob.arrayBuffer());
       return ok({
-        mimeType: format === 'png' ? 'image/png' : 'image/jpeg', base64: toBase64(bytes), byteLength: bytes.length, widthPx: dims.widthPx, heightPx: dims.heightPx,
+        mimeType: format === 'jpeg' ? 'image/jpeg' : 'image/png', base64: toBase64(bytes), byteLength: bytes.length, widthPx: dims.widthPx, heightPx: dims.heightPx,
         cropPt: dims.crop, pageId: page.id, mode, format, documentId: snapshot.documentId, sessionId: snapshot.sessionId, revision: snapshot.revision,
       });
     } catch (e) {
@@ -208,7 +226,26 @@ export function createSnapshotRenderer(deps: RendererDeps) {
     }
   }
 
-  return { render, dispose() { adapter?.dispose(); host?.remove(); adapter = null; host = null; } };
+  /** An asset at a bounded size as a PNG, drawn by the browser from the approved bytes (used when a format cannot hold an SVG). */
+  async function rasterise(sha256: string, maxPixels: number): Promise<Result<{ base64: string; widthPx: number; heightPx: number }>> {
+    try {
+      const res = await fetchAsset(`/assets/${sha256}`);
+      if (!res.ok) return fail('not_found', `the asset ${sha256.slice(0, 12)} is not available (${res.status})`);
+      const url = URL.createObjectURL(await res.blob());
+      const image = new Image();
+      try { image.src = url; await image.decode(); } catch { return fail('internal_error', 'the picture could not be drawn'); } finally { URL.revokeObjectURL(url); }
+      const w0 = image.naturalWidth || maxPixels, h0 = image.naturalHeight || maxPixels;
+      const k = Math.min(1, maxPixels / Math.max(w0, h0)) * (w0 < 256 && h0 < 256 ? Math.min(4, 512 / Math.max(w0, h0)) : 1);
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(w0 * k)); canvas.height = Math.max(1, Math.round(h0 * k));
+      canvas.getContext('2d')!.drawImage(image, 0, 0, canvas.width, canvas.height);
+      const blob: Blob | null = await new Promise(r => canvas.toBlob(r, 'image/png'));
+      if (!blob) return fail('internal_error', 'the picture could not be encoded');
+      return ok({ base64: toBase64(new Uint8Array(await blob.arrayBuffer())), widthPx: canvas.width, heightPx: canvas.height });
+    } catch (e) { return fail('internal_error', e instanceof Error ? e.message : String(e)); }
+  }
+
+  return { render, rasterise, dispose() { adapter?.dispose(); host?.remove(); adapter = null; host = null; } };
 }
 
 /** Small ids and bounds over the picture, so a model can match pixels to elements. Drawn after the image and never part of a clean render. */

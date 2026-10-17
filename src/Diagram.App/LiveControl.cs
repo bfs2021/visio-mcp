@@ -22,10 +22,12 @@ public sealed class LiveControl : IAsyncDisposable
 
     readonly BridgeRouter router;
     readonly PipeServer server;
+    readonly Func<RequestEnvelope, CancellationToken, Task<ResponseEnvelope>> export;
 
-    public LiveControl(string pipeName, BridgeRouter router)
+    public LiveControl(string pipeName, BridgeRouter router, Func<RequestEnvelope, CancellationToken, Task<ResponseEnvelope>> export)
     {
         this.router = router;
+        this.export = export;
         server = PipeServer.Start(pipeName, HandleAsync);
     }
 
@@ -36,6 +38,7 @@ public sealed class LiveControl : IAsyncDisposable
         if (!Offered.Contains(request.Method)) return Wire.Error(request.RequestId, "method_not_found", $"{request.Method} is not available to clients");
         if (ScopeOptional.Contains(request.Method) && request.DocumentId is null && request.SessionId is null && router.CurrentScope is { } scope)
             request = request with { DocumentId = scope.DocumentId, SessionId = scope.SessionId };
+        if (request.Method == "doc.export") return await export(request, ct); // the host writes the file itself, inside the approved folders
         return await router.SendAsync(request, ct);
     }
 

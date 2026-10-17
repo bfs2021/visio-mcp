@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0": {
+      "diagram.core.contracts": {
+        "type": "Project"
+      },
+      "diagram.host.core": {
+        "type": "Project",
+        "dependencies": {
+          "Diagram.Core.Contracts": "[1.0.0, )"
+        }
+      }
+    }
+  }
+}

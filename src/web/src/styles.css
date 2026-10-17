@@ -80,3 +80,14 @@ textarea { width: 100%; resize: vertical; }
 .tx-detail { overflow: auto; font-size: 12px; } .tx-detail h3 { margin: 0 0 4px; text-transform: none; font-size: 13px; color: var(--ink); }
 .tx-detail code { background: #f1f5f9; padding: 0 3px; border-radius: 3px; }
 .tx-source { background: #f8fafc; border: 1px solid #e2e8f0; padding: 6px; max-height: 70px; overflow: auto; font: 11px/1.4 Consolas, monospace; margin: 4px 0; }
+
+.dialog-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, .35); display: grid; place-items: center; z-index: 60; }
+.dialog { background: #fff; border-radius: 6px; padding: 14px 18px; width: min(640px, 92vw); max-height: 80vh; overflow: auto; box-shadow: 0 12px 40px rgba(15, 23, 42, .35); }
+.dialog h2 { margin: 0 0 6px; font-size: 15px; }
+.dialog h3 { font-size: 12px; margin: 10px 0 4px; }
+.dialog ul { margin: 0; padding-left: 18px; }
+.dialog li { margin: 3px 0; }
+.diag-warning, .diag-error { color: #92400e; }
+.diag-info { color: #64748b; }
+.diag-code { font-weight: 600; text-transform: capitalize; }
+.dialog-actions { justify-content: flex-end; margin-top: 12px; }

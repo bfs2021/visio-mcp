@@ -31,6 +31,8 @@ public sealed class HostServices(MainWindow window)
                 "host.openJson" => await OpenAsync(request, ct),
                 "host.saveJson" => await SaveAsync(request, ct),
                 "host.pickImage" => await PickImageAsync(request, ct),
+                "host.openVsdx" => await OpenVsdxAsync(request, ct),
+                "host.exportVsdx" => await ExportVsdxAsync(request, ct),
                 _ => Err(request, "method_not_found", $"unknown host method {request.Method}"),
             };
         }
@@ -69,6 +71,50 @@ public sealed class HostServices(MainWindow window)
         if (!opened.IsOk) return Err(request, opened.Error!);
         CurrentPath = path;
         return Ok(request, new JsonObject { ["path"] = path, ["notes"] = new JsonArray(opened.Value.Notes.Select(n => (JsonNode)n).ToArray()) });
+    }
+
+    async Task<ResponseEnvelope> OpenVsdxAsync(RequestEnvelope request, CancellationToken ct)
+    {
+        var path = Ask("openVsdx", () =>
+        {
+            var d = new OpenFileDialog { Title = "Open Visio drawing", Filter = "Visio drawings (*.vsdx)|*.vsdx|All files (*.*)|*.*" };
+            return d.ShowDialog(window) == true ? d.FileName : null;
+        });
+        if (path is null) return Ok(request, new JsonObject { ["cancelled"] = true });
+        var status = await window.Router.SendAsync(new RequestEnvelope
+        {
+            RequestId = Guid.NewGuid().ToString(), Method = "doc.status", DocumentId = window.Router.CurrentScope?.DocumentId, SessionId = window.Router.CurrentScope?.SessionId, Params = new JsonObject(),
+        }, ct);
+        if (status.Error is { } se) return Err(request, se);
+        var s = status.Result!.Value;
+        var expected = new ExpectedState { DocumentId = s.GetProperty("documentId").GetString()!, SessionId = s.GetProperty("sessionId").GetString()!, BaseRevision = s.GetProperty("revision").GetInt32() };
+
+        var opened = await window.Native.OpenAsync(path, expected, ct);
+        if (!opened.IsOk) return Err(request, opened.Error!);
+        CurrentPath = null; // the JSON file the person had open is not this document's home any more: Save asks where to put it
+        return Ok(request, new JsonObject { ["path"] = opened.Value.Path, ["summary"] = opened.Value.Report.Summary, ["diagnostics"] = opened.Value.Report.ToJson(), ["lossy"] = opened.Value.Report.IsLossy });
+    }
+
+    async Task<ResponseEnvelope> ExportVsdxAsync(RequestEnvelope request, CancellationToken ct)
+    {
+        var acceptLoss = request.Params["acceptLoss"]?.GetValue<bool>() ?? false;
+        var path = request.Params["path"]?.GetValue<string>() ?? Ask("exportVsdx", () =>
+        {
+            var d = new SaveFileDialog { Title = "Export to Visio", Filter = "Visio drawings (*.vsdx)|*.vsdx", DefaultExt = ".vsdx", AddExtension = true };
+            return d.ShowDialog(window) == true ? d.FileName : null;
+        });
+        if (path is null) return Ok(request, new JsonObject { ["cancelled"] = true });
+        var scope = window.Router.CurrentScope;
+        if (scope is null) return Err(request, "not_ready", "the editor is not ready", retryable: true);
+        var r = await window.Native.ExportAsync(path, scope, acceptLoss, ct);
+        if (!r.IsOk)
+        {
+            // a refusal because something would be lost carries the chosen path, so the person can agree without choosing it again
+            var e = r.Error!;
+            if (e.Code == "compatibility_loss") { var d = (JsonObject)e.Details!.DeepClone(); d["path"] = path; e = e with { Details = d }; }
+            return Err(request, e);
+        }
+        return Ok(request, new JsonObject { ["path"] = r.Value.Path, ["revision"] = r.Value.Revision, ["bytes"] = r.Value.Bytes, ["summary"] = r.Value.Report.Summary, ["diagnostics"] = r.Value.Report.ToJson(), ["lossy"] = r.Value.Report.IsLossy });
     }
 
     async Task<ResponseEnvelope> SaveAsync(RequestEnvelope request, CancellationToken ct)

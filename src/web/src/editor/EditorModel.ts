@@ -16,9 +16,20 @@ export interface HostApi {
   pickImage(): Promise<Result<{ cancelled: true } | { ref: PreparedAssetRef; notes: string[]; width: number; height: number }>>;
   openJson(): Promise<Result<{ cancelled?: true; path?: string; notes?: string[] }>>;
   saveJson(saveAs: boolean): Promise<Result<{ cancelled?: true; path?: string; revision?: number }>>;
+  openVsdx(): Promise<Result<NativeOutcome>>;
+  /** `path` repeats a choice the person already made when they agree to a lossy export. */
+  exportVsdx(opts: { acceptLoss?: boolean; path?: string }): Promise<Result<NativeOutcome>>;
 }
 
+export interface DiagnosticItem { severity: 'info' | 'warning' | 'error'; code: string; message: string; elementId?: string; pageId?: string; action?: string }
+export interface NativeOutcome { cancelled?: true; path?: string; summary?: string; diagnostics?: DiagnosticItem[]; lossy?: boolean; revision?: number; bytes?: number }
+
+/** What a person is shown about a Visio file: what came across and what did not, with an optional action (export anyway). */
+export interface CompatibilityView { title: string; summary: string; diagnostics: DiagnosticItem[]; confirm?: { label: string; run: () => void } }
+
 export const noHost: HostApi = {
+  openVsdx: async () => fail('not_running', 'there is no host to open files'),
+  exportVsdx: async () => fail('not_running', 'there is no host to save files'),
   pickImage: async () => fail('not_running', 'there is no host to choose a picture'),
   openJson: async () => fail('not_running', 'there is no host to open files'),
   saveJson: async () => fail('not_running', 'there is no host to save files'),
@@ -62,6 +73,8 @@ export class EditorModel {
   readonly scriptSources = new Map<string, string>();
 
   host: HostApi = noHost;
+  /** The compatibility report dialog, when one is showing. */
+  report: CompatibilityView | null = null;
   selection: string[] = [];
   tool: Tool = { kind: 'select' };
   unit: Unit = 'mm';
@@ -386,6 +399,44 @@ export class EditorModel {
     this.adapter?.project(this.engine.store.snapshot());
     this.say(`Opened ${r.value.path ?? 'file'}.${r.value.notes?.length ? ' ' + r.value.notes.join('; ') : ''}`, 'info');
   }
+
+  async openVsdx(): Promise<void> {
+    const r = await this.host.openVsdx();
+    if (!r.ok) { this.say(r.error.message, 'error'); return; }
+    if (r.value.cancelled) return;
+    this.selection = [];
+    this.adapter?.project(this.engine.store.snapshot());
+    const items = r.value.diagnostics ?? [];
+    this.say(`Opened ${r.value.path ?? 'file'}. ${r.value.summary ?? ''}`.trim(), r.value.lossy ? 'warning' : 'info');
+    if (items.length) this.report = { title: 'Opened a Visio drawing', summary: r.value.summary ?? '', diagnostics: items };
+    this.bump();
+  }
+
+  /** Exports an editable Visio file. If Visio cannot hold something, nothing is written until the person has seen what and agreed. */
+  async exportVsdx(opts: { acceptLoss?: boolean; path?: string } = {}): Promise<void> {
+    const r = await this.host.exportVsdx(opts);
+    if (!r.ok) {
+      if (r.error.code === 'compatibility_loss') {
+        const d = r.error.details as { diagnostics?: DiagnosticItem[]; path?: string } | undefined;
+        const path = d?.path;
+        this.report = {
+          title: 'Export to Visio', summary: r.error.message, diagnostics: d?.diagnostics ?? [],
+          confirm: { label: 'Export anyway', run: () => { this.report = null; void this.exportVsdx({ acceptLoss: true, ...(path ? { path } : {}) }); } },
+        };
+        this.bump();
+        return;
+      }
+      this.say(r.error.message, 'error');
+      return;
+    }
+    if (r.value.cancelled) return;
+    const items = r.value.diagnostics ?? [];
+    this.say(`Exported ${r.value.path ?? ''} at revision ${r.value.revision}. ${r.value.summary ?? ''}`.trim(), r.value.lossy ? 'warning' : 'info');
+    if (items.length) this.report = { title: 'Exported to Visio', summary: r.value.summary ?? '', diagnostics: items };
+    this.bump();
+  }
+
+  closeReport(): void { this.report = null; this.bump(); }
 
   async save(saveAs = false): Promise<void> {
     const r = await this.host.saveJson(saveAs);

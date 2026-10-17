@@ -99,7 +99,10 @@ public sealed class AssetPreparer
     }
 
     /// <summary>Validates and, for SVG, sanitises bytes that are already in memory (used when opening a file). Does not store them.</summary>
-    public Result<(byte[] Bytes, IReadOnlyList<string> Notes)> Approve(byte[] bytes, string mime)
+    public Result<(byte[] Bytes, IReadOnlyList<string> Notes)> Approve(byte[] bytes, string mime) => ApproveBytes(bytes, mime);
+
+    /// <summary>The same checks without needing a preparer: used by importers that hold the bytes and keep them elsewhere.</summary>
+    public static Result<(byte[] Bytes, IReadOnlyList<string> Notes)> ApproveBytes(byte[] bytes, string mime)
     {
         if (!Mimes.Contains(mime)) return Result<(byte[], IReadOnlyList<string>)>.Fail("invalid_request", $"{mime} is not a supported image type");
         if (mime == "image/svg+xml")

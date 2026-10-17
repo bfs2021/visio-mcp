@@ -7,7 +7,7 @@ import { canonicalSerialize } from '../model/canonical';
 import { ok, type Result } from '../model/result';
 import type { AdapterCallbacks, CanvasAdapter, Tool, ViewportInfo } from './CanvasAdapter';
 import { edgeStyle, effectiveState, labelOf, registerCustomShapes, vertexStyle } from './cellMapping';
-import { installGestureHooks, setGestureSink } from './gestureHooks';
+import { installGestureHooks } from './gestureHooks';
 import { pageOf } from './intents';
 
 const MARGIN_PT = 40;
@@ -84,8 +84,8 @@ export class MaxGraphAdapter implements CanvasAdapter {
     const selectionHandler = g.getPlugin('SelectionHandler') as unknown as { guidesEnabled: boolean } | undefined;
     if (selectionHandler) selectionHandler.guidesEnabled = true; // alignment guides while moving
     this.installEditRedirects();
-    installGestureHooks(g);
-    setGestureSink(n => { if (!this.projecting) cb.onGesture(n); });
+    const uninstallGestures = installGestureHooks(g, n => { if (!this.projecting) cb.onGesture(n); });
+    this.cleanups.push(uninstallGestures);
 
     g.getSelectionModel().addListener(InternalEvent.CHANGE, () => { if (!this.projecting) cb.onSelection(this.getSelection(), { subSelect: this.toggleHeld }); });
     g.addMouseListener({
@@ -448,7 +448,6 @@ export class MaxGraphAdapter implements CanvasAdapter {
 
   dispose(): void {
     this.disposed = true;
-    setGestureSink(null);
     for (const c of this.cleanups) c();
     this.graph.destroy();
     this.world.remove();

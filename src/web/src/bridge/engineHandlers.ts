@@ -17,6 +17,8 @@ export interface EngineHandlerOptions {
   onSessionChanged?: (scope: Scope, revision: number) => void;
   /** Rasterises a committed snapshot. Only the page has a drawing surface; without it, render answers not_ready. */
   render?: (snapshot: Snapshot, projection: Projection | undefined, params: RenderParams) => Promise<Result<RenderResult>>;
+  /** Turns an approved asset (by hash) into a PNG, for formats that cannot hold the original (an SVG picture inside a Visio file). */
+  rasterise?: (sha256: string, maxPixels: number) => Promise<Result<{ base64: string; widthPx: number; heightPx: number }>>;
   /** Text measurement and picture sizes for layout inspection, supplied by the page. */
   layoutContext?: (snapshot: Snapshot) => Promise<Pick<LayoutContext, 'measureWidth' | 'assetSize'>>;
 }
@@ -77,6 +79,16 @@ export function createEngineHandler(engine: CommandEngine, opts: EngineHandlerOp
         if (!s.ok) return respond(s);
         const tags = Array.isArray(p.tags) ? p.tags.filter((t): t is string => typeof t === 'string') : undefined;
         return respond(ok({ revision: s.value.revision, assets: listAssets(s.value, typeof p.query === 'string' ? p.query : undefined, tags) }));
+      }
+      case 'doc.exportSnapshot': {
+        // The barrier read export and save use: committed state at one revision plus the derived routes at that same revision.
+        const snap = await engine.exportSnapshot(scope);
+        return respond(snap);
+      }
+      case 'assets.rasterise': {
+        if (!opts.rasterise) return respond(fail('not_ready', 'this editor has no drawing surface to rasterise with'));
+        if (typeof p.sha256 !== 'string' || !/^[0-9a-f]{64}$/.test(p.sha256)) return respond(fail('invalid_request', 'sha256 must be a 64 character hex string'));
+        return respond(await opts.rasterise(p.sha256, typeof p.maxPixels === 'number' ? Math.min(4096, Math.max(16, p.maxPixels)) : 1024));
       }
       case 'doc.render': {
         if (!opts.render) return respond(fail('not_ready', 'this editor has no drawing surface to render with', { retryable: false }));

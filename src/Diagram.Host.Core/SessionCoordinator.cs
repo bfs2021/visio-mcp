@@ -25,6 +25,18 @@ public interface IEditorChannel
     Task<Result<Unit>> MarkSavedAsync(Scope scope, int revision, string path, CancellationToken ct);
 }
 
+/// <summary>The barrier read that export uses: committed state at one revision with the routes derived at that same revision.</summary>
+public interface IExportSource
+{
+    Task<Result<ExportSnapshot>> ExportSnapshotAsync(Scope scope, CancellationToken ct);
+}
+
+/// <summary>Asks the editor's drawing surface to turn an approved image into a PNG, for formats that cannot hold it as it is.</summary>
+public interface IRasteriser
+{
+    Task<Result<byte[]>> RasteriseAsync(string sha256, CancellationToken ct);
+}
+
 /// <summary>
 /// JSON open and save. A file is a wrapper {format, formatVersion, document, blobs}: the canonical document plus each asset's bytes once, keyed by hash.
 /// Open validates everything before the editor sees it; save never marks newer state or another session clean.

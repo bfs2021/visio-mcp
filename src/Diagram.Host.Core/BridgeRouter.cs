@@ -29,7 +29,7 @@ public static class AppOrigin
 /// requests to responses with host-generated ids, and settles pending calls as unknown if the renderer dies.
 /// The editor (frontend engine) owns sessions, duplicate delivery and revisions; this router never replays or retries.
 /// </summary>
-public sealed class BridgeRouter : IEditorChannel
+public sealed class BridgeRouter : IEditorChannel, IExportSource, IRasteriser
 {
     readonly IFrontendTransport transport;
     readonly Func<RequestEnvelope, CancellationToken, Task<ResponseEnvelope>>? hostHandler;
@@ -166,7 +166,7 @@ public sealed class BridgeRouter : IEditorChannel
     static TimeSpan TimeoutFor(string method) => method switch
     {
         "doc.apply" or "doc.executeScript" or "doc.undo" or "doc.redo" or "doc.replace" => TimeSpan.FromSeconds(15),
-        "doc.render" => TimeSpan.FromSeconds(30),
+        "doc.render" or "doc.exportSnapshot" or "assets.rasterise" => TimeSpan.FromSeconds(30),
         _ => TimeSpan.FromSeconds(10),
     };
 
@@ -230,6 +230,26 @@ public sealed class BridgeRouter : IEditorChannel
         var p = new JsonObject { ["baseRevision"] = expected.BaseRevision, ["document"] = JsonSerializer.SerializeToNode(document, ContractJson.Options) };
         var s = new Scope { DocumentId = expected.DocumentId, SessionId = expected.SessionId };
         return Unpack<Snapshot>(await SendAsync(For("doc.replace", s, p), ct));
+    }
+
+    public async Task<Result<ExportSnapshot>> ExportSnapshotAsync(Scope scope, CancellationToken ct) =>
+        Unpack<ExportSnapshot>(await SendAsync(For("doc.exportSnapshot", scope, new JsonObject()), ct));
+
+    public async Task<Result<byte[]>> RasteriseAsync(string sha256, CancellationToken ct)
+    {
+        var scope = CurrentScope;
+        if (scope is null) return Result<byte[]>.Fail("not_ready", "the editor has not signalled ready", retryable: true);
+        var r = await SendAsync(For("assets.rasterise", scope, new JsonObject { ["sha256"] = sha256, ["maxPixels"] = 1024 }), ct);
+        if (r.Error is { } e) return Result<byte[]>.Fail(e);
+        try { return Result<byte[]>.Ok(Convert.FromBase64String(r.Result!.Value.GetProperty("base64").GetString()!)); }
+        catch (Exception ex) when (ex is FormatException or KeyNotFoundException or InvalidOperationException) { return Result<byte[]>.Fail("internal_error", "the editor returned an unreadable picture"); }
+    }
+
+    /// <summary>A rendered page (or the page as SVG) for MCP image export and previews: the editor draws it from a snapshot barrier.</summary>
+    public async Task<Result<JsonElement>> RenderAsync(Scope scope, JsonObject parameters, CancellationToken ct)
+    {
+        var r = await SendAsync(For("doc.render", scope, parameters), ct);
+        return r.Error is { } e ? Result<JsonElement>.Fail(e) : Result<JsonElement>.Ok(r.Result!.Value);
     }
 
     public async Task<Result<Unit>> MarkSavedAsync(Scope scope, int revision, string path, CancellationToken ct)

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import type { EditorModel } from './editor/EditorModel';
+import { CompatibilityDialog } from './components/CompatibilityDialog';
 import { Drawer } from './components/Drawer';
 import { Inspector } from './components/Inspector';
 import { PageCanvas } from './components/PageCanvas';
@@ -53,6 +54,7 @@ export function App({ model }: { model: EditorModel }) {
       <PageCanvas model={model} />
       <Inspector model={model} />
       <Drawer model={model} />
+      <CompatibilityDialog model={model} />
       <StatusBar model={model} />
     </div>
   );

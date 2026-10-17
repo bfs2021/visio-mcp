@@ -30,6 +30,9 @@ export function Toolbar({ model }: { model: EditorModel }) {
       { id: 'open', label: 'Open…', shortcut: 'Ctrl+O', run: () => void model.open() },
       { id: 'save', label: 'Save', shortcut: 'Ctrl+S', run: () => void model.save(false) },
       { id: 'save-as', label: 'Save as…', shortcut: 'Ctrl+Shift+S', run: () => void model.save(true) },
+      'sep',
+      { id: 'open-visio', label: 'Open Visio drawing…', run: () => void model.openVsdx() },
+      { id: 'export-visio', label: 'Export to Visio (.vsdx)…', run: () => void model.exportVsdx() },
     ] },
     { name: 'Edit', items: [
       { id: 'undo', label: 'Undo', shortcut: 'Ctrl+Z', run: () => void model.undo() },

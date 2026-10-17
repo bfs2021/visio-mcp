@@ -263,4 +263,50 @@ public class LiveControlTests
         Assert.Equal(2, Body(page).GetProperty("revision").GetInt32());
         Assert.Equal(800, Body(page).GetProperty("widthPx").GetInt32());
     }
+
+    [Fact]
+    public async Task ExportDocumentWritesIntoTheApprovedFolderAndRefusesAnywhereElse()
+    {
+        var pipe = NewPipe();
+        var root = Path.Combine(Path.GetTempPath(), "export-" + Guid.NewGuid().ToString("N"));
+        await using var h = await Harness.StartAsync(pipe: pipe, exportRoot: root);
+        await using var client = await Connect(pipe);
+        var id = await Summary(client);
+        var make = await client.CallToolAsync("apply_operations", Apply(id, Guid.NewGuid().ToString(), 0, Shape("a"), Shape("b", 100, 10),
+            new { op = "createConnector", alias = "c", from = new { elementId = "a", glue = "dynamic" }, to = new { elementId = "b", glue = "dynamic" } }), cancellationToken: Ct());
+        Assert.True(make.IsError != true, make.StructuredContent?.ToString());
+
+        Dictionary<string, object?> Export(string format, string? path = null) => new() { ["documentId"] = id.Doc, ["sessionId"] = id.Session, ["format"] = format, ["path"] = path };
+
+        var vsdx = await client.CallToolAsync("export_document", Export("vsdx", "drawing.vsdx"), cancellationToken: Ct());
+        Assert.True(vsdx.IsError != true, vsdx.StructuredContent?.ToString());
+        var file = Path.Combine(root, "drawing.vsdx");
+        Assert.Equal(Path.GetFullPath(file), Body(vsdx).GetProperty("path").GetString());
+        using (var zip = System.IO.Compression.ZipFile.OpenRead(file)) Assert.Contains(zip.Entries, e => e.FullName == "visio/pages/page1.xml");
+        Assert.Equal(1, Body(vsdx).GetProperty("revision").GetInt32());
+
+        foreach (var (format, magic) in new[] { ("png", new byte[] { 0x89, 0x50, 0x4E, 0x47 }), ("jpeg", new byte[] { 0xFF, 0xD8 }), ("svg", "<svg"u8.ToArray()) })
+        {
+            var r = await client.CallToolAsync("export_document", Export(format), cancellationToken: Ct());
+            Assert.True(r.IsError != true, r.StructuredContent?.ToString());
+            var bytes = await File.ReadAllBytesAsync(Body(r).GetProperty("path").GetString()!);
+            Assert.Equal(magic, bytes[..magic.Length]);
+            Assert.StartsWith(root, Body(r).GetProperty("path").GetString()!, StringComparison.OrdinalIgnoreCase);
+        }
+
+        // nothing outside the approved folders, wrong extension, or traversal
+        var outside = await client.CallToolAsync("export_document", Export("vsdx", Path.Combine(Path.GetTempPath(), "elsewhere.vsdx")), cancellationToken: Ct());
+        Assert.Equal("path_not_permitted", ErrorCode(outside));
+        Assert.False(File.Exists(Path.Combine(Path.GetTempPath(), "elsewhere.vsdx")));
+        var up = await client.CallToolAsync("export_document", Export("png", Path.Combine("..", "up.png")), cancellationToken: Ct());
+        Assert.Equal("path_not_permitted", ErrorCode(up));
+        var ext = await client.CallToolAsync("export_document", Export("vsdx", "drawing.exe"), cancellationToken: Ct());
+        Assert.Equal("invalid_request", ErrorCode(ext));
+        var fmt = await client.CallToolAsync("export_document", Export("pdf"), cancellationToken: Ct());
+        Assert.Equal("invalid_request", ErrorCode(fmt));
+
+        // exporting did not change the document
+        Assert.Equal(1, (await Summary(client)).Revision);
+        Directory.Delete(root, true);
+    }
 }

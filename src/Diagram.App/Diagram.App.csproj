@@ -12,6 +12,7 @@
     <PackageReference Include="Microsoft.Web.WebView2" Version="[1.0.4258.31]" />
     <ProjectReference Include="..\Diagram.Host.Core\Diagram.Host.Core.csproj" />
     <ProjectReference Include="..\Diagram.Ipc\Diagram.Ipc.csproj" />
+    <ProjectReference Include="..\Diagram.Visio\Diagram.Visio.csproj" />
   </ItemGroup>
   <!-- The packaged frontend: build it first (npm run build in src/web). It ships beside the executable under web/. -->
   <ItemGroup>

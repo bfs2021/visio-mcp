@@ -222,15 +222,17 @@ public sealed class DiagramTools(PipeClient app)
         return Finish(await Send("doc.changes", documentId, sessionId, Obj(("sinceRevision", sinceRevision)), Read, ct));
     }
 
-    [McpServerTool(Name = "export_document"), Description("Exports the document as vsdx, svg, png or jpeg. Not available yet: returns not_ready. " + Identity)]
+    [McpServerTool(Name = "export_document"), Description("Exports the document as vsdx (editable Visio), svg, png or jpeg. The file is written inside the open document's folder or the application's export folder; the result gives its path, and for vsdx lists anything Visio could not hold. " + Identity)]
     public async Task<CallToolResult> ExportDocument(
         [Description("The document id from get_document_summary.")] string documentId,
         [Description("The session id from get_document_summary.")] string sessionId,
         [Description("vsdx, svg, png or jpeg.")] string format,
-        [Description("Optional output path inside the application-approved workspace.")] string? path = null,
+        [Description("Optional file name or path inside the approved folders. Omitted: a name is made from the title and revision.")] string? path = null,
+        [Description("For svg, png and jpeg: the page to export (default: the only or first page).")] string? pageId = null,
         CancellationToken ct = default)
     {
         if (Check(("documentId", documentId), ("sessionId", sessionId)) is { } bad) return ToolErrors.Fail("invalid_request", bad);
-        return Finish(await Send("doc.export", documentId, sessionId, Obj(("format", format), ("path", path)), Export, ct));
+        if (pageId is not null && Check(("pageId", pageId)) is { } badPage) return ToolErrors.Fail("invalid_request", badPage);
+        return Finish(await Send("doc.export", documentId, sessionId, Obj(("format", format), ("path", path), ("pageId", pageId)), Export, ct));
     }
 }

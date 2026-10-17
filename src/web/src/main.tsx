@@ -14,6 +14,8 @@ function hostApi(host: HostServices | null): HostApi {
     pickImage: () => host.call('host.pickImage'),
     openJson: () => host.call('host.openJson'),
     saveJson: saveAs => host.call('host.saveJson', { saveAs }),
+    openVsdx: () => host.call('host.openVsdx'),
+    exportVsdx: opts => host.call('host.exportVsdx', opts),
   };
 }
 
@@ -23,7 +25,7 @@ const assetUrl = (snapshot: { document: { assets: Array<{ id: string; sha256: st
   return a ? `/assets/${a.sha256}` : '';
 };
 const renderer = createSnapshotRenderer({ assetUrl: assetUrl as never });
-const { engine, host, router } = startApp(window.chrome?.webview, null, { onSessionChanged: () => model?.sessionReplaced(), render: renderer.render, layoutContext: createBrowserLayoutContext(assetUrl as never) });
+const { engine, host, router } = startApp(window.chrome?.webview, null, { onSessionChanged: () => model?.sessionReplaced(), render: renderer.render, rasterise: renderer.rasterise, layoutContext: createBrowserLayoutContext(assetUrl as never) });
 model = new EditorModel(engine);
 model.host = hostApi(host);
 if (router) model.onGestureState = active => router.setGestureActive(active); // an outside mutation waits (briefly) while the user is mid-gesture

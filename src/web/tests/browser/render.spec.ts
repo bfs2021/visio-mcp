@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import type { RenderResult } from '../../src/render/SnapshotRenderer';
-import { armPicture, elements, openEditor, pngFixture, revision, sha256, snapshot } from './support';
+import { armPicture, drag, elements, openEditor, placeShape, pngFixture, revision, scale, sha256, snapshot } from './support';
 
 type Envelope = { result?: any; error?: { code: string; message: string; details?: any } };
 const call = (page: Page, method: string, params: Record<string, unknown>): Promise<Envelope> => page.evaluate(([m, p]) => (window as any).__editor.callTool(m, p), [method, params] as const);
@@ -176,4 +176,63 @@ test('layout inspection in the real editor measures real text and leaves the doc
   expect(res.result.revision).toBe(rev);
   expect(JSON.stringify(await elements(page))).toBe(before);
   expect(await revision(page)).toBe(rev);
+});
+
+test('svg output is a standalone vector file with pictures inlined', async ({ page }) => {
+  await openEditor(page);
+  const fx = pngFixture();
+  const sha = await armPicture(page, fx);
+  const assetId = `asset:${fx.name.replace(/\W+/g, '-')}~${sha}`;
+  await apply(page, [
+    { op: 'registerAsset', asset: { id: assetId, name: fx.name, mimeType: fx.mime, sha256: sha, tags: [], provenance: 'test' } },
+    { op: 'createImage', id: U(1), assetId, bounds: box(100, 100, 128, 128) },
+    rect(U(2), box(300, 100), RED, { alias: 'r' }),
+  ]);
+  const res = await call(page, 'doc.render', { scope: 'page', format: 'svg' });
+  expect(res.error, JSON.stringify(res.error)).toBeUndefined();
+  const r = res.result as RenderResult;
+  expect(r.mimeType).toBe('image/svg+xml');
+  const text = Buffer.from(r.base64, 'base64').toString('utf8');
+  expect(text.startsWith('<svg')).toBe(true);
+  expect(text).toContain('data:image/png;base64,'); // the picture travels inside the file
+  expect(text).not.toContain('/assets/'); // no reference to the application's own address
+  expect(text.toLowerCase()).toContain('#ff0000');
+  const parsed = await page.evaluate(t => { const d = new DOMParser().parseFromString(t, 'image/svg+xml'); return d.querySelector('parsererror') ? 'bad' : d.documentElement.tagName; }, text);
+  expect(parsed).toBe('svg');
+});
+
+test('the export snapshot barrier gives committed geometry and routes even in the middle of a drag', async ({ page }) => {
+  await openEditor(page);
+  const a = await placeShape(page, 'shape-rectangle', { x: 100, y: 100 }, 'a');
+  const b = await placeShape(page, 'shape-rectangle', { x: 400, y: 300 }, 'b');
+  await apply(page, [{ op: 'createConnector', id: U(3), from: { elementId: a.id, glue: 'dynamic' }, to: { elementId: b.id, glue: 'dynamic' }, route: 'orthogonal' }]);
+  const before = (await call(page, 'doc.exportSnapshot', {})).result;
+  expect(before.projection.connectors[U(3)].routePoints.length).toBeGreaterThan(1);
+  const centre = await page.evaluate(id => (window as any).__editor.centre(id), a.id);
+  const c = { x: centre.x, y: centre.y };
+  await page.mouse.click(c.x, c.y); // select it first, as a person would
+  const k = await scale(page);
+  await drag(page, c, { x: c.x + 80 * k, y: c.y + 80 * k }, { release: false }); // mid-drag, nothing committed
+  expect(await page.evaluate(() => (window as any).__editor.gestureActive())).toBe(true);
+  const during = (await call(page, 'doc.exportSnapshot', {})).result;
+  expect(during.revision).toBe(before.revision);
+  expect(JSON.stringify(during.document)).toBe(JSON.stringify(before.document)); // committed geometry, not the preview
+  expect(JSON.stringify(during.projection.connectors)).toBe(JSON.stringify(before.projection.connectors));
+  expect(during.projection.revision).toBe(during.revision); // the sidecar is the same revision as the document
+  await page.mouse.up();
+});
+
+test('an approved picture can be rasterised for formats that cannot hold the original', async ({ page }) => {
+  await openEditor(page);
+  const fx = pngFixture();
+  const sha = await armPicture(page, fx);
+  const ok = await call(page, 'assets.rasterise', { sha256: sha, maxPixels: 256 });
+  expect(ok.error, JSON.stringify(ok.error)).toBeUndefined();
+  expect(ok.result.widthPx).toBeGreaterThan(0);
+  const head = Buffer.from(ok.result.base64, 'base64').subarray(0, 4);
+  expect([...head]).toEqual([0x89, 0x50, 0x4e, 0x47]);
+  await page.unroute(`**/assets/${sha}`);
+  await page.route(`**/assets/${sha}`, route => route.fulfill({ status: 404, body: '' }));
+  expect((await call(page, 'assets.rasterise', { sha256: sha })).error?.code).toBe('not_found');
+  expect((await call(page, 'assets.rasterise', { sha256: 'nope' })).error?.code).toBe('invalid_request');
 });
