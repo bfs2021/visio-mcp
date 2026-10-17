@@ -1,0 +1,372 @@
+import type {
+  ChangeSet, CommittedEvent, DiagramDocument, ExportSnapshot, MutationRequest, Operation, Projection, ResolvedDiff, ScriptRequest,
+  Scope, Snapshot, TransactionRecord, TransactionResult, TransactionSource, TransactionSummary, UndoRequest,
+} from '../contracts/generated';
+import { canonicalSerialize } from '../model/canonical';
+import { fail, ok, type Result } from '../model/result';
+import { sha256Hex } from '../model/sha256';
+import { DocumentStore } from '../model/store';
+import { validateDocument, validateMutationRequest, validateScriptRequest, validateUndoRequest } from '../model/validate';
+import { applyDiff, type DiffBody } from './diff';
+import { History } from './history';
+import { planPatch } from './planPatch';
+
+export type Projector = (snapshot: Snapshot, diff: ResolvedDiff) => Result<void>;
+export type SnapshotProjector = (snapshot: Snapshot) => Result<Projection>;
+export type ScriptCompiler = (
+  script: string,
+  snapshot: Snapshot,
+  context: { pageId?: string; preparedAssetRefs?: ScriptRequest['preparedAssetRefs'] },
+) => Result<{ operations: Operation[]; sourceSpans?: unknown }>;
+
+export interface EngineOptions {
+  document: DiagramDocument;
+  /** Element and (for tests) transaction ids. Default: crypto.randomUUID. */
+  idFactory?: () => string;
+  /** The engine, not callers, creates session ids. Default: crypto.randomUUID. */
+  sessionIdFactory?: () => string;
+  retention?: { results?: number; resultBytes?: number; history?: number };
+  now?: () => number;
+}
+
+interface CacheEntry { hash: string; result: Result<TransactionResult>; bytes: number }
+type Method = 'apply' | 'script' | 'undo' | 'redo';
+
+export interface EngineStatus {
+  recoveryDegraded: boolean;
+  checkpointRequested: boolean;
+  projectionHealthy: boolean;
+  savedRevision: number | null;
+  savedPath: string | null;
+  dirty: boolean;
+}
+
+/**
+ * The only writer of committed state. Every GUI edit, script and MCP call is queued here and goes through the same
+ * sequence: scope, then duplicate-transaction cache, then base revision, then planning and one synchronous commit.
+ */
+export class CommandEngine {
+  readonly store: DocumentStore;
+  private readonly newId: () => string;
+  private readonly newSessionId: () => string;
+  private history: History;
+  private cache = new Map<string, CacheEntry>();
+  private cacheBytes = 0;
+  private readonly maxResults: number;
+  private readonly maxResultBytes: number;
+  private readonly maxHistory: number;
+  private tail: Promise<unknown> = Promise.resolve();
+  private projector: Projector | null = null;
+  private snapshotProjector: SnapshotProjector | null = null;
+  private listeners = new Set<(e: CommittedEvent) => void>();
+  private sequence = 0;
+  private recoveryDegraded = false;
+  private checkpointRequested = false;
+  private projectionHealthy = true;
+  private savedRevision: number | null = null;
+  private savedPath: string | null = null;
+
+  constructor(opts: EngineOptions) {
+    this.newId = opts.idFactory ?? (() => crypto.randomUUID());
+    this.newSessionId = opts.sessionIdFactory ?? (() => crypto.randomUUID());
+    this.maxResults = opts.retention?.results ?? 256;
+    this.maxResultBytes = opts.retention?.resultBytes ?? 16 * 1024 * 1024;
+    this.maxHistory = opts.retention?.history ?? 1000;
+    this.store = new DocumentStore(opts.document, this.newSessionId());
+    this.history = new History(this.store.revision, this.maxHistory);
+  }
+
+  get documentId(): string { return this.store.documentId; }
+  get sessionId(): string { return this.store.sessionId; }
+  get revision(): number { return this.store.revision; }
+  scope(): Scope { return { documentId: this.documentId, sessionId: this.sessionId }; }
+
+  status(): EngineStatus {
+    return {
+      recoveryDegraded: this.recoveryDegraded, checkpointRequested: this.checkpointRequested, projectionHealthy: this.projectionHealthy,
+      savedRevision: this.savedRevision, savedPath: this.savedPath, dirty: this.savedRevision !== this.revision,
+    };
+  }
+
+  setProjector(project: Projector): void { this.projector = project; }
+  setSnapshotProjector(project: SnapshotProjector): void { this.snapshotProjector = project; }
+
+  onCommitted(listener: (event: CommittedEvent) => void): () => void {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+
+  // ------------------------------------------------------------------ queue
+  private enqueue<T>(job: () => T | Promise<T>): Promise<T> {
+    const run = this.tail.then(job, job);
+    this.tail = run.catch(() => undefined);
+    return run;
+  }
+
+  private checkScope(scope: { documentId?: string; sessionId?: string }): Result<void> {
+    if (!scope.documentId || !scope.sessionId) return fail('invalid_request', 'documentId and sessionId are required');
+    if (scope.documentId !== this.documentId) return fail('document_mismatch', 'the request is for a different document', { details: { actual: this.documentId } });
+    if (scope.sessionId !== this.sessionId) return fail('session_mismatch', 'the session is not the current one', { details: { actual: this.sessionId } });
+    return ok(undefined);
+  }
+
+  // ------------------------------------------------------------------ mutations
+  execute(req: MutationRequest, source: TransactionSource | 'gui' | 'script' | 'mcp'): Promise<Result<TransactionResult>> {
+    const v = validateMutationRequest(req);
+    if (!v.ok) return Promise.resolve(v);
+    const hash = this.hashOf('apply', req, { operations: req.operations });
+    return this.enqueue(() => this.runMutation('apply', req, source, hash, () => ok(req.operations)));
+  }
+
+  executeScript(req: ScriptRequest, compile: ScriptCompiler): Promise<Result<TransactionResult>> {
+    const v = validateScriptRequest(req);
+    if (!v.ok) return Promise.resolve(v);
+    // Source and prepared refs are the caller's input; compiled UUIDs are not, so they stay out of the hash.
+    const hash = this.hashOf('script', req, { script: req.script, preparedAssetRefs: req.preparedAssetRefs ?? null });
+    return this.enqueue(() => this.runMutation('script', req, 'script', hash, snapshot => {
+      const ctx: Parameters<ScriptCompiler>[2] = {};
+      if (req.pageId) ctx.pageId = req.pageId;
+      if (req.preparedAssetRefs) ctx.preparedAssetRefs = req.preparedAssetRefs;
+      const compiled = compile(req.script, snapshot, ctx);
+      return compiled.ok ? ok(compiled.value.operations) : compiled;
+    }));
+  }
+
+  undo(req: UndoRequest): Promise<Result<TransactionResult>> { return this.replay('undo', req); }
+  redo(req: UndoRequest): Promise<Result<TransactionResult>> { return this.replay('redo', req); }
+
+  private hashOf(method: Method, req: { documentId: string; sessionId: string; pageId?: string; baseRevision: number }, params: unknown): string {
+    return sha256Hex(canonicalSerialize({
+      method, documentId: req.documentId, sessionId: req.sessionId, pageId: req.pageId ?? null, baseRevision: req.baseRevision, params,
+    }));
+  }
+
+  /** Steps 2 and 3 of the lifecycle, shared by every mutation: scope, then cache, then revision. Order is mandatory. */
+  private admit(req: { documentId: string; sessionId: string; transactionId: string; baseRevision: number }, hash: string): Result<TransactionResult> | null {
+    const scope = this.checkScope(req);
+    if (!scope.ok) return scope;
+    const cached = this.cache.get(req.transactionId);
+    if (cached) {
+      if (cached.hash === hash) return cached.result;
+      return fail('transaction_id_conflict', 'this transaction id was already used for a different request', { details: { transactionId: req.transactionId } });
+    }
+    if (req.baseRevision !== this.revision) {
+      const changes = this.history.since(req.baseRevision);
+      return fail('revision_conflict', `the document is at revision ${this.revision}, not ${req.baseRevision}`, {
+        retryable: false,
+        details: { expected: req.baseRevision, actual: this.revision, ...(changes ? { changesSinceExpected: changes } : { historyUnavailable: true }) },
+      });
+    }
+    return null;
+  }
+
+  private async runMutation(
+    method: Method,
+    req: MutationRequest | ScriptRequest,
+    source: TransactionSource | 'gui' | 'script' | 'mcp',
+    hash: string,
+    produce: (snapshot: Snapshot) => Result<Operation[]>,
+  ): Promise<Result<TransactionResult>> {
+    const early = this.admit(req, hash);
+    if (early) return early;
+    const before = this.store.snapshot();
+    const ops = produce(before);
+    if (!ops.ok) return ops;
+    const planned = planPatch(before.document, ops.value, { newId: this.newId, ...(req.pageId ? { pageId: req.pageId } : {}) });
+    if (!planned.ok) return planned;
+    const plan = planned.value;
+    const previousRevision = before.revision;
+
+    if (plan.noChange) {
+      const result = this.resultOf(req.transactionId, previousRevision, previousRevision, plan, 'applied');
+      return this.remember(req.transactionId, hash, ok(result));
+    }
+
+    const result = this.commit(plan.forward, plan.inverse, {
+      transactionId: req.transactionId, source: source as TransactionSource, previousRevision, description: plan.description,
+      plan, kind: 'edit',
+    });
+    return this.remember(req.transactionId, hash, result);
+  }
+
+  private resultOf(transactionId: string, previousRevision: number, revision: number, plan: ReturnType<typeof emptyPlan>, projectionStatus: 'applied' | 'failed'): TransactionResult {
+    return {
+      transactionId, previousRevision, revision, noChange: previousRevision === revision,
+      created: plan.created, changed: plan.changed, deleted: plan.deleted, changedPageIds: plan.changedPageIds,
+      changedLayerIds: plan.changedLayerIds, changedAssetIds: plan.changedAssetIds, visuallyAffectedIds: plan.visuallyAffectedIds,
+      warnings: [], projectionStatus,
+    };
+  }
+
+  /** The single commit point: apply, record, notify. Runs synchronously inside the queue. */
+  private commit(
+    forwardBody: DiffBody,
+    inverseBody: DiffBody,
+    meta: { transactionId: string; source: TransactionSource; previousRevision: number; description: string; plan: ReturnType<typeof emptyPlan>; kind: 'edit' | 'undo' | 'redo'; replayOf?: TransactionRecord },
+  ): Result<TransactionResult> {
+    const revision = meta.previousRevision + 1;
+    const forward: ResolvedDiff = { ...forwardBody, transactionId: meta.transactionId, source: meta.source, previousRevision: meta.previousRevision, revision };
+    const inverse: ResolvedDiff = { ...inverseBody, transactionId: meta.transactionId, source: meta.source, previousRevision: revision, revision: meta.previousRevision };
+
+    this.store.commit(applyDiff(this.store.snapshot().document, forward, revision));
+    const summary: TransactionSummary = {
+      transactionId: meta.transactionId, source: meta.source, previousRevision: meta.previousRevision, revision, description: meta.description,
+      created: meta.plan.created, changed: meta.plan.changed, deleted: meta.plan.deleted, changedPageIds: meta.plan.changedPageIds,
+      changedLayerIds: meta.plan.changedLayerIds, changedAssetIds: meta.plan.changedAssetIds,
+    };
+    const record: TransactionRecord = { summary, forward, inverse };
+    if (meta.kind === 'edit') this.history.pushEdit(record);
+    else this.history.pushReplay(record);
+    this.sequence++;
+
+    let projectionStatus: 'applied' | 'failed' = 'applied';
+    if (this.projector) {
+      let projected: Result<void>;
+      try { projected = this.projector(this.store.snapshot(), forward); } catch (e) { projected = fail('projection_failed', String(e)); }
+      if (!projected.ok) { projectionStatus = 'failed'; this.projectionHealthy = false; } else this.projectionHealthy = true;
+    }
+
+    const event: CommittedEvent = { sequence: this.sequence, documentId: this.documentId, sessionId: this.sessionId, revision, resolvedDiff: forward };
+    for (const l of this.listeners) {
+      try { l(event); } catch { this.recoveryDegraded = true; this.checkpointRequested = true; } // a failed durability listener cannot undo a commit
+    }
+    return ok(this.resultOf(meta.transactionId, meta.previousRevision, revision, meta.plan, projectionStatus));
+  }
+
+  private remember(transactionId: string, hash: string, result: Result<TransactionResult>): Result<TransactionResult> {
+    const bytes = JSON.stringify(result).length;
+    this.cache.set(transactionId, { hash, result, bytes });
+    this.cacheBytes += bytes;
+    // Bounded by count and total bytes; byte pressure may evict earlier entries.
+    for (const [key, entry] of this.cache) {
+      if (this.cache.size <= this.maxResults && this.cacheBytes <= this.maxResultBytes) break;
+      if (key === transactionId) continue;
+      this.cache.delete(key);
+      this.cacheBytes -= entry.bytes;
+    }
+    return result;
+  }
+
+  // ------------------------------------------------------------------ undo / redo
+  private replay(kind: 'undo' | 'redo', req: UndoRequest): Promise<Result<TransactionResult>> {
+    const v = validateUndoRequest(req);
+    if (!v.ok) return Promise.resolve(v);
+    const hash = this.hashOf(kind, req, {});
+    return this.enqueue((): Result<TransactionResult> => {
+      const early = this.admit(req, hash);
+      if (early) return early;
+      const rec = kind === 'undo' ? this.history.peekUndo() : this.history.peekRedo();
+      if (!rec) {
+        const evicted = kind === 'undo' && this.history.hasEvictedUndo;
+        return fail('history_unavailable', evicted ? 'older history was discarded' : `nothing to ${kind}`, {
+          details: { reason: evicted ? 'evicted' : 'empty', earliestRetainedRevision: this.history.earliestRetainedRevision },
+        });
+      }
+      const previousRevision = this.revision;
+      const body = kind === 'undo' ? rec.inverse : rec.forward;
+      const opposite = kind === 'undo' ? rec.forward : rec.inverse;
+      const plan = describeDiff(this.store.snapshot().document, body);
+      const result = this.commit(body, opposite, {
+        transactionId: req.transactionId, source: kind, previousRevision, description: `${kind}: ${rec.summary.description}`, plan, kind,
+      });
+      if (result.ok) { if (kind === 'undo') this.history.moveUndoToRedo(); else this.history.moveRedoToUndo(); }
+      return this.remember(req.transactionId, hash, result);
+    });
+  }
+
+  // ------------------------------------------------------------------ reads and lifecycle barriers
+  snapshot(scope: Scope): Promise<Result<Snapshot>> {
+    return this.enqueue(() => {
+      const s = this.checkScope(scope);
+      return s.ok ? ok(this.store.snapshot()) : s;
+    });
+  }
+
+  exportSnapshot(scope: Scope): Promise<Result<ExportSnapshot>> {
+    return this.enqueue(() => {
+      const s = this.checkScope(scope);
+      if (!s.ok) return s;
+      if (!this.snapshotProjector) return fail('projection_failed', 'no snapshot projector is registered');
+      const snapshot = this.store.snapshot();
+      let projection: Result<Projection>;
+      try { projection = this.snapshotProjector(snapshot); } catch (e) { projection = fail('projection_failed', String(e)); }
+      if (!projection.ok) return projection;
+      const p = projection.value;
+      if (p.revision !== snapshot.revision || p.sessionId !== snapshot.sessionId || p.documentId !== snapshot.documentId) {
+        return fail('projection_failed', 'the projection does not belong to this snapshot');
+      }
+      return ok({ ...snapshot, projection: p });
+    });
+  }
+
+  getChanges(scope: Scope, sinceRevision: number): Promise<Result<ChangeSet>> {
+    return this.enqueue(() => {
+      const s = this.checkScope(scope);
+      if (!s.ok) return s;
+      const transactions = this.history.since(sinceRevision);
+      if (!transactions) {
+        return fail('history_unavailable', 'that revision is older than the retained history', {
+          details: { earliestRetainedRevision: this.history.earliestRetainedRevision, revision: this.revision, guidance: 'read a full summary instead' },
+        });
+      }
+      return ok({ sinceRevision, earliestRetainedRevision: this.history.earliestRetainedRevision, revision: this.revision, transactions });
+    });
+  }
+
+  /**
+   * Replaces the open document (open file, recovery). The import must name the revision it started from, so an import
+   * that finishes after the user kept editing cannot discard those edits. Starts a new session and clears history and cache.
+   */
+  replaceDocument(doc: DiagramDocument, expected: Scope & { baseRevision: number }): Promise<Result<Snapshot>> {
+    return this.enqueue(() => {
+      const s = this.checkScope(expected);
+      if (!s.ok) return s;
+      if (expected.baseRevision !== this.revision) {
+        return fail('revision_conflict', `the document is at revision ${this.revision}, not ${expected.baseRevision}`, { details: { expected: expected.baseRevision, actual: this.revision } });
+      }
+      const valid = validateDocument(doc);
+      if (!valid.ok) return valid;
+      this.store.replace(valid.value, this.newSessionId());
+      this.history = new History(this.store.revision, this.maxHistory);
+      this.cache.clear();
+      this.cacheBytes = 0;
+      this.sequence = 0;
+      this.savedRevision = null;
+      this.savedPath = null;
+      this.recoveryDegraded = false;
+      this.checkpointRequested = false;
+      this.projectionHealthy = true;
+      return ok(this.store.snapshot());
+    });
+  }
+
+  /** Records that `revision` of this session reached disk. A save of an older session or an older revision never cleans newer state. */
+  markSaved(scope: Scope, revision: number, path: string): Promise<Result<void>> {
+    return this.enqueue(() => {
+      const s = this.checkScope(scope);
+      if (!s.ok) return s;
+      if (revision > this.revision || revision < 0) return fail('invalid_request', `revision ${revision} does not exist in this session`);
+      if (this.savedRevision === null || revision >= this.savedRevision) { this.savedRevision = revision; this.savedPath = path; }
+      return ok(undefined);
+    });
+  }
+}
+
+const emptyPlan = () => ({
+  created: [] as string[], changed: [] as string[], deleted: [] as string[], changedPageIds: [] as string[],
+  changedLayerIds: [] as string[], changedAssetIds: [] as string[], visuallyAffectedIds: [] as string[],
+});
+
+/** Summarises a replayed diff (undo/redo) against the state it is applied to. */
+function describeDiff(doc: DiagramDocument, diff: DiffBody): ReturnType<typeof emptyPlan> {
+  const existing = new Set<string>();
+  for (const p of doc.pages) for (const e of p.elements) existing.add(e.id);
+  const plan = emptyPlan();
+  for (const u of diff.upserts.elements) (existing.has(u.element.id) ? plan.changed : plan.created).push(u.element.id);
+  plan.deleted.push(...diff.deletes.elementIds.filter(id => existing.has(id)));
+  plan.changedAssetIds.push(...diff.upserts.assets.map(a => a.id), ...diff.deletes.assetIds);
+  plan.changedPageIds.push(...diff.upserts.pages.map(p => p.page.id), ...diff.deletes.pageIds);
+  plan.changedLayerIds.push(...diff.upserts.layers.map(l => l.layer.id), ...diff.deletes.layerIds);
+  plan.visuallyAffectedIds.push(...plan.created, ...plan.changed);
+  return plan;
+}
