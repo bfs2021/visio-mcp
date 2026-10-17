@@ -8,8 +8,8 @@ production code: no `src/` project or production solution may reference these fo
 |---|---|---|
 | `contracts/` | I00 | Minimal probe request envelope schema. Prototype input to I10's production schema, not a competing model. |
 | `contract-tests/` | I00 | Vitest + Ajv checks of the envelope schema. |
-| `vsdx/`, `vsdx.tests/` | I01 | Planned: editable native-file round trip. |
-| `canvas/` | I02 | Planned: maxGraph interaction and PNG preview. |
+| `vsdx/`, `vsdx.tests/` | I01 | Editable native-file round trip (done; G1 PASS with backend caveat). |
+| `canvas/` | I02 | maxGraph interaction and PNG preview (done; G2 PASS). Run with `npm --prefix spikes/canvas run test:browser`. |
 | `ipc/`, `mcp/`, `ipc.tests/` | I03 | Planned: stdio MCP → framed pipe → test host. |
 | `webview/`, `webview.tests/` | I04 | Planned: WebView2 → live canvas operation. |
 

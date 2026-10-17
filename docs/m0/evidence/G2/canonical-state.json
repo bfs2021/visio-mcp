@@ -1,0 +1,61 @@
+{
+  "revision": 3,
+  "rect": {
+    "id": "rect",
+    "x": 100,
+    "y": 140,
+    "w": 150,
+    "h": 90,
+    "angle": 90,
+    "text": "Probe"
+  },
+  "ellipse": {
+    "id": "ellipse",
+    "x": 360,
+    "y": 90,
+    "w": 110,
+    "h": 70,
+    "angle": 33,
+    "text": ""
+  },
+  "picture": {
+    "id": "picture",
+    "x": 60,
+    "y": 260,
+    "w": 96,
+    "h": 96,
+    "angle": 0,
+    "text": "",
+    "mime": "image/png",
+    "bytes": "<205 bytes>"
+  },
+  "vector": {
+    "id": "vector",
+    "x": 260,
+    "y": 260,
+    "w": 96,
+    "h": 96,
+    "angle": 0,
+    "text": "",
+    "mime": "image/svg+xml",
+    "bytes": "<197 bytes>"
+  },
+  "connector": {
+    "id": "connector",
+    "from": {
+      "elementId": "rect",
+      "port": {
+        "x": 1,
+        "y": 0.5
+      }
+    },
+    "to": {
+      "elementId": "ellipse",
+      "port": {
+        "x": 0,
+        "y": 0.5
+      }
+    },
+    "bends": []
+  }
+}
