@@ -5,6 +5,8 @@ import { App } from './App';
 import { startApp } from './bridge/bootstrap';
 import { EditorModel, noHost, type HostApi } from './editor/EditorModel';
 import type { HostServices } from './bridge/hostServices';
+import { createSnapshotRenderer } from './render/SnapshotRenderer';
+import { createBrowserLayoutContext } from './layout/browserContext';
 
 function hostApi(host: HostServices | null): HostApi {
   if (!host) return noHost;
@@ -16,7 +18,12 @@ function hostApi(host: HostServices | null): HostApi {
 }
 
 let model: EditorModel | null = null;
-const { engine, host, router } = startApp(window.chrome?.webview, null, { onSessionChanged: () => model?.sessionReplaced() });
+const assetUrl = (snapshot: { document: { assets: Array<{ id: string; sha256: string }> } }, id: string) => {
+  const a = snapshot.document.assets.find(x => x.id === id);
+  return a ? `/assets/${a.sha256}` : '';
+};
+const renderer = createSnapshotRenderer({ assetUrl: assetUrl as never });
+const { engine, host, router } = startApp(window.chrome?.webview, null, { onSessionChanged: () => model?.sessionReplaced(), render: renderer.render, layoutContext: createBrowserLayoutContext(assetUrl as never) });
 model = new EditorModel(engine);
 model.host = hostApi(host);
 if (router) model.onGestureState = active => router.setGestureActive(active); // an outside mutation waits (briefly) while the user is mid-gesture
@@ -40,6 +47,7 @@ if (import.meta.env.VITE_TEST_API === '1') {
       if (text !== null) ed.textarea.innerText = text;
       g.stopEditing(text === null);
     },
+    callTool: (method: string, params: Record<string, unknown>) => router!.dispatch({ protocolVersion: 1, kind: 'request', requestId: crypto.randomUUID(), method, ...m.engine.scope(), params } as never),
     setHost: (h: Partial<HostApi>) => { m.host = { ...noHost, ...h }; },
     exportSnapshot: async () => { const r = await m.engine.exportSnapshot(m.engine.scope()); return r.ok ? JSON.parse(JSON.stringify(r.value)) : { error: r.error }; },
     changesSince: async (revision: number) => { const r = await m.engine.getChanges(m.engine.scope(), revision); return r.ok ? JSON.parse(JSON.stringify(r.value)) : { error: r.error }; },

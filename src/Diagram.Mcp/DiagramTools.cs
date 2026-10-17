@@ -36,6 +36,25 @@ public sealed class DiagramTools(PipeClient app)
     static CallToolResult Finish(ResponseEnvelope r) =>
         r.Error is { } e ? ToolErrors.Fail(e) : ToolErrors.Ok(JsonNode.Parse(r.Result!.Value.GetRawText())!);
 
+    /// <summary>
+    /// A rendered picture goes back as a real MCP image block plus a JSON description of it (what it shows, at which revision, how big).
+    /// The base64 is never repeated inside the text.
+    /// </summary>
+    static CallToolResult FinishImage(ResponseEnvelope r)
+    {
+        if (r.Error is { } e) return ToolErrors.Fail(e);
+        var body = JsonNode.Parse(r.Result!.Value.GetRawText())!.AsObject();
+        var b64 = body["base64"]?.GetValue<string>();
+        var mime = body["mimeType"]?.GetValue<string>();
+        if (b64 is null || mime is null) return ToolErrors.Fail("internal_error", "the application returned a render without image data");
+        body.Remove("base64");
+        return new CallToolResult
+        {
+            Content = [ImageContentBlock.FromBytes(Convert.FromBase64String(b64), mime), new TextContentBlock { Text = body.ToJsonString() }],
+            StructuredContent = JsonSerializer.SerializeToElement(body),
+        };
+    }
+
     static string? Check(params (string Name, string? Value)[] ids)
     {
         foreach (var (name, value) in ids) if (!Guid.TryParse(value, out _)) return $"{name} must be a UUID";
@@ -137,7 +156,7 @@ public sealed class DiagramTools(PipeClient app)
         return ToolErrors.Ok(body);
     }
 
-    [McpServerTool(Name = "render_page"), Description("Renders a page to a PNG or JPEG image. Not available yet: returns not_ready. " + Identity)]
+    [McpServerTool(Name = "render_page"), Description("Renders a page to a PNG or JPEG image (an image block plus JSON metadata with the revision it shows). debug mode overlays element ids and bounds. " + Identity)]
     public async Task<CallToolResult> RenderPage(
         [Description("The document id from get_document_summary.")] string documentId,
         [Description("The session id from get_document_summary.")] string sessionId,
@@ -149,10 +168,10 @@ public sealed class DiagramTools(PipeClient app)
         CancellationToken ct = default)
     {
         if (Check(("documentId", documentId), ("sessionId", sessionId), ("pageId", pageId)) is { } bad) return ToolErrors.Fail("invalid_request", bad);
-        return Finish(await Send("doc.render", documentId, sessionId, Obj(("scope", "page"), ("pageId", pageId), ("format", format), ("maxWidth", maxWidth), ("maxHeight", maxHeight), ("mode", mode)), Render, ct));
+        return FinishImage(await Send("doc.render", documentId, sessionId, Obj(("scope", "page"), ("pageId", pageId), ("format", format), ("maxWidth", maxWidth), ("maxHeight", maxHeight), ("mode", mode)), Render, ct));
     }
 
-    [McpServerTool(Name = "render_region"), Description("Renders part of a page, given as bounds or element ids, with padding. Not available yet: returns not_ready. " + Identity)]
+    [McpServerTool(Name = "render_region"), Description("Renders part of a page, given as bounds or element ids, with padding: a cheap way to check one correction. " + Identity)]
     public async Task<CallToolResult> RenderRegion(
         [Description("The document id from get_document_summary.")] string documentId,
         [Description("The session id from get_document_summary.")] string sessionId,
@@ -165,11 +184,11 @@ public sealed class DiagramTools(PipeClient app)
         CancellationToken ct = default)
     {
         if (Check(("documentId", documentId), ("sessionId", sessionId), ("pageId", pageId)) is { } bad) return ToolErrors.Fail("invalid_request", bad);
-        return Finish(await Send("doc.render", documentId, sessionId, Obj(("scope", "region"), ("pageId", pageId), ("bounds", bounds is { } b ? JsonNode.Parse(b.GetRawText()) : null),
+        return FinishImage(await Send("doc.render", documentId, sessionId, Obj(("scope", "region"), ("pageId", pageId), ("bounds", bounds is { } b ? JsonNode.Parse(b.GetRawText()) : null),
             ("elementIds", elementIds is null ? null : new JsonArray(elementIds.Select(i => (JsonNode)JsonValue.Create(i)!).ToArray())), ("paddingPt", paddingPt), ("format", format), ("mode", mode)), Render, ct));
     }
 
-    [McpServerTool(Name = "inspect_layout"), Description("Machine-readable layout warnings (outside the page, overlaps, clipped text, dangling connectors). Not available yet: returns not_ready. " + Identity)]
+    [McpServerTool(Name = "inspect_layout"), Description("Machine-readable layout warnings (outside the page, overlaps, clipped text, unattached connectors, connectors through shapes, stretched pictures, low contrast). Each issue has element ids, page and bounds. " + Identity)]
     public async Task<CallToolResult> InspectLayout(
         [Description("The document id from get_document_summary.")] string documentId,
         [Description("The session id from get_document_summary.")] string sessionId,

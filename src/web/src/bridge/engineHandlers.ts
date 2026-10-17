@@ -5,6 +5,9 @@ import { validateDocument, validateMutationRequest, validateScriptRequest, valid
 import { drawScriptCompiler } from '../script/compiler';
 import type { Operation } from '../contracts/generated';
 import { listAssets, readObjects, readSummary } from './readTools';
+import { inspectLayout, type LayoutContext } from '../layout/inspectLayout';
+import type { Projection, Snapshot } from '../contracts/generated';
+import type { RenderParams, RenderResult } from '../render/SnapshotRenderer';
 
 const toResponse = <T>(requestId: string, r: Result<T>): ResponseEnvelope =>
   r.ok ? { protocolVersion: 1, kind: 'response', requestId, result: r.value } : { protocolVersion: 1, kind: 'response', requestId, error: r.error as AppError };
@@ -12,7 +15,14 @@ const toResponse = <T>(requestId: string, r: Result<T>): ResponseEnvelope =>
 export interface EngineHandlerOptions {
   /** Called after the engine starts a new session (document replaced), so the host can learn the new scope. */
   onSessionChanged?: (scope: Scope, revision: number) => void;
+  /** Rasterises a committed snapshot. Only the page has a drawing surface; without it, render answers not_ready. */
+  render?: (snapshot: Snapshot, projection: Projection | undefined, params: RenderParams) => Promise<Result<RenderResult>>;
+  /** Text measurement and picture sizes for layout inspection, supplied by the page. */
+  layoutContext?: (snapshot: Snapshot) => Promise<Pick<LayoutContext, 'measureWidth' | 'assetSize'>>;
 }
+
+/** Used when the page cannot measure text: a rough average advance, and the report says its sizes are estimates either way. */
+const approximateWidth: LayoutContext['measureWidth'] = (text, font) => text.length * font.sizePt * 0.5;
 
 /**
  * Routes host-initiated doc.* requests to the engine. Scope arrives at the envelope top level and is merged into the
@@ -68,9 +78,23 @@ export function createEngineHandler(engine: CommandEngine, opts: EngineHandlerOp
         const tags = Array.isArray(p.tags) ? p.tags.filter((t): t is string => typeof t === 'string') : undefined;
         return respond(ok({ revision: s.value.revision, assets: listAssets(s.value, typeof p.query === 'string' ? p.query : undefined, tags) }));
       }
-      case 'doc.render':
-      case 'doc.inspectLayout':
-        return respond(fail('not_ready', 'rendering and layout inspection arrive with the render tools (I31)', { retryable: false }));
+      case 'doc.render': {
+        if (!opts.render) return respond(fail('not_ready', 'this editor has no drawing surface to render with', { retryable: false }));
+        if (p.scope !== 'page' && p.scope !== 'region') return respond(fail('invalid_request', 'scope must be page or region'));
+        // A barrier read: the picture shows the revision committed at this point, however far the live document moves while it is drawn.
+        const snap = await engine.exportSnapshot(scope);
+        if (!snap.ok) return respond(snap);
+        return respond(await opts.render(snap.value as Snapshot, snap.value.projection, p as unknown as RenderParams));
+      }
+      case 'doc.inspectLayout': {
+        let snap: Result<Snapshot & { projection?: Projection }> = await engine.exportSnapshot(scope);
+        // A host with no drawing surface has no resolved routes; connectors are then judged by straight lines, and the report says so.
+        if (!snap.ok && snap.error.code === 'projection_failed') snap = await engine.snapshot(scope);
+        if (!snap.ok) return respond(snap);
+        const measured = opts.layoutContext ? await opts.layoutContext(snap.value as Snapshot) : { measureWidth: approximateWidth };
+        const report = inspectLayout(snap.value as Snapshot, { ...measured, ...(snap.value.projection ? { projection: snap.value.projection } : {}) }, typeof p.pageId === 'string' ? { pageId: p.pageId } : {});
+        return respond(ok({ documentId: snap.value.documentId, sessionId: snap.value.sessionId, revision: snap.value.revision, issues: report.issues, notes: report.notes }));
+      }
       case 'doc.export':
         return respond(fail('not_ready', 'export arrives with the native file work (I40)', { retryable: false }));
       case 'doc.undo':

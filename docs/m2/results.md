@@ -1,18 +1,18 @@
-# M2 results so far (I20, I21, I30)
+# M2 results so far (I20, I21, I30, I31)
 
 Recorded 2026-10-17, same Windows 11 machine as M1. M2 here means the full editing model (I20) and DrawScript with the transaction
-drawer (I21), then live MCP control of the running app (I30). Render, layout and export tools (I31, I40) are not part of this record.
+drawer (I21), then live MCP control of the running app (I30). Rendering and layout feedback (I31) is recorded below; export (I40) is not part of this record.
 
 ## Test results
 | Suite | Command | Result |
 |---|---|---|
-| Engine, contracts, bridge, canvas logic, scripts, admission gate, read tools | `npm --prefix src/web test` | 234 pass |
-| Editor in a real browser (Chromium via Playwright) | `npm --prefix src/web run test:browser` | 16 pass |
+| Engine, contracts, bridge, canvas logic, scripts, admission gate, read tools | `npm --prefix src/web test` | 249 pass |
+| Editor in a real browser (Chromium via Playwright) | `npm --prefix src/web run test:browser` | 23 pass |
 | C# DTO parity with the schemas | `dotnet test tests/Diagram.Contracts.Tests` | 24 pass |
 | Host services, router, asset and file safety | `dotnet test tests/Diagram.Host.Tests` | 69 pass |
-| WPF shell with real WebView2, and live control from a real MCP client | `dotnet test tests/Diagram.Windows.Tests` | 18 pass (10 shell, 8 live control) |
+| WPF shell with real WebView2, and live control from a real MCP client | `dotnet test tests/Diagram.Windows.Tests` | 19 pass (10 shell, 9 live control) |
 | Production pipe: framing, handshake, limits, peers | `dotnet test tests/Diagram.Ipc.Tests` | 15 pass |
-| MCP shim: tool surface, identity, errors, stdout | `dotnet test tests/Diagram.Mcp.Tests` | 9 pass |
+| MCP shim: tool surface, identity, errors, stdout | `dotnet test tests/Diagram.Mcp.Tests` | 11 pass |
 | Generated contracts match the schemas | `npm --prefix src/web run generate:check` | up to date |
 | Production bundle | `npm --prefix src/web run build` | builds |
 
@@ -81,6 +81,17 @@ New operations, all in the schema bundle and generated into both languages: `dup
 - **Live tests** drive a real stdio MCP client, the real shim, the real pipe and the real WebView2 editor: reads show the canonical store; a retry after a lost committed reply (new connection, new shim process, or reconnect) returns the identical transaction result and
   creates nothing twice; a changed payload under the same transaction id conflicts; a stale revision after a human edit is refused with what changed, and the human's work is untouched; a script create runs once; session and document mismatches stop at the gate; lifecycle methods are unreachable.
 
+## I31: render snapshots and layout feedback
+- **Renderer** (`src/web/src/render/SnapshotRenderer.ts`): draws a committed snapshot with the same style and geometry mapping as the canvas, in a hidden surface of its own, then rasterises it to PNG or JPEG. The request is a barrier read, so the picture is labelled with the
+  revision committed when it was asked for even if later commits land while it draws. Selection handles and editor chrome are not part of it (a render with a shape selected is byte-identical to one without), and a live drag preview cannot leak in. Pictures are inlined from their
+  approved bytes so the raster is never tainted; a picture whose bytes are missing, or any other failure, is an error and never a blank area. Fonts are awaited first. The page background fills the picture (white for JPEG when the page has none).
+- **Pages and regions**: defaults 1600 x 1200, at most 8192 on a side, at most 8 pixels per point, and 16 megapixels or 16 MiB encoded refused as `limit_exceeded`. A region takes exactly one of bounds or element ids plus padding. Element crops use rotated extents, a routed connector's resolved bounds and a group's frame, never a stale box.
+- **Debug mode** draws each visible element's dashed bounds and a small chip with its alias or short id, after the picture and only in debug.
+- **Layout inspection** (`src/web/src/layout/inspectLayout.ts`): `OUTSIDE_PAGE`, `ZERO_SIZE`, `TEXT_OVERFLOW`, `OVERLAP` (ignores containment and members of one group), `UNGLUED_CONNECTOR_END`, `DANGLING_CONNECTOR`, `CONNECTOR_CROSSES_SHAPE` (resolved routes when the editor has them, ignoring the connector's own ends and their groups),
+  `IMAGE_DISTORTION` (when the natural size is known), `LOW_CONTRAST` and a quiet `HIDDEN_OBJECT`. Every issue has element ids, page, bounds, message and the numbers it was judged by. The report states that text sizes are estimates. It is a pure read: hashes and revision are unchanged.
+- **Tools**: `render_page` and `render_region` return a real MCP image block plus a JSON description (revision shown, pixel size, crop in points) and never repeat the base64 as text; `inspect_layout` returns the issues. Only `export_document` still answers `not_ready`.
+- **Live loop** on the real stack: inspect finds the overflowing label, render_region returns a PNG of just that element at the right revision, a one-object resize fixes it, every other object is byte for byte unchanged, and a second inspect and render show the new revision.
+
 ## Bugs and design decisions found while building
 - Group membership lives on the group, so grouping rewrites no member and is reported as one created element.
 - The z-order test names suggested reordering shifts intervening objects; "front" and "back" were made to touch only their targets, and only the one-step moves report a neighbour.
@@ -89,8 +100,8 @@ New operations, all in the schema bundle and generated into both languages: `dup
 - A one-line shell heredoc kept failing in this environment, so larger files were written with the file tool.
 
 ## Known gaps, carried forward
-0. The gesture hold is covered by fake-clock tests and by a test that a human commit bypasses it, but not by a real mouse drag with a real MCP client in flight (production builds have no test window to start one).
-   Render, layout inspection and export are `not_ready` until I31 and I40; the library catalogue arrives with I50.
+0. Export is `not_ready` until I40, and the library catalogue arrives with I50.
+   The gesture hold is covered by fake-clock tests and by a test that a human commit bypasses it, but not by a real mouse drag with a real MCP client in flight (production builds have no test window to start one).
 1. DrawScript has no `if`, loops or variables by design. Layer, asset and page references are by name or id; there is no way yet to list prepared assets for the script from the GUI (the host passes `preparedAssetRefs`; I50 adds the catalogue UI).
 2. The inspector has no page-tab strip, layer panel or asset catalogue yet (the operations exist; I50 owns the UI).
 3. Group handles are per member while selected; there is no single group resize or rotate handle on the canvas. The inspector does both.

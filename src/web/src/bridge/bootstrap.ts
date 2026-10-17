@@ -2,6 +2,7 @@ import { CommandEngine } from '../commands/CommandEngine';
 import { newDocument } from '../model/newDocument';
 import { BridgeClient, type WebViewLike } from './BridgeClient';
 import { createRequestRouter } from './RequestRouter';
+import type { EngineHandlerOptions } from './engineHandlers';
 import { createHostServices } from './hostServices';
 
 declare global {
@@ -12,7 +13,7 @@ declare global {
  * Creates the engine over a new A4 document, answers host requests, mirrors committed changes to the host and announces readiness.
  * `editor.ready` is sent only after the handler is registered, so the host never sees a ready editor that cannot answer.
  */
-export function startApp(webview: WebViewLike | undefined, root: HTMLElement | null = typeof document !== 'undefined' ? document.getElementById('status') : null, hooks: { onSessionChanged?: () => void } = {}) {
+export function startApp(webview: WebViewLike | undefined, root: HTMLElement | null = typeof document !== 'undefined' ? document.getElementById('status') : null, hooks: { onSessionChanged?: () => void; render?: EngineHandlerOptions['render']; layoutContext?: EngineHandlerOptions['layoutContext'] } = {}) {
   const engine = new CommandEngine({ document: newDocument() });
   const show = () => {
     if (typeof document !== 'undefined') document.body.dataset.revision = String(engine.revision); // a visible, testable mirror of the revision
@@ -23,15 +24,16 @@ export function startApp(webview: WebViewLike | undefined, root: HTMLElement | n
   show();
   engine.onCommitted(show);
 
-  if (!webview) return { engine, client: null, host: null, router: null };
-  const client = new BridgeClient(webview);
+  let client: BridgeClient | null = null;
+  const announce = (name: 'editor.ready' | 'editor.session') => client?.sendEvent(name, { protocolVersion: 1, ...engine.scope(), revision: engine.revision });
+  // The router exists with or without a host, so a plain browser (tests, development) can exercise the same request path.
+  const router = createRequestRouter(engine, { ...(hooks.render ? { render: hooks.render } : {}), ...(hooks.layoutContext ? { layoutContext: hooks.layoutContext } : {}), onSessionChanged: () => { router.cancelGesture(); show(); announce('editor.session'); hooks.onSessionChanged?.(); } });
+  if (!webview) return { engine, client: null, host: null, router };
+  client = new BridgeClient(webview);
   const host = createHostServices(client);
-  const announce = (name: 'editor.ready' | 'editor.session') =>
-    client.sendEvent(name, { protocolVersion: 1, ...engine.scope(), revision: engine.revision });
-
-  const router = createRequestRouter(engine, { onSessionChanged: () => { router.cancelGesture(); show(); announce('editor.session'); hooks.onSessionChanged?.(); } });
   client.onRequest(router.dispatch);
-  engine.onCommitted(e => client.sendEvent('editor.committed', e as unknown as Record<string, unknown>));
+  const sender = client;
+  engine.onCommitted(e => sender.sendEvent('editor.committed', e as unknown as Record<string, unknown>));
   announce('editor.ready');
   return { engine, client, host, router };
 }

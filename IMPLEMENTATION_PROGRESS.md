@@ -2,7 +2,7 @@
 
 Updated: 2026-10-17 (Europe/London).
 
-Status: **M0 (I00 to I05) and M1 (I10, I11, I12) done, see [docs/m1/results.md](docs/m1/results.md); I20, I21 and I30 done, see [docs/m2/results.md](docs/m2/results.md)**; I31 onwards not started. This file splits future implementation into bounded work
+Status: **M0 (I00 to I05) and M1 (I10, I11, I12) done, see [docs/m1/results.md](docs/m1/results.md); I20, I21, I30 and I31 done, see [docs/m2/results.md](docs/m2/results.md)**; I40 onwards not started. This file splits future implementation into bounded work
 packages. It is a progress and dependency register, not a claim that feasibility
 spikes, builds, tests or Windows acceptance have run.
 
@@ -29,7 +29,7 @@ write-capable delegation or have Claude return reviewable patches for Codex to a
 | I20 | M2: full model and operations, groups, arrange, target resolution | Codex | I12 | done | 65 engine tests plus 5 browser tests; `docs/m2/evidence/I20/grouped-and-aligned.png` |
 | I21 | M2: DrawScript parser/compiler and transaction drawer | Codex; Claude review | I20 | done | 31 script tests plus 2 browser tests; `docs/m2/evidence/I21/script-and-transactions.png` |
 | I30 | M2: production IPC, admission gate and live MCP tools | Codex; Claude review | I11, I20, I21 | done | 15 IPC + 9 MCP + 11 admission + 8 live-control tests; `docs/m2/results.md` |
-| I31 | M3: render snapshots, layout checks and change queries | Codex | I12, I20, I30 | not started | Revision-labelled previews and bounded history recovery |
+| I31 | M3: semantic queries, render snapshots and layout feedback | Codex | I12, I20, I30 | done | 9 layout + 6 render-planning + 7 browser pixel tests + 2 image-content + live visual loop; `docs/m3/evidence/I31/` |
 | I40 | M4: production VSDX mappings and compatibility diagnostics | Codex; Claude review | I01, I20, I30, I31 | not started | Feature matrix and supported-subset round-trip tests |
 | I41 | M4: Visio/Word manual acceptance suite | Windows tester + Codex | I40 | not started | Editable objects, glue, UUID retention, Word activation |
 | I50 | M5: multipage/layers and approved asset library | Codex; Claude review | I20, I40 | not started | Page/layer operations; one-logo and global-replace tests |

@@ -190,7 +190,7 @@ public class LiveControlTests
         var wrongDoc = await client.CallToolAsync("get_changes", new Dictionary<string, object?> { ["documentId"] = Guid.NewGuid().ToString(), ["sessionId"] = id.Session, ["sinceRevision"] = 0 }, cancellationToken: Ct());
         Assert.Equal("document_mismatch", ErrorCode(wrongDoc));
         var render = await client.CallToolAsync("render_page", new Dictionary<string, object?> { ["documentId"] = id.Doc, ["sessionId"] = id.Session, ["pageId"] = Guid.NewGuid().ToString() }, cancellationToken: Ct());
-        Assert.Equal("not_ready", ErrorCode(render)); // render tools arrive with I31 and say so
+        Assert.Equal("not_found", ErrorCode(render)); // a page that does not exist is named as such: rendering is real now
     }
 
     [Fact]
@@ -215,5 +215,52 @@ public class LiveControlTests
         await using var h = await Harness.StartAsync(pipe: pipe);
         var e = Record.Exception(() => PipeServer.Start(pipe, (c, r, ct) => Task.FromResult(Wire.Error(r.RequestId, "internal_error", "no"))));
         Assert.True(e is IOException or UnauthorizedAccessException);
+    }
+
+    [Fact]
+    public async Task VisualLoopInspectRenderOneObjectPatchLeavesTheRestExact()
+    {
+        var pipe = NewPipe();
+        await using var h = await Harness.StartAsync(pipe: pipe);
+        await using var client = await Connect(pipe);
+        var id = await Summary(client);
+        var make = await client.CallToolAsync("apply_operations", Apply(id, Guid.NewGuid().ToString(), 0,
+            new { op = "createShape", alias = "tight", bounds = new { x = 40, y = 40, width = 70, height = 24 }, text = new { value = "A label that will not fit in here", fontSizePt = 14 } },
+            new { op = "createShape", alias = "roomy", bounds = new { x = 200, y = 40, width = 240, height = 80 }, text = new { value = "Fits easily", fontSizePt = 14 } },
+            new { op = "createShape", alias = "other", bounds = new { x = 40, y = 200, width = 100, height = 60 } }), cancellationToken: Ct());
+        Assert.True(make.IsError != true, make.StructuredContent?.ToString());
+        var pageId = (await client.CallToolAsync("get_document_summary", cancellationToken: Ct())).StructuredContent!.Value.GetProperty("pages")[0].GetProperty("id").GetString()!;
+        string Objects(string alias) => Body(client.CallToolAsync("get_objects", new Dictionary<string, object?> { ["documentId"] = id.Doc, ["sessionId"] = id.Session, ["ids"] = new[] { alias } }, cancellationToken: Ct()).Result).GetProperty("objects")[0].GetRawText();
+        var roomyBefore = Objects("roomy"); var otherBefore = Objects("other");
+
+        // 1. inspect: the model is told which element has a problem, and where
+        var inspect = await client.CallToolAsync("inspect_layout", new Dictionary<string, object?> { ["documentId"] = id.Doc, ["sessionId"] = id.Session }, cancellationToken: Ct());
+        Assert.True(inspect.IsError != true, inspect.StructuredContent?.ToString());
+        var issues = Body(inspect).GetProperty("issues").EnumerateArray().Where(i => i.GetProperty("code").GetString() == "TEXT_OVERFLOW").ToList();
+        var issue = Assert.Single(issues);
+        var tightId = issue.GetProperty("elementIds")[0].GetString()!;
+        Assert.Equal(40, issue.GetProperty("bounds").GetProperty("x").GetDouble());
+
+        // 2. look at just that region: a real PNG comes back as an image, tagged with the revision it shows
+        var region = await client.CallToolAsync("render_region", new Dictionary<string, object?> { ["documentId"] = id.Doc, ["sessionId"] = id.Session, ["pageId"] = pageId, ["elementIds"] = new[] { tightId }, ["paddingPt"] = 10.0 }, cancellationToken: Ct());
+        Assert.True(region.IsError != true, region.StructuredContent?.ToString());
+        var image = Assert.IsType<ImageContentBlock>(region.Content.First());
+        var bytes = image.DecodedData.ToArray();
+        Assert.Equal(new byte[] { 0x89, 0x50, 0x4E, 0x47 }, bytes[..4]); // PNG signature
+        Assert.Equal(1, Body(region).GetProperty("revision").GetInt32());
+        Assert.Equal(40 - 10, Body(region).GetProperty("cropPt").GetProperty("x").GetDouble());
+
+        // 3. correct only that object
+        var fix = await client.CallToolAsync("apply_operations", Apply(id, Guid.NewGuid().ToString(), 1, new { op = "resize", target = tightId, bounds = new { width = 220, height = 60 } }), cancellationToken: Ct());
+        Assert.True(fix.IsError != true, fix.StructuredContent?.ToString());
+        Assert.Equal(roomyBefore, Objects("roomy")); // every other object is byte for byte what it was
+        Assert.Equal(otherBefore, Objects("other"));
+
+        // 4. the problem is gone, and a render of the new revision says so
+        var again = await client.CallToolAsync("inspect_layout", new Dictionary<string, object?> { ["documentId"] = id.Doc, ["sessionId"] = id.Session }, cancellationToken: Ct());
+        Assert.DoesNotContain(Body(again).GetProperty("issues").EnumerateArray(), i => i.GetProperty("code").GetString() == "TEXT_OVERFLOW");
+        var page = await client.CallToolAsync("render_page", new Dictionary<string, object?> { ["documentId"] = id.Doc, ["sessionId"] = id.Session, ["pageId"] = pageId, ["maxWidth"] = 800 }, cancellationToken: Ct());
+        Assert.Equal(2, Body(page).GetProperty("revision").GetInt32());
+        Assert.Equal(800, Body(page).GetProperty("widthPx").GetInt32());
     }
 }

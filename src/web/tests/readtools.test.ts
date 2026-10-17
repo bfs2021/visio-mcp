@@ -79,9 +79,12 @@ describe('request handler: tool methods', () => {
     expect(t.engine.revision).toBe(0);
   });
 
-  it('render, layout and export are not ready yet and say so', async () => {
+  it('export is not ready yet, and render is not ready without a drawing surface; layout inspection works anywhere', async () => {
     const t = createTestEngine();
-    for (const m of ['doc.render', 'doc.inspectLayout', 'doc.export']) expect((await call(t, m, {})).error?.code).toBe('not_ready');
+    for (const m of ['doc.render', 'doc.export']) expect((await call(t, m, { scope: 'page' })).error?.code).toBe('not_ready');
+    const layout = await call(t, 'doc.inspectLayout', {});
+    expect(layout.error).toBeUndefined();
+    expect((layout.result as { issues: unknown[]; notes: string[] }).notes.length).toBeGreaterThan(0);
   });
 
   it('summary, objects, assets and changes answer from the committed store', async () => {
