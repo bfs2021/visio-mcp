@@ -1,7 +1,7 @@
 import { CommandEngine } from '../commands/CommandEngine';
 import { newDocument } from '../model/newDocument';
 import { BridgeClient, type WebViewLike } from './BridgeClient';
-import { createEngineHandler } from './engineHandlers';
+import { createRequestRouter } from './RequestRouter';
 import { createHostServices } from './hostServices';
 
 declare global {
@@ -23,14 +23,15 @@ export function startApp(webview: WebViewLike | undefined, root: HTMLElement | n
   show();
   engine.onCommitted(show);
 
-  if (!webview) return { engine, client: null, host: null };
+  if (!webview) return { engine, client: null, host: null, router: null };
   const client = new BridgeClient(webview);
   const host = createHostServices(client);
   const announce = (name: 'editor.ready' | 'editor.session') =>
     client.sendEvent(name, { protocolVersion: 1, ...engine.scope(), revision: engine.revision });
 
-  client.onRequest(createEngineHandler(engine, { onSessionChanged: () => { show(); announce('editor.session'); hooks.onSessionChanged?.(); } }));
+  const router = createRequestRouter(engine, { onSessionChanged: () => { router.cancelGesture(); show(); announce('editor.session'); hooks.onSessionChanged?.(); } });
+  client.onRequest(router.dispatch);
   engine.onCommitted(e => client.sendEvent('editor.committed', e as unknown as Record<string, unknown>));
   announce('editor.ready');
-  return { engine, client, host };
+  return { engine, client, host, router };
 }

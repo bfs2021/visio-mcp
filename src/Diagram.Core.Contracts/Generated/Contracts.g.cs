@@ -868,6 +868,7 @@ public sealed record RequestEnvelope
     [JsonPropertyName("documentId")] public string? DocumentId { get; init; }
     [JsonPropertyName("sessionId")] public string? SessionId { get; init; }
     [JsonPropertyName("params")] public required JsonObject Params { get; init; }
+    [JsonPropertyName("origin")] public Origin? Origin { get; init; }
 }
 
 public sealed record ResponseEnvelope
@@ -877,5 +878,12 @@ public sealed record ResponseEnvelope
     [JsonPropertyName("requestId")] public required string RequestId { get; init; }
     [JsonPropertyName("result")] public JsonElement? Result { get; init; }
     [JsonPropertyName("error")] public AppError? Error { get; init; }
+}
+
+public sealed record Origin
+{
+    [JsonPropertyName("source")] public required string Source { get; init; }
+    [JsonPropertyName("clientLabel")] public string? ClientLabel { get; init; }
+    [JsonPropertyName("connectionId")] public required string ConnectionId { get; init; }
 }
 

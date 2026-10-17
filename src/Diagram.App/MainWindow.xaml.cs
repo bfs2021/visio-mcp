@@ -9,12 +9,13 @@ namespace Diagram.App;
 /// <param name="UserDataDir">WebView2 profile folder.</param>
 /// <param name="BlobDir">Durable content-addressed asset bytes.</param>
 /// <param name="Offscreen">Place the window out of sight (automated tests).</param>
-public sealed record AppOptions(string ContentRoot, string UserDataDir, string BlobDir, bool Offscreen = false)
+/// <param name="PipeName">Pipe the MCP shim connects to; null leaves live control off.</param>
+public sealed record AppOptions(string ContentRoot, string UserDataDir, string BlobDir, bool Offscreen = false, string? PipeName = null)
 {
     public static AppOptions Default()
     {
         var data = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AgenticDiagram");
-        return new AppOptions(Path.Combine(AppContext.BaseDirectory, "web"), Path.Combine(data, "webview"), Path.Combine(data, "blobs"));
+        return new AppOptions(Path.Combine(AppContext.BaseDirectory, "web"), Path.Combine(data, "webview"), Path.Combine(data, "blobs"), PipeName: Diagram.Ipc.PipeNames.For());
     }
 }
 
@@ -44,6 +45,7 @@ public partial class MainWindow : Window
     public BridgeRouter Router => Host.Router;
     public SessionCoordinator Coordinator { get; private set; } = null!;
     public HostServices Services { get; private set; } = null!;
+    public LiveControl? Live { get; private set; }
 
     public async Task InitializeAsync()
     {
@@ -53,6 +55,8 @@ public partial class MainWindow : Window
         host = new WebViewHost(Web.CoreWebView2, Dispatcher, options.ContentRoot, Blobs, services.HandleAsync);
         Coordinator = new SessionCoordinator(host.Router, Blobs, Preparer, Writer);
         Services = services;
+        if (options.PipeName is { } pipe) Live = new LiveControl(pipe, host.Router); // fails on a name collision rather than attaching to another owner
+        Closed += async (_, _) => { if (Live is not null) await Live.DisposeAsync(); };
     }
 
     public void Navigate() => Host.Navigate();

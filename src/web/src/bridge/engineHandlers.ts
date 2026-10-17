@@ -1,7 +1,10 @@
 import type { AppError, DiagramDocument, RequestEnvelope, ResponseEnvelope, Scope } from '../contracts/generated';
 import type { CommandEngine } from '../commands/CommandEngine';
 import { fail, ok, type Result } from '../model/result';
-import { validateDocument, validateMutationRequest, validateUndoRequest } from '../model/validate';
+import { validateDocument, validateMutationRequest, validateScriptRequest, validateUndoRequest } from '../model/validate';
+import { drawScriptCompiler } from '../script/compiler';
+import type { Operation } from '../contracts/generated';
+import { listAssets, readObjects, readSummary } from './readTools';
 
 const toResponse = <T>(requestId: string, r: Result<T>): ResponseEnvelope =>
   r.ok ? { protocolVersion: 1, kind: 'response', requestId, result: r.value } : { protocolVersion: 1, kind: 'response', requestId, error: r.error as AppError };
@@ -29,6 +32,47 @@ export function createEngineHandler(engine: CommandEngine, opts: EngineHandlerOp
         const req = validateMutationRequest({ ...p, ...scope });
         return respond(req.ok ? await engine.execute(req.value, 'mcp') : req);
       }
+      case 'doc.executeScript': {
+        const req = validateScriptRequest({ ...p, ...scope });
+        if (!req.ok) return respond(req);
+        // Show the model exactly what its script became. A retry answered from the cache never compiles, so it carries no operations.
+        let operations: Operation[] | undefined;
+        const r = await engine.executeScript(req.value, (src, snap, ctx) => {
+          const out = drawScriptCompiler(src, snap, ctx);
+          if (out.ok) operations = out.value.operations;
+          return out;
+        });
+        return respond(r.ok ? ok({ transaction: r.value, ...(operations ? { operations } : {}) }) : r);
+      }
+      case 'doc.summary': {
+        const s = await engine.snapshot(scope);
+        if (!s.ok) return respond(s);
+        const bool = (v: unknown) => (typeof v === 'boolean' ? v : undefined);
+        return respond(readSummary(s.value, {
+          ...(typeof p.pageId === 'string' ? { pageId: p.pageId } : {}),
+          ...(bool(p.includeGeometry) !== undefined ? { includeGeometry: p.includeGeometry as boolean } : {}),
+          ...(bool(p.includeStyle) !== undefined ? { includeStyle: p.includeStyle as boolean } : {}),
+          ...(bool(p.includeHidden) !== undefined ? { includeHidden: p.includeHidden as boolean } : {}),
+        }));
+      }
+      case 'doc.getObjects': {
+        if (!Array.isArray(p.ids) || p.ids.length === 0 || p.ids.length > 500 || p.ids.some(i => typeof i !== 'string')) return respond(fail('invalid_request', 'ids must be 1 to 500 strings'));
+        const s = await engine.snapshot(scope);
+        if (!s.ok) return respond(s);
+        const objects = readObjects(s.value, p.ids as string[], typeof p.pageId === 'string' ? p.pageId : undefined);
+        return respond(objects.ok ? ok({ revision: s.value.revision, objects: objects.value }) : objects);
+      }
+      case 'assets.list': {
+        const s = await engine.snapshot(scope);
+        if (!s.ok) return respond(s);
+        const tags = Array.isArray(p.tags) ? p.tags.filter((t): t is string => typeof t === 'string') : undefined;
+        return respond(ok({ revision: s.value.revision, assets: listAssets(s.value, typeof p.query === 'string' ? p.query : undefined, tags) }));
+      }
+      case 'doc.render':
+      case 'doc.inspectLayout':
+        return respond(fail('not_ready', 'rendering and layout inspection arrive with the render tools (I31)', { retryable: false }));
+      case 'doc.export':
+        return respond(fail('not_ready', 'export arrives with the native file work (I40)', { retryable: false }));
       case 'doc.undo':
       case 'doc.redo': {
         const req = validateUndoRequest({ ...p, ...scope });

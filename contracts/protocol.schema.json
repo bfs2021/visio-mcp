@@ -7,280 +7,954 @@
   "$defs": {
     "ErrorCode": {
       "enum": [
-        "not_running", "not_ready", "no_document", "session_mismatch", "document_mismatch", "unsupported_version",
-        "invalid_request", "not_found", "ambiguous_target", "revision_conflict", "locked_target", "limit_exceeded",
-        "history_unavailable", "transaction_id_conflict", "timeout_unknown", "io_error", "compatibility_loss",
-        "projection_failed", "busy", "busy_user_editing", "path_not_permitted", "consent_denied", "dependency_conflict",
-        "method_not_found", "internal_error"
+        "not_running",
+        "not_ready",
+        "no_document",
+        "session_mismatch",
+        "document_mismatch",
+        "unsupported_version",
+        "invalid_request",
+        "not_found",
+        "ambiguous_target",
+        "revision_conflict",
+        "locked_target",
+        "limit_exceeded",
+        "history_unavailable",
+        "transaction_id_conflict",
+        "timeout_unknown",
+        "io_error",
+        "compatibility_loss",
+        "projection_failed",
+        "busy",
+        "busy_user_editing",
+        "path_not_permitted",
+        "consent_denied",
+        "dependency_conflict",
+        "method_not_found",
+        "internal_error"
       ]
     },
     "AppError": {
-      "type": "object", "additionalProperties": false, "required": ["code", "message", "retryable"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "message",
+        "retryable"
+      ],
       "properties": {
-        "code": { "$ref": "#/$defs/ErrorCode" },
-        "message": { "type": "string", "maxLength": 4096 },
-        "retryable": { "type": "boolean" },
-        "details": { "type": "object" },
-        "outcome": { "enum": ["unknown", "none"], "description": "unknown when the request may have been delivered or committed before the failure" }
+        "code": {
+          "$ref": "#/$defs/ErrorCode"
+        },
+        "message": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "retryable": {
+          "type": "boolean"
+        },
+        "details": {
+          "type": "object"
+        },
+        "outcome": {
+          "enum": [
+            "unknown",
+            "none"
+          ],
+          "description": "unknown when the request may have been delivered or committed before the failure"
+        }
       }
     },
     "Diagnostic": {
-      "type": "object", "additionalProperties": false, "required": ["severity", "code", "message"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "severity",
+        "code",
+        "message"
+      ],
       "properties": {
-        "severity": { "enum": ["info", "warning", "error"] },
-        "code": { "type": "string", "maxLength": 128 },
-        "message": { "type": "string", "maxLength": 4096 },
-        "pageId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "elementId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "sourceShape": { "type": "string", "maxLength": 256 },
-        "action": { "type": "string", "maxLength": 1024 },
-        "detail": { "type": "string", "maxLength": 4096 }
+        "severity": {
+          "enum": [
+            "info",
+            "warning",
+            "error"
+          ]
+        },
+        "code": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "message": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "pageId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "elementId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "sourceShape": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "action": {
+          "type": "string",
+          "maxLength": 1024
+        },
+        "detail": {
+          "type": "string",
+          "maxLength": 4096
+        }
       }
     },
     "Scope": {
-      "type": "object", "additionalProperties": false, "required": ["documentId", "sessionId"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "documentId",
+        "sessionId"
+      ],
       "properties": {
-        "documentId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "sessionId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "pageId": { "$ref": "document.schema.json#/$defs/Uuid" }
+        "documentId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "sessionId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "pageId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        }
       }
     },
     "MutationRequest": {
-      "type": "object", "additionalProperties": false,
-      "required": ["documentId", "sessionId", "transactionId", "baseRevision", "operations"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "documentId",
+        "sessionId",
+        "transactionId",
+        "baseRevision",
+        "operations"
+      ],
       "properties": {
-        "documentId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "sessionId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "pageId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "transactionId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "baseRevision": { "type": "integer", "minimum": 0 },
-        "atomic": { "const": true },
-        "operations": { "type": "array", "items": { "$ref": "operations.schema.json#/$defs/Operation" }, "minItems": 1, "maxItems": 1000 }
+        "documentId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "sessionId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "pageId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "transactionId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "baseRevision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "atomic": {
+          "const": true
+        },
+        "operations": {
+          "type": "array",
+          "items": {
+            "$ref": "operations.schema.json#/$defs/Operation"
+          },
+          "minItems": 1,
+          "maxItems": 1000
+        }
       }
     },
     "PreparedAssetRef": {
-      "type": "object", "additionalProperties": false, "required": ["preparationId", "asset", "expiresAt"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "preparationId",
+        "asset",
+        "expiresAt"
+      ],
       "properties": {
-        "preparationId": { "type": "string", "minLength": 1, "maxLength": 256, "description": "Opaque host-issued capability for approved bytes, never a path." },
-        "asset": { "$ref": "document.schema.json#/$defs/Asset" },
-        "expiresAt": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})$" }
+        "preparationId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "Opaque host-issued capability for approved bytes, never a path."
+        },
+        "asset": {
+          "$ref": "document.schema.json#/$defs/Asset"
+        },
+        "expiresAt": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})$"
+        }
       }
     },
     "PreparedAsset": {
-      "type": "object", "additionalProperties": false, "required": ["ref"],
-      "properties": { "ref": { "$ref": "#/$defs/PreparedAssetRef" } }
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ref"
+      ],
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/PreparedAssetRef"
+        }
+      }
     },
     "ScriptRequest": {
-      "type": "object", "additionalProperties": false,
-      "required": ["documentId", "sessionId", "transactionId", "baseRevision", "script"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "documentId",
+        "sessionId",
+        "transactionId",
+        "baseRevision",
+        "script"
+      ],
       "properties": {
-        "documentId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "sessionId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "pageId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "transactionId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "baseRevision": { "type": "integer", "minimum": 0 },
-        "atomic": { "const": true },
-        "script": { "type": "string", "maxLength": 1048576 },
-        "preparedAssetRefs": { "type": "object", "additionalProperties": { "$ref": "#/$defs/PreparedAssetRef" } }
+        "documentId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "sessionId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "pageId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "transactionId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "baseRevision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "atomic": {
+          "const": true
+        },
+        "script": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "preparedAssetRefs": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/PreparedAssetRef"
+          }
+        }
       }
     },
     "UndoRequest": {
-      "type": "object", "additionalProperties": false, "required": ["documentId", "sessionId", "transactionId", "baseRevision"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "documentId",
+        "sessionId",
+        "transactionId",
+        "baseRevision"
+      ],
       "properties": {
-        "documentId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "sessionId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "pageId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "transactionId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "baseRevision": { "type": "integer", "minimum": 0 }
+        "documentId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "sessionId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "pageId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "transactionId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "baseRevision": {
+          "type": "integer",
+          "minimum": 0
+        }
       }
     },
     "TransactionResult": {
-      "type": "object", "additionalProperties": false,
-      "required": ["transactionId", "previousRevision", "revision", "noChange", "created", "changed", "deleted", "changedPageIds", "changedLayerIds", "changedAssetIds", "visuallyAffectedIds", "warnings", "projectionStatus"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "transactionId",
+        "previousRevision",
+        "revision",
+        "noChange",
+        "created",
+        "changed",
+        "deleted",
+        "changedPageIds",
+        "changedLayerIds",
+        "changedAssetIds",
+        "visuallyAffectedIds",
+        "warnings",
+        "projectionStatus"
+      ],
       "properties": {
-        "transactionId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "previousRevision": { "type": "integer", "minimum": 0 },
-        "revision": { "type": "integer", "minimum": 0 },
-        "noChange": { "type": "boolean" },
-        "created": { "type": "array", "items": { "$ref": "document.schema.json#/$defs/Uuid" } },
-        "changed": { "type": "array", "items": { "$ref": "document.schema.json#/$defs/Uuid" } },
-        "deleted": { "type": "array", "items": { "$ref": "document.schema.json#/$defs/Uuid" } },
-        "changedPageIds": { "type": "array", "items": { "$ref": "document.schema.json#/$defs/Uuid" } },
-        "changedLayerIds": { "type": "array", "items": { "$ref": "document.schema.json#/$defs/Uuid" } },
-        "changedAssetIds": { "type": "array", "items": { "type": "string" } },
-        "visuallyAffectedIds": { "type": "array", "items": { "$ref": "document.schema.json#/$defs/Uuid" } },
-        "warnings": { "type": "array", "items": { "$ref": "#/$defs/Diagnostic" } },
-        "projectionStatus": { "enum": ["applied", "failed"] }
+        "transactionId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "previousRevision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "noChange": {
+          "type": "boolean"
+        },
+        "created": {
+          "type": "array",
+          "items": {
+            "$ref": "document.schema.json#/$defs/Uuid"
+          }
+        },
+        "changed": {
+          "type": "array",
+          "items": {
+            "$ref": "document.schema.json#/$defs/Uuid"
+          }
+        },
+        "deleted": {
+          "type": "array",
+          "items": {
+            "$ref": "document.schema.json#/$defs/Uuid"
+          }
+        },
+        "changedPageIds": {
+          "type": "array",
+          "items": {
+            "$ref": "document.schema.json#/$defs/Uuid"
+          }
+        },
+        "changedLayerIds": {
+          "type": "array",
+          "items": {
+            "$ref": "document.schema.json#/$defs/Uuid"
+          }
+        },
+        "changedAssetIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "visuallyAffectedIds": {
+          "type": "array",
+          "items": {
+            "$ref": "document.schema.json#/$defs/Uuid"
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Diagnostic"
+          }
+        },
+        "projectionStatus": {
+          "enum": [
+            "applied",
+            "failed"
+          ]
+        }
       }
     },
     "Snapshot": {
-      "type": "object", "additionalProperties": false, "required": ["documentId", "sessionId", "revision", "document"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "documentId",
+        "sessionId",
+        "revision",
+        "document"
+      ],
       "properties": {
-        "documentId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "sessionId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "pageId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "revision": { "type": "integer", "minimum": 0 },
-        "document": { "$ref": "document.schema.json#/$defs/DiagramDocument" }
+        "documentId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "sessionId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "pageId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "document": {
+          "$ref": "document.schema.json#/$defs/DiagramDocument"
+        }
       }
     },
     "ConnectorProjection": {
-      "type": "object", "additionalProperties": false, "required": ["routePoints", "visualBounds"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "routePoints",
+        "visualBounds"
+      ],
       "properties": {
-        "routePoints": { "type": "array", "items": { "$ref": "document.schema.json#/$defs/Point" } },
-        "visualBounds": { "$ref": "document.schema.json#/$defs/Bounds" }
+        "routePoints": {
+          "type": "array",
+          "items": {
+            "$ref": "document.schema.json#/$defs/Point"
+          }
+        },
+        "visualBounds": {
+          "$ref": "document.schema.json#/$defs/Bounds"
+        }
       }
     },
     "Projection": {
-      "type": "object", "additionalProperties": false, "required": ["documentId", "sessionId", "revision", "connectors", "groupVisualBounds"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "documentId",
+        "sessionId",
+        "revision",
+        "connectors",
+        "groupVisualBounds"
+      ],
       "properties": {
-        "documentId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "sessionId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "pageId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "revision": { "type": "integer", "minimum": 0 },
-        "connectors": { "type": "object", "additionalProperties": { "$ref": "#/$defs/ConnectorProjection" } },
-        "groupVisualBounds": { "type": "object", "additionalProperties": { "$ref": "document.schema.json#/$defs/Bounds" } }
+        "documentId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "sessionId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "pageId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "connectors": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/ConnectorProjection"
+          }
+        },
+        "groupVisualBounds": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "document.schema.json#/$defs/Bounds"
+          }
+        }
       }
     },
     "ExportSnapshot": {
-      "type": "object", "additionalProperties": false, "required": ["documentId", "sessionId", "revision", "document", "projection"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "documentId",
+        "sessionId",
+        "revision",
+        "document",
+        "projection"
+      ],
       "properties": {
-        "documentId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "sessionId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "pageId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "revision": { "type": "integer", "minimum": 0 },
-        "document": { "$ref": "document.schema.json#/$defs/DiagramDocument" },
-        "projection": { "$ref": "#/$defs/Projection" }
+        "documentId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "sessionId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "pageId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "document": {
+          "$ref": "document.schema.json#/$defs/DiagramDocument"
+        },
+        "projection": {
+          "$ref": "#/$defs/Projection"
+        }
       }
     },
-    "TransactionSource": { "enum": ["gui", "script", "mcp", "undo", "redo", "system"] },
+    "TransactionSource": {
+      "enum": [
+        "gui",
+        "script",
+        "mcp",
+        "undo",
+        "redo",
+        "system"
+      ]
+    },
     "ElementUpsert": {
-      "type": "object", "additionalProperties": false, "required": ["pageId", "element"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pageId",
+        "element"
+      ],
       "properties": {
-        "pageId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "index": { "type": "integer", "minimum": 0, "description": "position in the page's element array; omitted means append for a new element or keep the current position" },
-        "element": { "$ref": "document.schema.json#/$defs/Element" }
+        "pageId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "index": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "position in the page's element array; omitted means append for a new element or keep the current position"
+        },
+        "element": {
+          "$ref": "document.schema.json#/$defs/Element"
+        }
       }
     },
     "PageMeta": {
-      "type": "object", "additionalProperties": false, "required": ["id", "name", "widthPt", "heightPt", "background", "grid", "guides"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "widthPt",
+        "heightPt",
+        "background",
+        "grid",
+        "guides"
+      ],
       "properties": {
-        "id": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "name": { "type": "string" },
-        "widthPt": { "type": "number" },
-        "heightPt": { "type": "number" },
-        "background": { "$ref": "document.schema.json#/$defs/Paint" },
-        "grid": { "$ref": "document.schema.json#/$defs/Grid" },
-        "guides": { "type": "array", "items": { "$ref": "document.schema.json#/$defs/Guide" } }
+        "id": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "name": {
+          "type": "string"
+        },
+        "widthPt": {
+          "type": "number"
+        },
+        "heightPt": {
+          "type": "number"
+        },
+        "background": {
+          "$ref": "document.schema.json#/$defs/Paint"
+        },
+        "grid": {
+          "$ref": "document.schema.json#/$defs/Grid"
+        },
+        "guides": {
+          "type": "array",
+          "items": {
+            "$ref": "document.schema.json#/$defs/Guide"
+          }
+        }
       }
     },
     "PageUpsert": {
-      "type": "object", "additionalProperties": false, "required": ["page"],
-      "properties": { "index": { "type": "integer", "minimum": 0 }, "page": { "$ref": "#/$defs/PageMeta" } }
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "page"
+      ],
+      "properties": {
+        "index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "page": {
+          "$ref": "#/$defs/PageMeta"
+        }
+      }
     },
     "LayerUpsert": {
-      "type": "object", "additionalProperties": false, "required": ["pageId", "layer"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pageId",
+        "layer"
+      ],
       "properties": {
-        "pageId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "index": { "type": "integer", "minimum": 0 },
-        "layer": { "$ref": "document.schema.json#/$defs/Layer" }
+        "pageId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "layer": {
+          "$ref": "document.schema.json#/$defs/Layer"
+        }
       }
     },
     "DiffUpserts": {
-      "type": "object", "additionalProperties": false, "required": ["elements", "pages", "layers", "assets"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "elements",
+        "pages",
+        "layers",
+        "assets"
+      ],
       "properties": {
-        "elements": { "type": "array", "items": { "$ref": "#/$defs/ElementUpsert" } },
-        "pages": { "type": "array", "items": { "$ref": "#/$defs/PageUpsert" } },
-        "layers": { "type": "array", "items": { "$ref": "#/$defs/LayerUpsert" } },
-        "assets": { "type": "array", "items": { "$ref": "document.schema.json#/$defs/Asset" } }
+        "elements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ElementUpsert"
+          }
+        },
+        "pages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PageUpsert"
+          }
+        },
+        "layers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LayerUpsert"
+          }
+        },
+        "assets": {
+          "type": "array",
+          "items": {
+            "$ref": "document.schema.json#/$defs/Asset"
+          }
+        }
       }
     },
     "DiffDeletes": {
-      "type": "object", "additionalProperties": false, "required": ["elementIds", "pageIds", "layerIds", "assetIds"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "elementIds",
+        "pageIds",
+        "layerIds",
+        "assetIds"
+      ],
       "properties": {
-        "elementIds": { "type": "array", "items": { "$ref": "document.schema.json#/$defs/Uuid" } },
-        "pageIds": { "type": "array", "items": { "$ref": "document.schema.json#/$defs/Uuid" } },
-        "layerIds": { "type": "array", "items": { "$ref": "document.schema.json#/$defs/Uuid" } },
-        "assetIds": { "type": "array", "items": { "type": "string" } }
+        "elementIds": {
+          "type": "array",
+          "items": {
+            "$ref": "document.schema.json#/$defs/Uuid"
+          }
+        },
+        "pageIds": {
+          "type": "array",
+          "items": {
+            "$ref": "document.schema.json#/$defs/Uuid"
+          }
+        },
+        "layerIds": {
+          "type": "array",
+          "items": {
+            "$ref": "document.schema.json#/$defs/Uuid"
+          }
+        },
+        "assetIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
     "ResolvedDiff": {
-      "type": "object", "additionalProperties": false,
-      "required": ["transactionId", "source", "previousRevision", "revision", "upserts", "deletes"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "transactionId",
+        "source",
+        "previousRevision",
+        "revision",
+        "upserts",
+        "deletes"
+      ],
       "properties": {
-        "transactionId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "source": { "$ref": "#/$defs/TransactionSource" },
-        "previousRevision": { "type": "integer", "minimum": 0 },
-        "revision": { "type": "integer", "minimum": 0 },
-        "upserts": { "$ref": "#/$defs/DiffUpserts" },
-        "deletes": { "$ref": "#/$defs/DiffDeletes" }
+        "transactionId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "source": {
+          "$ref": "#/$defs/TransactionSource"
+        },
+        "previousRevision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "upserts": {
+          "$ref": "#/$defs/DiffUpserts"
+        },
+        "deletes": {
+          "$ref": "#/$defs/DiffDeletes"
+        }
       }
     },
     "TransactionSummary": {
-      "type": "object", "additionalProperties": false,
-      "required": ["transactionId", "source", "previousRevision", "revision", "description", "created", "changed", "deleted", "changedPageIds", "changedLayerIds", "changedAssetIds"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "transactionId",
+        "source",
+        "previousRevision",
+        "revision",
+        "description",
+        "created",
+        "changed",
+        "deleted",
+        "changedPageIds",
+        "changedLayerIds",
+        "changedAssetIds"
+      ],
       "properties": {
-        "transactionId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "source": { "$ref": "#/$defs/TransactionSource" },
-        "previousRevision": { "type": "integer", "minimum": 0 },
-        "revision": { "type": "integer", "minimum": 0 },
-        "description": { "type": "string", "maxLength": 1024 },
-        "created": { "type": "array", "items": { "$ref": "document.schema.json#/$defs/Uuid" } },
-        "changed": { "type": "array", "items": { "$ref": "document.schema.json#/$defs/Uuid" } },
-        "deleted": { "type": "array", "items": { "$ref": "document.schema.json#/$defs/Uuid" } },
-        "changedPageIds": { "type": "array", "items": { "$ref": "document.schema.json#/$defs/Uuid" } },
-        "changedLayerIds": { "type": "array", "items": { "$ref": "document.schema.json#/$defs/Uuid" } },
-        "changedAssetIds": { "type": "array", "items": { "type": "string" } }
+        "transactionId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "source": {
+          "$ref": "#/$defs/TransactionSource"
+        },
+        "previousRevision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1024
+        },
+        "created": {
+          "type": "array",
+          "items": {
+            "$ref": "document.schema.json#/$defs/Uuid"
+          }
+        },
+        "changed": {
+          "type": "array",
+          "items": {
+            "$ref": "document.schema.json#/$defs/Uuid"
+          }
+        },
+        "deleted": {
+          "type": "array",
+          "items": {
+            "$ref": "document.schema.json#/$defs/Uuid"
+          }
+        },
+        "changedPageIds": {
+          "type": "array",
+          "items": {
+            "$ref": "document.schema.json#/$defs/Uuid"
+          }
+        },
+        "changedLayerIds": {
+          "type": "array",
+          "items": {
+            "$ref": "document.schema.json#/$defs/Uuid"
+          }
+        },
+        "changedAssetIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
     "TransactionRecord": {
-      "type": "object", "additionalProperties": false, "required": ["summary", "forward", "inverse"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary",
+        "forward",
+        "inverse"
+      ],
       "properties": {
-        "summary": { "$ref": "#/$defs/TransactionSummary" },
-        "forward": { "$ref": "#/$defs/ResolvedDiff" },
-        "inverse": { "$ref": "#/$defs/ResolvedDiff" }
+        "summary": {
+          "$ref": "#/$defs/TransactionSummary"
+        },
+        "forward": {
+          "$ref": "#/$defs/ResolvedDiff"
+        },
+        "inverse": {
+          "$ref": "#/$defs/ResolvedDiff"
+        }
       }
     },
     "ChangeSet": {
-      "type": "object", "additionalProperties": false, "required": ["sinceRevision", "earliestRetainedRevision", "revision", "transactions"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sinceRevision",
+        "earliestRetainedRevision",
+        "revision",
+        "transactions"
+      ],
       "properties": {
-        "sinceRevision": { "type": "integer", "minimum": 0 },
-        "earliestRetainedRevision": { "type": "integer", "minimum": 0 },
-        "revision": { "type": "integer", "minimum": 0 },
-        "transactions": { "type": "array", "items": { "$ref": "#/$defs/TransactionSummary" } }
+        "sinceRevision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "earliestRetainedRevision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "transactions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TransactionSummary"
+          }
+        }
       }
     },
     "CommittedEvent": {
-      "type": "object", "additionalProperties": false, "required": ["sequence", "documentId", "sessionId", "revision", "resolvedDiff"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sequence",
+        "documentId",
+        "sessionId",
+        "revision",
+        "resolvedDiff"
+      ],
       "properties": {
-        "sequence": { "type": "integer", "minimum": 1 },
-        "documentId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "sessionId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "revision": { "type": "integer", "minimum": 0 },
-        "resolvedDiff": { "$ref": "#/$defs/ResolvedDiff" }
+        "sequence": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "documentId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "sessionId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "resolvedDiff": {
+          "$ref": "#/$defs/ResolvedDiff"
+        }
       }
     },
     "RequestEnvelope": {
-      "type": "object", "additionalProperties": false, "required": ["protocolVersion", "kind", "requestId", "method", "params"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocolVersion",
+        "kind",
+        "requestId",
+        "method",
+        "params"
+      ],
       "properties": {
-        "protocolVersion": { "const": 1 },
-        "kind": { "const": "request" },
-        "requestId": { "type": "string", "minLength": 1, "maxLength": 128 },
-        "method": { "type": "string", "pattern": "^[a-z][a-zA-Z]*(\\.[a-z][a-zA-Z]*)+$" },
-        "documentId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "sessionId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "params": { "type": "object", "propertyNames": { "not": { "enum": ["documentId", "sessionId"] } } }
+        "protocolVersion": {
+          "const": 1
+        },
+        "kind": {
+          "const": "request"
+        },
+        "requestId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "method": {
+          "type": "string",
+          "pattern": "^[a-z][a-zA-Z]*(\\.[a-z][a-zA-Z]*)+$"
+        },
+        "documentId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "sessionId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "params": {
+          "type": "object",
+          "propertyNames": {
+            "not": {
+              "enum": [
+                "documentId",
+                "sessionId"
+              ]
+            }
+          }
+        },
+        "origin": {
+          "$ref": "#/$defs/Origin"
+        }
       }
     },
     "ResponseEnvelope": {
-      "type": "object", "additionalProperties": false, "required": ["protocolVersion", "kind", "requestId"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocolVersion",
+        "kind",
+        "requestId"
+      ],
       "properties": {
-        "protocolVersion": { "const": 1 },
-        "kind": { "const": "response" },
-        "requestId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "protocolVersion": {
+          "const": 1
+        },
+        "kind": {
+          "const": "response"
+        },
+        "requestId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
         "result": {},
-        "error": { "$ref": "#/$defs/AppError" }
+        "error": {
+          "$ref": "#/$defs/AppError"
+        }
       },
-      "oneOf": [{ "required": ["result"] }, { "required": ["error"] }]
+      "oneOf": [
+        {
+          "required": [
+            "result"
+          ]
+        },
+        {
+          "required": [
+            "error"
+          ]
+        }
+      ]
+    },
+    "Origin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "connectionId"
+      ],
+      "description": "Stamped by the host for pipe requests; anything a caller supplies is discarded.",
+      "properties": {
+        "source": {
+          "enum": [
+            "mcp"
+          ]
+        },
+        "clientLabel": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "connectionId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      }
     }
   }
 }

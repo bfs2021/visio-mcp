@@ -9,8 +9,10 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Diagram.App\Diagram.App.csproj" />
+    <ProjectReference Include="..\..\src\Diagram.Mcp\Diagram.Mcp.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="ModelContextProtocol" Version="[2.2.0]" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="4.0.1">

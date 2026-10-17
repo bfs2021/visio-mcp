@@ -16,9 +16,10 @@ function hostApi(host: HostServices | null): HostApi {
 }
 
 let model: EditorModel | null = null;
-const { engine, host } = startApp(window.chrome?.webview, null, { onSessionChanged: () => model?.sessionReplaced() });
+const { engine, host, router } = startApp(window.chrome?.webview, null, { onSessionChanged: () => model?.sessionReplaced() });
 model = new EditorModel(engine);
 model.host = hostApi(host);
+if (router) model.onGestureState = active => router.setGestureActive(active); // an outside mutation waits (briefly) while the user is mid-gesture
 
 // A read-only window onto the editor for automated tests. It is compiled out of production builds, and nothing here edits the document.
 if (import.meta.env.VITE_TEST_API === '1') {

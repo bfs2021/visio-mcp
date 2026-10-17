@@ -1,16 +1,18 @@
-# M2 results so far (I20, I21)
+# M2 results so far (I20, I21, I30)
 
 Recorded 2026-10-17, same Windows 11 machine as M1. M2 here means the full editing model (I20) and DrawScript with the transaction
-drawer (I21). MCP live control (I30 and later) is not part of this record.
+drawer (I21), then live MCP control of the running app (I30). Render, layout and export tools (I31, I40) are not part of this record.
 
 ## Test results
 | Suite | Command | Result |
 |---|---|---|
-| Engine, contracts, bridge, canvas logic, scripts | `npm --prefix src/web test` | 216 pass |
+| Engine, contracts, bridge, canvas logic, scripts, admission gate, read tools | `npm --prefix src/web test` | 234 pass |
 | Editor in a real browser (Chromium via Playwright) | `npm --prefix src/web run test:browser` | 16 pass |
 | C# DTO parity with the schemas | `dotnet test tests/Diagram.Contracts.Tests` | 24 pass |
 | Host services, router, asset and file safety | `dotnet test tests/Diagram.Host.Tests` | 69 pass |
-| WPF shell with real WebView2 | `dotnet test tests/Diagram.Windows.Tests` | 10 pass |
+| WPF shell with real WebView2, and live control from a real MCP client | `dotnet test tests/Diagram.Windows.Tests` | 18 pass (10 shell, 8 live control) |
+| Production pipe: framing, handshake, limits, peers | `dotnet test tests/Diagram.Ipc.Tests` | 15 pass |
+| MCP shim: tool surface, identity, errors, stdout | `dotnet test tests/Diagram.Mcp.Tests` | 9 pass |
 | Generated contracts match the schemas | `npm --prefix src/web run generate:check` | up to date |
 | Production bundle | `npm --prefix src/web run build` | builds |
 
@@ -62,6 +64,23 @@ New operations, all in the schema bundle and generated into both languages: `dup
   Transactions tab (revision, source, created/changed/deleted/page/layer/asset ids, and the script text for script transactions). "Undo this transaction" is enabled
   only for the transaction on top of the undo stack; an earlier one explains why it is not.
 
+## I30: production pipe, admission gate and live MCP tools
+- **`Diagram.Ipc`** (promoted from the M0 spike): 4-byte length framing with a 32 MiB cap checked before allocation, a first-frame version handshake, a pipe named by user SID, logon session and protocol
+  version, current-user ACL, and a peer check on the first frame. `PipeServer` serves at most eight clients and sixteen pending calls per connection (the seventeenth gets `busy`, retryable, never started),
+  with one writer per connection and a bounded 64-response queue. It stamps every request with a host-made `origin` and discards any a client wrote. `PipeClient` connects lazily, never launches the app,
+  matches replies by id so calls can overlap, and never re-sends: a lost connection or a deadline is `not_running` or `timeout_unknown` with outcome `unknown`.
+- **App**: `LiveControl` serves the pipe and forwards only the document tools (`doc.summary`, `doc.getObjects`, `doc.apply`, `doc.executeScript`, `doc.changes`, `doc.inspectLayout`, `doc.render`, `doc.export`,
+  `assets.list`). Open, save, replace, mark-saved, undo, redo, status and every `host.*` method answer `method_not_found` over the pipe. A second instance fails on the name instead of attaching.
+- **Admission gate** (`src/web/src/bridge/AdmissionGate.ts`): per connection, first in first out, in front of the engine queue and never inside it. While a pointer drag, resize, rotation, bend or in-place text edit is active, an outside
+  mutation is held at most 3 s from its arrival (restarting a gesture does not stretch that), then refused with `busy_user_editing` (retryable, outcome `none`, so definitely not applied). A later read from the same
+  connection waits behind it; other connections read committed state meanwhile. Admission checks scope only, so a retry of a committed transaction is not rejected for its old revision: the engine still checks scope, then its cache, then the revision.
+  A human gesture commit enters the engine directly. Opening or replacing a document cancels the gesture.
+- **Tools** (`src/Diagram.Mcp`, official C# SDK, stdio): every tool in source section 11.2. Only `get_document_summary` needs no identity; the rest require `documentId` and `sessionId`, and the two mutation tools also require a client-chosen `transactionId` and `baseRevision`. The shim
+  forwards them unchanged and invents nothing. `apply_operations` and `execute_script` return the original transaction result plus short descriptions of what was created and changed (and, for scripts, the operations the script became).
+  `get_objects`, `list_assets`, `get_changes` and the summary read the committed store. Render, layout and export answer `not_ready` and say which package delivers them.
+- **Live tests** drive a real stdio MCP client, the real shim, the real pipe and the real WebView2 editor: reads show the canonical store; a retry after a lost committed reply (new connection, new shim process, or reconnect) returns the identical transaction result and
+  creates nothing twice; a changed payload under the same transaction id conflicts; a stale revision after a human edit is refused with what changed, and the human's work is untouched; a script create runs once; session and document mismatches stop at the gate; lifecycle methods are unreachable.
+
 ## Bugs and design decisions found while building
 - Group membership lives on the group, so grouping rewrites no member and is reported as one created element.
 - The z-order test names suggested reordering shifts intervening objects; "front" and "back" were made to touch only their targets, and only the one-step moves report a neighbour.
@@ -70,6 +89,8 @@ New operations, all in the schema bundle and generated into both languages: `dup
 - A one-line shell heredoc kept failing in this environment, so larger files were written with the file tool.
 
 ## Known gaps, carried forward
+0. The gesture hold is covered by fake-clock tests and by a test that a human commit bypasses it, but not by a real mouse drag with a real MCP client in flight (production builds have no test window to start one).
+   Render, layout inspection and export are `not_ready` until I31 and I40; the library catalogue arrives with I50.
 1. DrawScript has no `if`, loops or variables by design. Layer, asset and page references are by name or id; there is no way yet to list prepared assets for the script from the GUI (the host passes `preparedAssetRefs`; I50 adds the catalogue UI).
 2. The inspector has no page-tab strip, layer panel or asset catalogue yet (the operations exist; I50 owns the UI).
 3. Group handles are per member while selected; there is no single group resize or rotate handle on the canvas. The inspector does both.

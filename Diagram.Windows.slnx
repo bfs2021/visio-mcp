@@ -2,11 +2,15 @@
   <Folder Name="/src/">
     <Project Path="src/Diagram.Core.Contracts/Diagram.Core.Contracts.csproj" />
     <Project Path="src/Diagram.Host.Core/Diagram.Host.Core.csproj" />
+    <Project Path="src/Diagram.Ipc/Diagram.Ipc.csproj" />
+    <Project Path="src/Diagram.Mcp/Diagram.Mcp.csproj" />
     <Project Path="src/Diagram.App/Diagram.App.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Diagram.Contracts.Tests/Diagram.Contracts.Tests.csproj" />
     <Project Path="tests/Diagram.Host.Tests/Diagram.Host.Tests.csproj" />
+    <Project Path="tests/Diagram.Ipc.Tests/Diagram.Ipc.Tests.csproj" />
+    <Project Path="tests/Diagram.Mcp.Tests/Diagram.Mcp.Tests.csproj" />
     <Project Path="tests/Diagram.Windows.Tests/Diagram.Windows.Tests.csproj" />
   </Folder>
 </Solution>

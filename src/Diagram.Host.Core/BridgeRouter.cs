@@ -165,12 +165,12 @@ public sealed class BridgeRouter : IEditorChannel
 
     static TimeSpan TimeoutFor(string method) => method switch
     {
-        "doc.apply" or "doc.undo" or "doc.redo" or "doc.replace" => TimeSpan.FromSeconds(15),
+        "doc.apply" or "doc.executeScript" or "doc.undo" or "doc.redo" or "doc.replace" => TimeSpan.FromSeconds(15),
         "doc.render" => TimeSpan.FromSeconds(30),
         _ => TimeSpan.FromSeconds(10),
     };
 
-    static bool IsMutation(string method) => method is "doc.apply" or "doc.undo" or "doc.redo" or "doc.replace";
+    static bool IsMutation(string method) => method is "doc.apply" or "doc.executeScript" or "doc.undo" or "doc.redo" or "doc.replace";
 
     public async Task<ResponseEnvelope> SendAsync(RequestEnvelope request, CancellationToken ct)
     {

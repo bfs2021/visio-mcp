@@ -772,6 +772,7 @@ export interface RequestEnvelope {
   documentId?: Uuid;
   sessionId?: Uuid;
   params: Record<string, unknown>;
+  origin?: Origin;
 }
 
 export interface ResponseEnvelope {
@@ -780,5 +781,11 @@ export interface ResponseEnvelope {
   requestId: string;
   result?: unknown;
   error?: AppError;
+}
+
+export interface Origin {
+  source: "mcp";
+  clientLabel?: string;
+  connectionId: string;
 }
 
