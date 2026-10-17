@@ -50,6 +50,9 @@ const dataUri = (mime: string, bytes: Uint8Array) => `data:${mime};base64,${toBa
 export class Projection {
   readonly graph: Graph;
   private revision = 0;
+  /** Called after every model change and after project(); lets the host shell mirror the revision. */
+  onChange?: () => void;
+  get currentRevision() { return this.revision; }
   private suspended = 0;
   readonly log: GestureEvent[] = [];
   readonly timing: Record<string, number> = {};
@@ -64,7 +67,7 @@ export class Projection {
     this.graph.setAllowDanglingEdges(false);
     this.graph.setDisconnectOnMove(false);
     this.graph.setCellsDisconnectable(false);
-    this.graph.getDataModel().addListener(InternalEvent.CHANGE, () => { if (!this.suspended) this.revision++; });
+    this.graph.getDataModel().addListener(InternalEvent.CHANGE, () => { if (!this.suspended) { this.revision++; this.onChange?.(); } });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') this.graph.escape(e); });
     installGestureHooks(this);
   }
@@ -105,6 +108,7 @@ export class Projection {
       this.suspended--;
     }
     this.revision = scene.revision;
+    this.onChange?.();
     this.timing.projectMs = performance.now() - t0;
   }
 

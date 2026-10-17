@@ -11,6 +11,7 @@ public sealed class TestHost : IAsyncDisposable
     const int MaxClients = 8;
     readonly string pipeName;
     readonly bool hangSummary;
+    readonly Func<string, JsonElement, CancellationToken, Task<object>>? router;
     readonly CancellationTokenSource stop = new();
     readonly List<NamedPipeServerStream> live = new();
     readonly object gate = new();
@@ -22,12 +23,13 @@ public sealed class TestHost : IAsyncDisposable
     public int SummaryCalls => Volatile.Read(ref summaryCalls);
     public int PeerChecksPassed => Volatile.Read(ref peerChecksPassed);
 
-    TestHost(string pipeName, bool hangSummary) { this.pipeName = pipeName; this.hangSummary = hangSummary; }
+    TestHost(string pipeName, bool hangSummary, Func<string, JsonElement, CancellationToken, Task<object>>? router) { this.pipeName = pipeName; this.hangSummary = hangSummary; this.router = router; }
 
     /// <summary>Creates the first pipe instance synchronously: a name collision throws instead of silently attaching to another owner.</summary>
-    public static TestHost Start(string pipeName, bool hangSummary = false)
+    /// <param name="router">Optional: routes doc.* methods to a real backend (the WebView2 probe) instead of the canned replies. Throw <see cref="HostException"/> to return a coded error.</param>
+    public static TestHost Start(string pipeName, bool hangSummary = false, Func<string, JsonElement, CancellationToken, Task<object>>? router = null)
     {
-        var host = new TestHost(pipeName, hangSummary);
+        var host = new TestHost(pipeName, hangSummary, router);
         host.listening = host.NewInstance(first: true);
         host.acceptLoop = Task.Run(host.AcceptLoop);
         return host;
@@ -121,6 +123,19 @@ public sealed class TestHost : IAsyncDisposable
                 using var req = await FrameCodec.ReadAsync(pipe, ct);
                 var root = req.RootElement;
                 var id = root.TryGetProperty("requestId", out var rid) ? rid.GetString() : null;
+                if (router != null && Method(root) is { } m && m.StartsWith("doc."))
+                {
+                    try
+                    {
+                        var routed = await router(m, root.GetProperty("params"), ct);
+                        await FrameCodec.WriteAsync(pipe, Envelope.Result(id, routed), ct);
+                    }
+                    catch (HostException e)
+                    {
+                        await FrameCodec.WriteAsync(pipe, Envelope.Error(id, e.Code, e.Message, e.Retryable), ct);
+                    }
+                    continue;
+                }
                 switch (Method(root))
                 {
                     case "doc.summary":

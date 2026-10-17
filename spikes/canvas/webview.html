@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>WebView probe</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #f8fafc; font: 14px system-ui, sans-serif; }
+    #graph { position: absolute; inset: 0; overflow: auto; }
+    #rev { position: absolute; top: 6px; right: 10px; z-index: 10; background: #0f172a; color: #fff; padding: 2px 8px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div id="rev">rev ?</div>
+  <div id="graph"></div>
+  <script type="module" src="/src/webview-main.ts"></script>
+</body>
+</html>

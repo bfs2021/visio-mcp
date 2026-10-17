@@ -11,7 +11,7 @@ production code: no `src/` project or production solution may reference these fo
 | `vsdx/`, `vsdx.tests/` | I01 | Editable native-file round trip (done; G1 PASS with backend caveat). |
 | `canvas/` | I02 | maxGraph interaction and PNG preview (done; G2 PASS). Run with `npm --prefix spikes/canvas run test:browser`. |
 | `ipc/`, `mcp/`, `ipc.tests/` | I03 | Stdio MCP → framed pipe → test host (done; G3 PASS, second-user check NOT RUN). |
-| `webview/`, `webview.tests/` | I04 | Planned: WebView2 → live canvas operation. |
+| `webview/`, `webview.tests/` | I04 | WebView2 → live canvas operation (done; G4 PASS). Needs `npm --prefix spikes/canvas run build` first (the tests build it if missing). |
 
 Pinned versions, licences and hashes: [docs/m0/dependencies.json](../docs/m0/dependencies.json).
 Where and how each probe actually ran: [docs/m0/environment.json](../docs/m0/environment.json).
