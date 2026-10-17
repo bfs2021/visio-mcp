@@ -1,0 +1,21 @@
+{
+  "name": "diagram-web",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24.14.0" },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "generate": "node ../../tools/generate-contracts.mjs",
+    "generate:check": "node ../../tools/generate-contracts.mjs --check"
+  },
+  "dependencies": {
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "24.0.0",
+    "typescript": "7.0.2",
+    "vitest": "5.0.3"
+  }
+}

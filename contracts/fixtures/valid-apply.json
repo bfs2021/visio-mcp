@@ -1,0 +1,25 @@
+{
+  "protocolVersion": 1,
+  "kind": "request",
+  "requestId": "req-0001",
+  "method": "doc.apply",
+  "documentId": "00000000-0000-4000-8000-0000000000d1",
+  "sessionId": "00000000-0000-4000-8000-0000000000a1",
+  "params": {
+    "transactionId": "00000000-0000-4000-8000-0000000000b1",
+    "baseRevision": 0,
+    "atomic": true,
+    "operations": [
+      {
+        "op": "createShape",
+        "alias": "box",
+        "bounds": { "x": 72, "y": 72, "width": 144, "height": 72 },
+        "geometry": { "preset": "rounded-rectangle", "cornerRadiusPt": 6 },
+        "style": { "fill": { "kind": "solid", "colour": "#dbeafe", "opacity": 1 }, "strokeWidthPt": 1.5 },
+        "text": { "value": "Hello" }
+      },
+      { "op": "move", "target": "box", "delta": { "xPt": 8.5, "yPt": 0 } },
+      { "op": "set", "target": "box", "patch": { "name": "Greeting", "style": { "stroke": { "kind": "solid", "colour": "#333333", "opacity": 1 } } } }
+    ]
+  }
+}
