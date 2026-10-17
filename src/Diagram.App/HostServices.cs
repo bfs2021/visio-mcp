@@ -110,6 +110,8 @@ public sealed class HostServices(MainWindow window)
         {
             ["ref"] = JsonSerializer.SerializeToNode(prepared.Value.Ref, ContractJson.Options),
             ["notes"] = new JsonArray(prepared.Value.Notes.Select(n => (JsonNode)n).ToArray()),
+            ["width"] = prepared.Value.Width,
+            ["height"] = prepared.Value.Height,
         });
     }
 }

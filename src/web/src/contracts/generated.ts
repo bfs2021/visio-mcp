@@ -401,7 +401,27 @@ export interface RegisterAssetOp {
   asset: Asset;
 }
 
-export type Operation = CreateShapeOp | CreateTextOp | CreateImageOp | CreateConnectorOp | SetOp | MoveOp | ResizeOp | RotateOp | DeleteOp | RegisterAssetOp;
+export interface GridPatch {
+  visible?: boolean;
+  spacingPt?: number;
+  snap?: boolean;
+}
+
+export interface PagePatch {
+  name?: string;
+  widthPt?: number;
+  heightPt?: number;
+  background?: Paint;
+  grid?: GridPatch;
+}
+
+export interface SetPageOp {
+  op: "setPage";
+  pageId?: Uuid;
+  patch: PagePatch;
+}
+
+export type Operation = CreateShapeOp | CreateTextOp | CreateImageOp | CreateConnectorOp | SetOp | MoveOp | ResizeOp | RotateOp | DeleteOp | RegisterAssetOp | SetPageOp;
 
 export type ErrorCode = "not_running" | "not_ready" | "no_document" | "session_mismatch" | "document_mismatch" | "unsupported_version" | "invalid_request" | "not_found" | "ambiguous_target" | "revision_conflict" | "locked_target" | "limit_exceeded" | "history_unavailable" | "transaction_id_conflict" | "timeout_unknown" | "io_error" | "compatibility_loss" | "projection_failed" | "busy" | "busy_user_editing" | "path_not_permitted" | "consent_denied" | "dependency_conflict" | "method_not_found" | "internal_error";
 

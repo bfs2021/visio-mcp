@@ -14,9 +14,9 @@ const vEnvelope = V.RequestEnvelope;
 
 const opValidators = new Map<string, ValidateFn>([
   ['CreateShape', V.CreateShape], ['CreateText', V.CreateText], ['CreateImage', V.CreateImage], ['CreateConnector', V.CreateConnector],
-  ['Set', V.Set], ['Move', V.Move], ['Resize', V.Resize], ['Rotate', V.Rotate], ['Delete', V.Delete], ['RegisterAsset', V.RegisterAsset],
+  ['Set', V.Set], ['Move', V.Move], ['Resize', V.Resize], ['Rotate', V.Rotate], ['Delete', V.Delete], ['RegisterAsset', V.RegisterAsset], ['SetPage', V.SetPage],
 ]);
-const opByTag: Record<string, string> = { createShape: 'CreateShape', createText: 'CreateText', createImage: 'CreateImage', createConnector: 'CreateConnector', set: 'Set', move: 'Move', resize: 'Resize', rotate: 'Rotate', delete: 'Delete', registerAsset: 'RegisterAsset' };
+const opByTag: Record<string, string> = { createShape: 'CreateShape', createText: 'CreateText', createImage: 'CreateImage', createConnector: 'CreateConnector', set: 'Set', move: 'Move', resize: 'Resize', rotate: 'Rotate', delete: 'Delete', registerAsset: 'RegisterAsset', setPage: 'SetPage' };
 
 /** A oneOf failure only reports its first branch; validate against the branch the operation names so the error is about the right fields. */
 function explainOperations(operations: unknown, basePath: string): Result<never> | null {

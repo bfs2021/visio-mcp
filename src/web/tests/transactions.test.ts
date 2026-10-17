@@ -177,4 +177,25 @@ describe('incremental commit and rollback', () => {
     expect(r.ok && r.value.changedAssetIds).toEqual(['asset:new']);
     expect(store.snapshot().document.assets.map(a => a.id)).toContain('asset:new');
   });
+
+  it('setPage_changes_page_properties_with_exact_undo_and_touches_no_element', async () => {
+    const { engine, store, request, ids } = createTestEngine();
+    const before = store.snapshot();
+    const r = await engine.execute(request([{ op: 'setPage', patch: { name: 'Renamed', grid: { visible: false, snap: false } } }]), 'gui');
+    expect(r.ok && r.value.changedPageIds).toEqual([ids.page]);
+    expect(r.ok && r.value.changed).toEqual([]);
+    const page = store.snapshot().document.pages[0]!;
+    expect(page.name).toBe('Renamed');
+    expect(page.grid).toEqual({ visible: false, snap: false, spacingPt: before.document.pages[0]!.grid.spacingPt }); // unsupplied leaves are preserved
+    expect(page.elements).toBe(before.document.pages[0]!.elements); // the element array is shared, not copied
+    expect(page.layers).toBe(before.document.pages[0]!.layers);
+    const undone = await engine.undo({ ...engine.scope(), transactionId: '00000000-0000-4000-8000-000000000f02', baseRevision: engine.revision });
+    expect(undone.ok && undone.value.changedPageIds).toEqual([ids.page]);
+    expect(store.snapshot().document.pages[0]!.grid).toEqual(before.document.pages[0]!.grid);
+    expect(store.snapshot().document.pages[0]!.name).toBe('Page 1');
+    const same = await engine.execute(request([{ op: 'setPage', patch: { name: 'Page 1' } }]), 'gui');
+    expect(same.ok && same.value.noChange).toBe(true);
+    const bad = await engine.execute(request([{ op: 'setPage', patch: { widthPt: -1 } }]), 'gui');
+    expect(bad.ok).toBe(false);
+  });
 });

@@ -442,6 +442,28 @@ public sealed record RegisterAssetOp : Operation
     [JsonPropertyName("asset")] public required Asset Asset { get; init; }
 }
 
+public sealed record GridPatch
+{
+    [JsonPropertyName("visible")] public bool? Visible { get; init; }
+    [JsonPropertyName("spacingPt")] public double? SpacingPt { get; init; }
+    [JsonPropertyName("snap")] public bool? Snap { get; init; }
+}
+
+public sealed record PagePatch
+{
+    [JsonPropertyName("name")] public string? Name { get; init; }
+    [JsonPropertyName("widthPt")] public double? WidthPt { get; init; }
+    [JsonPropertyName("heightPt")] public double? HeightPt { get; init; }
+    [JsonPropertyName("background")] public Paint? Background { get; init; }
+    [JsonPropertyName("grid")] public GridPatch? Grid { get; init; }
+}
+
+public sealed record SetPageOp : Operation
+{
+    [JsonPropertyName("pageId")] public string? PageId { get; init; }
+    [JsonPropertyName("patch")] public required PagePatch Patch { get; init; }
+}
+
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "op")]
 [JsonDerivedType(typeof(CreateShapeOp), "createShape")]
 [JsonDerivedType(typeof(CreateTextOp), "createText")]
@@ -453,6 +475,7 @@ public sealed record RegisterAssetOp : Operation
 [JsonDerivedType(typeof(RotateOp), "rotate")]
 [JsonDerivedType(typeof(DeleteOp), "delete")]
 [JsonDerivedType(typeof(RegisterAssetOp), "registerAsset")]
+[JsonDerivedType(typeof(SetPageOp), "setPage")]
 public abstract record Operation;
 
 public sealed record AppError

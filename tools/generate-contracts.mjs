@@ -157,7 +157,7 @@ function emitCs() {
 // Only what the page validates at runtime: whole documents and requests, and each operation (for precise error messages).
 const VALIDATED = [
   'DiagramDocument', 'MutationRequest', 'ScriptRequest', 'UndoRequest', 'RequestEnvelope', 'Operation',
-  'CreateShape', 'CreateText', 'CreateImage', 'CreateConnector', 'Set', 'Move', 'Resize', 'Rotate', 'Delete', 'RegisterAsset',
+  'CreateShape', 'CreateText', 'CreateImage', 'CreateConnector', 'Set', 'Move', 'Resize', 'Rotate', 'Delete', 'RegisterAsset', 'SetPage',
 ];
 
 function emitValidators() {

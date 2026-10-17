@@ -17,3 +17,4 @@ export const Resize: ValidateFn;
 export const Rotate: ValidateFn;
 export const Delete: ValidateFn;
 export const RegisterAsset: ValidateFn;
+export const SetPage: ValidateFn;

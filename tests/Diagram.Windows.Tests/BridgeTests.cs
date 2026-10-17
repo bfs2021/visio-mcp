@@ -192,6 +192,51 @@ public class BridgeTests
     }
 
     [Fact]
+    public async Task EditorRendersAnAppliedChangeInTheRealShell()
+    {
+        await using var h = await Harness.StartAsync();
+        var applied = await h.Apply(0, null,
+            new JsonObject { ["op"] = "createShape", ["alias"] = "box", ["bounds"] = new JsonObject { ["x"] = 120, ["y"] = 120, ["width"] = 144, ["height"] = 72 }, ["text"] = new JsonObject { ["value"] = "Hello" }, ["geometry"] = new JsonObject { ["preset"] = "rounded-rectangle" }, ["style"] = new JsonObject { ["fill"] = new JsonObject { ["kind"] = "solid", ["colour"] = "#bfdbfe", ["opacity"] = 1 } } },
+            new JsonObject { ["op"] = "createShape", ["alias"] = "db", ["bounds"] = new JsonObject { ["x"] = 400, ["y"] = 110, ["width"] = 72, ["height"] = 96 }, ["geometry"] = new JsonObject { ["preset"] = "cylinder" } },
+            new JsonObject { ["op"] = "createConnector", ["from"] = new JsonObject { ["elementId"] = "box", ["glue"] = "dynamic" }, ["to"] = new JsonObject { ["elementId"] = "db", ["glue"] = "dynamic" } });
+        Assert.Null(applied.Error);
+
+        // The canvas, not just the store, shows the change: under the shape's centre are its own filled SVG node and its label.
+        var hit = await WaitForHit(h);
+        Assert.Contains("#bfdbfe", hit);
+        Assert.Equal("\"Revision 1\"", await h.Eval("document.querySelector('[data-testid=status-revision]').textContent.trim()"));
+
+        var png = await h.OnUi(() => h.Host.CapturePreviewAsync());
+        Assert.Equal(new byte[] { 0x89, 0x50, 0x4E, 0x47 }, png[..4]);
+        var dir = Path.Combine(Harness.RepoRoot, "docs", "m1", "evidence", "I11");
+        Directory.CreateDirectory(dir);
+        await File.WriteAllBytesAsync(Path.Combine(dir, "editor-in-webview2.png"), png);
+    }
+
+    static async Task<string> WaitForHit(Harness h)
+    {
+        const string probe = """
+            (() => {
+              const g = document.querySelector('[data-testid=canvas]');
+              const rects = [...g.querySelectorAll('svg rect, svg path')].filter(n => n.getAttribute('fill') === '#bfdbfe');
+              if (!rects.length) return '';
+              const b = rects[0].getBoundingClientRect();
+              // The label sits above the fill, so look at everything under the shape's centre, not just the topmost node.
+              const stack = document.elementsFromPoint(b.x + b.width / 2, b.y + b.height / 2);
+              return stack.some(n => n.getAttribute('fill') === '#bfdbfe') && stack.some(n => n.tagName === 'text' && n.textContent === 'Hello') ? '#bfdbfe' : '';
+            })()
+            """;
+        var deadline = DateTime.UtcNow.AddSeconds(10);
+        while (DateTime.UtcNow < deadline)
+        {
+            var v = JsonNode.Parse(await h.Eval(probe))!.GetValue<string>();
+            if (v.Length > 0) return v;
+            await Task.Delay(100);
+        }
+        throw new TimeoutException("the shape never appeared on the canvas");
+    }
+
+    [Fact]
     public async Task CspIsEnforcedAndThePageStillWorksWithoutEval()
     {
         await using var h = await Harness.StartAsync();

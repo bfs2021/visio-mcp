@@ -83,7 +83,7 @@ public class SchemaParityTests
     {
         var req = Samples()["MutationRequest"].Deserialize<MutationRequest>(ContractJson.Options)!;
         Assert.Equal(
-            new[] { "CreateShapeOp", "CreateTextOp", "CreateImageOp", "CreateConnectorOp", "SetOp", "MoveOp", "ResizeOp", "RotateOp", "DeleteOp", "RegisterAssetOp" },
+            new[] { "CreateShapeOp", "CreateTextOp", "CreateImageOp", "CreateConnectorOp", "SetOp", "MoveOp", "ResizeOp", "RotateOp", "DeleteOp", "RegisterAssetOp", "SetPageOp" },
             req.Operations.Select(o => o.GetType().Name).ToArray());
 
         var doc = Samples()["DiagramDocument"].Deserialize<DiagramDocument>(ContractJson.Options)!;

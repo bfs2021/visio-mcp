@@ -233,5 +233,141 @@
     "Microsoft.NET.Test.Sdk": "18.11.0 (pinned 18.10.1)",
     "dotnetSdk": "10.0.402 on the Windows machine (pinned 10.0.401)",
     "node": "24.14.1 on the Windows machine (pinned 24.21.0; spikes/contract-tests engines >=24.21.0 only warns and its 16 tests pass)"
+  },
+  "production": {
+    "recordedOn": "2026-10-17",
+    "note": "Resolved with npm view on this date; exact versions are locked in src/web/package-lock.json and each .csproj packages.lock.json. M1 production packages only; spike pins above are unchanged.",
+    "npm": [
+      {
+        "name": "react",
+        "version": "19.3.1",
+        "licence": "MIT",
+        "usedBy": [
+          "I12"
+        ]
+      },
+      {
+        "name": "react-dom",
+        "version": "19.3.1",
+        "licence": "MIT",
+        "usedBy": [
+          "I12"
+        ]
+      },
+      {
+        "name": "@maxgraph/core",
+        "version": "0.24.0",
+        "licence": "Apache-2.0",
+        "usedBy": [
+          "I12"
+        ],
+        "note": "same version proven by G2"
+      },
+      {
+        "name": "vite",
+        "version": "8.3.2",
+        "licence": "MIT",
+        "usedBy": [
+          "I11",
+          "I12"
+        ]
+      },
+      {
+        "name": "typescript",
+        "version": "7.0.2",
+        "licence": "Apache-2.0",
+        "usedBy": [
+          "I10",
+          "I11",
+          "I12"
+        ]
+      },
+      {
+        "name": "vitest",
+        "version": "5.0.3",
+        "licence": "MIT",
+        "usedBy": [
+          "I10",
+          "I11",
+          "I12"
+        ]
+      },
+      {
+        "name": "ajv",
+        "version": "8.20.0",
+        "licence": "MIT",
+        "usedBy": [
+          "I10"
+        ],
+        "note": "dev-time only: generates the precompiled validators and checks samples in tests. Not shipped: the page imports the generated validators, not Ajv."
+      },
+      {
+        "name": "@playwright/test",
+        "version": "1.63.0",
+        "licence": "Apache-2.0",
+        "usedBy": [
+          "I12"
+        ],
+        "note": "Chromium build 1243"
+      },
+      {
+        "name": "@types/react",
+        "version": "19.3.0",
+        "licence": "MIT",
+        "usedBy": [
+          "I12"
+        ]
+      },
+      {
+        "name": "@types/react-dom",
+        "version": "19.3.0",
+        "licence": "MIT",
+        "usedBy": [
+          "I12"
+        ]
+      },
+      {
+        "name": "@types/node",
+        "version": "24.0.0",
+        "licence": "MIT",
+        "usedBy": [
+          "I10"
+        ]
+      }
+    ],
+    "nuget": [
+      {
+        "id": "Microsoft.Web.WebView2",
+        "version": "1.0.4258.31",
+        "usedBy": [
+          "I11"
+        ]
+      },
+      {
+        "id": "xunit",
+        "version": "2.9.3",
+        "usedBy": [
+          "I10",
+          "I11"
+        ]
+      },
+      {
+        "id": "xunit.runner.visualstudio",
+        "version": "4.0.1",
+        "usedBy": [
+          "I10",
+          "I11"
+        ]
+      },
+      {
+        "id": "Microsoft.NET.Test.Sdk",
+        "version": "18.11.0",
+        "usedBy": [
+          "I10",
+          "I11"
+        ]
+      }
+    ],
+    "generators": "tools/generate-contracts.mjs (no third-party generator): emits TypeScript DTOs, C# DTOs and precompiled Ajv standalone validators from contracts/*.schema.json"
   }
 }

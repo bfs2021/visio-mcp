@@ -1,0 +1,52 @@
+:root { --bg: #f1f5f9; --panel: #ffffff; --line: #cbd5e1; --ink: #0f172a; --muted: #64748b; --accent: #2563eb; }
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+body { font: 13px "Segoe UI", system-ui, sans-serif; color: var(--ink); background: var(--bg); overflow: hidden; }
+button, select, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; border: 1px solid var(--line); background: #fff; border-radius: 4px; padding: 3px 8px; }
+button:hover:not(:disabled) { background: #eff6ff; border-color: #93c5fd; }
+button:disabled { opacity: .45; cursor: default; }
+
+.app { display: grid; height: 100%; grid-template-columns: 200px 1fr 260px; grid-template-rows: auto 1fr 24px; grid-template-areas: "bar bar bar" "left canvas right" "status status status"; }
+.toolbar { grid-area: bar; background: var(--panel); border-bottom: 1px solid var(--line); }
+.menubar { display: flex; gap: 2px; padding: 2px 6px; border-bottom: 1px solid #e2e8f0; }
+.menu { position: relative; }
+.menu-title { border: 0; background: transparent; padding: 3px 10px; }
+.menu-list { position: absolute; top: 100%; left: 0; z-index: 30; min-width: 220px; background: #fff; border: 1px solid var(--line); box-shadow: 0 6px 18px rgba(15, 23, 42, .18); border-radius: 4px; padding: 4px 0; }
+.menu-list button { display: grid; grid-template-columns: 18px 1fr auto; width: 100%; text-align: left; border: 0; border-radius: 0; background: transparent; gap: 6px; }
+.menu-list kbd { color: var(--muted); font: inherit; font-size: 11px; }
+.menu-list hr { border: 0; border-top: 1px solid #e2e8f0; margin: 4px 0; }
+.tools { display: flex; align-items: center; gap: 4px; padding: 4px 8px; flex-wrap: wrap; }
+.tool.active { background: #dbeafe; border-color: var(--accent); }
+.sep { width: 1px; height: 20px; background: var(--line); margin: 0 4px; }
+.zoom { min-width: 44px; text-align: center; }
+.unit select { margin-left: 4px; }
+.dirty { margin-left: auto; color: var(--muted); }
+
+.panel { background: var(--panel); overflow: auto; padding: 8px; }
+.panel-left { grid-area: left; border-right: 1px solid var(--line); }
+.panel-right { grid-area: right; border-left: 1px solid var(--line); }
+.panel h2 { font-size: 13px; margin: 0 0 6px; }
+.panel h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 10px 0 4px; }
+.panel details { margin-bottom: 6px; }
+.panel summary { cursor: pointer; font-weight: 600; padding: 2px 0; }
+.shape-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 4px; }
+.shape-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 2px; font-size: 10px; line-height: 1.1; text-align: center; }
+.shape-item.armed { background: #dbeafe; border-color: var(--accent); }
+.wide { width: 100%; margin-top: 4px; }
+.field { display: grid; grid-template-columns: 62px 1fr; align-items: center; gap: 4px; margin: 3px 0; }
+.field input[type="number"], .field input[type="text"], .field select { width: 100%; min-width: 0; }
+.field.paint { grid-template-columns: 40px auto auto 1fr 50px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 8px; }
+.grid2 .field { grid-template-columns: 50px 1fr; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 3px 0; }
+textarea { width: 100%; resize: vertical; }
+.muted { color: var(--muted); } .small { font-size: 11px; }
+
+.canvas-frame { grid-area: canvas; position: relative; display: grid; grid-template-columns: 22px 1fr; grid-template-rows: 22px 1fr; min-width: 0; min-height: 0; background: #94a3b8; }
+.ruler-corner { background: #e2e8f0; }
+.ruler { display: block; }
+.canvas-host { position: relative; overflow: auto; background: #cbd5e1; min-width: 0; min-height: 0; user-select: none; }
+
+.statusbar { grid-area: status; display: flex; gap: 18px; align-items: center; padding: 0 10px; background: #e2e8f0; border-top: 1px solid var(--line); font-size: 12px; }
+.statusbar .message { flex: 1; } .message.warning { color: #b45309; } .message.error { color: #b91c1c; }

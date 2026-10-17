@@ -345,6 +345,20 @@ class Planner {
         this.pages[hit.pageIdx] = { ...page, elements: page.elements.filter(e => !doomed.has(e.id)) };
         return;
       }
+      case 'setPage': {
+        const idx = this.defaultPage(op.pageId);
+        const page = this.pages[idx]!;
+        const p = op.patch;
+        const next: Page = { ...page };
+        if (p.name !== undefined) next.name = p.name;
+        if (p.widthPt !== undefined) next.widthPt = p.widthPt;
+        if (p.heightPt !== undefined) next.heightPt = p.heightPt;
+        if (p.background !== undefined) next.background = p.background;
+        if (p.grid) next.grid = { ...page.grid, ...p.grid };
+        this.assertFinite(next.widthPt, 'widthPt'); this.assertFinite(next.heightPt, 'heightPt');
+        this.pages[idx] = next;
+        return;
+      }
       case 'registerAsset': {
         const existing = this.assets.find(a => a.id === op.asset.id);
         if (existing) {
@@ -386,7 +400,8 @@ class Planner {
           break;
         }
         case 'text': {
-          need(element.kind === 'shape' || element.kind === 'text', key);
+          need(element.kind === 'shape' || element.kind === 'text' || element.kind === 'connector', key);
+          if (element.kind === 'connector') { next.label = merge(element.label ?? DEFAULT_TEXT, value as PatchObj); break; } // a connector's text is its label
           const base = (element as ShapeElement | TextElement).text ?? DEFAULT_TEXT;
           next.text = merge(base, value as PatchObj);
           break;
@@ -459,6 +474,18 @@ class Planner {
     }
     inverse.deletes.elementIds.push(...createdSorted.map(c => c.element.id));
 
+    const changedPageIds: string[] = [];
+    for (const page of this.pages) {
+      const orig = this.doc.pages.find(p => p.id === page.id);
+      if (!orig) continue;
+      const meta = (p: Page) => ({ id: p.id, name: p.name, widthPt: p.widthPt, heightPt: p.heightPt, background: p.background, grid: p.grid, guides: p.guides });
+      if (canonicalSerialize(meta(orig)) !== canonicalSerialize(meta(page))) {
+        forward.upserts.pages.push({ page: meta(page) });
+        inverse.upserts.pages.push({ page: meta(orig) });
+        changedPageIds.push(page.id);
+      }
+    }
+
     const newAssets = this.createdAssetIds.filter(id => !this.origAssets.has(id));
     for (const id of newAssets) {
       forward.upserts.assets.push(this.assets.find(a => a.id === id)!);
@@ -476,7 +503,7 @@ class Planner {
     const noChange = isNothing(forward);
     const description = operations.map(o => o.op).join(', ').slice(0, 1000);
     return {
-      forward, inverse, created, changed, deleted, changedPageIds: [], changedLayerIds: [], changedAssetIds: newAssets,
+      forward, inverse, created, changed, deleted, changedPageIds, changedLayerIds: [], changedAssetIds: newAssets,
       visuallyAffectedIds: [...visually], description, noChange,
     };
   }

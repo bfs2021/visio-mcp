@@ -1,0 +1,449 @@
+import {
+  Cell, EdgeHandler, Geometry, Graph, InternalEvent, Point, RubberBandHandler, VertexHandler, VertexHandlerConfig, getDefaultPlugins,
+  type EventSource, type InternalMouseEvent, type SelectionCellsHandler,
+} from '@maxgraph/core';
+import type { Element, Snapshot } from '../contracts/generated';
+import { canonicalSerialize } from '../model/canonical';
+import { ok, type Result } from '../model/result';
+import type { AdapterCallbacks, CanvasAdapter, Tool, ViewportInfo } from './CanvasAdapter';
+import { edgeStyle, effectiveState, labelOf, registerCustomShapes, vertexStyle } from './cellMapping';
+import { installGestureHooks, setGestureSink } from './gestureHooks';
+import { pageOf } from './intents';
+
+const MARGIN_PT = 40;
+const PX_PER_PT = 96 / 72; // 100% zoom
+export const DEFAULT_SCALE = PX_PER_PT;
+
+type Rect = { x: number; y: number; width: number; height: number };
+
+/**
+ * The only module that knows maxGraph. It translates UUIDs to cells internally and never hands a cell to the rest of the app.
+ * maxGraph's own edit paths (move, resize, rotate, bend, reconnect, label) are replaced by ones that emit an intent instead of
+ * changing its model: the canvas model changes only when the engine commits and the new snapshot is projected.
+ */
+export class MaxGraphAdapter implements CanvasAdapter {
+  readonly graph: Graph;
+  private readonly world: HTMLDivElement;
+  private readonly sheet: HTMLDivElement;
+  private readonly overlay: HTMLDivElement;
+  private projecting = false;
+  private tool: Tool = { kind: 'select' };
+  private readonly shown = new Map<string, string>(); // element id -> serialized projection key, to skip unchanged cells
+  private pageWidth = 841.89;
+  private pageHeight = 595.28;
+  private space = false;
+  private disposed = false;
+  private connectSource: Cell | null = null;
+  private readonly cleanups: Array<() => void> = [];
+
+  constructor(private readonly container: HTMLElement, private readonly cb: AdapterCallbacks, private readonly assetUrl: (assetId: string) => string) {
+    registerCustomShapes();
+    VertexHandlerConfig.rotationEnabled = true;
+    container.style.position = 'relative';
+    container.style.overflow = 'auto';
+    container.addEventListener('contextmenu', e => e.preventDefault());
+
+    this.world = document.createElement('div');
+    this.world.style.cssText = 'position:absolute;left:0;top:0;pointer-events:none;';
+    this.sheet = document.createElement('div');
+    this.sheet.dataset.testid = 'page-sheet';
+    this.sheet.style.cssText = 'position:absolute;box-shadow:0 1px 6px rgba(15,23,42,.35);';
+    this.world.appendChild(this.sheet);
+    container.appendChild(this.world);
+
+    this.graph = new Graph(container, undefined, [...getDefaultPlugins(), RubberBandHandler]);
+    // maxGraph's svg is an in-flow element, which paints below the positioned page sheet. Lift it above the sheet.
+    const svg = container.querySelector(':scope > svg') as SVGElement | null;
+    if (svg) Object.assign(svg.style, { position: 'absolute', zIndex: '1', overflow: 'visible' });
+    this.overlay = document.createElement('div');
+    this.overlay.style.cssText = 'position:absolute;left:0;top:0;pointer-events:none;z-index:5;';
+    container.appendChild(this.overlay);
+
+    const g = this.graph;
+    g.setPanning(true);
+    g.setCellsCloneable(false);
+    g.setConnectable(false);
+    g.setAllowDanglingEdges(true);
+    g.setDisconnectOnMove(false);
+    g.setHtmlLabels(false);
+    g.setGridEnabled(true);
+    g.setEnterStopsCellEditing(false);
+    g.view.setTranslate(MARGIN_PT, MARGIN_PT);
+    g.view.scale = DEFAULT_SCALE;
+    const panning = g.getPlugin('PanningHandler') as { isForcePanningEvent: (me: InternalMouseEvent) => boolean; useLeftButtonForPanning: boolean } | undefined;
+    if (panning) panning.isForcePanningEvent = me => this.space || (me.getEvent() as MouseEvent).button === 1;
+
+    const selectionHandler = g.getPlugin('SelectionHandler') as unknown as { guidesEnabled: boolean } | undefined;
+    if (selectionHandler) selectionHandler.guidesEnabled = true; // alignment guides while moving
+    this.installEditRedirects();
+    installGestureHooks(g);
+    setGestureSink(n => { if (!this.projecting) cb.onGesture(n); });
+
+    g.getSelectionModel().addListener(InternalEvent.CHANGE, () => { if (!this.projecting) cb.onSelection(this.getSelection()); });
+    g.addMouseListener({
+      mouseDown: (_s: EventSource, me: InternalMouseEvent) => this.mouseDown(me),
+      mouseMove: (_s: EventSource, me: InternalMouseEvent) => this.mouseMove(me),
+      mouseUp: (_s: EventSource, me: InternalMouseEvent) => this.mouseUp(me),
+    });
+
+    const onScroll = () => cb.onViewport(this.getViewport());
+    container.addEventListener('scroll', onScroll);
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      this.setZoom(this.graph.view.scale * Math.pow(1.0015, -e.deltaY), { x: e.clientX, y: e.clientY });
+    };
+    container.addEventListener('wheel', onWheel, { passive: false });
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && !(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLTextAreaElement)) this.space = true;
+      if (e.key === 'Escape') { this.graph.escape(e); this.connectSource = null; this.drawConnectLine(null); }
+    };
+    const onKeyUp = (e: KeyboardEvent) => { if (e.code === 'Space') this.space = false; };
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup', onKeyUp);
+    this.cleanups.push(
+      () => container.removeEventListener('scroll', onScroll), () => container.removeEventListener('wheel', onWheel),
+      () => document.removeEventListener('keydown', onKeyDown), () => document.removeEventListener('keyup', onKeyUp),
+    );
+    this.layoutWorld();
+  }
+
+  // ------------------------------------------------------------------ edits become intents
+  private installEditRedirects(): void {
+    const g = this.graph as unknown as Record<string, unknown>;
+    const idOf = (c: Cell) => c.getId() ?? '';
+    const emit = this.cb.onIntent.bind(this.cb);
+    const live = () => !this.projecting && !this.disposed;
+
+    g.moveCells = (cells: Cell[], dx: number, dy: number) => {
+      if (live() && (dx !== 0 || dy !== 0)) emit({ type: 'move', ids: cells.map(idOf), dx, dy });
+      return cells;
+    };
+    g.resizeCell = (cell: Cell, bounds: Rect) => {
+      if (live()) emit({ type: 'resize', id: idOf(cell), bounds: { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height } });
+      return cell;
+    };
+    g.labelChanged = (cell: Cell, value: unknown) => {
+      if (live()) emit({ type: 'text', id: idOf(cell), value: typeof value === 'string' ? value : String((value as { textContent?: string })?.textContent ?? value ?? '') });
+      return cell;
+    };
+
+    // Handler-level apply points (prototype patches are global, so route through the live adapter).
+    const adapter = this;
+    (VertexHandler.prototype as unknown as Record<string, unknown>).rotateCell = function (this: { state: { cell: Cell } }, cell: Cell, angle: number, parent?: Cell) {
+      if (!parent && angle !== 0 && adapter.activeFor(this)) emit({ type: 'rotate', id: idOf(cell), deltaDeg: angle });
+    };
+    const edgeProto = EdgeHandler.prototype as unknown as Record<string, unknown>;
+    edgeProto.changePoints = function (this: object, edge: Cell, points: Point[]) {
+      if (adapter.activeFor(this)) emit({ type: 'bend', id: idOf(edge), waypoints: points.map(p => ({ x: p.x, y: p.y })) });
+      return edge;
+    };
+    edgeProto.connect = function (this: { isSource: boolean }, edge: Cell, terminal: Cell | null, isSource: boolean) {
+      if (adapter.activeFor(this) && terminal) emit({ type: 'reconnect', id: idOf(edge), end: isSource ? 'from' : 'to', elementId: idOf(terminal) });
+      return edge;
+    };
+    edgeProto.changeTerminalPoint = function (this: object, edge: Cell, point: Point, isSource: boolean) {
+      if (adapter.activeFor(this)) emit({ type: 'reconnect', id: idOf(edge), end: isSource ? 'from' : 'to', point: { x: point.x, y: point.y } });
+      return edge;
+    };
+  }
+
+  private activeFor(handler: object): boolean {
+    const h = handler as { graph?: Graph };
+    return !this.disposed && !this.projecting && h.graph === this.graph;
+  }
+
+  // ------------------------------------------------------------------ projection
+  project(snapshot: Snapshot, pageId?: string): Result<void> {
+    if (this.disposed) return ok(undefined);
+    const page = pageOf(snapshot, pageId);
+    const selected = this.getSelection();
+    this.projecting = true;
+    const model = this.graph.getDataModel();
+    model.beginUpdate();
+    try {
+      this.pageWidth = page.widthPt;
+      this.pageHeight = page.heightPt;
+      this.graph.setGridSize(page.grid.spacingPt);
+      this.graph.setGridEnabled(page.grid.snap); // the preview snaps like the committed result: the planner owns the final value
+      this.paintSheet(page.background, page.grid);
+
+      const wanted = new Map<string, Element>();
+      for (const e of page.elements) if (e.kind !== 'group') wanted.set(e.id, e);
+      const parent = this.graph.getDefaultParent();
+
+      for (const child of [...parent.getChildren()]) {
+        const id = child.getId();
+        if (id && !wanted.has(id)) { model.remove(child); this.shown.delete(id); }
+      }
+      const byZ = [...wanted.values()].sort((a, b) => a.zIndex - b.zIndex);
+      for (const el of byZ) if (el.kind !== 'connector' && el.kind !== 'group') this.upsertVertex(el, page.layers);
+      for (const el of byZ) if (el.kind === 'connector') this.upsertEdge(el, page.layers);
+
+      // Stacking follows zIndex: vertices and connectors are interleaved by it.
+      byZ.forEach((el, i) => {
+        const cell = model.getCell(el.id);
+        if (cell && parent.getChildAt(i) !== cell) model.add(parent, cell, i);
+      });
+    } finally {
+      model.endUpdate();
+      this.projecting = false;
+    }
+    this.restoreSelection(selected);
+    this.layoutWorld();
+    return ok(undefined);
+  }
+
+  private restoreSelection(ids: string[]): void {
+    const model = this.graph.getDataModel();
+    const cells = ids.map(id => model.getCell(id)).filter((c): c is Cell => !!c);
+    this.projecting = true;
+    try { this.graph.setSelectionCells(cells); } finally { this.projecting = false; }
+  }
+
+  private keyFor(el: Element, state: { visible: boolean; locked: boolean }): string {
+    return canonicalSerialize({ el, state, asset: el.kind === 'image' ? this.assetUrl(el.assetId) : null });
+  }
+
+  private upsertVertex(el: Exclude<Element, { kind: 'connector' } | { kind: 'group' }>, layers: readonly import('../contracts/generated').Layer[]): void {
+    const model = this.graph.getDataModel();
+    const state = effectiveState(el, layers);
+    const key = this.keyFor(el, state);
+    let cell = model.getCell(el.id);
+    if (cell && this.shown.get(el.id) === key) return;
+    const style = vertexStyle(el, state.locked, this.assetUrl);
+    const value = labelOf(el);
+    if (!cell) {
+      cell = new Cell(value, new Geometry(el.bounds.x, el.bounds.y, el.bounds.width, el.bounds.height), style);
+      cell.setVertex(true);
+      cell.setId(el.id);
+      model.add(this.graph.getDefaultParent(), cell);
+    } else {
+      model.setGeometry(cell, new Geometry(el.bounds.x, el.bounds.y, el.bounds.width, el.bounds.height));
+      model.setStyle(cell, style);
+      model.setValue(cell, value);
+    }
+    model.setVisible(cell, state.visible);
+    this.shown.set(el.id, key);
+  }
+
+  private upsertEdge(el: Extract<Element, { kind: 'connector' }>, layers: readonly import('../contracts/generated').Layer[]): void {
+    const model = this.graph.getDataModel();
+    const state = effectiveState(el, layers);
+    const key = this.keyFor(el, state) + [el.from.elementId, el.to.elementId].map(id => (id ? this.shown.get(id) ?? '' : '')).join('|');
+    let cell = model.getCell(el.id);
+    if (cell && this.shown.get(el.id) === key) return;
+    const geo = new Geometry();
+    geo.relative = true;
+    geo.points = el.waypoints.map(p => new Point(p.x, p.y));
+    if (el.from.glue === 'none' && el.from.point) geo.setTerminalPoint(new Point(el.from.point.x, el.from.point.y), true);
+    if (el.to.glue === 'none' && el.to.point) geo.setTerminalPoint(new Point(el.to.point.x, el.to.point.y), false);
+    const style = edgeStyle(el, state.locked);
+    if (!cell) {
+      cell = new Cell(labelOf(el), geo, style);
+      cell.setEdge(true);
+      cell.setId(el.id);
+      model.add(this.graph.getDefaultParent(), cell);
+    } else {
+      model.setGeometry(cell, geo);
+      model.setStyle(cell, style);
+      model.setValue(cell, labelOf(el));
+    }
+    model.setTerminal(cell, el.from.glue !== 'none' && el.from.elementId ? model.getCell(el.from.elementId) : null, true);
+    model.setTerminal(cell, el.to.glue !== 'none' && el.to.elementId ? model.getCell(el.to.elementId) : null, false);
+    model.setVisible(cell, state.visible);
+    this.shown.set(el.id, key);
+  }
+
+  // ------------------------------------------------------------------ page sheet, grid and zoom
+  private paintSheet(background: import('../contracts/generated').Paint, grid: { visible: boolean; spacingPt: number }): void {
+    const s = this.graph.view.scale;
+    const sheet = this.sheet;
+    sheet.style.background = background.kind === 'solid' ? background.colour : '#ffffff';
+    sheet.style.backgroundImage = grid.visible
+      ? 'radial-gradient(circle, rgba(100,116,139,.55) 0.9px, transparent 1.1px)'
+      : 'none';
+    this.gridSpacing = grid.spacingPt;
+    sheet.style.backgroundSize = `${grid.spacingPt * s}px ${grid.spacingPt * s}px`;
+    sheet.dataset.grid = grid.visible ? 'on' : 'off';
+  }
+
+  private layoutWorld(): void {
+    const s = this.graph.view.scale;
+    this.world.style.width = `${(this.pageWidth + MARGIN_PT * 2) * s}px`;
+    this.world.style.height = `${(this.pageHeight + MARGIN_PT * 2) * s}px`;
+    Object.assign(this.sheet.style, { left: `${MARGIN_PT * s}px`, top: `${MARGIN_PT * s}px`, width: `${this.pageWidth * s}px`, height: `${this.pageHeight * s}px` });
+    this.sheet.style.backgroundSize = `${this.gridSpacing * s}px ${this.gridSpacing * s}px`;
+    this.cb.onViewport(this.getViewport());
+  }
+  private gridSpacing = 14.17;
+
+  setZoom(scale: number, anchorClient?: { x: number; y: number }): void {
+    const next = Math.min(8, Math.max(0.1, scale));
+    const c = this.container;
+    const rect = c.getBoundingClientRect();
+    const ax = anchorClient ? anchorClient.x - rect.left : c.clientWidth / 2;
+    const ay = anchorClient ? anchorClient.y - rect.top : c.clientHeight / 2;
+    const old = this.graph.view.scale;
+    const modelX = (c.scrollLeft + ax) / old - MARGIN_PT;
+    const modelY = (c.scrollTop + ay) / old - MARGIN_PT;
+    this.graph.view.setScale(next);
+    this.layoutWorld();
+    c.scrollLeft = (modelX + MARGIN_PT) * next - ax;
+    c.scrollTop = (modelY + MARGIN_PT) * next - ay;
+    this.cb.onViewport(this.getViewport());
+  }
+
+  zoomToFit(): void {
+    const c = this.container;
+    const s = Math.min(c.clientWidth / (this.pageWidth + MARGIN_PT * 2), c.clientHeight / (this.pageHeight + MARGIN_PT * 2));
+    this.graph.view.setScale(s);
+    this.layoutWorld();
+    c.scrollLeft = 0;
+    c.scrollTop = 0;
+    this.cb.onViewport(this.getViewport());
+  }
+
+  getViewport(): ViewportInfo {
+    return {
+      scale: this.graph.view.scale, scrollLeft: this.container.scrollLeft, scrollTop: this.container.scrollTop,
+      marginPt: MARGIN_PT, pageWidthPt: this.pageWidth, pageHeightPt: this.pageHeight,
+    };
+  }
+
+  // ------------------------------------------------------------------ selection and tools
+  getSelection(): string[] {
+    return (this.graph.getSelectionCells() as Cell[]).map(c => c.getId()).filter((id): id is string => !!id);
+  }
+
+  setSelection(ids: string[]): void { this.restoreSelection(ids); }
+
+  setTool(tool: Tool): void {
+    this.tool = tool;
+    const g = this.graph;
+    const select = tool.kind === 'select';
+    g.setCellsSelectable(select);
+    g.setCellsMovable(select);
+    g.setCellsResizable(select);
+    g.setCellsEditable(select);
+    if (!select) g.clearSelection();
+    this.connectSource = null;
+    this.drawConnectLine(null);
+    this.container.style.cursor = select ? '' : 'crosshair';
+  }
+
+  private toModel(me: InternalMouseEvent): Point {
+    const e = me.getEvent() as MouseEvent;
+    const rect = this.container.getBoundingClientRect();
+    const s = this.graph.view.scale;
+    return new Point((e.clientX - rect.left + this.container.scrollLeft) / s - MARGIN_PT, (e.clientY - rect.top + this.container.scrollTop) / s - MARGIN_PT);
+  }
+
+  private mouseDown(me: InternalMouseEvent): void {
+    if (this.tool.kind === 'connector') {
+      const c = me.getCell();
+      this.connectSource = c && c.isVertex() ? c : null;
+      if (this.connectSource) me.consume();
+    }
+  }
+
+  private mouseMove(me: InternalMouseEvent): void {
+    if (this.tool.kind === 'connector' && this.connectSource) {
+      const state = this.graph.view.getState(this.connectSource);
+      if (state) {
+        const e = me.getEvent() as MouseEvent;
+        const rect = this.container.getBoundingClientRect();
+        this.drawConnectLine({ x1: state.getCenterX(), y1: state.getCenterY(), x2: e.clientX - rect.left + this.container.scrollLeft, y2: e.clientY - rect.top + this.container.scrollTop });
+      }
+    }
+  }
+
+  private mouseUp(me: InternalMouseEvent): void {
+    if (this.tool.kind === 'connector') {
+      const src = this.connectSource;
+      this.connectSource = null;
+      this.drawConnectLine(null);
+      const target = me.getCell();
+      if (src && target && target.isVertex() && target !== src) this.cb.onIntent({ type: 'connect', from: src.getId()!, to: target.getId()! });
+    } else if (this.tool.kind === 'place' && !me.isConsumed() && (me.getEvent() as MouseEvent).button === 0) {
+      this.cb.onPlace(this.tool.what, this.toModel(me));
+    }
+  }
+
+  private drawConnectLine(l: { x1: number; y1: number; x2: number; y2: number } | null): void {
+    this.overlay.innerHTML = '';
+    if (!l) return;
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('width', String(this.container.scrollWidth));
+    svg.setAttribute('height', String(this.container.scrollHeight));
+    const line = document.createElementNS(ns, 'line');
+    for (const [k, v] of Object.entries({ x1: l.x1, y1: l.y1, x2: l.x2, y2: l.y2, stroke: '#2563eb', 'stroke-width': 2, 'stroke-dasharray': '6 4' })) line.setAttribute(k, String(v));
+    svg.appendChild(line);
+    this.overlay.appendChild(svg);
+  }
+
+  // ------------------------------------------------------------------ test support (read-only)
+  centerOf(id: string): { x: number; y: number } {
+    const cell = this.graph.getDataModel().getCell(id);
+    const state = cell && this.graph.view.getState(cell);
+    if (!cell || !state) throw new Error(`no cell ${id}`);
+    const rect = this.container.getBoundingClientRect();
+    if (cell.isEdge()) {
+      const pts = state.absolutePoints as Array<Point | null>;
+      const mid = pts[Math.floor(pts.length / 2)] ?? pts[0]!;
+      const a = pts[Math.floor((pts.length - 1) / 2)] ?? mid;
+      return { x: rect.left + ((a!.x + mid!.x) / 2) - this.container.scrollLeft, y: rect.top + ((a!.y + mid!.y) / 2) - this.container.scrollTop };
+    }
+    return { x: rect.left + state.getCenterX() - this.container.scrollLeft, y: rect.top + state.getCenterY() - this.container.scrollTop };
+  }
+
+  handleOf(id: string, which: 'rotate' | 'se' | 'bend'): { x: number; y: number } {
+    const cell = this.graph.getDataModel().getCell(id);
+    const handler = cell && ((this.graph.getPlugin('SelectionCellsHandler') as SelectionCellsHandler).getHandler(cell) as any);
+    if (!handler) throw new Error(`no handler for ${id}: select it first`);
+    const shape = which === 'rotate' ? handler.rotationShape : which === 'se' ? handler.sizers[7] : handler.bends[1];
+    if (!shape) throw new Error(`no ${which} handle on ${id}`);
+    const b = shape.bounds;
+    const rect = this.container.getBoundingClientRect();
+    return { x: rect.left + b.x + b.width / 2 - this.container.scrollLeft, y: rect.top + b.y + b.height / 2 - this.container.scrollTop };
+  }
+
+  /** Connector routes and visual bounds as maxGraph resolved them for the snapshot just projected. Derived data: never written back. */
+  readProjection(snapshot: Snapshot): import('../contracts/generated').Projection {
+    const connectors: Record<string, { routePoints: Array<{ x: number; y: number }>; visualBounds: { x: number; y: number; width: number; height: number } }> = {};
+    const s = this.graph.view.scale;
+    const t = this.graph.view.translate;
+    const page = pageOf(snapshot);
+    for (const el of page.elements) {
+      if (el.kind !== 'connector') continue;
+      const cell = this.graph.getDataModel().getCell(el.id);
+      const state = cell && this.graph.view.getState(cell);
+      const pts = ((state && state.absolutePoints) ?? []).filter((p): p is Point => !!p).map(p => ({ x: p.x / s - t.x, y: p.y / s - t.y }));
+      if (!pts.length) continue;
+      const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+      const x = Math.min(...xs), y = Math.min(...ys);
+      connectors[el.id] = { routePoints: pts, visualBounds: { x, y, width: Math.max(...xs) - x, height: Math.max(...ys) - y } };
+    }
+    return { documentId: snapshot.documentId, sessionId: snapshot.sessionId, revision: snapshot.revision, connectors, groupVisualBounds: {} };
+  }
+
+  sheetRect(): { x: number; y: number; width: number; height: number } {
+    const r = this.sheet.getBoundingClientRect();
+    return { x: r.left, y: r.top, width: r.width, height: r.height };
+  }
+
+  startTextEdit(id: string): void {
+    const cell = this.graph.getDataModel().getCell(id);
+    if (cell) this.graph.startEditingAtCell(cell);
+  }
+
+  dispose(): void {
+    this.disposed = true;
+    setGestureSink(null);
+    for (const c of this.cleanups) c();
+    this.graph.destroy();
+    this.world.remove();
+    this.overlay.remove();
+  }
+}

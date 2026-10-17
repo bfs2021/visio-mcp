@@ -191,6 +191,24 @@
       "type": "object", "additionalProperties": false, "required": ["op", "asset"],
       "properties": { "op": { "const": "registerAsset" }, "asset": { "$ref": "document.schema.json#/$defs/Asset" } }
     },
+    "GridPatch": {
+      "type": "object", "additionalProperties": false, "minProperties": 1,
+      "properties": { "visible": { "type": "boolean" }, "spacingPt": { "type": "number", "exclusiveMinimum": 0 }, "snap": { "type": "boolean" } }
+    },
+    "PagePatch": {
+      "type": "object", "additionalProperties": false, "minProperties": 1,
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "widthPt": { "type": "number", "exclusiveMinimum": 0, "maximum": 14400 },
+        "heightPt": { "type": "number", "exclusiveMinimum": 0, "maximum": 14400 },
+        "background": { "$ref": "document.schema.json#/$defs/Paint" },
+        "grid": { "$ref": "#/$defs/GridPatch" }
+      }
+    },
+    "SetPage": {
+      "type": "object", "additionalProperties": false, "required": ["op", "patch"],
+      "properties": { "op": { "const": "setPage" }, "pageId": { "$ref": "document.schema.json#/$defs/Uuid" }, "patch": { "$ref": "#/$defs/PagePatch" } }
+    },
     "Operation": {
       "oneOf": [
         { "$ref": "#/$defs/CreateShape" },
@@ -202,7 +220,8 @@
         { "$ref": "#/$defs/Resize" },
         { "$ref": "#/$defs/Rotate" },
         { "$ref": "#/$defs/Delete" },
-        { "$ref": "#/$defs/RegisterAsset" }
+        { "$ref": "#/$defs/RegisterAsset" },
+        { "$ref": "#/$defs/SetPage" }
       ],
       "x-discriminator": "op"
     }

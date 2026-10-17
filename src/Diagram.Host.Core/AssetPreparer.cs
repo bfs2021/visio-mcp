@@ -7,7 +7,7 @@ using Diagram.Core.Contracts;
 namespace Diagram.Host.Core;
 
 /// <summary>A validated upload: the schema-owned reference plus what sanitising changed, so the user can be told.</summary>
-public sealed record PreparedUpload(PreparedAssetRef Ref, IReadOnlyList<string> Notes);
+public sealed record PreparedUpload(PreparedAssetRef Ref, IReadOnlyList<string> Notes, int Width, int Height);
 
 /// <summary>Reads raster dimensions from the header alone. Pixel data is never decoded here.</summary>
 public static class RasterHeader
@@ -94,7 +94,8 @@ public sealed class AssetPreparer
         {
             Id = $"asset:{Slug(display)}~{sha}", Name = display, MimeType = mime, Sha256 = sha, Tags = [], Provenance = "user-import",
         };
-        return Result<PreparedUpload>.Ok(new PreparedUpload(new PreparedAssetRef { PreparationId = preparationId, Asset = asset, ExpiresAt = expires.ToString("O") }, notes));
+        var (w, h) = Dimensions(mime, final);
+        return Result<PreparedUpload>.Ok(new PreparedUpload(new PreparedAssetRef { PreparationId = preparationId, Asset = asset, ExpiresAt = expires.ToString("O") }, notes, w, h));
     }
 
     /// <summary>Validates and, for SVG, sanitises bytes that are already in memory (used when opening a file). Does not store them.</summary>
@@ -119,6 +120,30 @@ public sealed class AssetPreparer
     /// <summary>The blob hash for a live preparation id, or null if it is unknown or expired. Callers never see a path.</summary>
     public string? Resolve(string preparationId) =>
         preparations.TryGetValue(preparationId, out var p) && p.Expires > now() ? p.Sha : null;
+
+    /// <summary>Natural size in CSS pixels: header dimensions for rasters, width/height or viewBox for SVG, else 100 x 100.</summary>
+    static (int Width, int Height) Dimensions(string mime, byte[] bytes)
+    {
+        if (mime != "image/svg+xml") return RasterHeader.Read(mime, bytes) is { } d ? (d.Width, d.Height) : (100, 100);
+        var head = System.Text.Encoding.UTF8.GetString(bytes, 0, Math.Min(bytes.Length, 2048));
+        static double? Num(string text, string attr)
+        {
+            var m = Regex.Match(text, "\\b" + attr + "=\"([0-9.]+)(px)?\"");
+            return m.Success && double.TryParse(m.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : null;
+        }
+        var w = Num(head, "width");
+        var h = Num(head, "height");
+        if (w is null || h is null)
+        {
+            var vb = Regex.Match(head, "viewBox=\"\\s*[-0-9.]+[ ,]+[-0-9.]+[ ,]+([0-9.]+)[ ,]+([0-9.]+)");
+            if (vb.Success)
+            {
+                w ??= double.Parse(vb.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
+                h ??= double.Parse(vb.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture);
+            }
+        }
+        return ((int)Math.Clamp(w ?? 100, 1, 16384), (int)Math.Clamp(h ?? 100, 1, 16384));
+    }
 
     static async Task<Result<byte[]>> ReadBounded(Stream stream, string mime, CancellationToken ct)
     {

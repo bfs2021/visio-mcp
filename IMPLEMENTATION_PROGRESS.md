@@ -2,7 +2,7 @@
 
 Updated: 2026-10-17 (Europe/London).
 
-Status: **I00 to I05 (M0) done; M1 recommended to start with conditions, see [docs/m0/decision.md](docs/m0/decision.md)**; all other packages not started. This file splits future implementation into bounded work
+Status: **M0 (I00 to I05) and M1 (I10, I11, I12) done, see [docs/m1/results.md](docs/m1/results.md)**; I20 onwards not started. This file splits future implementation into bounded work
 packages. It is a progress and dependency register, not a claim that feasibility
 spikes, builds, tests or Windows acceptance have run.
 
@@ -23,9 +23,9 @@ write-capable delegation or have Claude return reviewable patches for Codex to a
 | I03 | M0: stdio MCP → pipe → test host probe | Claude design / Codex execution | I00 | done: PASS (second-user check NOT RUN) | `docs/m0/evidence/G3/report.md`; xunit 14/14 |
 | I04 | M0: WebView2 → live frontend operation probe | Codex | I00, I02 | done: PASS | `docs/m0/evidence/G4/report.md`; xunit 19/19 |
 | I05 | M0: Windows Visio/Word acceptance and backend decision | Codex + Windows tester | I01–I04 | done: conditional GO recommended | `docs/m0/results.md`, `results.json`, `decision.md` |
-| I10 | M1: minimal canonical store, transaction engine, inverse history | Codex | I05 | not started | Atomic rollback, revision race, patch preservation tests |
-| I11 | M1: WPF/WebView2 shell and JSON debug save/load | Codex; Claude review | I05, I10 | not started | Startup, ready handshake and file round-trip |
-| I12 | M1: one-page canvas, basic elements and inspector | Codex | I10, I11 | not started | GUI commands use store; glue and undo verified |
+| I10 | M1: minimal canonical store, transaction engine, inverse history | Codex | I05 | done | 115 vitest + 24 C# parity tests; `docs/m1/results.md` |
+| I11 | M1: WPF/WebView2 shell and JSON debug save/load | Codex; Claude review | I05, I10 | done | 69 host + 10 Windows tests; `docs/m1/evidence/I11/editor-in-webview2.png` |
+| I12 | M1: one-page canvas, basic elements and inspector | Codex | I10, I11 | done | 9 Playwright tests; `docs/m1/evidence/I12/editor.png` |
 | I20 | M2: full model and operations, groups, arrange, target resolution | Codex | I12 | not started | Every mutation tested with unaffected-object assertions |
 | I21 | M2: DrawScript parser/compiler and transaction drawer | Codex; Claude review | I20 | not started | Script/API equivalence and source error locations |
 | I30 | M3: production IPC routing and stdio MCP tools | Codex; Claude review | I11, I20, I21 | not started | Live GUI control, retry/conflict/session isolation |
@@ -70,6 +70,11 @@ built test-first and pass; the user ran the Visio and Word checks by hand. G1 pa
 Not probed and carried to M4: layer hide/lock/no-print, alpha fill, contain-fit image, hidden shape, document identity, copy/paste identity
 collisions, group angle normalisation, orthogonal connectors with user waypoints. Not run: second-Windows-user pipe refusal. Details in
 [results.md](docs/m0/results.md); the go/no-go is [decision.md](docs/m0/decision.md) (recommended GO with conditions, awaiting owner confirmation).
+
+M1 (2026-10-17, same Windows machine): I10 to I12 built test-first. The engine, bridge and canvas logic have 115 vitest tests, the editor has 9
+browser tests, the host has 69 C# tests and the real WPF/WebView2 shell has 10. Two bugs were found only by running the real thing (a bundle import
+that broke inside WebView2, and shapes painted underneath the page sheet); both are fixed and now covered. Known gaps are listed in
+[docs/m1/results.md](docs/m1/results.md). The M0 second-user pipe check remains open.
 
 For each completed package record: exact dependency
 versions, commands, environment, fixture paths, observed results and remaining

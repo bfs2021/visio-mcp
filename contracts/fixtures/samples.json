@@ -77,7 +77,8 @@
       { "op": "resize", "target": "a", "bounds": { "width": 20 } },
       { "op": "rotate", "target": "a", "deltaDeg": 15, "pivot": { "xPt": 1, "yPt": 1 } },
       { "op": "delete", "target": "a", "withConnectors": true },
-      { "op": "registerAsset", "asset": { "id": "asset:new", "name": "New", "mimeType": "image/svg+xml", "sha256": "0000000000000000000000000000000000000000000000000000000000000002", "tags": [] } }
+      { "op": "registerAsset", "asset": { "id": "asset:new", "name": "New", "mimeType": "image/svg+xml", "sha256": "0000000000000000000000000000000000000000000000000000000000000002", "tags": [] } },
+      { "op": "setPage", "pageId": "00000000-0000-4000-8000-0000000000e1", "patch": { "name": "Renamed", "widthPt": 600, "grid": { "visible": false, "snap": false, "spacingPt": 10 }, "background": { "kind": "none" } } }
     ]
   },
   "ScriptRequest": {
