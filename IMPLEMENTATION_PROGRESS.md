@@ -1,8 +1,8 @@
 # Implementation progress
 
-Updated: 2026-10-02 (Europe/London).
+Updated: 2026-10-17 (Europe/London).
 
-Status: **I00 implemented and reviewed by Codex (approve with corrections; corrections applied)**; all other packages not started. This file splits future implementation into bounded work
+Status: **I00 to I05 (M0) done; M1 recommended to start with conditions, see [docs/m0/decision.md](docs/m0/decision.md)**; all other packages not started. This file splits future implementation into bounded work
 packages. It is a progress and dependency register, not a claim that feasibility
 spikes, builds, tests or Windows acceptance have run.
 
@@ -18,11 +18,11 @@ write-capable delegation or have Claude return reviewable patches for Codex to a
 | ID | Milestone / package | Proposed implementer | Depends on | Status | Exit evidence |
 |---|---|---|---|---|---|
 | I00 | Freeze shared contracts, dependency versions/licences for isolated probes | Claude (implemented); Codex review | Design review | done (Codex review 68fcf783 corrections applied) | `spikes/contract-tests` 16/16 pass; versions in `docs/m0/dependencies.json` |
-| I01 | M0: OfficeIMO editable VSDX round-trip harness | Claude design / Codex execution | I00 | not started | Generated and Visio-saved fixtures; glue/IDs/images verified |
-| I02 | M0: maxGraph interaction and PNG probe | Codex | I00 | not started | Move/resize/connect/image and render demonstrated |
-| I03 | M0: stdio MCP → pipe → test host probe | Claude design / Codex execution | I00 | not started | Tool result, rejection, disconnect and framing evidence |
-| I04 | M0: WebView2 → live frontend operation probe | Codex | I00, I02 | not started | Visible change plus matching document revision |
-| I05 | M0: Windows Visio/Word acceptance and backend decision | Codex + Windows tester | I01–I04 | not started | All four probes pass; Visio/Word manual evidence |
+| I01 | M0: OfficeIMO editable VSDX round-trip harness | Claude design / Codex execution | I00 | done: PASS with backend caveat | `docs/m0/evidence/G1/report.md`; `spikes/vsdx.tests` 10/10 on generated and Visio-saved v7 |
+| I02 | M0: maxGraph interaction and PNG probe | Codex | I00 | done: PASS | `docs/m0/evidence/G2/report.md`; Playwright 3/3 |
+| I03 | M0: stdio MCP → pipe → test host probe | Claude design / Codex execution | I00 | done: PASS (second-user check NOT RUN) | `docs/m0/evidence/G3/report.md`; xunit 14/14 |
+| I04 | M0: WebView2 → live frontend operation probe | Codex | I00, I02 | done: PASS | `docs/m0/evidence/G4/report.md`; xunit 19/19 |
+| I05 | M0: Windows Visio/Word acceptance and backend decision | Codex + Windows tester | I01–I04 | done: conditional GO recommended | `docs/m0/results.md`, `results.json`, `decision.md` |
 | I10 | M1: minimal canonical store, transaction engine, inverse history | Codex | I05 | not started | Atomic rollback, revision race, patch preservation tests |
 | I11 | M1: WPF/WebView2 shell and JSON debug save/load | Codex; Claude review | I05, I10 | not started | Startup, ready handshake and file round-trip |
 | I12 | M1: one-page canvas, basic elements and inspector | Codex | I10, I11 | not started | GUI commands use store; glue and undo verified |
@@ -64,6 +64,12 @@ method; the regression tests went red (1/16) on the old schema, then `npm ci && 
 hashes are in [dependencies.json](docs/m0/dependencies.json); run details in
 [environment.json](docs/m0/environment.json). .NET was not installed, so only npm deps were
 installed; NuGet/.NET entries are pinned from registry metadata, not built.
+
+M0 (2026-10-17, Windows 11, .NET 10.0.402, Node 24.14.1, WebView2 155.0.4283.60, Visio and Word Microsoft 365): I01 to I04 were
+built test-first and pass; the user ran the Visio and Word checks by hand. G1 passes only with post-save patches over OfficeIMO.Visio 3.4.4.
+Not probed and carried to M4: layer hide/lock/no-print, alpha fill, contain-fit image, hidden shape, document identity, copy/paste identity
+collisions, group angle normalisation, orthogonal connectors with user waypoints. Not run: second-Windows-user pipe refusal. Details in
+[results.md](docs/m0/results.md); the go/no-go is [decision.md](docs/m0/decision.md) (recommended GO with conditions, awaiting owner confirmation).
 
 For each completed package record: exact dependency
 versions, commands, environment, fixture paths, observed results and remaining

@@ -1,0 +1,79 @@
+{
+  "description": "Machine-readable M0 gate results (I05). Outcomes: PASS, PARTIAL, FAIL, NOT RUN. Narrative in results.md, decision in decision.md.",
+  "recordedOn": "2026-10-17",
+  "environment": {
+    "os": "Windows 11 Enterprise 10.0.26300",
+    "dotnetSdk": "10.0.402",
+    "node": "24.14.1",
+    "webview2Runtime": "155.0.4283.60",
+    "visio": "Microsoft 365 Plan 2 desktop",
+    "word": "Microsoft 365 desktop",
+    "browserForCanvasProbe": "Playwright Chromium build 1243"
+  },
+  "gates": {
+    "G1": {
+      "outcome": "PASS",
+      "caveat": "Passes only with post-save patches over OfficeIMO.Visio 3.4.4 (connector glue, group formulas, page units, string cells, pictures). OfficeIMO output alone is not usable.",
+      "manualChecker": "Ralph (user), real Visio and Word, 2026-10-16 to 2026-10-17",
+      "fixtures": [
+        "docs/m0/evidence/G1/generated.vsdx",
+        "docs/m0/evidence/G1/visio-saved-v7.vsdx",
+        "docs/m0/evidence/G1/embedded.docx"
+      ],
+      "commands": [
+        "dotnet run --project spikes/vsdx -- --output docs/m0/evidence/G1/generated.vsdx",
+        "dotnet test spikes/vsdx.tests/VsdxProbe.Tests.csproj",
+        "VSDX_SAVED=<copy of visio-saved-v7.vsdx> dotnet test spikes/vsdx.tests/VsdxProbe.Tests.csproj --no-build"
+      ],
+      "tests": { "generated": "10/10", "visioSavedV7": "10/10" },
+      "report": "docs/m0/evidence/G1/report.md",
+      "limitations": [
+        "Change Picture is not offered in this Visio build, so picture replacement was not exercised through the UI",
+        "Connector route probed was straight with glue; an orthogonal connector with user waypoints was not tested in Visio",
+        "Layer hide/lock/no-print behaviour, alpha fill, contain-fit image, hidden shape, document identity, copy/paste identity collisions and group angle normalisation were not probed",
+        "33 degree rotation is asserted on the generated file only; the Visio-saved file was rotated by hand and the rotation assertion is skipped there",
+        "Geometry was not compared to 0.01 pt / 0.01 degrees between generated and Visio-saved files"
+      ]
+    },
+    "G2": {
+      "outcome": "PASS",
+      "tests": "3/3 Playwright",
+      "command": "npm --prefix spikes/canvas run test:browser",
+      "fixtures": ["docs/m0/evidence/G2/canvas.png", "docs/m0/evidence/G2/canonical-state.json"],
+      "manualChecker": "none needed (automated, real mouse events)",
+      "report": "docs/m0/evidence/G2/report.md",
+      "limitations": [
+        "maxGraph 0.24.0 throws on Escape during a rotate drag; worked around in the probe",
+        "begin/cancel gesture events are derived from handler internals, not an official maxGraph API",
+        "maxGraph 0.25.0 not evaluated"
+      ]
+    },
+    "G3": {
+      "outcome": "PASS",
+      "notRun": ["second Windows user refused"],
+      "tests": "14/14 xunit",
+      "command": "dotnet test spikes/ipc.tests/IpcProbe.Tests.csproj",
+      "fixtures": ["docs/m0/evidence/G3/mcp-transcript.txt", "docs/m0/evidence/G3/measurements.json"],
+      "manualChecker": "none needed (real MCP client over stdio)",
+      "report": "docs/m0/evidence/G3/report.md",
+      "limitations": [
+        "ACL and same-user peer checks verified; refusal of a different user needs a second account and was not run",
+        "Pipe-name collision behaviour implemented but not separately tested",
+        "16-outstanding-call and 8-client limits not exercised"
+      ]
+    },
+    "G4": {
+      "outcome": "PASS",
+      "tests": "19/19 xunit (real WebView2)",
+      "command": "dotnet test spikes/webview.tests/WebViewProbe.Tests.csproj",
+      "fixtures": ["docs/m0/evidence/G4/webview-after-apply.png", "docs/m0/evidence/G4/measurements.json"],
+      "manualChecker": "none needed (real WebView2 window, off-screen)",
+      "report": "docs/m0/evidence/G4/report.md",
+      "limitations": [
+        "Only render-process failure was exercised, not browser-process failure",
+        "Dispatcher behaviour under a slow page not measured"
+      ]
+    }
+  },
+  "contractTests": { "outcome": "PASS", "tests": "16/16 vitest", "command": "npm --prefix spikes/contract-tests test" }
+}

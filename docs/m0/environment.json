@@ -1,5 +1,5 @@
 {
-  "description": "Environments in which M0 probe commands actually ran. I05 adds evidence links. A gate with no Windows/Office entry is NOT RUN, not PASS.",
+  "description": "Environments in which M0 probe commands actually ran. I05 added the evidence links. A gate with no Windows/Office entry is NOT RUN, not PASS.",
   "runs": [
     {
       "package": "I00",
@@ -43,10 +43,147 @@
           "result": "GREEN: 16 passed / 16 from clean lockfile install"
         }
       ]
+    },
+    {
+      "os": "Windows 11 Enterprise 10.0.26300",
+      "dotnet": "10.0.402",
+      "node": "24.14.1",
+      "webview2Runtime": "155.0.4283.60",
+      "visio": "Microsoft 365 Plan 2",
+      "word": "Microsoft 365",
+      "date": "2026-10-16 to 2026-10-17",
+      "package": "I01",
+      "workingDirectory": "spikes",
+      "lockfiles": [
+        "spikes/vsdx/packages.lock.json",
+        "spikes/vsdx.tests/packages.lock.json"
+      ],
+      "evidence": [
+        "docs/m0/evidence/G1/report.md",
+        "docs/m0/evidence/G1/generated.vsdx",
+        "docs/m0/evidence/G1/visio-saved-v7.vsdx",
+        "docs/m0/evidence/G1/embedded.docx"
+      ],
+      "steps": [
+        {
+          "command": "dotnet test spikes/vsdx.tests/VsdxProbe.Tests.csproj",
+          "result": "GREEN 10/10 on generated file"
+        },
+        {
+          "command": "VSDX_SAVED=<copy of visio-saved-v7.vsdx> dotnet test spikes/vsdx.tests --no-build",
+          "result": "GREEN 10/10"
+        }
+      ],
+      "limitations": [
+        "Manual Visio and Word checks by the user on one machine",
+        "Visio-saved files v1 to v7 kept as evidence; v1 to v5 are failure or intermediate evidence"
+      ]
+    },
+    {
+      "os": "Windows 11 Enterprise 10.0.26300",
+      "dotnet": "10.0.402",
+      "node": "24.14.1",
+      "webview2Runtime": "155.0.4283.60",
+      "visio": "Microsoft 365 Plan 2",
+      "word": "Microsoft 365",
+      "date": "2026-10-16 to 2026-10-17",
+      "package": "I02",
+      "workingDirectory": "spikes",
+      "lockfiles": [
+        "spikes/canvas/package-lock.json"
+      ],
+      "evidence": [
+        "docs/m0/evidence/G2/report.md",
+        "docs/m0/evidence/G2/canvas.png",
+        "docs/m0/evidence/G2/canonical-state.json"
+      ],
+      "steps": [
+        {
+          "command": "npm --prefix spikes/canvas run test:browser",
+          "result": "GREEN 3/3 (red first: web server had no page)"
+        }
+      ],
+      "limitations": [
+        "Headless Chromium 1243 via Playwright; maxGraph Escape-during-rotate defect worked around"
+      ]
+    },
+    {
+      "os": "Windows 11 Enterprise 10.0.26300",
+      "dotnet": "10.0.402",
+      "node": "24.14.1",
+      "webview2Runtime": "155.0.4283.60",
+      "visio": "Microsoft 365 Plan 2",
+      "word": "Microsoft 365",
+      "date": "2026-10-16 to 2026-10-17",
+      "package": "I03",
+      "workingDirectory": "spikes",
+      "lockfiles": [
+        "spikes/ipc/packages.lock.json",
+        "spikes/mcp/packages.lock.json",
+        "spikes/ipc.tests/packages.lock.json"
+      ],
+      "evidence": [
+        "docs/m0/evidence/G3/report.md",
+        "docs/m0/evidence/G3/mcp-transcript.txt",
+        "docs/m0/evidence/G3/measurements.json"
+      ],
+      "steps": [
+        {
+          "command": "dotnet test spikes/ipc.tests/IpcProbe.Tests.csproj",
+          "result": "GREEN 14/14 (red first: did not compile)"
+        }
+      ],
+      "limitations": [
+        "Second-user refusal NOT RUN (one account available)"
+      ]
+    },
+    {
+      "os": "Windows 11 Enterprise 10.0.26300",
+      "dotnet": "10.0.402",
+      "node": "24.14.1",
+      "webview2Runtime": "155.0.4283.60",
+      "visio": "Microsoft 365 Plan 2",
+      "word": "Microsoft 365",
+      "date": "2026-10-16 to 2026-10-17",
+      "package": "I04",
+      "workingDirectory": "spikes",
+      "lockfiles": [
+        "spikes/webview/packages.lock.json",
+        "spikes/webview.tests/packages.lock.json"
+      ],
+      "evidence": [
+        "docs/m0/evidence/G4/report.md",
+        "docs/m0/evidence/G4/webview-after-apply.png",
+        "docs/m0/evidence/G4/measurements.json"
+      ],
+      "steps": [
+        {
+          "command": "dotnet test spikes/webview.tests/WebViewProbe.Tests.csproj",
+          "result": "GREEN 19/19 (red first: did not compile)"
+        }
+      ],
+      "limitations": [
+        "Test window placed off-screen; only renderer failure exercised"
+      ]
+    },
+    {
+      "package": "I05",
+      "date": "2026-10-17",
+      "evidence": [
+        "docs/m0/results.md",
+        "docs/m0/results.json",
+        "docs/m0/decision.md"
+      ],
+      "steps": [
+        {
+          "command": "re-ran every probe suite after the final change",
+          "result": "contract 16/16, vsdx 10/10 (generated and v7 copy), canvas 3/3, ipc 14/14, webview 19/19"
+        }
+      ]
     }
   ],
   "windowsAcceptance": {
-    "status": "NOT RUN",
-    "note": "Q1: Windows/Visio/Word machine still to be identified."
+    "status": "PASS for the M0 probes",
+    "note": "G1 to G4 passed on one Windows 11 machine with Visio and Word (Microsoft 365). Desktop acceptance of the production exporter is still I41. See docs/m0/results.md."
   }
 }

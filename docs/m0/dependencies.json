@@ -84,7 +84,7 @@
         "I02",
         "I04"
       ],
-      "status": "pinned only; pre-1.0, API stability is part of what G2 tests"
+      "status": "used by I02/I04 (spikes/canvas/package-lock.json); 0.25.0 exists, not evaluated. One defect found and worked around: Escape during rotate throws (G2 report)"
     },
     {
       "name": "@playwright/test",
@@ -95,7 +95,7 @@
       "usedBy": [
         "I02"
       ],
-      "status": "pinned only; browser build to be recorded by I02 after 'npx playwright install'"
+      "status": "used by I02; Chromium build 1243 installed with npx playwright install chromium"
     },
     {
       "name": "vite",
@@ -106,7 +106,7 @@
         "I00 (transitive, via vitest)",
         "I02"
       ],
-      "status": "installed transitively by spikes/contract-tests/package-lock.json (same integrity); not yet used as I02 build tool"
+      "status": "used by I02/I04 as dev server and bundler (spikes/canvas/package-lock.json)"
     },
     {
       "name": "typescript",
@@ -117,7 +117,7 @@
       "usedBy": [
         "I02"
       ],
-      "status": "pinned only; I00 tests do not typecheck (vitest strips types)"
+      "status": "used by I02 for npm run typecheck (tsc --noEmit)"
     }
   ],
   "nuget": [
@@ -142,7 +142,7 @@
       "usedBy": [
         "I01"
       ],
-      "status": "pinned only; glue/ID/image capability unproven until G1"
+      "status": "used by I01 (spikes/vsdx, lockfile). 3.5.1 evaluated in a scratch folder: no relevant fixes, stay on 3.4.4. G1 passes only with post-save patches (see docs/m0/evidence/G1/report.md)"
     },
     {
       "id": "OfficeIMO.Core",
@@ -152,7 +152,7 @@
       "usedBy": [
         "I01"
       ],
-      "status": "transitive of OfficeIMO.Visio; pinned only"
+      "status": "transitive of OfficeIMO.Visio; restored via spikes/vsdx lockfile"
     },
     {
       "id": "ModelContextProtocol",
@@ -164,7 +164,7 @@
       "usedBy": [
         "I03"
       ],
-      "status": "pinned only"
+      "status": "used by I03/I04 (spikes/mcp, ipc.tests, webview.tests, lockfiles); server and client both exercised"
     },
     {
       "id": "Microsoft.Web.WebView2",
@@ -174,7 +174,7 @@
       "usedBy": [
         "I04"
       ],
-      "status": "pinned only; Evergreen runtime version to be recorded on the Windows machine"
+      "status": "used by I04 (spikes/webview, lockfile); Evergreen runtime 155.0.4283.60 on the test machine"
     },
     {
       "id": "xunit.v3",
@@ -188,7 +188,7 @@
         "I03",
         "I04"
       ],
-      "status": "pinned only"
+      "status": "NOT USED: probes use xunit 2.9.3 (see usedInstead)"
     },
     {
       "id": "xunit.runner.visualstudio",
@@ -202,7 +202,7 @@
         "I03",
         "I04"
       ],
-      "status": "pinned only"
+      "status": "probes use 4.0.1 instead of the pinned 4.0.0 (see usedInstead)"
     },
     {
       "id": "Microsoft.NET.Test.Sdk",
@@ -216,7 +216,22 @@
         "I03",
         "I04"
       ],
-      "status": "pinned only"
+      "status": "probes use 18.11.0 instead of the pinned 18.10.1 (see usedInstead)"
+    },
+    {
+      "id": "System.IO.Hashing",
+      "version": "10.0.0",
+      "usedBy": [
+        "I01"
+      ],
+      "status": "added by I01 for the PNG CRC-32; not part of the original pin list; restored via spikes/vsdx lockfile"
     }
-  ]
+  ],
+  "usedInstead": {
+    "xunit": "2.9.3 (replaces xunit.v3 4.0.1)",
+    "xunit.runner.visualstudio": "4.0.1 (pinned 4.0.0)",
+    "Microsoft.NET.Test.Sdk": "18.11.0 (pinned 18.10.1)",
+    "dotnetSdk": "10.0.402 on the Windows machine (pinned 10.0.401)",
+    "node": "24.14.1 on the Windows machine (pinned 24.21.0; spikes/contract-tests engines >=24.21.0 only warns and its 16 tests pass)"
+  }
 }
