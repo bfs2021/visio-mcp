@@ -41,8 +41,16 @@ export function applyDiff(doc: DiagramDocument, diff: DiffBody, revision: number
   // Upserts.
   for (const pu of diff.upserts.pages) {
     const at = pages.findIndex(p => p.id === pu.page.id);
-    if (at >= 0) pages[at] = { ...pages[at]!, ...pu.page };
-    else {
+    if (at >= 0) {
+      const merged = { ...pages[at]!, ...pu.page };
+      if (pu.index === undefined || pu.index === at) pages[at] = merged;
+      else { // an index on an existing page moves it
+        const copy = pages.slice();
+        copy.splice(at, 1);
+        copy.splice(Math.min(pu.index, copy.length), 0, merged);
+        pages = copy;
+      }
+    } else {
       const page: Page = { ...pu.page, layers: [], elements: [] };
       const copy = pages.slice();
       copy.splice(pu.index === undefined ? copy.length : Math.min(pu.index, copy.length), 0, page);

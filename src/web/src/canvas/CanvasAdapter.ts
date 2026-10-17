@@ -19,7 +19,8 @@ export type Tool = { kind: 'select' } | { kind: 'connector' } | { kind: 'place';
 /** What the canvas tells the editor. It never carries maxGraph cells, and nothing here edits the document. */
 export interface AdapterCallbacks {
   onIntent(intent: Intent): void;
-  onSelection(ids: string[]): void;
+  /** `subSelect`: the pointer went down with Ctrl held, so a member of a group is picked on its own. */
+  onSelection(ids: string[], info?: { subSelect: boolean }): void;
   onGesture(notice: GestureNotice): void;
   onViewport(info: ViewportInfo): void;
   /** A click on empty canvas with a placement tool armed, in point coordinates. */

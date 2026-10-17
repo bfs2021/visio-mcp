@@ -11,54 +11,242 @@
         "name": "Page 1",
         "widthPt": 841.8897637795,
         "heightPt": 595.2755905512,
-        "background": { "kind": "solid", "colour": "#ffffff", "opacity": 1 },
-        "grid": { "visible": true, "spacingPt": 14.1732283465, "snap": true },
-        "guides": [{ "id": "00000000-0000-4000-8000-0000000000f1", "orientation": "vertical", "positionPt": 100 }],
+        "background": {
+          "kind": "solid",
+          "colour": "#ffffff",
+          "opacity": 1
+        },
+        "grid": {
+          "visible": true,
+          "spacingPt": 14.1732283465,
+          "snap": true
+        },
+        "guides": [
+          {
+            "id": "00000000-0000-4000-8000-0000000000f1",
+            "orientation": "vertical",
+            "positionPt": 100
+          }
+        ],
         "layers": [
-          { "id": "00000000-0000-4000-8000-0000000000c1", "name": "Layer 1", "visible": true, "locked": false, "printable": true, "snap": true, "glue": true, "colourOverride": "#ff0000" }
+          {
+            "id": "00000000-0000-4000-8000-0000000000c1",
+            "name": "Layer 1",
+            "visible": true,
+            "locked": false,
+            "printable": true,
+            "snap": true,
+            "glue": true,
+            "colourOverride": "#ff0000"
+          }
         ],
         "elements": [
           {
-            "id": "00000000-0000-4000-8000-000000000101", "alias": "box", "name": "Box", "kind": "shape",
-            "layerIds": ["00000000-0000-4000-8000-0000000000c1"], "zIndex": 1, "locked": false, "hidden": false,
-            "bounds": { "x": 72, "y": 72, "width": 144, "height": 72 }, "rotationDeg": 33, "metadata": { "k": "v" },
-            "geometry": { "preset": "rounded-rectangle", "cornerRadiusPt": 6 },
-            "style": { "fill": { "kind": "solid", "colour": "#dbeafe", "opacity": 0.5 }, "stroke": { "kind": "none" }, "strokeWidthPt": 1.5, "dash": "dashed", "lineCap": "round", "lineJoin": "bevel" },
-            "text": { "value": "Hello", "fontFamily": "Segoe UI", "fontSizePt": 12, "bold": true, "italic": false, "underline": false, "colour": "#000000", "horizontalAlign": "center", "verticalAlign": "middle", "wrap": true, "paddingPt": 4 },
-            "ports": [{ "id": "n", "x": 0.5, "y": 0 }]
+            "id": "00000000-0000-4000-8000-000000000101",
+            "alias": "box",
+            "name": "Box",
+            "kind": "shape",
+            "layerIds": [
+              "00000000-0000-4000-8000-0000000000c1"
+            ],
+            "zIndex": 1,
+            "locked": false,
+            "hidden": false,
+            "bounds": {
+              "x": 72,
+              "y": 72,
+              "width": 144,
+              "height": 72
+            },
+            "rotationDeg": 33,
+            "metadata": {
+              "k": "v"
+            },
+            "geometry": {
+              "preset": "rounded-rectangle",
+              "cornerRadiusPt": 6
+            },
+            "style": {
+              "fill": {
+                "kind": "solid",
+                "colour": "#dbeafe",
+                "opacity": 0.5
+              },
+              "stroke": {
+                "kind": "none"
+              },
+              "strokeWidthPt": 1.5,
+              "dash": "dashed",
+              "lineCap": "round",
+              "lineJoin": "bevel"
+            },
+            "text": {
+              "value": "Hello",
+              "fontFamily": "Segoe UI",
+              "fontSizePt": 12,
+              "bold": true,
+              "italic": false,
+              "underline": false,
+              "colour": "#000000",
+              "horizontalAlign": "center",
+              "verticalAlign": "middle",
+              "wrap": true,
+              "paddingPt": 4
+            },
+            "ports": [
+              {
+                "id": "n",
+                "x": 0.5,
+                "y": 0
+              }
+            ]
           },
           {
-            "id": "00000000-0000-4000-8000-000000000102", "kind": "text", "layerIds": [], "zIndex": 2, "locked": false, "hidden": false,
-            "bounds": { "x": 300, "y": 72, "width": 100, "height": 20 }, "rotationDeg": 0, "metadata": {},
-            "text": { "value": "Label", "fontFamily": "Segoe UI", "fontSizePt": 10, "bold": false, "italic": true, "underline": true, "colour": "#333333", "horizontalAlign": "left", "verticalAlign": "top", "wrap": false, "paddingPt": 0 }
+            "id": "00000000-0000-4000-8000-000000000102",
+            "kind": "text",
+            "layerIds": [],
+            "zIndex": 2,
+            "locked": false,
+            "hidden": false,
+            "bounds": {
+              "x": 300,
+              "y": 72,
+              "width": 100,
+              "height": 20
+            },
+            "rotationDeg": 0,
+            "metadata": {},
+            "text": {
+              "value": "Label",
+              "fontFamily": "Segoe UI",
+              "fontSizePt": 10,
+              "bold": false,
+              "italic": true,
+              "underline": true,
+              "colour": "#333333",
+              "horizontalAlign": "left",
+              "verticalAlign": "top",
+              "wrap": false,
+              "paddingPt": 0
+            }
           },
           {
-            "id": "00000000-0000-4000-8000-000000000103", "kind": "image", "layerIds": [], "zIndex": 3, "locked": true, "hidden": false,
-            "bounds": { "x": 72, "y": 200, "width": 64, "height": 64 }, "rotationDeg": 0, "metadata": {},
-            "assetId": "asset:logo", "fit": "contain", "opacity": 1, "preserveAspectRatio": true
+            "id": "00000000-0000-4000-8000-000000000103",
+            "kind": "image",
+            "layerIds": [],
+            "zIndex": 3,
+            "locked": true,
+            "hidden": false,
+            "bounds": {
+              "x": 72,
+              "y": 200,
+              "width": 64,
+              "height": 64
+            },
+            "rotationDeg": 0,
+            "metadata": {},
+            "assetId": "asset:logo",
+            "fit": "contain",
+            "opacity": 1,
+            "preserveAspectRatio": true
           },
           {
-            "id": "00000000-0000-4000-8000-000000000104", "kind": "connector", "layerIds": [], "zIndex": 4, "locked": false, "hidden": false,
-            "bounds": { "x": 216, "y": 108, "width": 84, "height": 0 }, "rotationDeg": 0, "metadata": {},
-            "from": { "elementId": "00000000-0000-4000-8000-000000000101", "port": "east", "glue": "dynamic" },
-            "to": { "point": { "x": 300, "y": 108 }, "glue": "none" },
-            "route": "orthogonal", "waypoints": [{ "x": 250, "y": 108 }],
-            "style": { "colour": "#334155", "widthPt": 1, "dash": "solid", "startArrow": "none", "endArrow": "block" },
-            "label": { "value": "uses", "fontFamily": "Segoe UI", "fontSizePt": 9, "bold": false, "italic": false, "underline": false, "colour": "#000000", "horizontalAlign": "center", "verticalAlign": "middle", "wrap": false, "paddingPt": 0 }
+            "id": "00000000-0000-4000-8000-000000000104",
+            "kind": "connector",
+            "layerIds": [],
+            "zIndex": 4,
+            "locked": false,
+            "hidden": false,
+            "bounds": {
+              "x": 216,
+              "y": 108,
+              "width": 84,
+              "height": 0
+            },
+            "rotationDeg": 0,
+            "metadata": {},
+            "from": {
+              "elementId": "00000000-0000-4000-8000-000000000101",
+              "port": "east",
+              "glue": "dynamic"
+            },
+            "to": {
+              "point": {
+                "x": 300,
+                "y": 108
+              },
+              "glue": "none"
+            },
+            "route": "orthogonal",
+            "waypoints": [
+              {
+                "x": 250,
+                "y": 108
+              }
+            ],
+            "style": {
+              "colour": "#334155",
+              "widthPt": 1,
+              "dash": "solid",
+              "startArrow": "none",
+              "endArrow": "block"
+            },
+            "label": {
+              "value": "uses",
+              "fontFamily": "Segoe UI",
+              "fontSizePt": 9,
+              "bold": false,
+              "italic": false,
+              "underline": false,
+              "colour": "#000000",
+              "horizontalAlign": "center",
+              "verticalAlign": "middle",
+              "wrap": false,
+              "paddingPt": 0
+            }
           },
           {
-            "id": "00000000-0000-4000-8000-000000000105", "kind": "group", "layerIds": [], "zIndex": 5, "locked": false, "hidden": false,
-            "bounds": { "x": 72, "y": 72, "width": 144, "height": 72 }, "rotationDeg": 0, "metadata": {},
-            "childIds": ["00000000-0000-4000-8000-000000000101"]
+            "id": "00000000-0000-4000-8000-000000000105",
+            "kind": "group",
+            "layerIds": [],
+            "zIndex": 5,
+            "locked": false,
+            "hidden": false,
+            "bounds": {
+              "x": 72,
+              "y": 72,
+              "width": 144,
+              "height": 72
+            },
+            "rotationDeg": 0,
+            "metadata": {},
+            "childIds": [
+              "00000000-0000-4000-8000-000000000101"
+            ]
           }
         ]
       }
     ],
     "assets": [
-      { "id": "asset:logo", "name": "Logo", "mimeType": "image/png", "sha256": "0000000000000000000000000000000000000000000000000000000000000001", "tags": ["logo"], "provenance": "sample", "sourcePath": "logo.png" }
+      {
+        "id": "asset:logo",
+        "name": "Logo",
+        "mimeType": "image/png",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+        "tags": [
+          "logo"
+        ],
+        "provenance": "sample",
+        "sourcePath": "logo.png"
+      }
     ],
-    "metadata": { "owner": "sample" },
-    "source": { "format": "native-json", "path": "sample.json" }
+    "metadata": {
+      "owner": "sample"
+    },
+    "source": {
+      "format": "native-json",
+      "path": "sample.json"
+    }
   },
   "MutationRequest": {
     "documentId": "00000000-0000-4000-8000-0000000000d1",
@@ -68,17 +256,296 @@
     "baseRevision": 3,
     "atomic": true,
     "operations": [
-      { "op": "createShape", "id": "00000000-0000-4000-8000-000000000201", "alias": "a", "name": "A", "pageId": "00000000-0000-4000-8000-0000000000e1", "layerIds": ["00000000-0000-4000-8000-0000000000c1"], "bounds": { "x": 0, "y": 0, "width": 10, "height": 10 }, "rotationDeg": 5, "geometry": { "preset": "ellipse" }, "style": { "strokeWidthPt": 2 }, "text": { "value": "x" }, "ports": [{ "id": "p", "x": 1, "y": 0.5 }] },
-      { "op": "createText", "bounds": { "x": 0, "y": 0, "width": 10, "height": 10 }, "text": { "value": "t", "bold": true } },
-      { "op": "createImage", "bounds": { "x": 0, "y": 0, "width": 10, "height": 10 }, "assetId": "asset:logo", "fit": "cover", "opacity": 0.5, "preserveAspectRatio": false },
-      { "op": "createConnector", "from": { "elementId": "a", "glue": "dynamic" }, "to": { "point": { "x": 5, "y": 5 }, "glue": "none" }, "route": "straight", "waypoints": [], "style": { "endArrow": "open" }, "label": { "value": "l" } },
-      { "op": "set", "target": "a", "patch": { "name": null, "alias": "b", "locked": true, "style": { "stroke": { "kind": "none" } } } },
-      { "op": "move", "target": "a", "delta": { "xPt": 1, "yPt": 2 } },
-      { "op": "resize", "target": "a", "bounds": { "width": 20 } },
-      { "op": "rotate", "target": "a", "deltaDeg": 15, "pivot": { "xPt": 1, "yPt": 1 } },
-      { "op": "delete", "target": "a", "withConnectors": true },
-      { "op": "registerAsset", "asset": { "id": "asset:new", "name": "New", "mimeType": "image/svg+xml", "sha256": "0000000000000000000000000000000000000000000000000000000000000002", "tags": [] } },
-      { "op": "setPage", "pageId": "00000000-0000-4000-8000-0000000000e1", "patch": { "name": "Renamed", "widthPt": 600, "grid": { "visible": false, "snap": false, "spacingPt": 10 }, "background": { "kind": "none" } } }
+      {
+        "op": "createShape",
+        "id": "00000000-0000-4000-8000-000000000201",
+        "alias": "a",
+        "name": "A",
+        "pageId": "00000000-0000-4000-8000-0000000000e1",
+        "layerIds": [
+          "00000000-0000-4000-8000-0000000000c1"
+        ],
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 10,
+          "height": 10
+        },
+        "rotationDeg": 5,
+        "geometry": {
+          "preset": "ellipse"
+        },
+        "style": {
+          "strokeWidthPt": 2
+        },
+        "text": {
+          "value": "x"
+        },
+        "ports": [
+          {
+            "id": "p",
+            "x": 1,
+            "y": 0.5
+          }
+        ]
+      },
+      {
+        "op": "createText",
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 10,
+          "height": 10
+        },
+        "text": {
+          "value": "t",
+          "bold": true
+        }
+      },
+      {
+        "op": "createImage",
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 10,
+          "height": 10
+        },
+        "assetId": "asset:logo",
+        "fit": "cover",
+        "opacity": 0.5,
+        "preserveAspectRatio": false
+      },
+      {
+        "op": "createConnector",
+        "from": {
+          "elementId": "a",
+          "glue": "dynamic"
+        },
+        "to": {
+          "point": {
+            "x": 5,
+            "y": 5
+          },
+          "glue": "none"
+        },
+        "route": "straight",
+        "waypoints": [],
+        "style": {
+          "endArrow": "open"
+        },
+        "label": {
+          "value": "l"
+        }
+      },
+      {
+        "op": "set",
+        "target": "a",
+        "patch": {
+          "name": null,
+          "alias": "b",
+          "locked": true,
+          "style": {
+            "stroke": {
+              "kind": "none"
+            }
+          }
+        }
+      },
+      {
+        "op": "move",
+        "target": "a",
+        "delta": {
+          "xPt": 1,
+          "yPt": 2
+        }
+      },
+      {
+        "op": "resize",
+        "target": "a",
+        "bounds": {
+          "width": 20
+        }
+      },
+      {
+        "op": "rotate",
+        "target": "a",
+        "deltaDeg": 15,
+        "pivot": {
+          "xPt": 1,
+          "yPt": 1
+        }
+      },
+      {
+        "op": "delete",
+        "target": "a",
+        "withConnectors": true
+      },
+      {
+        "op": "registerAsset",
+        "asset": {
+          "id": "asset:new",
+          "name": "New",
+          "mimeType": "image/svg+xml",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000002",
+          "tags": []
+        }
+      },
+      {
+        "op": "setPage",
+        "pageId": "00000000-0000-4000-8000-0000000000e1",
+        "patch": {
+          "name": "Renamed",
+          "widthPt": 600,
+          "grid": {
+            "visible": false,
+            "snap": false,
+            "spacingPt": 10
+          },
+          "background": {
+            "kind": "none"
+          }
+        }
+      },
+      {
+        "op": "duplicate",
+        "targets": [
+          "a",
+          "b"
+        ],
+        "offset": {
+          "xPt": 10,
+          "yPt": 20
+        },
+        "keepExternalLinks": true,
+        "keepAliases": true
+      },
+      {
+        "op": "group",
+        "targets": [
+          "a",
+          "b"
+        ],
+        "id": "6d3c0000-0000-4000-8000-000000000001",
+        "alias": "g",
+        "name": "Pair"
+      },
+      {
+        "op": "ungroup",
+        "target": "g"
+      },
+      {
+        "op": "align",
+        "targets": [
+          "a",
+          "b"
+        ],
+        "edge": "left"
+      },
+      {
+        "op": "distribute",
+        "targets": [
+          "a",
+          "b",
+          "c"
+        ],
+        "axis": "horizontal"
+      },
+      {
+        "op": "setGap",
+        "targets": [
+          "a",
+          "b"
+        ],
+        "axis": "vertical",
+        "gapPt": 14.5
+      },
+      {
+        "op": "reorder",
+        "targets": [
+          "a"
+        ],
+        "to": "front"
+      },
+      {
+        "op": "addPage",
+        "id": "6d3c0000-0000-4000-8000-000000000002",
+        "name": "Second",
+        "widthPt": 600,
+        "heightPt": 400,
+        "index": 1
+      },
+      {
+        "op": "reorderPage",
+        "pageId": "6d3c0000-0000-4000-8000-000000000002",
+        "index": 0
+      },
+      {
+        "op": "duplicatePage",
+        "pageId": "6d3c0000-0000-4000-8000-000000000002",
+        "id": "6d3c0000-0000-4000-8000-000000000003",
+        "name": "Copy"
+      },
+      {
+        "op": "deletePage",
+        "pageId": "6d3c0000-0000-4000-8000-000000000003"
+      },
+      {
+        "op": "addLayer",
+        "pageId": "6d3c0000-0000-4000-8000-000000000002",
+        "id": "6d3c0000-0000-4000-8000-000000000003",
+        "name": "Notes",
+        "visible": true,
+        "locked": false,
+        "printable": true,
+        "snap": true,
+        "glue": true,
+        "colourOverride": "#aabbcc"
+      },
+      {
+        "op": "setLayer",
+        "layerId": "6d3c0000-0000-4000-8000-000000000003",
+        "patch": {
+          "visible": false,
+          "name": "Hidden"
+        }
+      },
+      {
+        "op": "assignLayers",
+        "targets": [
+          "a"
+        ],
+        "layerIds": [
+          "6d3c0000-0000-4000-8000-000000000003"
+        ],
+        "mode": "add"
+      },
+      {
+        "op": "deleteLayer",
+        "layerId": "6d3c0000-0000-4000-8000-000000000003"
+      },
+      {
+        "op": "setAsset",
+        "assetId": "asset:logo",
+        "patch": {
+          "name": "Logo",
+          "tags": [
+            "x"
+          ],
+          "provenance": "test"
+        }
+      },
+      {
+        "op": "removeAsset",
+        "assetId": "asset:old"
+      },
+      {
+        "op": "replaceAsset",
+        "from": "asset:logo",
+        "to": "asset:logo-v2",
+        "targets": [
+          "a"
+        ]
+      }
     ]
   },
   "ScriptRequest": {
@@ -92,7 +559,13 @@
       "logo": {
         "preparationId": "prep-1",
         "expiresAt": "2030-01-01T00:00:00Z",
-        "asset": { "id": "asset:logo", "name": "Logo", "mimeType": "image/png", "sha256": "0000000000000000000000000000000000000000000000000000000000000001", "tags": [] }
+        "asset": {
+          "id": "asset:logo",
+          "name": "Logo",
+          "mimeType": "image/png",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+          "tags": []
+        }
       }
     }
   },
@@ -102,50 +575,277 @@
     "transactionId": "00000000-0000-4000-8000-0000000000b3",
     "baseRevision": 4
   },
-  "Scope": { "documentId": "00000000-0000-4000-8000-0000000000d1", "sessionId": "00000000-0000-4000-8000-0000000000a1", "pageId": "00000000-0000-4000-8000-0000000000e1" },
-  "AppError": { "code": "revision_conflict", "message": "stale", "retryable": false, "details": { "expected": 3, "actual": 4 }, "outcome": "none" },
-  "Diagnostic": { "severity": "warning", "code": "out_of_page", "message": "outside", "pageId": "00000000-0000-4000-8000-0000000000e1", "elementId": "00000000-0000-4000-8000-000000000101", "sourceShape": "Rect", "action": "move it", "detail": "x<0" },
-  "PreparedAssetRef": { "preparationId": "prep-1", "expiresAt": "2030-01-01T00:00:00Z", "asset": { "id": "asset:logo", "name": "Logo", "mimeType": "image/png", "sha256": "0000000000000000000000000000000000000000000000000000000000000001", "tags": [] } },
-  "PreparedAsset": { "ref": { "preparationId": "prep-1", "expiresAt": "2030-01-01T00:00:00Z", "asset": { "id": "asset:logo", "name": "Logo", "mimeType": "image/png", "sha256": "0000000000000000000000000000000000000000000000000000000000000001", "tags": [] } } },
-  "TransactionResult": {
-    "transactionId": "00000000-0000-4000-8000-0000000000b1", "previousRevision": 3, "revision": 4, "noChange": false,
-    "created": ["00000000-0000-4000-8000-000000000201"], "changed": ["00000000-0000-4000-8000-000000000101"], "deleted": [],
-    "changedPageIds": [], "changedLayerIds": [], "changedAssetIds": ["asset:new"], "visuallyAffectedIds": ["00000000-0000-4000-8000-000000000104"],
-    "warnings": [{ "severity": "info", "code": "note", "message": "m" }], "projectionStatus": "applied"
+  "Scope": {
+    "documentId": "00000000-0000-4000-8000-0000000000d1",
+    "sessionId": "00000000-0000-4000-8000-0000000000a1",
+    "pageId": "00000000-0000-4000-8000-0000000000e1"
   },
-  "Snapshot": { "documentId": "00000000-0000-4000-8000-0000000000d1", "sessionId": "00000000-0000-4000-8000-0000000000a1", "revision": 0, "document": { "$sample": "DiagramDocument" } },
-  "Projection": {
-    "documentId": "00000000-0000-4000-8000-0000000000d1", "sessionId": "00000000-0000-4000-8000-0000000000a1", "revision": 3,
-    "connectors": { "00000000-0000-4000-8000-000000000104": { "routePoints": [{ "x": 0, "y": 0 }, { "x": 1, "y": 1 }], "visualBounds": { "x": 0, "y": 0, "width": 1, "height": 1 } } },
-    "groupVisualBounds": { "00000000-0000-4000-8000-000000000105": { "x": 0, "y": 0, "width": 5, "height": 5 } }
-  },
-  "ExportSnapshot": { "documentId": "00000000-0000-4000-8000-0000000000d1", "sessionId": "00000000-0000-4000-8000-0000000000a1", "revision": 0, "document": { "$sample": "DiagramDocument" }, "projection": { "$sample": "Projection" } },
-  "ResolvedDiff": {
-    "transactionId": "00000000-0000-4000-8000-0000000000b1", "source": "mcp", "previousRevision": 3, "revision": 4,
-    "upserts": {
-      "elements": [{ "pageId": "00000000-0000-4000-8000-0000000000e1", "index": 0, "element": { "$sample": "DiagramDocument", "path": "pages/0/elements/0" } }],
-      "pages": [{ "index": 0, "page": { "id": "00000000-0000-4000-8000-0000000000e1", "name": "P", "widthPt": 1, "heightPt": 1, "background": { "kind": "none" }, "grid": { "visible": false, "spacingPt": 1, "snap": false }, "guides": [] } }],
-      "layers": [{ "pageId": "00000000-0000-4000-8000-0000000000e1", "index": 0, "layer": { "id": "00000000-0000-4000-8000-0000000000c1", "name": "L", "visible": true, "locked": false, "printable": true, "snap": true, "glue": true } }],
-      "assets": [{ "id": "asset:new", "name": "N", "mimeType": "image/png", "sha256": "0000000000000000000000000000000000000000000000000000000000000003", "tags": [] }]
+  "AppError": {
+    "code": "revision_conflict",
+    "message": "stale",
+    "retryable": false,
+    "details": {
+      "expected": 3,
+      "actual": 4
     },
-    "deletes": { "elementIds": ["00000000-0000-4000-8000-000000000999"], "pageIds": [], "layerIds": [], "assetIds": [] }
+    "outcome": "none"
+  },
+  "Diagnostic": {
+    "severity": "warning",
+    "code": "out_of_page",
+    "message": "outside",
+    "pageId": "00000000-0000-4000-8000-0000000000e1",
+    "elementId": "00000000-0000-4000-8000-000000000101",
+    "sourceShape": "Rect",
+    "action": "move it",
+    "detail": "x<0"
+  },
+  "PreparedAssetRef": {
+    "preparationId": "prep-1",
+    "expiresAt": "2030-01-01T00:00:00Z",
+    "asset": {
+      "id": "asset:logo",
+      "name": "Logo",
+      "mimeType": "image/png",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+      "tags": []
+    }
+  },
+  "PreparedAsset": {
+    "ref": {
+      "preparationId": "prep-1",
+      "expiresAt": "2030-01-01T00:00:00Z",
+      "asset": {
+        "id": "asset:logo",
+        "name": "Logo",
+        "mimeType": "image/png",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+        "tags": []
+      }
+    }
+  },
+  "TransactionResult": {
+    "transactionId": "00000000-0000-4000-8000-0000000000b1",
+    "previousRevision": 3,
+    "revision": 4,
+    "noChange": false,
+    "created": [
+      "00000000-0000-4000-8000-000000000201"
+    ],
+    "changed": [
+      "00000000-0000-4000-8000-000000000101"
+    ],
+    "deleted": [],
+    "changedPageIds": [],
+    "changedLayerIds": [],
+    "changedAssetIds": [
+      "asset:new"
+    ],
+    "visuallyAffectedIds": [
+      "00000000-0000-4000-8000-000000000104"
+    ],
+    "warnings": [
+      {
+        "severity": "info",
+        "code": "note",
+        "message": "m"
+      }
+    ],
+    "projectionStatus": "applied"
+  },
+  "Snapshot": {
+    "documentId": "00000000-0000-4000-8000-0000000000d1",
+    "sessionId": "00000000-0000-4000-8000-0000000000a1",
+    "revision": 0,
+    "document": {
+      "$sample": "DiagramDocument"
+    }
+  },
+  "Projection": {
+    "documentId": "00000000-0000-4000-8000-0000000000d1",
+    "sessionId": "00000000-0000-4000-8000-0000000000a1",
+    "revision": 3,
+    "connectors": {
+      "00000000-0000-4000-8000-000000000104": {
+        "routePoints": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 1,
+            "y": 1
+          }
+        ],
+        "visualBounds": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      }
+    },
+    "groupVisualBounds": {
+      "00000000-0000-4000-8000-000000000105": {
+        "x": 0,
+        "y": 0,
+        "width": 5,
+        "height": 5
+      }
+    }
+  },
+  "ExportSnapshot": {
+    "documentId": "00000000-0000-4000-8000-0000000000d1",
+    "sessionId": "00000000-0000-4000-8000-0000000000a1",
+    "revision": 0,
+    "document": {
+      "$sample": "DiagramDocument"
+    },
+    "projection": {
+      "$sample": "Projection"
+    }
+  },
+  "ResolvedDiff": {
+    "transactionId": "00000000-0000-4000-8000-0000000000b1",
+    "source": "mcp",
+    "previousRevision": 3,
+    "revision": 4,
+    "upserts": {
+      "elements": [
+        {
+          "pageId": "00000000-0000-4000-8000-0000000000e1",
+          "index": 0,
+          "element": {
+            "$sample": "DiagramDocument",
+            "path": "pages/0/elements/0"
+          }
+        }
+      ],
+      "pages": [
+        {
+          "index": 0,
+          "page": {
+            "id": "00000000-0000-4000-8000-0000000000e1",
+            "name": "P",
+            "widthPt": 1,
+            "heightPt": 1,
+            "background": {
+              "kind": "none"
+            },
+            "grid": {
+              "visible": false,
+              "spacingPt": 1,
+              "snap": false
+            },
+            "guides": []
+          }
+        }
+      ],
+      "layers": [
+        {
+          "pageId": "00000000-0000-4000-8000-0000000000e1",
+          "index": 0,
+          "layer": {
+            "id": "00000000-0000-4000-8000-0000000000c1",
+            "name": "L",
+            "visible": true,
+            "locked": false,
+            "printable": true,
+            "snap": true,
+            "glue": true
+          }
+        }
+      ],
+      "assets": [
+        {
+          "id": "asset:new",
+          "name": "N",
+          "mimeType": "image/png",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000003",
+          "tags": []
+        }
+      ]
+    },
+    "deletes": {
+      "elementIds": [
+        "00000000-0000-4000-8000-000000000999"
+      ],
+      "pageIds": [],
+      "layerIds": [],
+      "assetIds": []
+    }
   },
   "TransactionSummary": {
-    "transactionId": "00000000-0000-4000-8000-0000000000b1", "source": "gui", "previousRevision": 3, "revision": 4, "description": "move",
-    "created": [], "changed": ["00000000-0000-4000-8000-000000000101"], "deleted": [], "changedPageIds": [], "changedLayerIds": [], "changedAssetIds": []
+    "transactionId": "00000000-0000-4000-8000-0000000000b1",
+    "source": "gui",
+    "previousRevision": 3,
+    "revision": 4,
+    "description": "move",
+    "created": [],
+    "changed": [
+      "00000000-0000-4000-8000-000000000101"
+    ],
+    "deleted": [],
+    "changedPageIds": [],
+    "changedLayerIds": [],
+    "changedAssetIds": []
   },
   "ChangeSet": {
-    "sinceRevision": 2, "earliestRetainedRevision": 1, "revision": 4,
-    "transactions": [{ "transactionId": "00000000-0000-4000-8000-0000000000b1", "source": "gui", "previousRevision": 3, "revision": 4, "description": "move", "created": [], "changed": [], "deleted": [], "changedPageIds": [], "changedLayerIds": [], "changedAssetIds": [] }]
+    "sinceRevision": 2,
+    "earliestRetainedRevision": 1,
+    "revision": 4,
+    "transactions": [
+      {
+        "transactionId": "00000000-0000-4000-8000-0000000000b1",
+        "source": "gui",
+        "previousRevision": 3,
+        "revision": 4,
+        "description": "move",
+        "created": [],
+        "changed": [],
+        "deleted": [],
+        "changedPageIds": [],
+        "changedLayerIds": [],
+        "changedAssetIds": []
+      }
+    ]
   },
   "CommittedEvent": {
-    "sequence": 1, "documentId": "00000000-0000-4000-8000-0000000000d1", "sessionId": "00000000-0000-4000-8000-0000000000a1", "revision": 4,
-    "resolvedDiff": { "$sample": "ResolvedDiff" }
+    "sequence": 1,
+    "documentId": "00000000-0000-4000-8000-0000000000d1",
+    "sessionId": "00000000-0000-4000-8000-0000000000a1",
+    "revision": 4,
+    "resolvedDiff": {
+      "$sample": "ResolvedDiff"
+    }
   },
   "RequestEnvelope": {
-    "protocolVersion": 1, "kind": "request", "requestId": "r1", "method": "doc.summary",
-    "documentId": "00000000-0000-4000-8000-0000000000d1", "sessionId": "00000000-0000-4000-8000-0000000000a1", "params": { "includeGeometry": true }
+    "protocolVersion": 1,
+    "kind": "request",
+    "requestId": "r1",
+    "method": "doc.summary",
+    "documentId": "00000000-0000-4000-8000-0000000000d1",
+    "sessionId": "00000000-0000-4000-8000-0000000000a1",
+    "params": {
+      "includeGeometry": true
+    }
   },
-  "ResponseEnvelope": { "protocolVersion": 1, "kind": "response", "requestId": "r1", "result": { "revision": 4 } },
-  "ResponseEnvelopeError": { "protocolVersion": 1, "kind": "response", "requestId": "r1", "error": { "code": "not_ready", "message": "x", "retryable": true } }
+  "ResponseEnvelope": {
+    "protocolVersion": 1,
+    "kind": "response",
+    "requestId": "r1",
+    "result": {
+      "revision": 4
+    }
+  },
+  "ResponseEnvelopeError": {
+    "protocolVersion": 1,
+    "kind": "response",
+    "requestId": "r1",
+    "error": {
+      "code": "not_ready",
+      "message": "x",
+      "retryable": true
+    }
+  }
 }

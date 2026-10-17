@@ -26,12 +26,15 @@ export class MaxGraphAdapter implements CanvasAdapter {
   private readonly world: HTMLDivElement;
   private readonly sheet: HTMLDivElement;
   private readonly overlay: HTMLDivElement;
+  private readonly frames: HTMLDivElement;
   private projecting = false;
   private tool: Tool = { kind: 'select' };
   private readonly shown = new Map<string, string>(); // element id -> serialized projection key, to skip unchanged cells
   private pageWidth = 841.89;
   private pageHeight = 595.28;
   private space = false;
+  /** Ctrl (or Cmd) was held when the pointer last went down: select one member of a group instead of the whole group. */
+  private toggleHeld = false;
   private disposed = false;
   private connectSource: Cell | null = null;
   private readonly cleanups: Array<() => void> = [];
@@ -58,6 +61,9 @@ export class MaxGraphAdapter implements CanvasAdapter {
     this.overlay = document.createElement('div');
     this.overlay.style.cssText = 'position:absolute;left:0;top:0;pointer-events:none;z-index:5;';
     container.appendChild(this.overlay);
+    this.frames = document.createElement('div');
+    this.frames.style.cssText = 'position:absolute;left:0;top:0;pointer-events:none;z-index:4;';
+    container.appendChild(this.frames);
 
     const g = this.graph;
     g.setPanning(true);
@@ -73,13 +79,15 @@ export class MaxGraphAdapter implements CanvasAdapter {
     const panning = g.getPlugin('PanningHandler') as { isForcePanningEvent: (me: InternalMouseEvent) => boolean; useLeftButtonForPanning: boolean } | undefined;
     if (panning) panning.isForcePanningEvent = me => this.space || (me.getEvent() as MouseEvent).button === 1;
 
+    for (const type of ['pointerdown', 'mousedown'] as const) container.addEventListener(type, e => { this.toggleHeld = e.ctrlKey || e.metaKey; }, true);
+
     const selectionHandler = g.getPlugin('SelectionHandler') as unknown as { guidesEnabled: boolean } | undefined;
     if (selectionHandler) selectionHandler.guidesEnabled = true; // alignment guides while moving
     this.installEditRedirects();
     installGestureHooks(g);
     setGestureSink(n => { if (!this.projecting) cb.onGesture(n); });
 
-    g.getSelectionModel().addListener(InternalEvent.CHANGE, () => { if (!this.projecting) cb.onSelection(this.getSelection()); });
+    g.getSelectionModel().addListener(InternalEvent.CHANGE, () => { if (!this.projecting) cb.onSelection(this.getSelection(), { subSelect: this.toggleHeld }); });
     g.addMouseListener({
       mouseDown: (_s: EventSource, me: InternalMouseEvent) => this.mouseDown(me),
       mouseMove: (_s: EventSource, me: InternalMouseEvent) => this.mouseMove(me),
@@ -445,5 +453,19 @@ export class MaxGraphAdapter implements CanvasAdapter {
     this.graph.destroy();
     this.world.remove();
     this.overlay.remove();
+    this.frames.remove();
+  }
+
+  /** Dashed frames around the selected groups. Groups have no cell of their own, so this is the only sign that the members belong together. */
+  setGroupFrames(boxes: ReadonlyArray<{ x: number; y: number; width: number; height: number }>): void {
+    this.frames.replaceChildren();
+    const s = this.graph.view.scale;
+    for (const b of boxes) {
+      const d = document.createElement('div');
+      d.className = 'group-frame';
+      d.dataset.testid = 'group-frame';
+      d.style.cssText = `position:absolute;box-sizing:border-box;left:${(b.x + MARGIN_PT) * s}px;top:${(b.y + MARGIN_PT) * s}px;width:${b.width * s}px;height:${b.height * s}px;border:1px dashed #2563eb;`;
+      this.frames.appendChild(d);
+    }
   }
 }

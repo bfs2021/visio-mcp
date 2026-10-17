@@ -1,4 +1,5 @@
 import type { Bounds, Element, Endpoint, Operation, Page, Point, Snapshot } from '../contracts/generated';
+import { collapseToGroups, leavesOfTargets } from './selection';
 
 /**
  * Pure translation from what the user did on the canvas into canonical operations. Snapping happens here, in the interaction
@@ -92,17 +93,22 @@ export function intentOperations(snapshot: Snapshot, intent: Intent): Operation[
   }
 }
 
-/** Delete the selection, taking attached connectors with their shapes and not deleting a connector twice. */
+/**
+ * Delete the selection, taking attached connectors with their shapes and not deleting a connector twice. A group whose members are all
+ * selected is deleted as one object, members included; members of a partly selected group are removed from it.
+ */
 export function deleteOperations(snapshot: Snapshot, ids: string[]): Operation[] {
-  const selected = new Set(ids);
+  const targets = collapseToGroups(snapshot, ids);
+  const doomed = new Set(leavesOfTargets(snapshot, targets));
   const ops: Operation[] = [];
-  for (const id of ids) {
+  for (const id of targets) {
     const el = findElement(snapshot, id);
     if (!el) continue;
     if (el.kind === 'connector') {
-      const covered = [el.from, el.to].some(ep => ep.elementId && selected.has(ep.elementId));
+      const covered = [el.from, el.to].some(ep => ep.elementId && doomed.has(ep.elementId));
       if (!covered) ops.push({ op: 'delete', target: id });
-    } else if (el.kind !== 'group') ops.push({ op: 'delete', target: id, withConnectors: true });
+    } else if (el.kind === 'group') ops.push({ op: 'delete', target: id, children: 'delete', withConnectors: true });
+    else ops.push({ op: 'delete', target: id, withConnectors: true });
   }
   return ops;
 }

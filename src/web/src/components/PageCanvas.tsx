@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { EditorModel } from '../editor/EditorModel';
+import { ContextMenu } from './ContextMenu';
 import { Ruler, RULER_SIZE } from './Ruler';
 import { useModel } from './useModel';
 
@@ -8,6 +9,7 @@ export function PageCanvas({ model }: { model: EditorModel }) {
   const host = useRef<HTMLDivElement>(null);
   const frame = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 800, h: 600 });
+  const [menuAt, setMenuAt] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     const el = host.current!;
@@ -35,7 +37,9 @@ export function PageCanvas({ model }: { model: EditorModel }) {
         className="canvas-host" data-testid="canvas" ref={host}
         onDragOver={e => { if (e.dataTransfer.types.includes('application/x-diagram-shape')) e.preventDefault(); }}
         onDrop={onDrop}
+        onContextMenu={e => { e.preventDefault(); setMenuAt({ x: e.clientX, y: e.clientY }); }}
       />
+      {menuAt && <ContextMenu model={model} at={menuAt} onClose={() => setMenuAt(null)} />}
     </div>
   );
 }

@@ -151,7 +151,11 @@ describe('shared DTO samples', () => {
 
   it('exercises every operation and every element kind', () => {
     const ops = (samples.MutationRequest as { operations: Array<{ op: string }> }).operations.map(o => o.op).sort();
-    expect(ops).toEqual(['createConnector', 'createImage', 'createShape', 'createText', 'delete', 'move', 'registerAsset', 'resize', 'rotate', 'set', 'setPage']);
+    expect(ops).toEqual([
+      'addLayer', 'addPage', 'align', 'assignLayers', 'createConnector', 'createImage', 'createShape', 'createText', 'delete', 'deleteLayer', 'deletePage',
+      'distribute', 'duplicate', 'duplicatePage', 'group', 'move', 'registerAsset', 'removeAsset', 'reorder', 'reorderPage', 'replaceAsset', 'resize',
+      'rotate', 'set', 'setAsset', 'setGap', 'setLayer', 'setPage', 'ungroup',
+    ]);
     const kinds = (samples.DiagramDocument as { pages: Array<{ elements: Array<{ kind: string }> }> }).pages[0]!.elements.map(e => e.kind).sort();
     expect(kinds).toEqual(['connector', 'group', 'image', 'shape', 'text']);
   });

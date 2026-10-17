@@ -41,6 +41,8 @@ if (import.meta.env.VITE_TEST_API === '1') {
     },
     setHost: (h: Partial<HostApi>) => { m.host = { ...noHost, ...h }; },
     exportSnapshot: async () => { const r = await m.engine.exportSnapshot(m.engine.scope()); return r.ok ? JSON.parse(JSON.stringify(r.value)) : { error: r.error }; },
+    changesSince: async (revision: number) => { const r = await m.engine.getChanges(m.engine.scope(), revision); return r.ok ? JSON.parse(JSON.stringify(r.value)) : { error: r.error }; },
+    targets: () => [...m.targets],
     gestureActive: () => m.controller.isActive(),
     agentApply: (operations: unknown[], baseRevision?: number) => m.engine.execute({
       ...m.engine.scope(), transactionId: crypto.randomUUID(), baseRevision: baseRevision ?? m.engine.revision, atomic: true, operations,

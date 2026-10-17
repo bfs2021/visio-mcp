@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { ConnectorElement, Element, ImageElement, Operation, Paint, ShapeElement, TextBlock, TextElement } from '../contracts/generated';
 import type { EditorModel } from '../editor/EditorModel';
+import { ArrangePanel } from './ArrangePanel';
 import { useModel } from './useModel';
 
 const round = (v: number) => Math.round(v * 1000) / 1000;
@@ -79,13 +80,15 @@ export function Inspector({ model }: { model: EditorModel }) {
           <button type="button" onClick={() => void model.duplicate()}>Duplicate</button>{' '}
           <button type="button" onClick={() => void model.deleteSelection()} data-testid="inspector-delete">Delete</button>
         </section>
+        <ArrangePanel model={model} />
       </aside>
     );
   }
 
   const el = els[0]!;
   const u = model.unit;
-  const geometry = el.kind !== 'connector' && el.kind !== 'group';
+  const geometry = el.kind !== 'connector';
+  const isGroup = el.kind === 'group';
   const move = (dx: number, dy: number) => void model.apply('inspector', [{ op: 'move', target: el.id, delta: { xPt: dx, yPt: dy } }]);
   const text: TextBlock | undefined = el.kind === 'shape' ? el.text ?? DEFAULT_TEXT : el.kind === 'text' ? el.text : el.kind === 'connector' ? el.label ?? DEFAULT_TEXT : undefined;
   const setText = (patch: Partial<TextBlock>) => set({ text: patch });
@@ -106,7 +109,9 @@ export function Inspector({ model }: { model: EditorModel }) {
             <NumberField label="Y" testId="field-y" value={model.toUnit(el.bounds.y)} onCommit={v => move(0, model.fromUnit(v) - el.bounds.y)} />
             <NumberField label="W" testId="field-w" value={model.toUnit(el.bounds.width)} min={0} onCommit={v => void model.apply('inspector', [{ op: 'resize', target: el.id, bounds: { width: model.fromUnit(v) } }])} />
             <NumberField label="H" testId="field-h" value={model.toUnit(el.bounds.height)} min={0} onCommit={v => void model.apply('inspector', [{ op: 'resize', target: el.id, bounds: { height: model.fromUnit(v) } }])} />
-            <NumberField label="Angle °" testId="field-angle" value={el.rotationDeg} onCommit={v => void model.apply('inspector', [{ op: 'rotate', target: el.id, angleDeg: v }])} />
+            {isGroup
+              ? <NumberField label="Turn by °" testId="field-turn" key={`turn-${model.snapshot.revision}`} value={0} onCommit={v => void model.apply('inspector', [{ op: 'rotate', target: el.id, deltaDeg: v }])} />
+              : <NumberField label="Angle °" testId="field-angle" value={el.rotationDeg} onCommit={v => void model.apply('inspector', [{ op: 'rotate', target: el.id, angleDeg: v }])} />}
           </div>
         </section>
       )}
@@ -153,19 +158,21 @@ export function Inspector({ model }: { model: EditorModel }) {
         <h3>Arrange</h3>
         <div className="row">
           <label><input type="checkbox" checked={el.locked} data-testid="field-locked" onChange={e => set({ locked: e.target.checked })} /> Locked</label>
-          <label><input type="checkbox" checked={el.hidden} data-testid="field-hidden" onChange={e => set({ hidden: e.target.checked })} /> Hidden</label>
+          {!isGroup && <label><input type="checkbox" checked={el.hidden} data-testid="field-hidden" onChange={e => set({ hidden: e.target.checked })} /> Hidden</label>}
         </div>
         <button type="button" onClick={() => void model.duplicate()} data-testid="inspector-duplicate">Duplicate</button>{' '}
         <button type="button" onClick={() => void model.deleteSelection()} data-testid="inspector-delete">Delete</button>
       </section>
 
-      <section>
+      <ArrangePanel model={model} />
+
+      {!isGroup && <section>
         <h3>Layers</h3>
         {model.currentPage.layers.map(l => (
           <label key={l.id} className="row"><input type="checkbox" checked={el.layerIds.includes(l.id)} data-testid={`layer-${l.name}`}
             onChange={e => set({ layerIds: e.target.checked ? [...el.layerIds, l.id] : el.layerIds.filter(x => x !== l.id) })} /> {l.name}</label>
         ))}
-      </section>
+      </section>}
       <p className="muted small" title={el.id}>id {el.id.slice(0, 8)}…</p>
     </aside>
   );

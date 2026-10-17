@@ -1,9 +1,22 @@
 import { useState } from 'react';
 import type { Unit } from '../model/validate';
 import type { EditorModel } from '../editor/EditorModel';
+import { arrangeActions } from '../editor/arrangeActions';
 import { useModel } from './useModel';
 
 type MenuItem = { label: string; shortcut?: string; run: () => void; disabled?: boolean; checked?: boolean; id: string };
+
+/** The Arrange menu is the shared action list, with a separator between its sections. */
+function arrangeMenu(model: EditorModel): Array<MenuItem | 'sep'> {
+  const items: Array<MenuItem | 'sep'> = [];
+  let section = '';
+  for (const a of arrangeActions(model)) {
+    if (section && a.section !== section) items.push('sep');
+    section = a.section;
+    items.push({ id: a.id, label: a.label, run: a.run, disabled: a.disabled, ...(a.shortcut ? { shortcut: a.shortcut } : {}) });
+  }
+  return items;
+}
 
 export function Toolbar({ model }: { model: EditorModel }) {
   useModel(model);
@@ -29,6 +42,7 @@ export function Toolbar({ model }: { model: EditorModel }) {
       'sep',
       { id: 'select-all', label: 'Select all', shortcut: 'Ctrl+A', run: () => model.selectAll() },
     ] },
+    { name: 'Arrange', items: arrangeMenu(model) },
     { name: 'View', items: [
       { id: 'zoom-in', label: 'Zoom in', shortcut: 'Ctrl++', run: () => model.zoomBy(1.25) },
       { id: 'zoom-out', label: 'Zoom out', shortcut: 'Ctrl+-', run: () => model.zoomBy(0.8) },

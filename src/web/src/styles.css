@@ -50,3 +50,13 @@ textarea { width: 100%; resize: vertical; }
 
 .statusbar { grid-area: status; display: flex; gap: 18px; align-items: center; padding: 0 10px; background: #e2e8f0; border-top: 1px solid var(--line); font-size: 12px; }
 .statusbar .message { flex: 1; } .message.warning { color: #b45309; } .message.error { color: #b91c1c; }
+
+.arrange-panel h4 { font-size: 11px; font-weight: 600; margin: 6px 0 2px; color: var(--muted); }
+.arrange-panel .row.wrap { gap: 4px; }
+.arrange-panel button { padding: 2px 6px; font-size: 11px; }
+.field.inline { grid-template-columns: auto 64px; }
+.context-menu { position: fixed; z-index: 50; min-width: 230px; background: #fff; border: 1px solid var(--line); box-shadow: 0 6px 18px rgba(15, 23, 42, .22); border-radius: 4px; padding: 4px 0; }
+.context-section + .context-section { border-top: 1px solid #e2e8f0; margin-top: 4px; padding-top: 4px; }
+.context-menu button { display: grid; grid-template-columns: 1fr auto; gap: 18px; width: 100%; text-align: left; border: 0; border-radius: 0; background: transparent; }
+.context-menu button:hover:not(:disabled) { background: #e0f2fe; }
+.context-menu kbd { color: var(--muted); font: inherit; font-size: 11px; }

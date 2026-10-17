@@ -18,6 +18,9 @@ function useShortcuts(model: EditorModel) {
       const key = e.key.toLowerCase();
       if (mod && key === 'z' && !e.shiftKey) { e.preventDefault(); void model.undo(); }
       else if (mod && (key === 'y' || (key === 'z' && e.shiftKey))) { e.preventDefault(); void model.redo(); }
+      else if (mod && key === 'g') { e.preventDefault(); void (e.shiftKey ? model.ungroup() : model.group()); }
+      else if (mod && e.shiftKey && key === 'f') { e.preventDefault(); void model.reorder('front'); }
+      else if (mod && e.shiftKey && key === 'b') { e.preventDefault(); void model.reorder('back'); }
       else if (mod && key === 'c') { e.preventDefault(); model.copy(); }
       else if (mod && key === 'v') { e.preventDefault(); void model.paste(); }
       else if (mod && key === 'd') { e.preventDefault(); void model.duplicate(); }

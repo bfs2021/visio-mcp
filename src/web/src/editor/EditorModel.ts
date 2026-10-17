@@ -5,6 +5,7 @@ import { MaxGraphAdapter, DEFAULT_SCALE } from '../canvas/MaxGraphAdapter';
 import type { GestureNotice, Tool, ViewportInfo } from '../canvas/CanvasAdapter';
 import { GestureController, type GestureKind, type GestureToken } from '../canvas/GestureController';
 import { createSnapshotProjector } from '../canvas/SnapshotProjector';
+import { collapseToGroups, expandToGroups, leavesOfTargets } from '../canvas/selection';
 import { deleteOperations, findElement, intentOperations, nudgeOperations, pageContaining, pageOf, type Intent } from '../canvas/intents';
 import { fail, ok, type Result } from '../model/result';
 import { toPoints, type Unit } from '../model/validate';
@@ -63,7 +64,7 @@ export class EditorModel {
     };
     engine.setProjector(snapshot => this.adapter ? this.adapter.project(snapshot) : ok(undefined));
     engine.setSnapshotProjector(this.projector.project);
-    engine.onCommitted(() => this.bump());
+    engine.onCommitted(() => { this.syncGroupFrames(); this.bump(); });
   }
 
   // ------------------------------------------------------------------ React subscription
@@ -74,7 +75,23 @@ export class EditorModel {
 
   get snapshot(): Snapshot { return this.engine.store.snapshot(); }
   get currentPage() { return pageOf(this.snapshot); }
-  selectedElements(): Element[] { return this.selection.map(id => findElement(this.snapshot, id)).filter((e): e is Element => !!e); }
+  /** What the user has selected, with every complete group standing for its members. The canvas itself only ever holds the members. */
+  get targets(): string[] { return collapseToGroups(this.snapshot, this.selection); }
+  selectedElements(): Element[] { return this.targets.map(id => findElement(this.snapshot, id)).filter((e): e is Element => !!e); }
+
+  /** Picking a member of a group picks the whole group, unless Ctrl was held to reach into it. */
+  private handleSelection(ids: string[], subSelect: boolean): void {
+    const next = subSelect ? ids : expandToGroups(this.snapshot, ids);
+    if (next.length !== ids.length || next.some((id, i) => id !== ids[i])) this.adapter?.setSelection(next);
+    this.selection = next;
+    this.syncGroupFrames();
+    this.bump();
+  }
+
+  private syncGroupFrames(): void {
+    const frames = this.selectedElements().filter(e => e.kind === 'group').map(e => e.bounds);
+    this.adapter?.setGroupFrames(frames);
+  }
 
   assetUrlIn(snapshot: Snapshot, assetId: string): string {
     const a = snapshot.document.assets.find(x => x.id === assetId);
@@ -86,9 +103,9 @@ export class EditorModel {
     this.adapter?.dispose();
     this.adapter = new MaxGraphAdapter(container, {
       onIntent: i => void this.handleIntent(i),
-      onSelection: ids => { this.selection = ids; this.bump(); },
+      onSelection: (ids, info) => this.handleSelection(ids, info?.subSelect ?? false),
       onGesture: n => this.handleGesture(n),
-      onViewport: v => { this.viewport = v; this.bump(); },
+      onViewport: v => { this.viewport = v; this.syncGroupFrames(); this.bump(); },
       onPlace: (what, at) => void this.place(what, at),
     }, id => this.assetUrlIn(this.snapshot, id));
     this.adapter.project(this.snapshot);
@@ -206,7 +223,69 @@ export class EditorModel {
     if (r.ok) { this.selection = newIds; this.canvas?.setSelection(newIds); this.bump(); }
   }
 
-  async duplicate(): Promise<void> { this.copy(); await this.paste(); }
+  /** Copies the selection in place of a clipboard round trip, so groups and the connectors between copied shapes keep their structure. */
+  async duplicate(): Promise<void> {
+    const targets = this.targets;
+    if (!targets.length) { this.say('Select something to duplicate.', 'info'); return; }
+    const snapshot = this.snapshot;
+    const chosen = new Set(targets.flatMap(t => leavesOfTargets(snapshot, [t])));
+    // A connector is copied only with both of its shapes, like a pasted selection; one left dangling would have to point at the original.
+    const copyable = targets.filter(t => {
+      const el = findElement(snapshot, t);
+      return el && (el.kind !== 'connector' || [el.from, el.to].every(ep => ep.glue === 'none' || (ep.elementId && chosen.has(ep.elementId))));
+    });
+    if (!copyable.length) return;
+    this.pastes++;
+    const offset = 14.1732283465 * this.pastes;
+    const before = new Set(this.currentPage.elements.map(e => e.id));
+    const r = await this.apply('paste', [{ op: 'duplicate', targets: copyable, offset: { xPt: offset, yPt: offset }, keepAliases: true }]);
+    if (!r.ok) return;
+    const created = r.value.created.filter(id => !before.has(id));
+    const leaves = leavesOfTargets(this.snapshot, created.filter(id => findElement(this.snapshot, id)?.kind !== 'group'));
+    this.selection = [...new Set(leaves)];
+    this.canvas?.setSelection(this.selection);
+    this.bump();
+  }
+
+  // ------------------------------------------------------------------ groups, arrangement, stacking
+  /** Runs one structural operation on the current targets as a single transaction and keeps the members selected. */
+  private async arrangeWith(build: (targets: string[]) => Operation, minimum: number, what: string): Promise<Result<TransactionResult> | null> {
+    const targets = this.targets;
+    if (targets.length < minimum) { this.say(`Select at least ${minimum} object${minimum === 1 ? '' : 's'} to ${what}.`, 'info'); return null; }
+    const r = await this.apply('arrange', [build(targets)]);
+    if (r.ok) this.canvas?.setSelection(this.selection);
+    return r;
+  }
+
+  async group(): Promise<void> {
+    const r = await this.arrangeWith(targets => ({ op: 'group', targets }), 2, 'group');
+    if (r?.ok) this.say('Grouped.', 'info');
+  }
+
+  async ungroup(): Promise<void> {
+    const groups = this.targets.filter(t => findElement(this.snapshot, t)?.kind === 'group');
+    if (!groups.length) { this.say('Select a group to ungroup.', 'info'); return; }
+    const r = await this.apply('arrange', groups.map(target => ({ op: 'ungroup', target }) as Operation));
+    if (r.ok) this.say('Ungrouped.', 'info');
+  }
+
+  async align(edge: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom'): Promise<void> {
+    await this.arrangeWith(targets => ({ op: 'align', targets, edge }), 2, 'align');
+  }
+
+  async distribute(axis: 'horizontal' | 'vertical'): Promise<void> {
+    await this.arrangeWith(targets => ({ op: 'distribute', targets, axis }), 3, 'distribute');
+  }
+
+  async setGap(axis: 'horizontal' | 'vertical', gapPt: number): Promise<void> {
+    if (!Number.isFinite(gapPt) || gapPt < 0) { this.say('The gap must be zero or more.', 'warning'); return; }
+    await this.arrangeWith(targets => ({ op: 'setGap', targets, axis, gapPt }), 2, 'set a gap between');
+  }
+
+  async reorder(to: 'front' | 'back' | 'forward' | 'backward'): Promise<void> {
+    await this.arrangeWith(targets => ({ op: 'reorder', targets, to }), 1, 'reorder');
+  }
+
 
   async nudge(dx: number, dy: number): Promise<void> { await this.apply('nudge', nudgeOperations(this.snapshot, this.selection, dx, dy)); }
 

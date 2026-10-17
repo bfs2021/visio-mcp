@@ -435,6 +435,7 @@ public sealed record DeleteOp : Operation
 {
     [JsonPropertyName("target")] public required string Target { get; init; }
     [JsonPropertyName("withConnectors")] public bool? WithConnectors { get; init; }
+    [JsonPropertyName("children")] public string? Children { get; init; }
 }
 
 public sealed record RegisterAssetOp : Operation
@@ -476,7 +477,166 @@ public sealed record SetPageOp : Operation
 [JsonDerivedType(typeof(DeleteOp), "delete")]
 [JsonDerivedType(typeof(RegisterAssetOp), "registerAsset")]
 [JsonDerivedType(typeof(SetPageOp), "setPage")]
+[JsonDerivedType(typeof(DuplicateOp), "duplicate")]
+[JsonDerivedType(typeof(GroupOp), "group")]
+[JsonDerivedType(typeof(UngroupOp), "ungroup")]
+[JsonDerivedType(typeof(AlignOp), "align")]
+[JsonDerivedType(typeof(DistributeOp), "distribute")]
+[JsonDerivedType(typeof(SetGapOp), "setGap")]
+[JsonDerivedType(typeof(ReorderOp), "reorder")]
+[JsonDerivedType(typeof(AddPageOp), "addPage")]
+[JsonDerivedType(typeof(ReorderPageOp), "reorderPage")]
+[JsonDerivedType(typeof(DuplicatePageOp), "duplicatePage")]
+[JsonDerivedType(typeof(DeletePageOp), "deletePage")]
+[JsonDerivedType(typeof(AddLayerOp), "addLayer")]
+[JsonDerivedType(typeof(SetLayerOp), "setLayer")]
+[JsonDerivedType(typeof(AssignLayersOp), "assignLayers")]
+[JsonDerivedType(typeof(DeleteLayerOp), "deleteLayer")]
+[JsonDerivedType(typeof(SetAssetOp), "setAsset")]
+[JsonDerivedType(typeof(RemoveAssetOp), "removeAsset")]
+[JsonDerivedType(typeof(ReplaceAssetOp), "replaceAsset")]
 public abstract record Operation;
+
+public sealed record DuplicateOp : Operation
+{
+    [JsonPropertyName("targets")] public required IReadOnlyList<string> Targets { get; init; }
+    [JsonPropertyName("as")] public string? As { get; init; }
+    [JsonPropertyName("offset")] public Delta? Offset { get; init; }
+    [JsonPropertyName("keepExternalLinks")] public bool? KeepExternalLinks { get; init; }
+    [JsonPropertyName("keepAliases")] public bool? KeepAliases { get; init; }
+}
+
+public sealed record GroupOp : Operation
+{
+    [JsonPropertyName("targets")] public required IReadOnlyList<string> Targets { get; init; }
+    [JsonPropertyName("id")] public string? Id { get; init; }
+    [JsonPropertyName("alias")] public string? Alias { get; init; }
+    [JsonPropertyName("name")] public string? Name { get; init; }
+}
+
+public sealed record UngroupOp : Operation
+{
+    [JsonPropertyName("target")] public required string Target { get; init; }
+}
+
+public sealed record AlignOp : Operation
+{
+    [JsonPropertyName("targets")] public required IReadOnlyList<string> Targets { get; init; }
+    [JsonPropertyName("edge")] public required string Edge { get; init; }
+}
+
+public sealed record DistributeOp : Operation
+{
+    [JsonPropertyName("targets")] public required IReadOnlyList<string> Targets { get; init; }
+    [JsonPropertyName("axis")] public required string Axis { get; init; }
+}
+
+public sealed record SetGapOp : Operation
+{
+    [JsonPropertyName("targets")] public required IReadOnlyList<string> Targets { get; init; }
+    [JsonPropertyName("axis")] public required string Axis { get; init; }
+    [JsonPropertyName("gapPt")] public required double GapPt { get; init; }
+}
+
+public sealed record ReorderOp : Operation
+{
+    [JsonPropertyName("targets")] public required IReadOnlyList<string> Targets { get; init; }
+    [JsonPropertyName("to")] public required string To { get; init; }
+}
+
+public sealed record AddPageOp : Operation
+{
+    [JsonPropertyName("id")] public string? Id { get; init; }
+    [JsonPropertyName("name")] public required string Name { get; init; }
+    [JsonPropertyName("widthPt")] public double? WidthPt { get; init; }
+    [JsonPropertyName("heightPt")] public double? HeightPt { get; init; }
+    [JsonPropertyName("index")] public int? Index { get; init; }
+}
+
+public sealed record ReorderPageOp : Operation
+{
+    [JsonPropertyName("pageId")] public required string PageId { get; init; }
+    [JsonPropertyName("index")] public required int Index { get; init; }
+}
+
+public sealed record DuplicatePageOp : Operation
+{
+    [JsonPropertyName("pageId")] public required string PageId { get; init; }
+    [JsonPropertyName("id")] public string? Id { get; init; }
+    [JsonPropertyName("name")] public string? Name { get; init; }
+}
+
+public sealed record DeletePageOp : Operation
+{
+    [JsonPropertyName("pageId")] public required string PageId { get; init; }
+}
+
+public sealed record LayerPatch
+{
+    [JsonPropertyName("name")] public string? Name { get; init; }
+    [JsonPropertyName("visible")] public bool? Visible { get; init; }
+    [JsonPropertyName("locked")] public bool? Locked { get; init; }
+    [JsonPropertyName("printable")] public bool? Printable { get; init; }
+    [JsonPropertyName("snap")] public bool? Snap { get; init; }
+    [JsonPropertyName("glue")] public bool? Glue { get; init; }
+    [JsonPropertyName("colourOverride")] public string? ColourOverride { get; init; }
+}
+
+public sealed record AddLayerOp : Operation
+{
+    [JsonPropertyName("pageId")] public string? PageId { get; init; }
+    [JsonPropertyName("id")] public string? Id { get; init; }
+    [JsonPropertyName("name")] public required string Name { get; init; }
+    [JsonPropertyName("visible")] public bool? Visible { get; init; }
+    [JsonPropertyName("locked")] public bool? Locked { get; init; }
+    [JsonPropertyName("printable")] public bool? Printable { get; init; }
+    [JsonPropertyName("snap")] public bool? Snap { get; init; }
+    [JsonPropertyName("glue")] public bool? Glue { get; init; }
+    [JsonPropertyName("colourOverride")] public string? ColourOverride { get; init; }
+}
+
+public sealed record SetLayerOp : Operation
+{
+    [JsonPropertyName("layerId")] public required string LayerId { get; init; }
+    [JsonPropertyName("patch")] public required LayerPatch Patch { get; init; }
+}
+
+public sealed record AssignLayersOp : Operation
+{
+    [JsonPropertyName("targets")] public required IReadOnlyList<string> Targets { get; init; }
+    [JsonPropertyName("layerIds")] public required IReadOnlyList<string> LayerIds { get; init; }
+    [JsonPropertyName("mode")] public string? Mode { get; init; }
+}
+
+public sealed record DeleteLayerOp : Operation
+{
+    [JsonPropertyName("layerId")] public required string LayerId { get; init; }
+}
+
+public sealed record AssetPatch
+{
+    [JsonPropertyName("name")] public string? Name { get; init; }
+    [JsonPropertyName("tags")] public IReadOnlyList<string>? Tags { get; init; }
+    [JsonPropertyName("provenance")] public string? Provenance { get; init; }
+}
+
+public sealed record SetAssetOp : Operation
+{
+    [JsonPropertyName("assetId")] public required string AssetId { get; init; }
+    [JsonPropertyName("patch")] public required AssetPatch Patch { get; init; }
+}
+
+public sealed record RemoveAssetOp : Operation
+{
+    [JsonPropertyName("assetId")] public required string AssetId { get; init; }
+}
+
+public sealed record ReplaceAssetOp : Operation
+{
+    [JsonPropertyName("from")] public required string From { get; init; }
+    [JsonPropertyName("to")] public required string To { get; init; }
+    [JsonPropertyName("targets")] public IReadOnlyList<string>? Targets { get; init; }
+}
 
 public sealed record AppError
 {

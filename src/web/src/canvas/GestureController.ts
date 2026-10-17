@@ -3,7 +3,7 @@ import type { CommandEngine } from '../commands/CommandEngine';
 import { planPatch } from '../commands/planPatch';
 import { fail, ok, type Result } from '../model/result';
 
-export type GestureKind = 'move' | 'resize' | 'rotate' | 'bend' | 'text' | 'nudge' | 'inspector' | 'paste' | 'create';
+export type GestureKind = 'move' | 'resize' | 'rotate' | 'bend' | 'text' | 'nudge' | 'inspector' | 'paste' | 'create' | 'arrange';
 
 export interface GestureToken {
   readonly id: number;

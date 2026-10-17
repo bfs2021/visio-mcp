@@ -1,229 +1,1425 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "operations.schema.json",
-  "title": "Canonical operation union (M1 subset)",
-  "description": "Explicit operation union, not a JSON Patch interpreter. Omission preserves; null clears only the schema-defined nullable properties; nested patches merge supplied leaves; arrays replace atomically. I20 extends this union (duplicate, group, arrange, pages, layers, assets).",
+  "title": "Canonical operation union",
+  "description": "Explicit operation union, not a JSON Patch interpreter. Omission preserves; null clears only the schema-defined nullable properties; nested patches merge supplied leaves; arrays replace atomically.",
   "$ref": "#/$defs/Operation",
   "$defs": {
-    "Target": { "type": "string", "minLength": 1, "maxLength": 256, "description": "UUID, page-scoped alias, or exact display name; ambiguity is an error, never a guess." },
+    "Target": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "description": "UUID, page-scoped alias, or exact display name; ambiguity is an error, never a guess."
+    },
     "Delta": {
-      "type": "object", "additionalProperties": false, "required": ["xPt", "yPt"],
-      "properties": { "xPt": { "type": "number" }, "yPt": { "type": "number" } }
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "xPt",
+        "yPt"
+      ],
+      "properties": {
+        "xPt": {
+          "type": "number"
+        },
+        "yPt": {
+          "type": "number"
+        }
+      }
     },
     "Pivot": {
-      "type": "object", "additionalProperties": false, "required": ["xPt", "yPt"],
-      "properties": { "xPt": { "type": "number" }, "yPt": { "type": "number" } }
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "xPt",
+        "yPt"
+      ],
+      "properties": {
+        "xPt": {
+          "type": "number"
+        },
+        "yPt": {
+          "type": "number"
+        }
+      }
     },
     "BoundsPatch": {
-      "type": "object", "additionalProperties": false, "minProperties": 1,
-      "properties": { "x": { "type": "number" }, "y": { "type": "number" }, "width": { "type": "number" }, "height": { "type": "number" } }
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "width": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        }
+      }
     },
     "TextBlockPatch": {
-      "type": "object", "additionalProperties": false, "minProperties": 1,
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
       "properties": {
-        "value": { "type": "string", "maxLength": 65536 },
-        "fontFamily": { "type": "string", "minLength": 1, "maxLength": 128 },
-        "fontSizePt": { "type": "number", "exclusiveMinimum": 0, "maximum": 1000 },
-        "bold": { "type": "boolean" },
-        "italic": { "type": "boolean" },
-        "underline": { "type": "boolean" },
-        "colour": { "$ref": "document.schema.json#/$defs/Colour" },
-        "horizontalAlign": { "enum": ["left", "center", "right"] },
-        "verticalAlign": { "enum": ["top", "middle", "bottom"] },
-        "wrap": { "type": "boolean" },
-        "paddingPt": { "type": "number", "minimum": 0 }
+        "value": {
+          "type": "string",
+          "maxLength": 65536
+        },
+        "fontFamily": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "fontSizePt": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1000
+        },
+        "bold": {
+          "type": "boolean"
+        },
+        "italic": {
+          "type": "boolean"
+        },
+        "underline": {
+          "type": "boolean"
+        },
+        "colour": {
+          "$ref": "document.schema.json#/$defs/Colour"
+        },
+        "horizontalAlign": {
+          "enum": [
+            "left",
+            "center",
+            "right"
+          ]
+        },
+        "verticalAlign": {
+          "enum": [
+            "top",
+            "middle",
+            "bottom"
+          ]
+        },
+        "wrap": {
+          "type": "boolean"
+        },
+        "paddingPt": {
+          "type": "number",
+          "minimum": 0
+        }
       }
     },
     "StylePatch": {
-      "type": "object", "additionalProperties": false, "minProperties": 1,
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
       "description": "Union of shape and connector style leaves; leaves that do not apply to the target's kind are rejected.",
       "properties": {
-        "fill": { "$ref": "document.schema.json#/$defs/Paint" },
-        "stroke": { "$ref": "document.schema.json#/$defs/Paint" },
-        "strokeWidthPt": { "type": "number", "minimum": 0 },
-        "dash": { "enum": ["solid", "dashed", "dotted", "dash-dot"] },
-        "lineCap": { "enum": ["butt", "round", "square"] },
-        "lineJoin": { "enum": ["miter", "round", "bevel"] },
-        "colour": { "$ref": "document.schema.json#/$defs/Colour" },
-        "widthPt": { "type": "number", "minimum": 0 },
-        "startArrow": { "enum": ["none", "block", "open", "diamond", "oval"] },
-        "endArrow": { "enum": ["none", "block", "open", "diamond", "oval"] }
+        "fill": {
+          "$ref": "document.schema.json#/$defs/Paint"
+        },
+        "stroke": {
+          "$ref": "document.schema.json#/$defs/Paint"
+        },
+        "strokeWidthPt": {
+          "type": "number",
+          "minimum": 0
+        },
+        "dash": {
+          "enum": [
+            "solid",
+            "dashed",
+            "dotted",
+            "dash-dot"
+          ]
+        },
+        "lineCap": {
+          "enum": [
+            "butt",
+            "round",
+            "square"
+          ]
+        },
+        "lineJoin": {
+          "enum": [
+            "miter",
+            "round",
+            "bevel"
+          ]
+        },
+        "colour": {
+          "$ref": "document.schema.json#/$defs/Colour"
+        },
+        "widthPt": {
+          "type": "number",
+          "minimum": 0
+        },
+        "startArrow": {
+          "enum": [
+            "none",
+            "block",
+            "open",
+            "diamond",
+            "oval"
+          ]
+        },
+        "endArrow": {
+          "enum": [
+            "none",
+            "block",
+            "open",
+            "diamond",
+            "oval"
+          ]
+        }
       }
     },
     "GeometryPatch": {
-      "type": "object", "additionalProperties": false, "minProperties": 1,
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
       "properties": {
-        "preset": { "enum": ["rectangle", "rounded-rectangle", "ellipse", "diamond", "triangle", "hexagon", "parallelogram", "cylinder", "cloud", "callout"] },
-        "svgPath": { "type": "string", "maxLength": 65536 },
-        "cornerRadiusPt": { "type": "number", "minimum": 0 }
+        "preset": {
+          "enum": [
+            "rectangle",
+            "rounded-rectangle",
+            "ellipse",
+            "diamond",
+            "triangle",
+            "hexagon",
+            "parallelogram",
+            "cylinder",
+            "cloud",
+            "callout"
+          ]
+        },
+        "svgPath": {
+          "type": "string",
+          "maxLength": 65536
+        },
+        "cornerRadiusPt": {
+          "type": "number",
+          "minimum": 0
+        }
       }
     },
     "ElementPatch": {
-      "type": "object", "additionalProperties": false, "minProperties": 1,
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
       "properties": {
-        "name": { "type": ["string", "null"], "maxLength": 256 },
-        "alias": { "type": ["string", "null"], "minLength": 1, "maxLength": 128 },
-        "locked": { "type": "boolean" },
-        "hidden": { "type": "boolean" },
-        "layerIds": { "type": "array", "items": { "$ref": "document.schema.json#/$defs/Uuid" }, "uniqueItems": true },
-        "metadata": { "type": "object", "additionalProperties": { "type": "string", "maxLength": 4096 } },
-        "style": { "$ref": "#/$defs/StylePatch" },
-        "text": { "$ref": "#/$defs/TextBlockPatch" },
-        "geometry": { "$ref": "#/$defs/GeometryPatch" },
-        "assetId": { "type": "string", "minLength": 1, "maxLength": 256 },
-        "fit": { "enum": ["contain", "cover", "stretch"] },
-        "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
-        "preserveAspectRatio": { "type": "boolean" },
-        "route": { "enum": ["straight", "orthogonal", "curved"] },
-        "waypoints": { "type": "array", "items": { "$ref": "document.schema.json#/$defs/Point" }, "maxItems": 256 },
-        "from": { "$ref": "document.schema.json#/$defs/Endpoint" },
-        "to": { "$ref": "document.schema.json#/$defs/Endpoint" },
-        "ports": { "type": "array", "items": { "$ref": "document.schema.json#/$defs/Port" }, "maxItems": 64 }
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 256
+        },
+        "alias": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "locked": {
+          "type": "boolean"
+        },
+        "hidden": {
+          "type": "boolean"
+        },
+        "layerIds": {
+          "type": "array",
+          "items": {
+            "$ref": "document.schema.json#/$defs/Uuid"
+          },
+          "uniqueItems": true
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 4096
+          }
+        },
+        "style": {
+          "$ref": "#/$defs/StylePatch"
+        },
+        "text": {
+          "$ref": "#/$defs/TextBlockPatch"
+        },
+        "geometry": {
+          "$ref": "#/$defs/GeometryPatch"
+        },
+        "assetId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "fit": {
+          "enum": [
+            "contain",
+            "cover",
+            "stretch"
+          ]
+        },
+        "opacity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "preserveAspectRatio": {
+          "type": "boolean"
+        },
+        "route": {
+          "enum": [
+            "straight",
+            "orthogonal",
+            "curved"
+          ]
+        },
+        "waypoints": {
+          "type": "array",
+          "items": {
+            "$ref": "document.schema.json#/$defs/Point"
+          },
+          "maxItems": 256
+        },
+        "from": {
+          "$ref": "document.schema.json#/$defs/Endpoint"
+        },
+        "to": {
+          "$ref": "document.schema.json#/$defs/Endpoint"
+        },
+        "ports": {
+          "type": "array",
+          "items": {
+            "$ref": "document.schema.json#/$defs/Port"
+          },
+          "maxItems": 64
+        }
       }
     },
     "CreateShape": {
-      "type": "object", "additionalProperties": false, "required": ["op", "bounds"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "bounds"
+      ],
       "properties": {
-        "op": { "const": "createShape" },
-        "id": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "alias": { "type": "string", "minLength": 1, "maxLength": 128 },
-        "name": { "type": "string", "maxLength": 256 },
-        "pageId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "layerIds": { "type": "array", "items": { "$ref": "document.schema.json#/$defs/Uuid" }, "uniqueItems": true },
-        "bounds": { "$ref": "document.schema.json#/$defs/Bounds" },
-        "rotationDeg": { "type": "number" },
-        "geometry": { "$ref": "#/$defs/GeometryPatch" },
-        "style": { "$ref": "#/$defs/StylePatch" },
-        "text": { "$ref": "#/$defs/TextBlockPatch" },
-        "ports": { "type": "array", "items": { "$ref": "document.schema.json#/$defs/Port" }, "maxItems": 64 }
+        "op": {
+          "const": "createShape"
+        },
+        "id": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "alias": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "pageId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "layerIds": {
+          "type": "array",
+          "items": {
+            "$ref": "document.schema.json#/$defs/Uuid"
+          },
+          "uniqueItems": true
+        },
+        "bounds": {
+          "$ref": "document.schema.json#/$defs/Bounds"
+        },
+        "rotationDeg": {
+          "type": "number"
+        },
+        "geometry": {
+          "$ref": "#/$defs/GeometryPatch"
+        },
+        "style": {
+          "$ref": "#/$defs/StylePatch"
+        },
+        "text": {
+          "$ref": "#/$defs/TextBlockPatch"
+        },
+        "ports": {
+          "type": "array",
+          "items": {
+            "$ref": "document.schema.json#/$defs/Port"
+          },
+          "maxItems": 64
+        }
       }
     },
     "CreateText": {
-      "type": "object", "additionalProperties": false, "required": ["op", "bounds", "text"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "bounds",
+        "text"
+      ],
       "properties": {
-        "op": { "const": "createText" },
-        "id": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "alias": { "type": "string", "minLength": 1, "maxLength": 128 },
-        "name": { "type": "string", "maxLength": 256 },
-        "pageId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "layerIds": { "type": "array", "items": { "$ref": "document.schema.json#/$defs/Uuid" }, "uniqueItems": true },
-        "bounds": { "$ref": "document.schema.json#/$defs/Bounds" },
-        "rotationDeg": { "type": "number" },
-        "text": { "$ref": "#/$defs/TextBlockPatch" }
+        "op": {
+          "const": "createText"
+        },
+        "id": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "alias": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "pageId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "layerIds": {
+          "type": "array",
+          "items": {
+            "$ref": "document.schema.json#/$defs/Uuid"
+          },
+          "uniqueItems": true
+        },
+        "bounds": {
+          "$ref": "document.schema.json#/$defs/Bounds"
+        },
+        "rotationDeg": {
+          "type": "number"
+        },
+        "text": {
+          "$ref": "#/$defs/TextBlockPatch"
+        }
       }
     },
     "CreateImage": {
-      "type": "object", "additionalProperties": false, "required": ["op", "bounds", "assetId"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "bounds",
+        "assetId"
+      ],
       "properties": {
-        "op": { "const": "createImage" },
-        "id": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "alias": { "type": "string", "minLength": 1, "maxLength": 128 },
-        "name": { "type": "string", "maxLength": 256 },
-        "pageId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "layerIds": { "type": "array", "items": { "$ref": "document.schema.json#/$defs/Uuid" }, "uniqueItems": true },
-        "bounds": { "$ref": "document.schema.json#/$defs/Bounds" },
-        "rotationDeg": { "type": "number" },
-        "assetId": { "type": "string", "minLength": 1, "maxLength": 256 },
-        "fit": { "enum": ["contain", "cover", "stretch"] },
-        "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
-        "preserveAspectRatio": { "type": "boolean" }
+        "op": {
+          "const": "createImage"
+        },
+        "id": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "alias": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "pageId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "layerIds": {
+          "type": "array",
+          "items": {
+            "$ref": "document.schema.json#/$defs/Uuid"
+          },
+          "uniqueItems": true
+        },
+        "bounds": {
+          "$ref": "document.schema.json#/$defs/Bounds"
+        },
+        "rotationDeg": {
+          "type": "number"
+        },
+        "assetId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "fit": {
+          "enum": [
+            "contain",
+            "cover",
+            "stretch"
+          ]
+        },
+        "opacity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "preserveAspectRatio": {
+          "type": "boolean"
+        }
       }
     },
     "CreateConnector": {
-      "type": "object", "additionalProperties": false, "required": ["op", "from", "to"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "from",
+        "to"
+      ],
       "properties": {
-        "op": { "const": "createConnector" },
-        "id": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "alias": { "type": "string", "minLength": 1, "maxLength": 128 },
-        "name": { "type": "string", "maxLength": 256 },
-        "pageId": { "$ref": "document.schema.json#/$defs/Uuid" },
-        "layerIds": { "type": "array", "items": { "$ref": "document.schema.json#/$defs/Uuid" }, "uniqueItems": true },
-        "from": { "$ref": "#/$defs/EndpointInput" },
-        "to": { "$ref": "#/$defs/EndpointInput" },
-        "route": { "enum": ["straight", "orthogonal", "curved"] },
-        "waypoints": { "type": "array", "items": { "$ref": "document.schema.json#/$defs/Point" }, "maxItems": 256 },
-        "style": { "$ref": "#/$defs/StylePatch" },
-        "label": { "$ref": "#/$defs/TextBlockPatch" }
+        "op": {
+          "const": "createConnector"
+        },
+        "id": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "alias": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "pageId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "layerIds": {
+          "type": "array",
+          "items": {
+            "$ref": "document.schema.json#/$defs/Uuid"
+          },
+          "uniqueItems": true
+        },
+        "from": {
+          "$ref": "#/$defs/EndpointInput"
+        },
+        "to": {
+          "$ref": "#/$defs/EndpointInput"
+        },
+        "route": {
+          "enum": [
+            "straight",
+            "orthogonal",
+            "curved"
+          ]
+        },
+        "waypoints": {
+          "type": "array",
+          "items": {
+            "$ref": "document.schema.json#/$defs/Point"
+          },
+          "maxItems": 256
+        },
+        "style": {
+          "$ref": "#/$defs/StylePatch"
+        },
+        "label": {
+          "$ref": "#/$defs/TextBlockPatch"
+        }
       }
     },
     "EndpointInput": {
-      "type": "object", "additionalProperties": false, "required": ["glue"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "glue"
+      ],
       "description": "Like Endpoint, but elementId may be a Target (alias or name) that the engine resolves to a UUID, including elements created earlier in the same batch.",
       "properties": {
-        "elementId": { "$ref": "#/$defs/Target" },
-        "port": { "type": "string", "minLength": 1, "maxLength": 64 },
-        "point": { "$ref": "document.schema.json#/$defs/Point" },
-        "glue": { "enum": ["dynamic", "static", "none"] }
+        "elementId": {
+          "$ref": "#/$defs/Target"
+        },
+        "port": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "point": {
+          "$ref": "document.schema.json#/$defs/Point"
+        },
+        "glue": {
+          "enum": [
+            "dynamic",
+            "static",
+            "none"
+          ]
+        }
       }
     },
     "Set": {
-      "type": "object", "additionalProperties": false, "required": ["op", "target", "patch"],
-      "properties": { "op": { "const": "set" }, "target": { "$ref": "#/$defs/Target" }, "patch": { "$ref": "#/$defs/ElementPatch" } }
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "target",
+        "patch"
+      ],
+      "properties": {
+        "op": {
+          "const": "set"
+        },
+        "target": {
+          "$ref": "#/$defs/Target"
+        },
+        "patch": {
+          "$ref": "#/$defs/ElementPatch"
+        }
+      }
     },
     "Move": {
-      "type": "object", "additionalProperties": false, "required": ["op", "target", "delta"],
-      "properties": { "op": { "const": "move" }, "target": { "$ref": "#/$defs/Target" }, "delta": { "$ref": "#/$defs/Delta" } }
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "target",
+        "delta"
+      ],
+      "properties": {
+        "op": {
+          "const": "move"
+        },
+        "target": {
+          "$ref": "#/$defs/Target"
+        },
+        "delta": {
+          "$ref": "#/$defs/Delta"
+        }
+      }
     },
     "Resize": {
-      "type": "object", "additionalProperties": false, "required": ["op", "target", "bounds"],
-      "properties": { "op": { "const": "resize" }, "target": { "$ref": "#/$defs/Target" }, "bounds": { "$ref": "#/$defs/BoundsPatch" } }
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "target",
+        "bounds"
+      ],
+      "properties": {
+        "op": {
+          "const": "resize"
+        },
+        "target": {
+          "$ref": "#/$defs/Target"
+        },
+        "bounds": {
+          "$ref": "#/$defs/BoundsPatch"
+        }
+      }
     },
     "Rotate": {
-      "type": "object", "additionalProperties": false, "required": ["op", "target"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "target"
+      ],
       "properties": {
-        "op": { "const": "rotate" },
-        "target": { "$ref": "#/$defs/Target" },
-        "angleDeg": { "type": "number" },
-        "deltaDeg": { "type": "number" },
-        "pivot": { "$ref": "#/$defs/Pivot" }
+        "op": {
+          "const": "rotate"
+        },
+        "target": {
+          "$ref": "#/$defs/Target"
+        },
+        "angleDeg": {
+          "type": "number"
+        },
+        "deltaDeg": {
+          "type": "number"
+        },
+        "pivot": {
+          "$ref": "#/$defs/Pivot"
+        }
       },
-      "oneOf": [{ "required": ["angleDeg"] }, { "required": ["deltaDeg"] }]
+      "oneOf": [
+        {
+          "required": [
+            "angleDeg"
+          ]
+        },
+        {
+          "required": [
+            "deltaDeg"
+          ]
+        }
+      ]
     },
     "Delete": {
-      "type": "object", "additionalProperties": false, "required": ["op", "target"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "target"
+      ],
       "properties": {
-        "op": { "const": "delete" },
-        "target": { "$ref": "#/$defs/Target" },
-        "withConnectors": { "type": "boolean", "description": "Also delete connectors attached to the target; otherwise attached connectors are a dependency_conflict." }
+        "op": {
+          "const": "delete"
+        },
+        "target": {
+          "$ref": "#/$defs/Target"
+        },
+        "withConnectors": {
+          "type": "boolean",
+          "description": "Also delete connectors attached to the target; otherwise attached connectors are a dependency_conflict."
+        },
+        "children": {
+          "enum": [
+            "delete",
+            "ungroup"
+          ],
+          "description": "Required when the target is a group: delete the whole subtree or keep the members (ungroup first)."
+        }
       }
     },
     "RegisterAsset": {
-      "type": "object", "additionalProperties": false, "required": ["op", "asset"],
-      "properties": { "op": { "const": "registerAsset" }, "asset": { "$ref": "document.schema.json#/$defs/Asset" } }
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "asset"
+      ],
+      "properties": {
+        "op": {
+          "const": "registerAsset"
+        },
+        "asset": {
+          "$ref": "document.schema.json#/$defs/Asset"
+        }
+      }
     },
     "GridPatch": {
-      "type": "object", "additionalProperties": false, "minProperties": 1,
-      "properties": { "visible": { "type": "boolean" }, "spacingPt": { "type": "number", "exclusiveMinimum": 0 }, "snap": { "type": "boolean" } }
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "visible": {
+          "type": "boolean"
+        },
+        "spacingPt": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "snap": {
+          "type": "boolean"
+        }
+      }
     },
     "PagePatch": {
-      "type": "object", "additionalProperties": false, "minProperties": 1,
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
       "properties": {
-        "name": { "type": "string", "minLength": 1, "maxLength": 256 },
-        "widthPt": { "type": "number", "exclusiveMinimum": 0, "maximum": 14400 },
-        "heightPt": { "type": "number", "exclusiveMinimum": 0, "maximum": 14400 },
-        "background": { "$ref": "document.schema.json#/$defs/Paint" },
-        "grid": { "$ref": "#/$defs/GridPatch" }
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "widthPt": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 14400
+        },
+        "heightPt": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 14400
+        },
+        "background": {
+          "$ref": "document.schema.json#/$defs/Paint"
+        },
+        "grid": {
+          "$ref": "#/$defs/GridPatch"
+        }
       }
     },
     "SetPage": {
-      "type": "object", "additionalProperties": false, "required": ["op", "patch"],
-      "properties": { "op": { "const": "setPage" }, "pageId": { "$ref": "document.schema.json#/$defs/Uuid" }, "patch": { "$ref": "#/$defs/PagePatch" } }
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "patch"
+      ],
+      "properties": {
+        "op": {
+          "const": "setPage"
+        },
+        "pageId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "patch": {
+          "$ref": "#/$defs/PagePatch"
+        }
+      }
     },
     "Operation": {
       "oneOf": [
-        { "$ref": "#/$defs/CreateShape" },
-        { "$ref": "#/$defs/CreateText" },
-        { "$ref": "#/$defs/CreateImage" },
-        { "$ref": "#/$defs/CreateConnector" },
-        { "$ref": "#/$defs/Set" },
-        { "$ref": "#/$defs/Move" },
-        { "$ref": "#/$defs/Resize" },
-        { "$ref": "#/$defs/Rotate" },
-        { "$ref": "#/$defs/Delete" },
-        { "$ref": "#/$defs/RegisterAsset" },
-        { "$ref": "#/$defs/SetPage" }
+        {
+          "$ref": "#/$defs/CreateShape"
+        },
+        {
+          "$ref": "#/$defs/CreateText"
+        },
+        {
+          "$ref": "#/$defs/CreateImage"
+        },
+        {
+          "$ref": "#/$defs/CreateConnector"
+        },
+        {
+          "$ref": "#/$defs/Set"
+        },
+        {
+          "$ref": "#/$defs/Move"
+        },
+        {
+          "$ref": "#/$defs/Resize"
+        },
+        {
+          "$ref": "#/$defs/Rotate"
+        },
+        {
+          "$ref": "#/$defs/Delete"
+        },
+        {
+          "$ref": "#/$defs/RegisterAsset"
+        },
+        {
+          "$ref": "#/$defs/SetPage"
+        },
+        {
+          "$ref": "#/$defs/Duplicate"
+        },
+        {
+          "$ref": "#/$defs/Group"
+        },
+        {
+          "$ref": "#/$defs/Ungroup"
+        },
+        {
+          "$ref": "#/$defs/Align"
+        },
+        {
+          "$ref": "#/$defs/Distribute"
+        },
+        {
+          "$ref": "#/$defs/SetGap"
+        },
+        {
+          "$ref": "#/$defs/Reorder"
+        },
+        {
+          "$ref": "#/$defs/AddPage"
+        },
+        {
+          "$ref": "#/$defs/ReorderPage"
+        },
+        {
+          "$ref": "#/$defs/DuplicatePage"
+        },
+        {
+          "$ref": "#/$defs/DeletePage"
+        },
+        {
+          "$ref": "#/$defs/AddLayer"
+        },
+        {
+          "$ref": "#/$defs/SetLayer"
+        },
+        {
+          "$ref": "#/$defs/AssignLayers"
+        },
+        {
+          "$ref": "#/$defs/DeleteLayer"
+        },
+        {
+          "$ref": "#/$defs/SetAsset"
+        },
+        {
+          "$ref": "#/$defs/RemoveAsset"
+        },
+        {
+          "$ref": "#/$defs/ReplaceAsset"
+        }
       ],
       "x-discriminator": "op"
+    },
+    "Duplicate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "targets"
+      ],
+      "properties": {
+        "op": {
+          "const": "duplicate"
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Target"
+          },
+          "minItems": 1,
+          "maxItems": 1000,
+          "uniqueItems": true,
+          "description": "Explicit targets in input order. Input order breaks ties in arrangement."
+        },
+        "as": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Alias of the copy; only valid for a single target."
+        },
+        "offset": {
+          "$ref": "#/$defs/Delta"
+        },
+        "keepExternalLinks": {
+          "type": "boolean",
+          "description": "Copied connectors that attach to elements outside the duplicated set keep pointing at them; otherwise such connectors are not copied."
+        },
+        "keepAliases": {
+          "type": "boolean",
+          "description": "Copies keep their source's alias, made unique on the page by a numeric suffix (a, a-2, a-3); otherwise copies have no alias. Ignored for the copy named by as."
+        }
+      }
+    },
+    "Group": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "targets"
+      ],
+      "properties": {
+        "op": {
+          "const": "group"
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Target"
+          },
+          "minItems": 1,
+          "maxItems": 1000,
+          "uniqueItems": true,
+          "description": "Explicit targets in input order. Input order breaks ties in arrangement."
+        },
+        "id": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "alias": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 256
+        }
+      }
+    },
+    "Ungroup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "target"
+      ],
+      "properties": {
+        "op": {
+          "const": "ungroup"
+        },
+        "target": {
+          "$ref": "#/$defs/Target"
+        }
+      }
+    },
+    "Align": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "targets",
+        "edge"
+      ],
+      "properties": {
+        "op": {
+          "const": "align"
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Target"
+          },
+          "minItems": 1,
+          "maxItems": 1000,
+          "uniqueItems": true,
+          "description": "Explicit targets in input order. Input order breaks ties in arrangement."
+        },
+        "edge": {
+          "enum": [
+            "left",
+            "center",
+            "right",
+            "top",
+            "middle",
+            "bottom"
+          ]
+        }
+      }
+    },
+    "Distribute": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "targets",
+        "axis"
+      ],
+      "properties": {
+        "op": {
+          "const": "distribute"
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Target"
+          },
+          "minItems": 1,
+          "maxItems": 1000,
+          "uniqueItems": true,
+          "description": "Explicit targets in input order. Input order breaks ties in arrangement."
+        },
+        "axis": {
+          "enum": [
+            "horizontal",
+            "vertical"
+          ]
+        }
+      }
+    },
+    "SetGap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "targets",
+        "axis",
+        "gapPt"
+      ],
+      "properties": {
+        "op": {
+          "const": "setGap"
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Target"
+          },
+          "minItems": 1,
+          "maxItems": 1000,
+          "uniqueItems": true,
+          "description": "Explicit targets in input order. Input order breaks ties in arrangement."
+        },
+        "axis": {
+          "enum": [
+            "horizontal",
+            "vertical"
+          ]
+        },
+        "gapPt": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "Reorder": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "targets",
+        "to"
+      ],
+      "properties": {
+        "op": {
+          "const": "reorder"
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Target"
+          },
+          "minItems": 1,
+          "maxItems": 1000,
+          "uniqueItems": true,
+          "description": "Explicit targets in input order. Input order breaks ties in arrangement."
+        },
+        "to": {
+          "enum": [
+            "front",
+            "back",
+            "forward",
+            "backward"
+          ]
+        }
+      }
+    },
+    "AddPage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "name"
+      ],
+      "properties": {
+        "op": {
+          "const": "addPage"
+        },
+        "id": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "widthPt": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 14400
+        },
+        "heightPt": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 14400
+        },
+        "index": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "ReorderPage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "pageId",
+        "index"
+      ],
+      "properties": {
+        "op": {
+          "const": "reorderPage"
+        },
+        "pageId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "index": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "DuplicatePage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "pageId"
+      ],
+      "properties": {
+        "op": {
+          "const": "duplicatePage"
+        },
+        "pageId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "id": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        }
+      }
+    },
+    "DeletePage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "pageId"
+      ],
+      "properties": {
+        "op": {
+          "const": "deletePage"
+        },
+        "pageId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        }
+      }
+    },
+    "LayerPatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "locked": {
+          "type": "boolean"
+        },
+        "printable": {
+          "type": "boolean"
+        },
+        "snap": {
+          "type": "boolean"
+        },
+        "glue": {
+          "type": "boolean"
+        },
+        "colourOverride": {
+          "$ref": "document.schema.json#/$defs/Colour"
+        }
+      }
+    },
+    "AddLayer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "name"
+      ],
+      "properties": {
+        "op": {
+          "const": "addLayer"
+        },
+        "pageId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "id": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "locked": {
+          "type": "boolean"
+        },
+        "printable": {
+          "type": "boolean"
+        },
+        "snap": {
+          "type": "boolean"
+        },
+        "glue": {
+          "type": "boolean"
+        },
+        "colourOverride": {
+          "$ref": "document.schema.json#/$defs/Colour"
+        }
+      }
+    },
+    "SetLayer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "layerId",
+        "patch"
+      ],
+      "properties": {
+        "op": {
+          "const": "setLayer"
+        },
+        "layerId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        },
+        "patch": {
+          "$ref": "#/$defs/LayerPatch"
+        }
+      }
+    },
+    "AssignLayers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "targets",
+        "layerIds"
+      ],
+      "properties": {
+        "op": {
+          "const": "assignLayers"
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Target"
+          },
+          "minItems": 1,
+          "maxItems": 1000,
+          "uniqueItems": true,
+          "description": "Explicit targets in input order. Input order breaks ties in arrangement."
+        },
+        "layerIds": {
+          "type": "array",
+          "items": {
+            "$ref": "document.schema.json#/$defs/Uuid"
+          },
+          "uniqueItems": true,
+          "maxItems": 256
+        },
+        "mode": {
+          "enum": [
+            "set",
+            "add",
+            "remove"
+          ],
+          "description": "Default add."
+        }
+      }
+    },
+    "DeleteLayer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "layerId"
+      ],
+      "properties": {
+        "op": {
+          "const": "deleteLayer"
+        },
+        "layerId": {
+          "$ref": "document.schema.json#/$defs/Uuid"
+        }
+      }
+    },
+    "AssetPatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "maxItems": 64
+        },
+        "provenance": {
+          "type": "string",
+          "maxLength": 1024
+        }
+      }
+    },
+    "SetAsset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "assetId",
+        "patch"
+      ],
+      "properties": {
+        "op": {
+          "const": "setAsset"
+        },
+        "assetId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "patch": {
+          "$ref": "#/$defs/AssetPatch"
+        }
+      }
+    },
+    "RemoveAsset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "assetId"
+      ],
+      "properties": {
+        "op": {
+          "const": "removeAsset"
+        },
+        "assetId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        }
+      }
+    },
+    "ReplaceAsset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "from",
+        "to"
+      ],
+      "properties": {
+        "op": {
+          "const": "replaceAsset"
+        },
+        "from": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "to": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Target"
+          },
+          "minItems": 1,
+          "maxItems": 1000,
+          "uniqueItems": true,
+          "description": "Explicit targets in input order. Input order breaks ties in arrangement."
+        }
+      }
     }
   }
 }

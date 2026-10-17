@@ -394,6 +394,7 @@ export interface DeleteOp {
   op: "delete";
   target: Target;
   withConnectors?: boolean;
+  children?: "delete" | "ungroup";
 }
 
 export interface RegisterAssetOp {
@@ -421,7 +422,146 @@ export interface SetPageOp {
   patch: PagePatch;
 }
 
-export type Operation = CreateShapeOp | CreateTextOp | CreateImageOp | CreateConnectorOp | SetOp | MoveOp | ResizeOp | RotateOp | DeleteOp | RegisterAssetOp | SetPageOp;
+export type Operation = CreateShapeOp | CreateTextOp | CreateImageOp | CreateConnectorOp | SetOp | MoveOp | ResizeOp | RotateOp | DeleteOp | RegisterAssetOp | SetPageOp | DuplicateOp | GroupOp | UngroupOp | AlignOp | DistributeOp | SetGapOp | ReorderOp | AddPageOp | ReorderPageOp | DuplicatePageOp | DeletePageOp | AddLayerOp | SetLayerOp | AssignLayersOp | DeleteLayerOp | SetAssetOp | RemoveAssetOp | ReplaceAssetOp;
+
+export interface DuplicateOp {
+  op: "duplicate";
+  targets: Target[];
+  as?: string;
+  offset?: Delta;
+  keepExternalLinks?: boolean;
+  keepAliases?: boolean;
+}
+
+export interface GroupOp {
+  op: "group";
+  targets: Target[];
+  id?: Uuid;
+  alias?: string;
+  name?: string;
+}
+
+export interface UngroupOp {
+  op: "ungroup";
+  target: Target;
+}
+
+export interface AlignOp {
+  op: "align";
+  targets: Target[];
+  edge: "left" | "center" | "right" | "top" | "middle" | "bottom";
+}
+
+export interface DistributeOp {
+  op: "distribute";
+  targets: Target[];
+  axis: "horizontal" | "vertical";
+}
+
+export interface SetGapOp {
+  op: "setGap";
+  targets: Target[];
+  axis: "horizontal" | "vertical";
+  gapPt: number;
+}
+
+export interface ReorderOp {
+  op: "reorder";
+  targets: Target[];
+  to: "front" | "back" | "forward" | "backward";
+}
+
+export interface AddPageOp {
+  op: "addPage";
+  id?: Uuid;
+  name: string;
+  widthPt?: number;
+  heightPt?: number;
+  index?: number;
+}
+
+export interface ReorderPageOp {
+  op: "reorderPage";
+  pageId: Uuid;
+  index: number;
+}
+
+export interface DuplicatePageOp {
+  op: "duplicatePage";
+  pageId: Uuid;
+  id?: Uuid;
+  name?: string;
+}
+
+export interface DeletePageOp {
+  op: "deletePage";
+  pageId: Uuid;
+}
+
+export interface LayerPatch {
+  name?: string;
+  visible?: boolean;
+  locked?: boolean;
+  printable?: boolean;
+  snap?: boolean;
+  glue?: boolean;
+  colourOverride?: Colour;
+}
+
+export interface AddLayerOp {
+  op: "addLayer";
+  pageId?: Uuid;
+  id?: Uuid;
+  name: string;
+  visible?: boolean;
+  locked?: boolean;
+  printable?: boolean;
+  snap?: boolean;
+  glue?: boolean;
+  colourOverride?: Colour;
+}
+
+export interface SetLayerOp {
+  op: "setLayer";
+  layerId: Uuid;
+  patch: LayerPatch;
+}
+
+export interface AssignLayersOp {
+  op: "assignLayers";
+  targets: Target[];
+  layerIds: Uuid[];
+  mode?: "set" | "add" | "remove";
+}
+
+export interface DeleteLayerOp {
+  op: "deleteLayer";
+  layerId: Uuid;
+}
+
+export interface AssetPatch {
+  name?: string;
+  tags?: string[];
+  provenance?: string;
+}
+
+export interface SetAssetOp {
+  op: "setAsset";
+  assetId: string;
+  patch: AssetPatch;
+}
+
+export interface RemoveAssetOp {
+  op: "removeAsset";
+  assetId: string;
+}
+
+export interface ReplaceAssetOp {
+  op: "replaceAsset";
+  from: string;
+  to: string;
+  targets?: Target[];
+}
 
 export type ErrorCode = "not_running" | "not_ready" | "no_document" | "session_mismatch" | "document_mismatch" | "unsupported_version" | "invalid_request" | "not_found" | "ambiguous_target" | "revision_conflict" | "locked_target" | "limit_exceeded" | "history_unavailable" | "transaction_id_conflict" | "timeout_unknown" | "io_error" | "compatibility_loss" | "projection_failed" | "busy" | "busy_user_editing" | "path_not_permitted" | "consent_denied" | "dependency_conflict" | "method_not_found" | "internal_error";
 
