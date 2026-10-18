@@ -29,6 +29,7 @@ public sealed partial class HostServices(MainWindow window)
             return request.Method switch
             {
                 "host.ping" => Ok(request, new JsonObject { ["pong"] = true }),
+                "host.newDocument" => await NewDocumentAsync(request, ct),
                 "host.openJson" => await OpenAsync(request, ct),
                 "host.saveJson" => await SaveAsync(request, ct),
                 "host.pickImage" => await PickImageAsync(request, ct),
@@ -167,3 +168,4 @@ public sealed partial class HostServices(MainWindow window)
         });
     }
 }
+

@@ -29,7 +29,7 @@ public sealed class RecoveryManager : IAsyncDisposable
     readonly object gate = new();
     RecoverySession? session;
     int commitsSinceCheckpoint, lastCommitted, savedRevision = -1, startRevision;
-    bool degraded;
+    bool degraded, keepUnsaved;
     string? note;
     TaskCompletionSource ready = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -87,7 +87,7 @@ public sealed class RecoveryManager : IAsyncDisposable
         var next = await store.BeginSessionAsync(snap.Value.DocumentId, snap.Value.SessionId, doc, snap.Value.Revision, currentPath(), Shas(snap.Value.Document), stop.Token, options.FlushDelay).ConfigureAwait(false);
         lock (gate)
         {
-            session = next; commitsSinceCheckpoint = 0; lastCommitted = startRevision = snap.Value.Revision; savedRevision = -1; degraded = false; note = null;
+            session = next; commitsSinceCheckpoint = 0; lastCommitted = startRevision = snap.Value.Revision; savedRevision = -1; keepUnsaved = false; degraded = false; note = null;
             ready.TrySetResult();
         }
         if (previous is not null && previous.SessionId != next.SessionId && previousWasUntouched) await store.CompleteAsync(previous.SessionId).ConfigureAwait(false);
@@ -96,7 +96,7 @@ public sealed class RecoveryManager : IAsyncDisposable
     /// <summary>The current session holds no changes worth keeping: nothing committed since it began, or everything committed was saved.</summary>
     bool UntouchedNow()
     {
-        lock (gate) return session is not null && session.Journal.LastAcceptedRevision <= Math.Max(startRevision, savedRevision);
+        lock (gate) return session is not null && (session.Journal.LastAcceptedRevision <= savedRevision || !keepUnsaved && session.Journal.LastAcceptedRevision <= startRevision);
     }
 
     static IEnumerable<string> Shas(DiagramDocument d) => d.Assets.Select(a => a.Sha256);
@@ -153,7 +153,7 @@ public sealed class RecoveryManager : IAsyncDisposable
             {
                 RecoverySession? s; lock (gate) s = session;
                 if (s is null || s.SessionId != sessionId) return;
-                lock (gate) savedRevision = Math.Max(savedRevision, revision);
+                lock (gate) { savedRevision = Math.Max(savedRevision, revision); keepUnsaved = false; }
                 await store.SetSavedAsync(sessionId, revision, path, stop.Token).ConfigureAwait(false);
                 await CheckpointAsync().ConfigureAwait(false);
             }
@@ -174,13 +174,25 @@ public sealed class RecoveryManager : IAsyncDisposable
         var offer = new List<RecoveryCandidate>();
         foreach (var c in all)
         {
-            var nothingToKeep = (c.LastDurableRevision == 0 && c.CheckpointRevision == 0) || c.LastDurableRevision <= (c.SavedRevision ?? -1); // a blank page nobody touched, or work that was saved
+            var nothingToKeep = (c.LastDurableRevision == 0 && c.CheckpointRevision == 0 && !c.KeepUnsaved) || c.LastDurableRevision <= (c.SavedRevision ?? -1); // a blank page nobody touched, or work that was saved
             if (nothingToKeep) { await store.CompleteAsync(c.SessionId).ConfigureAwait(false); continue; }
             offer.Add(c);
         }
         return offer;
     }
 
+    /// <summary>Preserves an explicit unsaved document even at revision zero. Called after the session's first checkpoint is durable.</summary>
+    public async Task KeepCurrentUnsavedAsync(string sessionId, CancellationToken ct)
+    {
+        await DrainAsync().ConfigureAwait(false);
+        if (SessionId != sessionId) throw new InvalidOperationException("the new recovery session is not ready");
+        try
+        {
+            await store.KeepUnsavedAsync(sessionId, ct).ConfigureAwait(false);
+            lock (gate) if (session?.SessionId == sessionId) keepUnsaved = true;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { Mark(true, "recovery could not preserve the new document: " + e.Message); throw; }
+    }
     public Task DiscardAsync(string sessionId) => store.CompleteAsync(sessionId);
 
     /// <summary>The restored document now has its own session and checkpoint, so the old session can go.</summary>
@@ -237,3 +249,4 @@ public sealed class RecoveryManager : IAsyncDisposable
         stop.Cancel();
     }
 }
+

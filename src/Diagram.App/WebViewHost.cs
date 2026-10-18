@@ -68,10 +68,18 @@ public sealed class WebViewHost : IFrontendTransport
 
     public void Navigate() => core.Navigate($"{AppOrigin.Uri}index.html");
 
+    bool stopped;
+    /// <summary>Cancel outstanding calls before WPF disposes the control; queued reply callbacks must not touch a closed WebView.</summary>
+    public void Stop()
+    {
+        stopped = true;
+        Router.OnRendererFailed("the window closed");
+    }
+
     public void Post(string json)
     {
-        if (ui.CheckAccess()) core.PostWebMessageAsJson(json);
-        else ui.BeginInvoke(() => core.PostWebMessageAsJson(json));
+        void Send() { if (!stopped) core.PostWebMessageAsJson(json); }
+        if (ui.CheckAccess()) Send(); else ui.BeginInvoke(Send);
     }
 
     void OnProcessFailed(object? sender, CoreWebView2ProcessFailedEventArgs e)
@@ -156,3 +164,4 @@ public sealed class WebViewHost : IFrontendTransport
         core.Environment.CreateWebResourceResponse(new MemoryStream(body), status, reason,
             $"Content-Type: {mime}\r\nContent-Security-Policy: {Csp}\r\nX-Content-Type-Options: nosniff\r\nCache-Control: no-store");
 }
+

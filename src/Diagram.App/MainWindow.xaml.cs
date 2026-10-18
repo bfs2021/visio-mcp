@@ -94,7 +94,7 @@ public partial class MainWindow : Window
     /// </summary>
     void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
-        if (!options.PromptOnClose || closeApproved || host is null) return;
+        if (!options.PromptOnClose || closeApproved || host is null) { host?.Stop(); return; }
         e.Cancel = true;
         if (closeAsked) return; // a prompt is already showing
         closeAsked = true;
@@ -129,3 +129,4 @@ public partial class MainWindow : Window
 
     public void Navigate() => Host.Navigate();
 }
+
