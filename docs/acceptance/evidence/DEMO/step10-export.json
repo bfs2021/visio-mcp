@@ -1,0 +1,16 @@
+{
+  "path": "C:\\Users\\ralphlocal\\AppData\\Local\\Temp\\demo-46c25cf3a38e41bdb422328930caeeec\\exports\\architecture-demo.vsdx",
+  "format": "vsdx",
+  "revision": 6,
+  "bytes": 7172,
+  "lossy": false,
+  "summary": "0 things could not be carried across exactly, and 1 note.",
+  "diagnostics": [
+    {
+      "severity": "info",
+      "code": "unused_asset_not_exported",
+      "message": "The asset ESG Legacy Logo is not used by any picture; a Visio file keeps only pictures that are on a page.",
+      "action": "catalogue entry dropped"
+    }
+  ]
+}

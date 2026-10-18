@@ -1,0 +1,37 @@
+{
+  "sinceRevision": 2,
+  "earliestRetainedRevision": 0,
+  "revision": 4,
+  "transactions": [
+    {
+      "transactionId": "d03512ab-ad08-4b8b-81df-aeba1ea49d16",
+      "source": "gui",
+      "previousRevision": 2,
+      "revision": 3,
+      "description": "move",
+      "created": [],
+      "changed": [
+        "cbe11687-46ec-4a6d-a70c-0bf63a36173b"
+      ],
+      "deleted": [],
+      "changedPageIds": [],
+      "changedLayerIds": [],
+      "changedAssetIds": []
+    },
+    {
+      "transactionId": "b17e4568-ab11-4b61-9069-b6c6998c0de2",
+      "source": "gui",
+      "previousRevision": 3,
+      "revision": 4,
+      "description": "set",
+      "created": [],
+      "changed": [
+        "9875d55a-1414-4a36-a83a-e159f3faf5cc"
+      ],
+      "deleted": [],
+      "changedPageIds": [],
+      "changedLayerIds": [],
+      "changedAssetIds": []
+    }
+  ]
+}

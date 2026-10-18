@@ -70,3 +70,41 @@ Static guards fail the build if code starts a program, opens its own network con
 3. A recovered session that was not edited since restoring is offered again after another crash (it cannot tell it was restored).
 4. Library picture bytes are not garbage-collected automatically; `CollectGarbageAsync` exists and is tested but nothing calls it on a schedule yet.
 5. The M0 second-Windows-user pipe check remains open.
+
+---
+
+# I52: performance and the complete demonstration
+
+Recorded 2026-10-18.
+
+## What was delivered
+- **Performance** (`src/web/tests/performance/targets.test.ts`, `tests/Diagram.Windows.Tests/PerformanceTests.cs`): spec §18 timings on a 500-element page, on the engine alone and on the real stack
+  (editor, pipe, shim, stdio MCP client), Debug and Release, with raw samples. Every preferred target is met by a wide margin (single edit about 8 ms to the agent and 31 ms painted,
+  100-operation batch 34 ms, 500-element summary 1.2 ms in the host, 1600x1200 preview 47 ms, `.vsdx` save 130 ms). See [performance.md](../acceptance/performance.md).
+- **The spec §23 demonstration** (`tests/Diagram.Windows.Tests/DemoTests.cs`, `tools/demo/scenario.drawscript`, `tools/demo/verify-demo.mjs`): all fourteen steps through a real MCP client and the real editor,
+  with a scripted human (real mouse events and the inspector in WebView2), the library logo swap, `.vsdx` export, Visio 16.0 and Word on that same file, and re-import of both the app's export and the file
+  Visio saved. The verifier reads only the saved snapshots and transaction reports and checks, among 49 checks, that every object a transaction did not name is byte-identical.
+- **Definition of done** ([definition-of-done.md](../acceptance/definition-of-done.md)): each of the 20 §27 criteria mapped to the tests and runs that evidence it, and to what they do not show.
+
+## Test results (final tree)
+| Suite | Result |
+|---|---|
+| `npm --prefix src/web test` | 289 pass (performance 4) |
+| `npm --prefix src/web run test:browser` | 43 pass |
+| Contracts / Host / Ipc / Mcp / Visio | 24 / 119 / 17 / 13 / 124 pass |
+| Windows.Tests | 33 pass (DemoTests 1, PerformanceTests 1) |
+| `node tools/demo/verify-demo.mjs` | 49 of 49 checks pass |
+
+## Found while building
+- **A four-second freeze in the test setup.** Starting the shim from the process that hosts the editor froze that whole process for about 4 s, 4 to 7 s later, on this machine. It hit pipe calls, UI dispatches and
+  plain timers alike, and needed no MCP call; a process without the shim never did it. Cause not found; in use the shim is a separate process. The benchmark warms up for 10 s and records the stall.
+- **`inspect_layout` has no alignment check.** The agent found the planted misalignment from the bounds delivered with the preview. Not changed.
+- **Stored connector bounds are not the live extent** (by design: `visualBounds`). A verifier that compared stored connector bounds across a round trip failed until it compared glue instead.
+- The editor's test API (`window.__editor`) is compiled out of the shipped build, so the demo's human finds its targets by label on the canvas, as a person would.
+
+## Known gaps
+1. No person used the application, Visio or Word for the §27 "manual" criteria; Visio and Word were driven through automation. A short human pass on another workstation is still worthwhile.
+2. One machine; the live fixture is one page of 500 elements, not ten pages. No frame-rate or input-latency trace for drag and resize.
+3. The M0 second-Windows-user pipe check remains open (NOT RUN).
+4. R05 (reference-diagram regression) is still partial: the R02 fixture ran as part of the Windows suite, but the full reproduction workflow was not re-run as a separate I52 acceptance step.
+5. `inspect_layout` does not detect misalignment; the inspector's line, dash, arrowhead and font controls have no browser test.
