@@ -78,7 +78,7 @@ public sealed class WebViewHost : IFrontendTransport
     public void Stop()
     {
         stopped = true;
-        Router.OnRendererFailed("the window closed");
+        Router.OnTransportStopped("the window closed", channel);
     }
 
     public void Post(string json)

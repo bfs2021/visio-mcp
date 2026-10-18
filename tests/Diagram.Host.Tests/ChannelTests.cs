@@ -18,6 +18,7 @@ public class ChannelTests
     sealed class Page(string name) : IFrontendTransport
     {
         public BridgeRouter Router = null!;
+        public bool Hold;
         public readonly List<string> Seen = new();
         public readonly List<JsonObject> Replies = new();
         public void Post(string json)
@@ -25,6 +26,7 @@ public class ChannelTests
             var msg = JsonNode.Parse(json)!.AsObject();
             if (msg["kind"]?.GetValue<string>() == "response") { lock (Replies) Replies.Add(msg); return; }
             lock (Seen) Seen.Add(msg["method"]!.GetValue<string>());
+            if (Hold) return;
             var reply = new JsonObject { ["protocolVersion"] = 1, ["kind"] = "response", ["requestId"] = msg["requestId"]!.GetValue<string>(), ["result"] = new JsonObject { ["page"] = name } };
             Task.Run(() => Router.OnMessage(Origin, reply.ToJsonString(), true, name));
         }
@@ -141,4 +143,20 @@ public class ChannelTests
         Assert.False(router.RendererFailedRecently); // that is about the person's page
         Assert.Equal("document_mismatch", (await router.SendAsync(Req("doc.snapshot", D2, S2), default)).Error!.Code);
     }
+    [Fact]
+    public async Task TransportStopCancelsOnlyItsCallsWithoutClearingRecoveryOwnership()
+    {
+        var (router, user, _) = Make();
+        Event(router, BridgeRouter.User, "editor.ready", D1, S1);
+        Event(router, BridgeRouter.Agent, "editor.document.opened", D2, S2);
+        var reset = new List<string>(); router.ChannelReset += reset.Add;
+        user.Hold = true;
+        var pending = router.SendAsync(Req("doc.snapshot", D1, S1), default);
+        router.OnTransportStopped("window closed");
+        Assert.Equal("timeout_unknown", (await pending.WaitAsync(TimeSpan.FromSeconds(1))).Error?.Code);
+        Assert.Equal("not_ready", (await router.SendAsync(Req("doc.snapshot", D1, S1), default).WaitAsync(TimeSpan.FromSeconds(1))).Error?.Code);
+        Assert.Empty(reset); Assert.Equal(S1, router.ScopeOf(D1)!.SessionId);
+        Assert.Equal("agent", (await router.SendAsync(Req("doc.snapshot", D2, S2), default)).Result!.Value.GetProperty("page").GetString());
+    }
+
 }

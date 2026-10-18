@@ -130,7 +130,9 @@ public class CrashRecoveryTests
         var root = Path.Combine(Path.GetTempPath(), "diagram-win-discard-" + Guid.NewGuid().ToString("N"));
         try
         {
-            await using (var first = await Harness.StartAsync(existingRoot: root)) { await Edit(first); }
+            var first = await Harness.StartAsync(existingRoot: root);
+            await using (first) { await Edit(first); }
+            await WaitFor(async () => (await first.Window.Workspace.ReadAsync())?.CleanExit == true, 15); // Closed finishes its asynchronous metadata write before this orphan-session setup deletes it
             File.Delete(Path.Combine(root, "workspace.json")); // no remembered tabs: these sessions belong to no tab
             await using (var second = await Harness.StartAsync(existingRoot: root))
             {

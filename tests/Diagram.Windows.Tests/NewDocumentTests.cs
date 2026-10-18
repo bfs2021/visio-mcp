@@ -193,4 +193,18 @@ public class NewDocumentTests
         finally { try { Directory.Delete(root, true); } catch { } }
     }
 
+    [Fact]
+    public async Task StoppingTheWindowKeepsRecoveryTracksUntilCommittedEditsAreDrained()
+    {
+        await using var h = await Harness.StartAsync();
+        await h.Window.RecoveryMgr.WhenSessionReadyAsync();
+        Assert.Null((await h.Apply(0, null, Harness.Shape("last-edit", 20, 20))).Error);
+        var scope = h.Router.CurrentScope!;
+        await h.OnUi(() => { h.Host.Stop(); return Task.FromResult(0); });
+        Assert.Contains(scope.SessionId, h.Window.RecoveryMgr.OpenSessions);
+        await h.Window.RecoveryMgr.DrainAsync();
+        var candidate = Assert.Single(await h.Window.Recovery.ReadRecoveryAsync(null, default), c => c.SessionId == scope.SessionId);
+        Assert.Equal(1, candidate.LastDurableRevision);
+    }
+
 }
