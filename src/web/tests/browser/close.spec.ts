@@ -7,7 +7,7 @@ async function armHost(page: Page, saveWorks = true) {
     const calls: string[] = [];
     (window as any).__calls = calls;
     (window as any).__editor.setHost({
-      saveJson: async () => { calls.push('save'); if (works) await (window as any).__editor.markSaved('C:\Work\plan.diagram.json'); return { ok: true, value: works ? { path: 'C:\Work\plan.diagram.json' } : { cancelled: true } }; },
+      saveJson: async () => { calls.push('save'); if (works) await (window as any).__editor.markSaved('C:\\Work\\plan.diagram.json'); return { ok: true, value: works ? { path: 'C:\\Work\\plan.diagram.json' } : { cancelled: true } }; },
       appClose: async (discard: boolean) => { calls.push(`close:${discard ? 'discard' : 'keep'}`); return { ok: true, value: { closing: true } }; },
       appCloseCancelled: async () => { calls.push('cancelled'); return { ok: true, value: { cancelled: true } }; },
     });
@@ -75,8 +75,24 @@ test('after a save the file name is shown in the prompt for later changes', asyn
   await openEditor(page);
   await armHost(page);
   await placeShape(page, 'shape-rectangle', { x: 200, y: 150 }, 'x');
-  await page.evaluate(() => (window as any).__editor.markSaved('C:\Work\plan.diagram.json'));
+  await page.evaluate(() => (window as any).__editor.markSaved('C:\\Work\\plan.diagram.json'));
   await placeShape(page, 'shape-rectangle', { x: 400, y: 150 }, 'y');
   await beginClose(page);
   await expect(page.getByTestId('close-prompt')).toContainText('plan.diagram.json has changes');
+});
+
+test('the page title and status bar follow the file name and the unsaved state', async ({ page }) => {
+  await openEditor(page);
+  await expect(page).toHaveTitle('Untitled - Diagram');
+  await expect(page.getByTestId('status-saved')).toHaveText('Untitled');
+  await placeShape(page, 'shape-rectangle', { x: 200, y: 150 }, 'x');
+  await expect(page).toHaveTitle('● Untitled - Diagram');
+  await expect(page.getByTestId('status-saved')).toHaveText('Untitled, not saved');
+  await page.evaluate(() => (window as any).__editor.markSaved('C:\\Work\\plan.diagram.json'));
+  await expect(page).toHaveTitle('plan.diagram.json - Diagram');
+  await expect(page.getByTestId('status-saved')).toHaveText('plan.diagram.json: saved');
+  await expect(page.getByTestId('status-saved')).toHaveAttribute('title', 'C:\\Work\\plan.diagram.json');
+  await placeShape(page, 'shape-rectangle', { x: 400, y: 150 }, 'y');
+  await expect(page).toHaveTitle('● plan.diagram.json - Diagram');
+  await expect(page.getByTestId('status-saved')).toHaveText('plan.diagram.json: unsaved changes');
 });

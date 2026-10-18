@@ -60,7 +60,7 @@ if (import.meta.env.VITE_TEST_API === '1') {
     committedEvents: () => JSON.parse(JSON.stringify(recorded)),
     checkRecovery: () => m.checkRecovery(),
     beginClose: () => m.beginClose(),
-    markSaved: (path: string) => m.engine.markSaved(m.engine.scope(), m.engine.revision, path),
+    markSaved: async (path: string) => { await m.engine.markSaved(m.engine.scope(), m.engine.revision, path); m.say(`Saved ${path}.`, 'info'); },
     snapshot: () => JSON.parse(JSON.stringify(m.snapshot)),
     selection: () => [...m.selection],
     status: () => ({ ...m.status, ...m.engine.status() }),

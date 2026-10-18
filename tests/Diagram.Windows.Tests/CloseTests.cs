@@ -50,6 +50,26 @@ public class CloseTests
     }
 
     [Fact]
+    public async Task TheWindowTitleNamesTheFileAndMarksUnsavedWork()
+    {
+        var (h, root, _) = await StartDirty(edit: false);
+        var file = Path.Combine(root, "plan.diagram.json");
+        try
+        {
+            async Task<string> Title() => await h.OnUi(() => Task.FromResult(h.Window.Title));
+            await WaitFor(() => Title().GetAwaiter().GetResult() == "Untitled - Diagram");
+            await WaitFor(() => h.Window.RecoveryMgr.SessionId == h.Router.CurrentScope?.SessionId);
+            Assert.Null((await h.Apply(0, null, Harness.Shape("crm", 20, 20))).Error);
+            await WaitFor(() => Title().GetAwaiter().GetResult() == "● Untitled - Diagram");
+            h.Window.Services.DialogOverride = _ => file;
+            var saved = await h.Window.Services.HandleAsync(new RequestEnvelope { RequestId = "s", Method = "host.saveJson", Params = new JsonObject { ["saveAs"] = true } }, default);
+            Assert.Null(saved.Error);
+            await WaitFor(() => Title().GetAwaiter().GetResult() == "plan.diagram.json - Diagram");
+        }
+        finally { await h.DisposeAsync(); try { Directory.Delete(root, true); } catch { } }
+    }
+
+    [Fact]
     public async Task DontSaveClosesAndTheWorkIsNotOfferedOnTheNextStart()
     {
         var (h, root, closed) = await StartDirty();

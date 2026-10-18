@@ -116,6 +116,8 @@ export class EditorModel {
   report: CompatibilityView | null = null;
   /** Unfinished work found at start, waiting for the person's answer. */
   recoveryOffer: RecoveryOffer | null = null;
+  /** When this window last saved or opened a file (for the status bar). */
+  lastSavedAt: Date | null = null;
   /** Set while the host's close request waits for the person: Save, Don't save or Cancel. */
   closePrompt: { fileName: string | null; saving: boolean; error: string | null } | null = null;
   /** What a recovery brought back and what it could not, shown after restoring. */
@@ -478,6 +480,7 @@ export class EditorModel {
     if (r.value.cancelled) return;
     this.selection = [];
     this.showCommitted();
+    this.lastSavedAt = new Date();
     this.say(`Opened ${r.value.path ?? 'file'}.${r.value.notes?.length ? ' ' + r.value.notes.join('; ') : ''}`, 'info');
   }
 
@@ -523,6 +526,7 @@ export class EditorModel {
     const r = await this.host.saveJson(saveAs);
     if (!r.ok) { this.say(r.error.message, 'error'); return; }
     if (r.value.cancelled) return;
+    this.lastSavedAt = new Date();
     this.say(`Saved ${r.value.path ?? ''}.`, 'info');
   }
 

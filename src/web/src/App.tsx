@@ -7,6 +7,7 @@ import { Inspector } from './components/Inspector';
 import { LayersPanel } from './components/LayersPanel';
 import { RecoveryDialog } from './components/RecoveryDialog';
 import { CloseDialog } from './components/CloseDialog';
+import { DocumentTitle } from './components/DocumentTitle';
 import { PageTabs } from './components/PageTabs';
 import { PageCanvas } from './components/PageCanvas';
 import { ShapesPanel } from './components/ShapesPanel';
@@ -67,6 +68,7 @@ export function App({ model }: { model: EditorModel }) {
       <CompatibilityDialog model={model} />
       <RecoveryDialog model={model} />
       <CloseDialog model={model} />
+      <DocumentTitle model={model} />
       <StatusBar model={model} />
     </div>
   );

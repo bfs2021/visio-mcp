@@ -6,7 +6,7 @@ export function CloseDialog({ model }: { model: EditorModel }) {
   useModel(model);
   const p = model.closePrompt;
   if (!p) return null;
-  const name = p.fileName ? p.fileName.split(/[\/]/).pop() : 'This diagram';
+  const name = p.fileName ? p.fileName.split(/[\\/]/).pop() : 'This diagram';
   return (
     <div className="dialog-backdrop" role="presentation">
       <div className="dialog" role="alertdialog" aria-modal="true" aria-labelledby="close-title" aria-describedby="close-text" data-testid="close-prompt"

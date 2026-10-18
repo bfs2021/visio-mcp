@@ -65,6 +65,7 @@ public partial class MainWindow : Window
     {
         var env = await CoreWebView2Environment.CreateAsync(userDataFolder: options.UserDataDir);
         await Web.EnsureCoreWebView2Async(env);
+        Web.CoreWebView2.DocumentTitleChanged += (_, _) => Title = Web.CoreWebView2.DocumentTitle; // the page names the file and marks unsaved work (W04)
         var services = new HostServices(this);
         host = new WebViewHost(Web.CoreWebView2, Dispatcher, options.ContentRoot, Blobs, services.HandleAsync);
         Coordinator = new SessionCoordinator(host.Router, Blobs, Preparer, Writer);
