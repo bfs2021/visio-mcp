@@ -9,6 +9,8 @@ import { ok, type Result } from '../model/result';
 import type { AdapterCallbacks, CanvasAdapter, Tool, ViewportInfo } from './CanvasAdapter';
 import { edgeStyle, effectiveState, labelOf, registerCustomShapes, vertexStyle } from './cellMapping';
 import { centreOfTerminal, endFor, routeOrthogonal, type Terminal } from '../layout/orthogonalRoute';
+import { avoidObstacles, segmentsOf, type Segment } from '../layout/obstacleRoute';
+import { selectObstacles, visualRect } from '../layout/obstacles';
 import { installGestureHooks } from './gestureHooks';
 import { pageOf } from './intents';
 
@@ -186,6 +188,18 @@ export class MaxGraphAdapter implements CanvasAdapter {
       const wanted = new Map<string, Element>();
       for (const e of page.elements) if (e.kind !== 'group') wanted.set(e.id, e);
       this.pageElements = wanted;
+      this.pageLayers = page.layers;
+      // Obstacle avoidance and parallel spacing make every orthogonal route depend on all the others, so a change to any shape or to
+      // any orthogonal connector re-routes them all, in z-order, from an empty set of occupied tracks. That keeps the result a pure
+      // function of the document.
+      const sig = canonicalSerialize([...wanted.values()].map(e => e.kind === 'connector'
+        ? { id: e.id, f: e.from, t: e.to, w: e.waypoints, r: e.route, z: e.zIndex }
+        : { id: e.id, b: e.bounds, rot: e.rotationDeg, h: e.hidden, l: e.layerIds, k: e.kind, fi: e.kind === 'shape' ? [e.style.fill.kind, e.style.stroke.kind] : 0, z: e.zIndex }).concat(page.layers.map(l => ({ id: l.id, v: l.visible })) as never[]), );
+      if (sig !== this.routingSig) {
+        this.routingSig = sig;
+        this.occupied = [];
+        for (const e of wanted.values()) if (e.kind === 'connector' && e.route === 'orthogonal') this.shown.delete(e.id);
+      }
       const parent = this.graph.getDefaultParent();
 
       for (const child of [...parent.getChildren()]) {
@@ -244,6 +258,9 @@ export class MaxGraphAdapter implements CanvasAdapter {
   }
 
   private pageElements = new Map<string, Element>();
+  private pageLayers: readonly import('../contracts/generated').Layer[] = [];
+  private routingSig = '';
+  private occupied: Segment[] = [];
 
   /** R08: an orthogonal connector's route, computed here so it leaves and enters along the end axes and passes through its waypoints. */
   private orthogonalRoute(el: Extract<Element, { kind: 'connector' }>): { interior: Point[]; fixed: { from?: { x: number; y: number; perimeter: boolean }; to?: { x: number; y: number; perimeter: boolean } } } {
@@ -257,7 +274,15 @@ export class MaxGraphAdapter implements CanvasAdapter {
     const wp = el.waypoints.map(p => ({ x: p.x, y: p.y }));
     const a = endFor(el.from, ta, wp[0] ?? pointOf(tb, el.to));
     const b = endFor(el.to, tb, wp[wp.length - 1] ?? pointOf(ta, el.from));
-    const route = routeOrthogonal(a, b, wp);
+    let route = routeOrthogonal(a, b, wp);
+    if (!wp.length) { // R08b: author waypoints are never rerouted; an automatic route goes around the shapes in its way
+      const endIds = new Set([el.from.elementId, el.to.elementId].filter((id): id is string => !!id));
+      const endRects = [ta, tb].filter((t): t is Terminal => !!t).map(t => visualRect({ bounds: t.box, rotationDeg: t.rotationDeg }));
+      const free = [el.from, el.to].filter(ep => ep.glue === 'none' && ep.point).map(ep => ep.point!);
+      const obstacles = selectObstacles([...this.pageElements.values()], this.pageLayers, endIds, endRects, free, this.pageWidth * this.pageHeight);
+      route = avoidObstacles(a, b, route, obstacles, endRects, this.occupied).route;
+    }
+    this.occupied.push(...segmentsOf(route));
     const SIDE = new Set(['0.5,0', '0.5,1', '0,0.5', '1,0.5']);
     const pin = (e: typeof a) => (e.fraction ? { x: e.fraction.x, y: e.fraction.y, perimeter: SIDE.has(`${e.fraction.x},${e.fraction.y}`) } : undefined);
     return { interior: route.slice(1, -1).map(p => new Point(p.x, p.y)), fixed: { from: pin(a), to: pin(b) } };
