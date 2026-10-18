@@ -31,7 +31,7 @@ function parse(path: string): Result<PathStep[]> {
     if (!'MLHV CQZmlhvcqz'.replace(/ /g, '').includes(cmd) || !cmd) return bad(`command ${cmd || '(missing)'}`);
     if (!out.length && cmd.toUpperCase() !== 'M') return bad('the first command must be M');
     const upper = cmd.toUpperCase(), relative = cmd !== upper;
-    if (upper === 'Z') { out.push({ op: 'Z' }); x = sx; y = sy; cmd = ''; continue; }
+    if (upper === 'Z') { if (out.length >= 32768) return bad('path exceeds the segment limit'); out.push({ op: 'Z' }); x = sx; y = sy; cmd = ''; continue; }
     const count = ({ M: 2, L: 2, H: 1, V: 1, C: 6, Q: 4 } as Record<string, number>)[upper]!;
     const args = tokens.slice(i, i + count); if (args.length !== count || args.some(a => typeof a !== 'number')) return bad(`missing numbers for ${cmd}`);
     i += count;

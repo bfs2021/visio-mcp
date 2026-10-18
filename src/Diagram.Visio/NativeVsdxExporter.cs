@@ -431,7 +431,7 @@ public sealed class NativeVsdxExporter : IVsdxExporter
                     var parsed = GeometryMap.ForSvgPath(path);
                     if (parsed.IsOk) geo = parsed.Value;
                     else { geo = GeometryMap.ForPreset("rectangle"); Warn("svg_path_not_exported", $"The custom outline could not be read ({parsed.Error!.Message}); a rectangle is used.", s.Id, "outline replaced"); preset = "rectangle"; }
-                    if (parsed.IsOk && path.Contains('C', StringComparison.OrdinalIgnoreCase) || path.Contains('Q', StringComparison.OrdinalIgnoreCase)) Warn("curves_flattened", "Curves in the custom outline are drawn as short straight segments in Visio.", s.Id, "curves flattened", "info");
+                    if (parsed.IsOk && (path.Contains('C', StringComparison.OrdinalIgnoreCase) || path.Contains('Q', StringComparison.OrdinalIgnoreCase))) Warn("curves_flattened", "Curves in the custom outline are drawn as short straight segments in Visio.", s.Id, "curves flattened", "info");
                 }
                 else
                 {

@@ -86,18 +86,21 @@ public static class GeometryMap
     /// </summary>
     public static Result<IReadOnlyList<GeoSection>> ForSvgPath(string path)
     {
+        if (path.Length is 0 or > 65536) return Result<IReadOnlyList<GeoSection>>.Fail("invalid_request", "path length must be 1–65536 characters");
         var rows = new List<GeoRow>();
         double x = 0, y = 0, sx = 0, sy = 0;
         var i = 0;
         char cmd = ' ';
+        var drawn = false;
         bool Num(out double v)
         {
             while (i < path.Length && (char.IsWhiteSpace(path[i]) || path[i] == ',')) i++;
             var start = i;
             if (i < path.Length && (path[i] == '-' || path[i] == '+')) i++;
-            while (i < path.Length && (char.IsDigit(path[i]) || path[i] == '.')) i++;
+            while (i < path.Length && char.IsAsciiDigit(path[i])) i++;
+            if (i < path.Length && path[i] == '.') { i++; while (i < path.Length && char.IsAsciiDigit(path[i])) i++; }
             if (i < path.Length && (path[i] == 'e' || path[i] == 'E')) { i++; if (i < path.Length && (path[i] == '-' || path[i] == '+')) i++; while (i < path.Length && char.IsDigit(path[i])) i++; }
-            return double.TryParse(path.AsSpan(start, i - start), NumberStyles.Float, CultureInfo.InvariantCulture, out v) && i > start;
+            return double.TryParse(path.AsSpan(start, i - start), NumberStyles.Float, CultureInfo.InvariantCulture, out v) && i > start && double.IsFinite(v) && Math.Abs(v) <= 1e6;
         }
         Frac F(double px, double py) => new(px / PathBox, py / PathBox);
         void Curve(Func<double, (double, double)> at) { for (var k = 1; k <= 16; k++) { var (px, py) = at(k / 16.0); rows.Add(new LineRow(F(px, py))); } }
@@ -106,9 +109,10 @@ public static class GeometryMap
         {
             while (i < path.Length && (char.IsWhiteSpace(path[i]) || path[i] == ',')) i++;
             if (i >= path.Length) break;
-            if (char.IsLetter(path[i])) { cmd = path[i++]; if (cmd is 'Z' or 'z') { if (rows.Count > 0) rows.Add(new LineRow(F(sx, sy))); x = sx; y = sy; continue; } }
+            if (char.IsLetter(path[i])) { cmd = path[i++]; if (rows.Count == 0 && cmd is not ('M' or 'm')) return Bad(cmd); if (cmd is 'Z' or 'z') { if (rows.Count >= 32768) return Bad(cmd); if (rows.Count > 0) rows.Add(new LineRow(F(sx, sy))); x = sx; y = sy; cmd = ' '; continue; } }
             else if (cmd == ' ') return Result<IReadOnlyList<GeoSection>>.Fail("invalid_request", "an SVG path must start with a command");
             var rel = char.IsLower(cmd);
+            if (char.ToUpperInvariant(cmd) != 'M') drawn = true;
             switch (char.ToUpperInvariant(cmd))
             {
                 case 'M':
@@ -146,8 +150,10 @@ public static class GeometryMap
                 default:
                     return Result<IReadOnlyList<GeoSection>>.Fail("invalid_request", $"the path command '{cmd}' is not supported (use M, L, H, V, C, Q and Z)");
             }
+            if (rows.Count > 32768 || !double.IsFinite(x) || !double.IsFinite(y) || Math.Abs(x) > 1e6 || Math.Abs(y) > 1e6)
+                return Result<IReadOnlyList<GeoSection>>.Fail("invalid_request", "path exceeds the coordinate or segment limit");
         }
-        if (rows.Count < 2 || rows[0] is not MoveRow) return Result<IReadOnlyList<GeoSection>>.Fail("invalid_request", "the path draws nothing");
+        if (rows.Count < 2 || !drawn || rows[0] is not MoveRow) return Result<IReadOnlyList<GeoSection>>.Fail("invalid_request", "the path draws nothing");
         return Result<IReadOnlyList<GeoSection>>.Ok([new GeoSection(rows)]);
 
         Result<IReadOnlyList<GeoSection>> Bad(char c) => Result<IReadOnlyList<GeoSection>>.Fail("invalid_request", $"the path command '{c}' is missing a number");
@@ -186,7 +192,8 @@ public static class GeometryMap
     public static string Signature(IReadOnlyList<GeoSection> sections)
     {
         var sb = new StringBuilder();
-        string R(double v) => Math.Round(v, 4).ToString("0.####", CultureInfo.InvariantCulture);
+        // Remove arithmetic round-off before quantising a half-way value (export scales to inches and back).
+        string R(double v) => Math.Round(Math.Round(v, 8), 4).ToString("0.####", CultureInfo.InvariantCulture);
         foreach (var s in sections)
         {
             sb.Append(s.NoFill ? "[open" : "[fill");

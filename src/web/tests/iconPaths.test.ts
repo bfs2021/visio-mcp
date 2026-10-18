@@ -19,3 +19,13 @@ it('rejects unsupported and malformed custom paths atomically at the transaction
     expect(t.engine.revision).toBe(0);
   }
 });
+
+it('normalises relative commands, multiple subpaths and curves consistently', async () => {
+  const { parsePath } = await import('../src/geometry/svgPath');
+  const r = parsePath('m 10 20 10 0 h 5 v 5 z M 40 40 q 10 0 10 10 c 0 10 10 10 10 0');
+  expect(r.ok).toBe(true); if (!r.ok) return;
+  expect(r.value.slice(0, 5)).toEqual([{ op: 'M', x: 10, y: 20 }, { op: 'L', x: 20, y: 20 }, { op: 'L', x: 25, y: 20 }, { op: 'L', x: 25, y: 25 }, { op: 'Z' }]);
+  expect(r.value.at(-1)).toEqual({ op: 'L', x: 60, y: 50 });
+  expect(r.value).toHaveLength(38);
+  for (const bad of ['M 0 0 Z', 'M 0 0 L 1 1 Z 2 2', 'M 900000 0 l 900000 0', 'M 0 0 ' + 'L 1 1 '.repeat(11000)]) expect(parsePath(bad).ok).toBe(false);
+});
