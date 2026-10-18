@@ -1,6 +1,6 @@
 # W07 — external file changes and safe save choices
 
-Status: proposed for user approval. [Issue #29](https://github.com/rp2839/visio-mcp/issues/29).
+Status: approved by the user on 2026-10-18. [Issue #29](https://github.com/rp2839/visio-mcp/issues/29).
 Branch: `codex/w07-save-conflicts`, based on main `b8d9fee`.
 
 ## Intent and scope
@@ -45,4 +45,4 @@ The fingerprint comparison plus final guard is best-effort conflict detection, n
 
 ## Approval
 
-Approve this design to implement W07. The design-only commit does not change product code or dependencies. The results report and issue will record any implementation limits and verification once the work is complete.
+The user approved this written design in chat. Implementation results and limits are recorded in docs/m5/W07-save-conflicts.md.

@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="6719d599-ff2f-4b73-81bf-360633fbcd00" name="claude@W11-TEMPLATE 2026-10-18 22:50:34" runUser="W11-TEMPLATE\claude" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-18T22:50:34.5152291+01:00" queuing="2026-10-18T22:50:34.5152293+01:00" start="2026-10-18T22:50:31.7592208+01:00" finish="2026-10-18T22:50:34.5213257+01:00" />
+  <TestSettings name="default" id="98cceb83-8ff6-4e73-80be-0d2bef63ff2b">
+    <Deployment runDeploymentRoot="claude_W11-TEMPLATE_2026-10-18_22_50_34" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="cdb034fc-5921-4bd5-88ac-119b3862b5d7" testId="f63ead0f-c327-a211-d231-e24812bd9907" testName="Diagram.Host.Tests.DiskVersionTests.FinalGuardPreservesSecondExternalWriteAndDoesNotMarkLocalEditsSaved" computerName="W11-TEMPLATE" duration="00:00:00.0673524" startTime="2026-10-18T22:50:34.3354669+01:00" endTime="2026-10-18T22:50:34.4028409+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="cdb034fc-5921-4bd5-88ac-119b3862b5d7" />
+    <UnitTestResult executionId="a841141c-bc1b-4109-8007-9cb9b0d03747" testId="60f91934-9661-6d1d-6ec0-3acd8bab5880" testName="Diagram.Host.Tests.DiskVersionTests.LockedFileIsNotMistakenForMissingOrUnchanged" computerName="W11-TEMPLATE" duration="00:00:00.0826636" startTime="2026-10-18T22:50:34.2671109+01:00" endTime="2026-10-18T22:50:34.3279176+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a841141c-bc1b-4109-8007-9cb9b0d03747" />
+    <UnitTestResult executionId="ec2adec9-211f-4c98-a3d9-5d971f8c629f" testId="fe1dd9ce-7cc1-c7b9-197c-eeb30e1914d0" testName="Diagram.Host.Tests.DiskVersionTests.OpenBaselineNamesBytesReadRatherThanFileChangedBeforePublication" computerName="W11-TEMPLATE" duration="00:00:00.0311412" startTime="2026-10-18T22:50:34.4036623+01:00" endTime="2026-10-18T22:50:34.4345908+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ec2adec9-211f-4c98-a3d9-5d971f8c629f" />
+    <UnitTestResult executionId="deaa1097-a4c1-49d5-a88e-971bcac31c06" testId="0414fcb5-221d-2f5e-a663-1f61b3216f0a" testName="Diagram.Host.Tests.DiskVersionTests.HashDetectsSameSizeWriteEvenWithPreservedTimestampAndDeletion" computerName="W11-TEMPLATE" duration="00:00:00.0138352" startTime="2026-10-18T22:50:34.4348478+01:00" endTime="2026-10-18T22:50:34.4492239+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="deaa1097-a4c1-49d5-a88e-971bcac31c06" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Diagram.Host.Tests.DiskVersionTests.LockedFileIsNotMistakenForMissingOrUnchanged" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.host.tests\bin\debug\net10.0\diagram.host.tests.dll" id="60f91934-9661-6d1d-6ec0-3acd8bab5880">
+      <Execution id="a841141c-bc1b-4109-8007-9cb9b0d03747" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Host.Tests\bin\Debug\net10.0\Diagram.Host.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Host.Tests.DiskVersionTests" name="LockedFileIsNotMistakenForMissingOrUnchanged" />
+    </UnitTest>
+    <UnitTest name="Diagram.Host.Tests.DiskVersionTests.OpenBaselineNamesBytesReadRatherThanFileChangedBeforePublication" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.host.tests\bin\debug\net10.0\diagram.host.tests.dll" id="fe1dd9ce-7cc1-c7b9-197c-eeb30e1914d0">
+      <Execution id="ec2adec9-211f-4c98-a3d9-5d971f8c629f" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Host.Tests\bin\Debug\net10.0\Diagram.Host.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Host.Tests.DiskVersionTests" name="OpenBaselineNamesBytesReadRatherThanFileChangedBeforePublication" />
+    </UnitTest>
+    <UnitTest name="Diagram.Host.Tests.DiskVersionTests.FinalGuardPreservesSecondExternalWriteAndDoesNotMarkLocalEditsSaved" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.host.tests\bin\debug\net10.0\diagram.host.tests.dll" id="f63ead0f-c327-a211-d231-e24812bd9907">
+      <Execution id="cdb034fc-5921-4bd5-88ac-119b3862b5d7" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Host.Tests\bin\Debug\net10.0\Diagram.Host.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Host.Tests.DiskVersionTests" name="FinalGuardPreservesSecondExternalWriteAndDoesNotMarkLocalEditsSaved" />
+    </UnitTest>
+    <UnitTest name="Diagram.Host.Tests.DiskVersionTests.HashDetectsSameSizeWriteEvenWithPreservedTimestampAndDeletion" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.host.tests\bin\debug\net10.0\diagram.host.tests.dll" id="0414fcb5-221d-2f5e-a663-1f61b3216f0a">
+      <Execution id="deaa1097-a4c1-49d5-a88e-971bcac31c06" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Host.Tests\bin\Debug\net10.0\Diagram.Host.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Host.Tests.DiskVersionTests" name="HashDetectsSameSizeWriteEvenWithPreservedTimestampAndDeletion" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="f63ead0f-c327-a211-d231-e24812bd9907" executionId="cdb034fc-5921-4bd5-88ac-119b3862b5d7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="60f91934-9661-6d1d-6ec0-3acd8bab5880" executionId="a841141c-bc1b-4109-8007-9cb9b0d03747" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fe1dd9ce-7cc1-c7b9-197c-eeb30e1914d0" executionId="ec2adec9-211f-4c98-a3d9-5d971f8c629f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0414fcb5-221d-2f5e-a663-1f61b3216f0a" executionId="deaa1097-a4c1-49d5-a88e-971bcac31c06" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="4" executed="4" passed="4" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v4.0.1+0f7d528729 (64-bit .NET 10.0.13)&#xD;
+[xUnit.net 00:00:00.41]   Discovering: Diagram.Host.Tests&#xD;
+[xUnit.net 00:00:01.75]   Discovered:  Diagram.Host.Tests&#xD;
+[xUnit.net 00:00:01.78]   Starting:    Diagram.Host.Tests&#xD;
+[xUnit.net 00:00:02.02]   Finished:    Diagram.Host.Tests&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

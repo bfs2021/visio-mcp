@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="a138f196-c3d6-4f0a-94e0-c27626c35f18" name="claude@W11-TEMPLATE 2026-10-18 22:49:02" runUser="W11-TEMPLATE\claude" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-18T22:49:02.2592625+01:00" queuing="2026-10-18T22:49:02.2592630+01:00" start="2026-10-18T22:48:56.4993161+01:00" finish="2026-10-18T22:49:02.2709122+01:00" />
+  <TestSettings name="default" id="f444dd5d-7fa4-49b1-ab1b-5b3ca60fd15c">
+    <Deployment runDeploymentRoot="claude_W11-TEMPLATE_2026-10-18_22_49_02" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="ed3629f5-f7b5-40d7-97f5-9253054c5a3b" testId="d8476d23-ce70-9599-417f-debad134b94c" testName="Diagram.Windows.Tests.FileConflictTests.ExternalWriteBeforeSaveLeavesDiskAndLocalWorkIntact" computerName="W11-TEMPLATE" duration="00:00:03.6683769" startTime="2026-10-18T22:48:58.4568660+01:00" endTime="2026-10-18T22:49:02.1471164+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ed3629f5-f7b5-40d7-97f5-9253054c5a3b">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.True() Failure&#xD;
+Expected: True&#xD;
+Actual:   False</Message>
+          <StackTrace>   at Diagram.Windows.Tests.FileConflictTests.ExternalWriteBeforeSaveLeavesDiskAndLocalWorkIntact() in C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\FileConflictTests.cs:line 21&#xD;
+   at Diagram.Windows.Tests.FileConflictTests.ExternalWriteBeforeSaveLeavesDiskAndLocalWorkIntact() in C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\FileConflictTests.cs:line 24&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Diagram.Windows.Tests.FileConflictTests.ExternalWriteBeforeSaveLeavesDiskAndLocalWorkIntact" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="d8476d23-ce70-9599-417f-debad134b94c">
+      <Execution id="ed3629f5-f7b5-40d7-97f5-9253054c5a3b" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.FileConflictTests" name="ExternalWriteBeforeSaveLeavesDiskAndLocalWorkIntact" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="d8476d23-ce70-9599-417f-debad134b94c" executionId="ed3629f5-f7b5-40d7-97f5-9253054c5a3b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="1" executed="1" passed="0" failed="1" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v4.0.1+0f7d528729 (64-bit .NET 10.0.13)&#xD;
+[xUnit.net 00:00:00.64]   Discovering: Diagram.Windows.Tests&#xD;
+[xUnit.net 00:00:01.19]   Discovered:  Diagram.Windows.Tests&#xD;
+[xUnit.net 00:00:01.21]   Starting:    Diagram.Windows.Tests&#xD;
+[xUnit.net 00:00:04.92]       Assert.True() Failure&#xD;
+[xUnit.net 00:00:04.93]       Expected: True&#xD;
+[xUnit.net 00:00:04.93]       Actual:   False&#xD;
+[xUnit.net 00:00:04.93]       Stack Trace:&#xD;
+[xUnit.net 00:00:04.93]         C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\FileConflictTests.cs(21,0): at Diagram.Windows.Tests.FileConflictTests.ExternalWriteBeforeSaveLeavesDiskAndLocalWorkIntact()&#xD;
+[xUnit.net 00:00:04.93]         C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\FileConflictTests.cs(24,0): at Diagram.Windows.Tests.FileConflictTests.ExternalWriteBeforeSaveLeavesDiskAndLocalWorkIntact()&#xD;
+[xUnit.net 00:00:04.93]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:04.93]   Finished:    Diagram.Windows.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="W11-TEMPLATE" outcome="Error" timestamp="2026-10-18T22:49:02.1499795+01:00">
+        <Text>[xUnit.net 00:00:04.92]     Diagram.Windows.Tests.FileConflictTests.ExternalWriteBeforeSaveLeavesDiskAndLocalWorkIntact [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>
