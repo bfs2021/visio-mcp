@@ -302,3 +302,50 @@ test('the inspector sets arrowhead sizes on a selected connector, and the render
   await page.getByTestId('field-end-arrow-size').selectOption('small');
   expect(await sizeOf()).toBeLessThan(medium);
 });
+
+test('an automatic orthogonal route goes around a shape in its way, through a container, and leaves author waypoints alone', async ({ page }) => {
+  await openEditor(page);
+  const wall = box(280, 90, 60, 110);
+  await apply(page, [
+    { op: 'createShape', id: U(40), bounds: { x: 20, y: 20, width: 700, height: 360 }, style: { fill: { kind: 'none' }, stroke: BLUE } }, // a container around everything
+    { op: 'createShape', id: U(41), bounds: box(100, 120), style: { fill: RED, stroke: { kind: 'none' } } },
+    { op: 'createShape', id: U(42), bounds: box(500, 120), style: { fill: BLUE, stroke: { kind: 'none' } } },
+    { op: 'createShape', id: U(43), bounds: wall, style: { fill: RED, stroke: { kind: 'none' } } },
+    { op: 'createConnector', id: U(44), from: { elementId: U(41), port: 'east', glue: 'static' }, to: { elementId: U(42), port: 'west', glue: 'static' }, route: 'orthogonal' },
+    { op: 'createConnector', id: U(45), from: { elementId: U(41), port: 'east', glue: 'static' }, to: { elementId: U(42), port: 'west', glue: 'static' }, route: 'orthogonal', waypoints: [{ x: 220, y: 150 }, { x: 220, y: 150 }] },
+  ]);
+  const routes = (await call(page, 'doc.exportSnapshot', {})).result.projection.connectors;
+  const hitsWall = (pts: Array<{ x: number; y: number }>) => pts.slice(1).some((p, i) => {
+    const q = pts[i]!; return Math.max(p.x, q.x) > wall.x && Math.min(p.x, q.x) < wall.x + wall.width && Math.max(p.y, q.y) > wall.y && Math.min(p.y, q.y) < wall.y + wall.height;
+  });
+  const auto = routes[U(44)].routePoints as Array<{ x: number; y: number }>;
+  expect(hitsWall(auto)).toBe(false); // around the wall
+  expect(auto.length).toBeGreaterThan(2);
+  expect(auto.every((p, i) => i === 0 || Math.abs(p.x - auto[i - 1]!.x) < 0.01 || Math.abs(p.y - auto[i - 1]!.y) < 0.01)).toBe(true);
+  expect(Math.min(...auto.map(p => p.y))).toBeGreaterThan(20); // stayed inside the container: it was not an obstacle
+  // moving the wall out of the way restores the straight route: routes follow the document
+  await apply(page, [{ op: 'move', target: U(43), delta: { xPt: 0, yPt: 200 } }]);
+  const clear = ((await call(page, 'doc.exportSnapshot', {})).result.projection.connectors[U(44)].routePoints) as Array<{ x: number; y: number }>;
+  expect(clear).toHaveLength(2);
+});
+
+test('automatic routing stays quick and deterministic on a dense page', async ({ page }) => {
+  await openEditor(page);
+  const ops: unknown[] = [];
+  const cols = 10, rows = 6;
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) ops.push({ op: 'createShape', id: U(100 + r * cols + c), bounds: box(30 + c * 85, 30 + r * 85, 60, 40), style: { fill: RED, stroke: { kind: 'none' } } });
+  const sides = ['east', 'west', 'north', 'south'];
+  for (let i = 0; i < 60; i++) {
+    const a = (i * 7) % (cols * rows), b = (i * 13 + 5) % (cols * rows);
+    if (a === b) continue;
+    ops.push({ op: 'createConnector', id: U(300 + i), from: { elementId: U(100 + a), port: sides[i % 4], glue: 'static' }, to: { elementId: U(100 + b), port: sides[(i + 1) % 4], glue: 'static' }, route: 'orthogonal' });
+  }
+  await apply(page, ops);
+  const t0 = Date.now();
+  const first = (await call(page, 'doc.exportSnapshot', {})).result.projection.connectors;
+  const elapsed = Date.now() - t0;
+  const again = (await call(page, 'doc.exportSnapshot', {})).result.projection.connectors;
+  expect(JSON.stringify(again)).toBe(JSON.stringify(first));
+  expect(Object.keys(first).length).toBeGreaterThan(50);
+  expect(elapsed).toBeLessThan(8000);
+});
