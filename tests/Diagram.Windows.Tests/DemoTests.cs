@@ -171,11 +171,12 @@ public class DemoTests
             Assert.InRange(dy, 11.0, 11.7); // 4 mm
             Assert.Equal(Y("billing"), Y("data"), 3); // the other pair is aligned
             var layout = await Tool("inspect_layout", Scope(seen.Doc, seen.Session, new()));
+            Assert.Contains(layout.GetProperty("issues").EnumerateArray(), i => i.GetProperty("code").GetString() == "NEAR_ALIGNMENT" && i.GetProperty("elementIds").EnumerateArray().Any(id => id.GetString() == IdOf(snap, "erp")));
             File.WriteAllText(Path.Combine(Evidence, "step04-findings.json"), JsonSerializer.Serialize(new
             {
                 revision = seen.Revision, preview = "step04-preview.png",
                 misaligned = new { elements = new[] { "crm", "erp" }, rowDeltaPt = Math.Round(dy, 2), expected = 0 },
-                layoutInspector = layout, note = "inspect_layout has no alignment check; the agent compares the bounds returned with the preview.",
+                layoutInspector = layout, note = "Near-alignment hints are heuristic; the agent also checks the intended row against explicit bounds.",
             }, Pretty));
             Record(4, "agent", "render_page and bounds comparison: ERP is 11.3 pt below CRM", null);
             return $"preview {png.Length} bytes; ERP sits {dy:F1} pt below CRM (inspect_layout reports {layout.GetProperty("issues").GetArrayLength()} issues)";

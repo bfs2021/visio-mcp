@@ -4,6 +4,7 @@ import { parentMap } from '../commands/groups';
 import { effectiveState } from '../canvas/cellMapping';
 import { measureTextBox, TextMeasurementLimitError, type TextMeasurement } from './textMeasurement';
 import { parsePath } from '../geometry/svgPath';
+import { inspectNearAlignments, isVisibleThinRule } from './inspectAlignment';
 
 export type Severity = 'info' | 'warning' | 'error';
 
@@ -74,19 +75,19 @@ export const contrastRatio = (a: string, b: string): number => {
  */
 export function inspectLayout(snapshot: Snapshot, ctx: LayoutContext, opts: { pageId?: string } = {}): LayoutReport {
   const issues: LayoutIssue[] = [];
-  const notes = ['Text size is estimated from font metrics measured in the editor; a borderline overflow may render differently.'];
+  const notes = ['Text size is estimated from font metrics measured in the editor; a borderline overflow may render differently.', 'Near-alignment hints are heuristic observations of comparable peer shapes, not proof that either object should move.'];
   if (!ctx.projection) notes.push('Connector routes were not available, so crossings are judged by straight lines between the connected elements.');
   if (!ctx.assetSize) notes.push('Image sizes were not available, so picture distortion was not checked.');
 
   for (const page of snapshot.document.pages) {
     if (opts.pageId && page.id !== opts.pageId) continue;
-    inspectPage(page, ctx, issues);
+    inspectPage(page, ctx, issues, notes);
   }
   issues.sort((a, b) => a.pageId.localeCompare(b.pageId) || a.code.localeCompare(b.code) || a.elementIds[0]!.localeCompare(b.elementIds[0]!));
   return { issues, notes };
 }
 
-function inspectPage(page: Page, ctx: LayoutContext, issues: LayoutIssue[]): void {
+function inspectPage(page: Page, ctx: LayoutContext, issues: LayoutIssue[], notes: string[]): void {
   const byId = new Map(page.elements.map(e => [e.id, e] as const));
   const parents = parentMap(page.elements);
   const shown = page.elements.filter(e => effectiveState(e, page.layers).visible);
@@ -110,7 +111,7 @@ function inspectPage(page: Page, ctx: LayoutContext, issues: LayoutIssue[]): voi
     }
 
     if (isBox(el)) {
-      if (el.bounds.width < 1 || el.bounds.height < 1) add('ZERO_SIZE', el.bounds.width < EPS || el.bounds.height < EPS ? 'error' : 'warning', [el.id], box, 'The element is zero or almost zero in size and will not be seen.', { widthPt: el.bounds.width, heightPt: el.bounds.height });
+      if ((el.bounds.width < 1 || el.bounds.height < 1) && !isVisibleThinRule(el)) add('ZERO_SIZE', el.bounds.width < EPS || el.bounds.height < EPS ? 'error' : 'warning', [el.id], box, 'The element is zero or almost zero in size and will not be seen.', { widthPt: el.bounds.width, heightPt: el.bounds.height });
 
       const text = el.kind === 'shape' ? el.text : el.kind === 'text' ? el.text : undefined;
       if (text && text.value.trim()) textChecks(el, text, box, add, ctx, page);
@@ -126,6 +127,10 @@ function inspectPage(page: Page, ctx: LayoutContext, issues: LayoutIssue[]): voi
 
     if (el.kind === 'connector') connectorChecks(el, add, ctx, byId, parents, shown);
   }
+
+  const alignment = inspectNearAlignments(page, shown, parents);
+  issues.push(...alignment.issues);
+  if (alignment.truncated) notes.push(`Near-alignment analysis was limited on page ${page.id}: at most 50,000 pairs and 100 hints are inspected.`);
 
   // hidden objects that sit on layers which are themselves visible: easy to forget, so report them quietly
   for (const el of page.elements) {
