@@ -6,7 +6,7 @@
   "typecheck": "PASS",
   "generatedContracts": "PASS",
   "productionBuild": "PASS",
-  "dotnetTotal": null,
+  "dotnetTotal": 353,
   "dotnetProjects": [
     {
       "file": "w03-final_net10.0_20261018194040.trx",
