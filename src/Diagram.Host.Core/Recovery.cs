@@ -323,7 +323,7 @@ public sealed record RecoveryLoss(bool TornTailDiscarded, int? CorruptionAfterRe
 
 /// <summary>Everything needed to rebuild the last durable state of one unfinished session. The page validates and applies it; the host never replays.</summary>
 public sealed record RecoveryCandidate(
-    string SessionId, string DocumentId, string? OriginalPath, int CheckpointRevision, JsonNode Document, IReadOnlyList<JsonObject> Events, int LastDurableRevision, RecoveryLoss Loss, DateTimeOffset LastWrite, int? SavedRevision = null);
+    string SessionId, string DocumentId, string? OriginalPath, int CheckpointRevision, JsonNode Document, IReadOnlyList<JsonObject> Events, int LastDurableRevision, RecoveryLoss Loss, DateTimeOffset LastWrite, int? SavedRevision = null, bool KeepUnsaved = false);
 
 /// <summary>The folder of recovery sessions, one sub-folder per editor session.</summary>
 public sealed class RecoveryStore(string root, BlobStore blobs)
@@ -350,9 +350,18 @@ public sealed class RecoveryStore(string root, BlobStore blobs)
         var o = JsonNode.Parse(await File.ReadAllTextAsync(file, ct).ConfigureAwait(false))!.AsObject();
         o["originalPath"] = path;
         o["savedRevision"] = revision;
+        o["keepUnsaved"] = false;
         await new AtomicFileWriter().WriteAsync(file, Encoding.UTF8.GetBytes(o.ToJsonString()), ct).ConfigureAwait(false);
     }
 
+    /// <summary>An explicit New document is unsaved work even before its first edit. This is session state, not canonical drawing metadata.</summary>
+    public async Task KeepUnsavedAsync(string sessionId, CancellationToken ct)
+    {
+        var file = Path.Combine(SessionDir(sessionId), "session.json");
+        var meta = JsonNode.Parse(await File.ReadAllTextAsync(file, ct).ConfigureAwait(false))!.AsObject();
+        meta["keepUnsaved"] = true;
+        await new AtomicFileWriter().WriteAsync(file, Encoding.UTF8.GetBytes(meta.ToJsonString()), ct).ConfigureAwait(false);
+    }
     /// <summary>The unfinished sessions on disk, newest first. A session that was closed cleanly has been removed and is not listed.</summary>
     public Task<IReadOnlyList<RecoveryCandidate>> ReadRecoveryAsync(string? excludeSessionId, CancellationToken ct)
     {
@@ -371,7 +380,7 @@ public sealed class RecoveryStore(string root, BlobStore blobs)
     {
         var cp = new CheckpointStore(dir).ReadLatest();
         if (cp is null) return null; // no usable checkpoint: nothing to rebuild from
-        string? original = null; int? saved = null;
+        string? original = null; int? saved = null; bool keepUnsaved = false;
         try
         {
             if (File.Exists(Path.Combine(dir, "session.json")))
@@ -379,6 +388,7 @@ public sealed class RecoveryStore(string root, BlobStore blobs)
                 var meta = JsonNode.Parse(File.ReadAllText(Path.Combine(dir, "session.json")));
                 original = meta?["originalPath"]?.GetValue<string>();
                 saved = meta?["savedRevision"]?.GetValue<int>();
+                keepUnsaved = meta?["keepUnsaved"]?.GetValue<bool>() ?? false;
             }
         }
         catch (Exception e) when (e is JsonException or IOException or InvalidOperationException) { }
@@ -397,7 +407,7 @@ public sealed class RecoveryStore(string root, BlobStore blobs)
         if (read.CorruptionAfterRevision is { } after) messages.Add($"the journal is damaged after revision {after}; later changes could not be recovered ({read.Detail})");
         var last = events.Count > 0 ? events[^1]["revision"]!.GetValue<int>() : cp.Revision;
         var write = new[] { "journal.log", "manifest.json" }.Select(f => Path.Combine(dir, f)).Where(File.Exists).Select(File.GetLastWriteTimeUtc).DefaultIfEmpty(Directory.GetLastWriteTimeUtc(dir)).Max();
-        return new RecoveryCandidate(cp.SessionId, cp.DocumentId, original, cp.Revision, cp.Document, events, last, new RecoveryLoss(read.TornTailDiscarded, corruptAfter, messages), new DateTimeOffset(write, TimeSpan.Zero), saved);
+        return new RecoveryCandidate(cp.SessionId, cp.DocumentId, original, cp.Revision, cp.Document, events, last, new RecoveryLoss(read.TornTailDiscarded, corruptAfter, messages), new DateTimeOffset(write, TimeSpan.Zero), saved, keepUnsaved);
     }
 
     /// <summary>Removes a finished session (after a safe save, or after the person chose to discard it).</summary>
@@ -437,3 +447,5 @@ public static class BlobGc
         return removed;
     }
 }
+
+

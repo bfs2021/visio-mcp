@@ -1,0 +1,59 @@
+{
+  "codeCommit": "79b6884c8f037154605075f5f178f2880297f044",
+  "includedMain": "1dbcf56",
+  "frontendPassed": 341,
+  "browserPassed": 63,
+  "typecheck": "PASS",
+  "generatedContracts": "PASS",
+  "productionBuild": "PASS",
+  "dotnetTotal": 353,
+  "dotnetProjects": [
+    {
+      "file": "w03-final_net10.0_20261018194040.trx",
+      "total": 24,
+      "passed": 24,
+      "failed": 0
+    },
+    {
+      "file": "w03-final_net10.0_20261018194052.trx",
+      "total": 129,
+      "passed": 129,
+      "failed": 0
+    },
+    {
+      "file": "w03-final_net10.0_20261018194058.trx",
+      "total": 17,
+      "passed": 17,
+      "failed": 0
+    },
+    {
+      "file": "w03-final_net10.0_20261018194204.trx",
+      "total": 13,
+      "passed": 13,
+      "failed": 0
+    },
+    {
+      "file": "w03-final_net10.0_20261018194224.trx",
+      "total": 126,
+      "passed": 126,
+      "failed": 0
+    },
+    {
+      "file": "w03-final_net10.0_20261018194727.trx",
+      "total": 44,
+      "passed": 44,
+      "failed": 0
+    }
+  ],
+  "finalTargetedWindows": {
+    "file": "final-ui-host.trx",
+    "failed": 0,
+    "passed": 10
+  },
+  "humanManualAcceptance": "NOT RUN",
+  "remaining": [
+    "W02b visible tab shell/New-as-tab integration (#41)",
+    "R09 starters after R09 implementation",
+    "Review and merge"
+  ]
+}

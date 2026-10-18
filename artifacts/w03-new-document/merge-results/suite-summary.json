@@ -1,0 +1,48 @@
+{
+  "independentReview": "No substantive remaining findings",
+  "remaining": [
+    "R09 starters conditional on R09 implementation"
+  ],
+  "browserPassed": 95,
+  "codeCommit": "d4e9a652cf66ef2acaf0d480259aa7e0e1ba2010",
+  "manualHumanAcceptance": "NOT RUN",
+  "targetedWindowsPassed": 13,
+  "productionBuild": "PASS",
+  "includedMain": "d3854d8694f3cda54cc92ec10331b27c429ebbec",
+  "projects": [
+    {
+      "file": "w03-combined-final_net10.0_20261018211901.trx",
+      "passed": 24,
+      "failed": 0
+    },
+    {
+      "file": "w03-combined-final_net10.0_20261018211905.trx",
+      "passed": 141,
+      "failed": 0
+    },
+    {
+      "file": "w03-combined-final_net10.0_20261018211918.trx",
+      "passed": 126,
+      "failed": 0
+    },
+    {
+      "file": "w03-combined-final_net10.0_20261018212026.trx",
+      "passed": 14,
+      "failed": 0
+    },
+    {
+      "file": "w03-combined-final_net10.0_20261018212031.trx",
+      "passed": 17,
+      "failed": 0
+    },
+    {
+      "file": "w03-combined-final_net10.0_20261018212449.trx",
+      "passed": 67,
+      "failed": 0
+    }
+  ],
+  "generatedContracts": "PASS",
+  "typecheck": "PASS",
+  "frontendPassed": 348,
+  "dotnetPassed": 389.0
+}

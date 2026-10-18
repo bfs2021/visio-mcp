@@ -28,7 +28,7 @@ export function Toolbar({ model, ws }: { model: EditorModel; ws: WorkspaceModel 
 
   const menus: Array<{ name: string; items: Array<MenuItem | 'sep'> }> = [
     { name: 'File', items: [
-      { id: 'new', label: 'New', shortcut: 'Ctrl+N', run: () => { ws.newTab(); } },
+      { id: 'new', label: 'New…', shortcut: 'Ctrl+N', run: () => model.newDocument.begin() },
       { id: 'open', label: 'Open…', shortcut: 'Ctrl+O', run: () => void ws.openFile() },
       { id: 'save', label: 'Save', shortcut: 'Ctrl+S', run: () => void model.save(false) },
       { id: 'save-as', label: 'Save as…', shortcut: 'Ctrl+Shift+S', run: () => void model.save(true) },
@@ -112,3 +112,4 @@ export function Toolbar({ model, ws }: { model: EditorModel; ws: WorkspaceModel 
     </header>
   );
 }
+

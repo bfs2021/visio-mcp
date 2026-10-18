@@ -22,6 +22,8 @@ export type ScriptCompiler = (
 
 export interface EngineOptions {
   document: DiagramDocument;
+  /** Explicit File > New tabs hold intentional unsaved work, even before their first edit. */
+  explicitUnsaved?: boolean;
   /** Element and (for tests) transaction ids. Default: crypto.randomUUID. */
   idFactory?: () => string;
   /** The engine, not callers, creates session ids. Default: crypto.randomUUID. */
@@ -80,7 +82,7 @@ export class CommandEngine {
     this.maxHistory = opts.retention?.history ?? 1000;
     this.store = new DocumentStore(opts.document, this.newSessionId());
     this.history = new History(this.store.revision, this.maxHistory);
-    this.blankRevision = this.store.revision;
+    this.blankRevision = opts.explicitUnsaved ? null : this.store.revision;
   }
 
   get documentId(): string { return this.store.documentId; }

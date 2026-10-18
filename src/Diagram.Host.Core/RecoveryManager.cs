@@ -23,11 +23,11 @@ public sealed class RecoveryManager : IAsyncDisposable
         public required RecoverySession Session;
         public required string DocumentId;
         public int CommitsSinceCheckpoint, LastCommitted, SavedRevision = -1, StartRevision;
-        public bool Degraded;
+        public bool Degraded, KeepUnsaved;
         public string? Note;
         public string SessionId => Session.SessionId;
         /// <summary>No changes worth keeping: nothing committed since it began, or everything committed was saved.</summary>
-        public bool Untouched => Session.Journal.LastAcceptedRevision <= Math.Max(StartRevision, SavedRevision);
+        public bool Untouched => Session.Journal.LastAcceptedRevision <= SavedRevision || !KeepUnsaved && Session.Journal.LastAcceptedRevision <= StartRevision;
     }
 
     readonly BridgeRouter router;
@@ -206,7 +206,7 @@ public sealed class RecoveryManager : IAsyncDisposable
             {
                 Track? t; lock (gate) tracks.TryGetValue(sessionId, out t);
                 if (t is null) return;
-                lock (gate) t.SavedRevision = Math.Max(t.SavedRevision, revision);
+                lock (gate) { t.SavedRevision = Math.Max(t.SavedRevision, revision); t.KeepUnsaved = false; }
                 await store.SetSavedAsync(sessionId, revision, path, stop.Token).ConfigureAwait(false);
                 await CheckpointAsync(t).ConfigureAwait(false);
             }
@@ -227,13 +227,26 @@ public sealed class RecoveryManager : IAsyncDisposable
         var offer = new List<RecoveryCandidate>();
         foreach (var c in all)
         {
-            var nothingToKeep = (c.LastDurableRevision == 0 && c.CheckpointRevision == 0) || c.LastDurableRevision <= (c.SavedRevision ?? -1); // a blank page nobody touched, or work that was saved
+            var nothingToKeep = (c.LastDurableRevision == 0 && c.CheckpointRevision == 0 && !c.KeepUnsaved) || c.LastDurableRevision <= (c.SavedRevision ?? -1); // a blank page nobody touched, or work that was saved
             if (nothingToKeep) { await store.CompleteAsync(c.SessionId).ConfigureAwait(false); continue; }
             offer.Add(c);
         }
         return offer;
     }
 
+    /// <summary>Preserves one explicit unsaved document even at revision zero, after its first checkpoint is durable.</summary>
+    public async Task KeepCurrentUnsavedAsync(string sessionId, CancellationToken ct)
+    {
+        await DrainAsync().ConfigureAwait(false);
+        Track? track; lock (gate) tracks.TryGetValue(sessionId, out track);
+        if (track is null) throw new InvalidOperationException("the new recovery session is not ready");
+        try
+        {
+            await store.KeepUnsavedAsync(sessionId, ct).ConfigureAwait(false);
+            lock (gate) track.KeepUnsaved = true;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { Mark(track, true, "recovery could not preserve the new document: " + e.Message); throw; }
+    }
     public Task DiscardAsync(string sessionId) => store.CompleteAsync(sessionId);
 
     /// <summary>The restored document now has its own session and checkpoint, so the old session can go.</summary>
@@ -242,6 +255,13 @@ public sealed class RecoveryManager : IAsyncDisposable
         await WhenSessionReadyAsync().ConfigureAwait(false);
         await DrainAsync().ConfigureAwait(false);
         lock (gate) if (tracks.ContainsKey(oldSessionId)) return; // still an open document's session
+        var source = (await store.ReadRecoveryAsync(null, stop.Token).ConfigureAwait(false)).FirstOrDefault(c => c.SessionId == oldSessionId);
+        if (source?.KeepUnsaved == true)
+        {
+            var target = router.ScopeOf(source.DocumentId);
+            if (target is null || target.SessionId == oldSessionId) throw new InvalidOperationException("the restored document is not ready");
+            await KeepCurrentUnsavedAsync(target.SessionId, stop.Token).ConfigureAwait(false);
+        }
         await store.CompleteAsync(oldSessionId).ConfigureAwait(false);
     }
 

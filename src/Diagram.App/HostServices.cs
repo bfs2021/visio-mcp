@@ -49,11 +49,15 @@ public sealed partial class HostServices(MainWindow window)
 
     public async Task<ResponseEnvelope> HandleAsync(RequestEnvelope request, CancellationToken ct)
     {
+        var fileAction = request.Method is "host.newDocument" or "host.openJson" or "host.openVsdx" or "host.saveJson";
+        if (fileAction) await newDocumentGate.WaitAsync(ct);
         try
         {
             return request.Method switch
             {
                 "host.ping" => Ok(request, new JsonObject { ["pong"] = true }),
+                "host.newDocument" => await NewDocumentAsync(request, ct),
+                "host.protectNewDocument" => await ProtectNewDocumentAsync(request, ct),
                 "host.openJson" => await OpenAsync(request, ct),
                 "host.saveJson" => await SaveAsync(request, ct),
                 "host.pickImage" => await PickImageAsync(request, ct),
@@ -76,6 +80,7 @@ public sealed partial class HostServices(MainWindow window)
         {
             return Err(request, "io_error", e.Message);
         }
+        finally { if (fileAction) newDocumentGate.Release(); }
     }
 
     static ResponseEnvelope Ok(RequestEnvelope r, JsonNode result) => new() { RequestId = r.RequestId, Result = JsonSerializer.SerializeToElement(result) };

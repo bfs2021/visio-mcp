@@ -176,12 +176,14 @@ test('keyboard: Ctrl+N makes a tab, Ctrl+Tab and Ctrl+Shift+Tab move between the
   await armHost(page);
   await page.locator('body').click({ position: { x: 5, y: 5 } });
   await page.keyboard.press('Control+n');
+  await page.getByRole('button', { name: 'Create', exact: true }).click();
   await expect(page.getByTestId('tab')).toHaveCount(2);
   await page.keyboard.press('Control+Tab');
   expect((await tabs(page)).map(t => t.active)).toEqual([true, false]);
   await page.keyboard.press('Control+Shift+Tab');
   expect((await tabs(page)).map(t => t.active)).toEqual([false, true]);
   await page.keyboard.press('Control+w');
+  await page.getByTestId('close-discard').click();
   await expect(page.getByTestId('tab')).toHaveCount(1);
 });
 

@@ -9,6 +9,26 @@ namespace Diagram.Host.Tests;
 
 public class RecoveryTests
 {
+    [Fact]
+    public async Task ExplicitUntitledMarkerSurvivesRecoveryMetadataRoundTrip()
+    {
+        using var env = new Env(); var session = await env.Begin();
+        var file = Path.Combine(session.Dir, "session.json");
+        var meta = JsonNode.Parse(await File.ReadAllTextAsync(file))!; meta["keepUnsaved"] = true;
+        await File.WriteAllTextAsync(file, meta.ToJsonString());
+        var candidate = Assert.Single(await env.Store.ReadRecoveryAsync(null, default));
+        Assert.True(JsonSerializer.SerializeToNode(candidate)!["KeepUnsaved"]?.GetValue<bool>() ?? false);
+    }
+    [Fact]
+    public async Task SavingAnExplicitBlankClearsTheUnsavedMarker()
+    {
+        using var env = new Env(); await env.Begin();
+        await env.Store.KeepUnsavedAsync(Sess, default);
+        Assert.True(Assert.Single(await env.Store.ReadRecoveryAsync(null, default)).KeepUnsaved);
+        await env.Store.SetSavedAsync(Sess, 0, "C:/plan.diagram.json", default);
+        var saved = Assert.Single(await env.Store.ReadRecoveryAsync(null, default));
+        Assert.False(saved.KeepUnsaved); Assert.Equal(0, saved.SavedRevision);
+    }
     const string Doc = "00000000-0000-4000-8000-0000000000d1";
     const string Sess = "00000000-0000-4000-8000-0000000000e1";
     static readonly TimeSpan Fast = TimeSpan.FromMilliseconds(5);
@@ -278,3 +298,5 @@ public class RecoveryTests
         Assert.Equal(0, c.CheckpointRevision); // the first checkpoint, still present because the previous generation is kept
     }
 }
+
+

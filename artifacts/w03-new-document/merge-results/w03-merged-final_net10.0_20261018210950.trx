@@ -1,0 +1,106 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="c4c6ad5e-22b2-4b82-8137-98aec106e298" name="claude@W11-TEMPLATE 2026-10-18 21:08:56" runUser="W11-TEMPLATE\claude" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-18T21:08:56.6170628+01:00" queuing="2026-10-18T21:08:56.6170636+01:00" start="2026-10-18T21:08:47.2038098+01:00" finish="2026-10-18T21:09:49.9990988+01:00" />
+  <TestSettings name="default" id="1e4b51ff-8335-4a67-aad6-1c68f137acd2">
+    <Deployment runDeploymentRoot="claude_W11-TEMPLATE_2026-10-18_21_08_56" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="afd8a1fb-626e-4d3e-a858-72f6890c2186" testId="6df3c2b9-2f02-c1dc-ce80-37c01265f91c" testName="ToolTests.ApplicationErrorsKeepTheirCodeRetryableAndOutcome" computerName="W11-TEMPLATE" duration="00:00:05.4138242" startTime="2026-10-18T21:09:09.5132103+01:00" endTime="2026-10-18T21:09:15.0211763+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="afd8a1fb-626e-4d3e-a858-72f6890c2186" />
+    <UnitTestResult executionId="56d4eb0e-aa7c-4138-9c67-e4c47d91505b" testId="15a7e955-7604-6965-6c19-8a76cce2b7ea" testName="ToolTests.AllToolNamesMatchSource" computerName="W11-TEMPLATE" duration="00:00:06.5205509" startTime="2026-10-18T21:08:56.6025218+01:00" endTime="2026-10-18T21:09:03.1141651+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="56d4eb0e-aa7c-4138-9c67-e4c47d91505b" />
+    <UnitTestResult executionId="3646dab9-bcd5-4ab6-b8c3-a8a5e3604411" testId="b3090240-7105-e251-4eb5-076dae531087" testName="ToolTests.LostConnectionIsAnUnknownOutcomeAndIsNotRetried" computerName="W11-TEMPLATE" duration="00:00:06.7462527" startTime="2026-10-18T21:09:37.1341073+01:00" endTime="2026-10-18T21:09:43.8805629+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3646dab9-bcd5-4ab6-b8c3-a8a5e3604411" />
+    <UnitTestResult executionId="bb3e5d62-8f62-43aa-9fa3-ed9860a9762f" testId="78662c28-bd42-8185-c2d9-e9e701706fef" testName="ToolTests.TextLayoutForwardsScopeAndReadOptionsWithoutInventingATransaction" computerName="W11-TEMPLATE" duration="00:00:05.4128630" startTime="2026-10-18T21:09:31.7209990+01:00" endTime="2026-10-18T21:09:37.1336837+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bb3e5d62-8f62-43aa-9fa3-ed9860a9762f" />
+    <UnitTestResult executionId="4d85f013-705c-4aa1-88a9-5cb002bf66d8" testId="f3c703f3-aace-947e-12e0-f56db5b1c419" testName="ToolTests.NotRunningThenRecovers" computerName="W11-TEMPLATE" duration="00:00:06.3962218" startTime="2026-10-18T21:09:03.1160430+01:00" endTime="2026-10-18T21:09:09.5127413+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4d85f013-705c-4aa1-88a9-5cb002bf66d8" />
+    <UnitTestResult executionId="b8670ef4-725d-42f2-8027-f5f5bac4ece1" testId="ae2d5ef9-31ee-22a5-b358-3f857518a8a6" testName="ImageContentTests.RenderResultIsAnImageBlockPlusJsonMetadataNeverHiddenBase64" computerName="W11-TEMPLATE" duration="00:00:06.5851186" startTime="2026-10-18T21:08:56.6434066+01:00" endTime="2026-10-18T21:09:03.2297395+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b8670ef4-725d-42f2-8027-f5f5bac4ece1" />
+    <UnitTestResult executionId="4a95beb6-3f2f-45c6-a768-b8558af14921" testId="68e1d04c-d1d7-aa6b-dc3c-1752fdc3aa35" testName="ToolTests.OperationDiscoveryWorksOfflineAndMatchesCanonicalContracts" computerName="W11-TEMPLATE" duration="00:00:05.7892205" startTime="2026-10-18T21:09:43.8816462+01:00" endTime="2026-10-18T21:09:49.7892824+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4a95beb6-3f2f-45c6-a768-b8558af14921" />
+    <UnitTestResult executionId="6a35b90e-1d2f-4917-abc3-82311bbe0de7" testId="638f9f1c-5854-5167-1167-3e364f9a47c3" testName="ToolTests.RenderLayoutAndExportAdvertiseNotReady" computerName="W11-TEMPLATE" duration="00:00:05.4274614" startTime="2026-10-18T21:09:26.2927764+01:00" endTime="2026-10-18T21:09:31.7203888+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6a35b90e-1d2f-4917-abc3-82311bbe0de7" />
+    <UnitTestResult executionId="8cdb7fcb-8434-4ebc-b1f3-d69d1e8a4e25" testId="0300989d-3d5f-6040-2c50-2d58937776c5" testName="ToolTests.StdioHasNoLogs" computerName="W11-TEMPLATE" duration="00:00:00.5050337" startTime="2026-10-18T21:09:15.0224510+01:00" endTime="2026-10-18T21:09:15.5279316+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8cdb7fcb-8434-4ebc-b1f3-d69d1e8a4e25" />
+    <UnitTestResult executionId="371463f0-fcd9-487a-9527-3ff289efdb16" testId="7c1c5f72-9a64-6a9e-320c-cc940df45753" testName="ToolTests.BadInputIsRejectedBeforeItReachesTheApplication" computerName="W11-TEMPLATE" duration="00:00:08.1106882" startTime="2026-10-18T21:08:48.4732917+01:00" endTime="2026-10-18T21:08:56.5913500+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="371463f0-fcd9-487a-9527-3ff289efdb16" />
+    <UnitTestResult executionId="6fef2202-1247-43d6-886d-abdb1ba668dc" testId="9ad7ebd3-dd94-4be0-b14f-a027076bb52e" testName="ImageContentTests.RenderRegionForwardsBoundsOrElementIds" computerName="W11-TEMPLATE" duration="00:00:07.1974638" startTime="2026-10-18T21:08:49.4446726+01:00" endTime="2026-10-18T21:08:56.6426964+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6fef2202-1247-43d6-886d-abdb1ba668dc" />
+    <UnitTestResult executionId="e7ba6bbe-0850-4ae6-a142-adc582099928" testId="8eee013e-575a-9e23-0713-8010f06016e1" testName="ToolTests.ToolSchemasRequireIdentity" computerName="W11-TEMPLATE" duration="00:00:05.3640167" startTime="2026-10-18T21:09:20.9283089+01:00" endTime="2026-10-18T21:09:26.2923432+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e7ba6bbe-0850-4ae6-a142-adc582099928" />
+    <UnitTestResult executionId="6ca14219-02f0-49bb-a413-0a5b35e3dc3a" testId="bc2c4f5d-59e9-2088-5747-3f6ceef814e1" testName="ToolTests.MutationIdentityIsForwardedUnchangedAndNeverInvented" computerName="W11-TEMPLATE" duration="00:00:05.3991634" startTime="2026-10-18T21:09:15.5281502+01:00" endTime="2026-10-18T21:09:20.9277847+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6ca14219-02f0-49bb-a413-0a5b35e3dc3a" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="ToolTests.MutationIdentityIsForwardedUnchangedAndNeverInvented" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.mcp.tests\bin\debug\net10.0\diagram.mcp.tests.dll" id="bc2c4f5d-59e9-2088-5747-3f6ceef814e1">
+      <Execution id="6ca14219-02f0-49bb-a413-0a5b35e3dc3a" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Mcp.Tests\bin\Debug\net10.0\Diagram.Mcp.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="ToolTests" name="MutationIdentityIsForwardedUnchangedAndNeverInvented" />
+    </UnitTest>
+    <UnitTest name="ToolTests.StdioHasNoLogs" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.mcp.tests\bin\debug\net10.0\diagram.mcp.tests.dll" id="0300989d-3d5f-6040-2c50-2d58937776c5">
+      <Execution id="8cdb7fcb-8434-4ebc-b1f3-d69d1e8a4e25" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Mcp.Tests\bin\Debug\net10.0\Diagram.Mcp.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="ToolTests" name="StdioHasNoLogs" />
+    </UnitTest>
+    <UnitTest name="ToolTests.LostConnectionIsAnUnknownOutcomeAndIsNotRetried" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.mcp.tests\bin\debug\net10.0\diagram.mcp.tests.dll" id="b3090240-7105-e251-4eb5-076dae531087">
+      <Execution id="3646dab9-bcd5-4ab6-b8c3-a8a5e3604411" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Mcp.Tests\bin\Debug\net10.0\Diagram.Mcp.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="ToolTests" name="LostConnectionIsAnUnknownOutcomeAndIsNotRetried" />
+    </UnitTest>
+    <UnitTest name="ToolTests.ApplicationErrorsKeepTheirCodeRetryableAndOutcome" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.mcp.tests\bin\debug\net10.0\diagram.mcp.tests.dll" id="6df3c2b9-2f02-c1dc-ce80-37c01265f91c">
+      <Execution id="afd8a1fb-626e-4d3e-a858-72f6890c2186" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Mcp.Tests\bin\Debug\net10.0\Diagram.Mcp.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="ToolTests" name="ApplicationErrorsKeepTheirCodeRetryableAndOutcome" />
+    </UnitTest>
+    <UnitTest name="ToolTests.NotRunningThenRecovers" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.mcp.tests\bin\debug\net10.0\diagram.mcp.tests.dll" id="f3c703f3-aace-947e-12e0-f56db5b1c419">
+      <Execution id="4d85f013-705c-4aa1-88a9-5cb002bf66d8" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Mcp.Tests\bin\Debug\net10.0\Diagram.Mcp.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="ToolTests" name="NotRunningThenRecovers" />
+    </UnitTest>
+    <UnitTest name="ToolTests.OperationDiscoveryWorksOfflineAndMatchesCanonicalContracts" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.mcp.tests\bin\debug\net10.0\diagram.mcp.tests.dll" id="68e1d04c-d1d7-aa6b-dc3c-1752fdc3aa35">
+      <Execution id="4a95beb6-3f2f-45c6-a768-b8558af14921" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Mcp.Tests\bin\Debug\net10.0\Diagram.Mcp.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="ToolTests" name="OperationDiscoveryWorksOfflineAndMatchesCanonicalContracts" />
+    </UnitTest>
+    <UnitTest name="ImageContentTests.RenderResultIsAnImageBlockPlusJsonMetadataNeverHiddenBase64" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.mcp.tests\bin\debug\net10.0\diagram.mcp.tests.dll" id="ae2d5ef9-31ee-22a5-b358-3f857518a8a6">
+      <Execution id="b8670ef4-725d-42f2-8027-f5f5bac4ece1" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Mcp.Tests\bin\Debug\net10.0\Diagram.Mcp.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="ImageContentTests" name="RenderResultIsAnImageBlockPlusJsonMetadataNeverHiddenBase64" />
+    </UnitTest>
+    <UnitTest name="ImageContentTests.RenderRegionForwardsBoundsOrElementIds" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.mcp.tests\bin\debug\net10.0\diagram.mcp.tests.dll" id="9ad7ebd3-dd94-4be0-b14f-a027076bb52e">
+      <Execution id="6fef2202-1247-43d6-886d-abdb1ba668dc" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Mcp.Tests\bin\Debug\net10.0\Diagram.Mcp.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="ImageContentTests" name="RenderRegionForwardsBoundsOrElementIds" />
+    </UnitTest>
+    <UnitTest name="ToolTests.TextLayoutForwardsScopeAndReadOptionsWithoutInventingATransaction" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.mcp.tests\bin\debug\net10.0\diagram.mcp.tests.dll" id="78662c28-bd42-8185-c2d9-e9e701706fef">
+      <Execution id="bb3e5d62-8f62-43aa-9fa3-ed9860a9762f" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Mcp.Tests\bin\Debug\net10.0\Diagram.Mcp.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="ToolTests" name="TextLayoutForwardsScopeAndReadOptionsWithoutInventingATransaction" />
+    </UnitTest>
+    <UnitTest name="ToolTests.BadInputIsRejectedBeforeItReachesTheApplication" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.mcp.tests\bin\debug\net10.0\diagram.mcp.tests.dll" id="7c1c5f72-9a64-6a9e-320c-cc940df45753">
+      <Execution id="371463f0-fcd9-487a-9527-3ff289efdb16" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Mcp.Tests\bin\Debug\net10.0\Diagram.Mcp.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="ToolTests" name="BadInputIsRejectedBeforeItReachesTheApplication" />
+    </UnitTest>
+    <UnitTest name="ToolTests.ToolSchemasRequireIdentity" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.mcp.tests\bin\debug\net10.0\diagram.mcp.tests.dll" id="8eee013e-575a-9e23-0713-8010f06016e1">
+      <Execution id="e7ba6bbe-0850-4ae6-a142-adc582099928" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Mcp.Tests\bin\Debug\net10.0\Diagram.Mcp.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="ToolTests" name="ToolSchemasRequireIdentity" />
+    </UnitTest>
+    <UnitTest name="ToolTests.RenderLayoutAndExportAdvertiseNotReady" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.mcp.tests\bin\debug\net10.0\diagram.mcp.tests.dll" id="638f9f1c-5854-5167-1167-3e364f9a47c3">
+      <Execution id="6a35b90e-1d2f-4917-abc3-82311bbe0de7" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Mcp.Tests\bin\Debug\net10.0\Diagram.Mcp.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="ToolTests" name="RenderLayoutAndExportAdvertiseNotReady" />
+    </UnitTest>
+    <UnitTest name="ToolTests.AllToolNamesMatchSource" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.mcp.tests\bin\debug\net10.0\diagram.mcp.tests.dll" id="15a7e955-7604-6965-6c19-8a76cce2b7ea">
+      <Execution id="56d4eb0e-aa7c-4138-9c67-e4c47d91505b" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Mcp.Tests\bin\Debug\net10.0\Diagram.Mcp.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="ToolTests" name="AllToolNamesMatchSource" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="6df3c2b9-2f02-c1dc-ce80-37c01265f91c" executionId="afd8a1fb-626e-4d3e-a858-72f6890c2186" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="15a7e955-7604-6965-6c19-8a76cce2b7ea" executionId="56d4eb0e-aa7c-4138-9c67-e4c47d91505b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b3090240-7105-e251-4eb5-076dae531087" executionId="3646dab9-bcd5-4ab6-b8c3-a8a5e3604411" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="78662c28-bd42-8185-c2d9-e9e701706fef" executionId="bb3e5d62-8f62-43aa-9fa3-ed9860a9762f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f3c703f3-aace-947e-12e0-f56db5b1c419" executionId="4d85f013-705c-4aa1-88a9-5cb002bf66d8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ae2d5ef9-31ee-22a5-b358-3f857518a8a6" executionId="b8670ef4-725d-42f2-8027-f5f5bac4ece1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="68e1d04c-d1d7-aa6b-dc3c-1752fdc3aa35" executionId="4a95beb6-3f2f-45c6-a768-b8558af14921" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="638f9f1c-5854-5167-1167-3e364f9a47c3" executionId="6a35b90e-1d2f-4917-abc3-82311bbe0de7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0300989d-3d5f-6040-2c50-2d58937776c5" executionId="8cdb7fcb-8434-4ebc-b1f3-d69d1e8a4e25" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7c1c5f72-9a64-6a9e-320c-cc940df45753" executionId="371463f0-fcd9-487a-9527-3ff289efdb16" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9ad7ebd3-dd94-4be0-b14f-a027076bb52e" executionId="6fef2202-1247-43d6-886d-abdb1ba668dc" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8eee013e-575a-9e23-0713-8010f06016e1" executionId="e7ba6bbe-0850-4ae6-a142-adc582099928" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bc2c4f5d-59e9-2088-5747-3f6ceef814e1" executionId="6ca14219-02f0-49bb-a413-0a5b35e3dc3a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="13" executed="13" passed="13" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v4.0.1+0f7d528729 (64-bit .NET 10.0.13)&#xD;
+[xUnit.net 00:00:00.13]   Discovering: Diagram.Mcp.Tests&#xD;
+[xUnit.net 00:00:00.83]   Discovered:  Diagram.Mcp.Tests&#xD;
+[xUnit.net 00:00:00.85]   Starting:    Diagram.Mcp.Tests&#xD;
+[xUnit.net 00:01:02.19]   Finished:    Diagram.Mcp.Tests&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

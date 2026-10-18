@@ -24,6 +24,7 @@ export class WorkspaceModel {
   configure: (model: EditorModel, state: DocumentState) => void = () => {};
   /** A short message the strip shows (for example, the tab limit). */
   notice: string | null = null;
+  protectNew: (scope: Scope) => Promise<Result<unknown>> = async () => ok({});
   /** Said once after a start that brought documents back; stays until dismissed. */
   banner: { text: string; lines: string[] } | null = null;
   dismissBanner(): void { this.banner = null; this.bump(); }
@@ -75,6 +76,19 @@ export class WorkspaceModel {
     model.untitledNo = ++this.untitled;
     model.host = this.hostApi;
     model.closeTabNow = discard => this.closeNow(model, discard);
+    model.newDocument.replacesCurrent = false;
+    model.newDocument.create = async document => {
+      const target = this.newTab({ document });
+      if (!target) return { ok: false, error: { code: 'invalid_request', message: this.notice!, retryable: false } };
+      try {
+        const protectedResult = await this.protectNew(target.engine.scope());
+        if (!protectedResult.ok) target.say('Created the new drawing, but recovery could not protect it. Save it now: ' + protectedResult.error.message, 'warning');
+        else target.say('Created a new untitled drawing. Save it to keep it.', 'info');
+      } catch { target.say('Created the new drawing, but recovery could not protect it. Save it now.', 'warning'); }
+      return ok(target.engine.scope());
+    };
+    model.newDocument.created = () => {}; // the previous editor, history and view belong to its existing tab
+
     this.unsubscribe.set(model, model.subscribe(() => this.bump())); // what any tab shows can change the strip (its name, its unsaved dot)
   }
 
@@ -82,10 +96,10 @@ export class WorkspaceModel {
 
   // ------------------------------------------------------------------ tabs
   /** A new untitled document in a new tab, which becomes the active one. Null if the tab limit was reached. */
-  newTab(opts: { activate?: boolean } = {}): EditorModel | null {
+  newTab(opts: { activate?: boolean; document?: DiagramDocument } = {}): EditorModel | null {
     if (this.app.workspace.documents.length >= TAB_LIMIT) { this.notice = `You have ${TAB_LIMIT} documents open. Close some before opening more.`; this.bump(); return null; }
     this.notice = null;
-    const state = this.app.openDocument(opts.activate === undefined ? {} : { activate: opts.activate });
+    const state = this.app.openDocument({ ...(opts.activate === undefined ? {} : { activate: opts.activate }), ...(opts.document ? { document: { document: opts.document, explicitUnsaved: true } } : {}) });
     return state.ui as EditorModel;
   }
 

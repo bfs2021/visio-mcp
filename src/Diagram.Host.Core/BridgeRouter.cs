@@ -42,6 +42,7 @@ public sealed class BridgeRouter : IEditorChannel, IExportSource, IRasteriser
     // Every open document, by id, with the newest revision seen for it. The active one is what single-document callers mean by "current".
     readonly Dictionary<string, (Scope Scope, int Revision, string Channel)> docs = new();
     readonly HashSet<string> frozen = new();
+    readonly HashSet<string> stoppedChannels = new();
     readonly Dictionary<string, TaskCompletionSource> channelReady = new();
     string? activeId;
     long correlation;
@@ -54,7 +55,7 @@ public sealed class BridgeRouter : IEditorChannel, IExportSource, IRasteriser
     }
 
     /// <summary>Adds another page the router talks to (the agent-only view). Its documents are reachable by id; they are never the active document.</summary>
-    public void AddChannel(string name, IFrontendTransport transport) { lock (gate) { channels[name] = transport; channelReady[name] = new(TaskCreationOptions.RunContinuationsAsynchronously); } }
+    public void AddChannel(string name, IFrontendTransport transport) { lock (gate) { channels[name] = transport; stoppedChannels.Remove(name); channelReady[name] = new(TaskCreationOptions.RunContinuationsAsynchronously); } }
 
     /// <summary>Completes once the named page has signalled that it can answer.</summary>
     public Task WaitChannelReadyAsync(string channel, CancellationToken ct)
@@ -245,6 +246,21 @@ public sealed class BridgeRouter : IEditorChannel, IExportSource, IRasteriser
         back?.Post(JsonSerializer.Serialize(response with { RequestId = id }, ContractJson.Options));
     }
 
+    /// <summary>Stop a transport during clean shutdown without dropping document/recovery ownership.</summary>
+    public void OnTransportStopped(string reason, string channel = User)
+    {
+        List<TaskCompletionSource<JsonObject>> all;
+        lock (gate)
+        {
+            stoppedChannels.Add(channel);
+            var mine = pending.Where(p => p.Value.Channel == channel).ToList();
+            all = mine.Select(p => p.Value.Tcs).ToList();
+            foreach (var p in mine) pending.Remove(p.Key);
+        }
+        foreach (var t in all)
+            t.TrySetResult(new JsonObject { ["error"] = JsonSerializer.SerializeToNode(new AppError { Code = "timeout_unknown", Message = reason, Retryable = false, Outcome = "unknown" }, ContractJson.Options) });
+    }
+
     /// <summary>The renderer died or the page reloaded: no pending call can be answered, and whether each took effect is unknown.</summary>
     public void OnRendererFailed(string reason, string channel = User)
     {
@@ -304,7 +320,11 @@ public sealed class BridgeRouter : IEditorChannel, IExportSource, IRasteriser
         var correlationId = $"c{Interlocked.Increment(ref correlation)}-{Guid.NewGuid():N}"; // host-generated: caller ids can collide, these cannot
         var mutation = IsMutation(request.Method);
         var tcs = new TaskCompletionSource<JsonObject>(TaskCreationOptions.RunContinuationsAsynchronously);
-        lock (gate) pending[correlationId] = (tcs, mutation, route);
+        lock (gate)
+        {
+            if (stoppedChannels.Contains(route)) return Fail(request.RequestId, "not_ready", "the editor transport is closed", outcome: "none");
+            pending[correlationId] = (tcs, mutation, route);
+        }
 
         var forwarded = request with { RequestId = correlationId };
         transport.Post(JsonSerializer.Serialize(forwarded, ContractJson.Options));

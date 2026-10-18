@@ -80,6 +80,7 @@ ws = new WorkspaceModel(app, firstModel);
 ws.configure = configure;
 ws.isBusy = () => !!router?.isGestureActive();
 ws.host = hostApi(host);
+if (host) ws.protectNew = scope => host.call('host.protectNewDocument', { ...scope });
 configure(firstModel, workspace.active!);
 const model = firstModel;
 void ws.restoreWorkspace(model).then(() => ws!.refreshAgentDocs()); // the last run's tabs come back; unfinished work no tab owns is offered
