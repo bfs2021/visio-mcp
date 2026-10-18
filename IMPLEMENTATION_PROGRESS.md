@@ -66,7 +66,7 @@ These rows preserve delivery evidence at the time recorded. Installation notes a
 
 ### Active work — GitHub Issues
 
-Current status, ownership, dependencies and handovers live in [GitHub Issues](https://github.com/rp2839/visio-mcp/issues), not this document. The user created [Project 3](https://github.com/users/rp2839/projects/3/views/1); population awaits authenticated Project access. This is an ID-to-issue index, not a second status table.
+Ownership, dependencies and handovers live in [GitHub Issues](https://github.com/rp2839/visio-mcp/issues); workflow state lives in [Project 3's Status field](https://github.com/users/rp2839/projects/3/views/1). All 21 migrated issues were verified in Backlog on 2026-10-18. This is an ID-to-issue index, not a second status table.
 
 | Work ID | Issue |
 |---|---|

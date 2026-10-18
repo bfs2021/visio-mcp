@@ -1,7 +1,6 @@
 name: Work item
 description: Track a feature, defect or acceptance gap with reviewable exit criteria.
 title: "[ID] "
-labels: ["status:backlog"]
 body:
   - type: textarea
     id: problem
@@ -39,4 +38,4 @@ body:
       required: true
   - type: markdown
     attributes:
-      value: Before editing, follow docs/development/issue-workflow.md. Record the agent, branch and scope in a claim comment, then read back the issue. New issues are unclaimed in Backlog.
+      value: Before editing, follow docs/development/issue-workflow.md. Record the agent, branch and scope in a claim comment, then read back the issue. The Project auto-add and item-added workflows place new open issues in Backlog; Project Status is authoritative.

@@ -2,8 +2,8 @@
 
 Read [docs/development/issue-workflow.md](docs/development/issue-workflow.md) before starting development or acceptance work.
 
-- GitHub Issues owns current status, dependencies, agent ownership and handovers. `IMPLEMENTATION_PROGRESS.md` is historical evidence and an issue index.
-- Pull current main, read the issue and recent comments, and check for an existing claim before editing. Claim work with an agent label, status and comment naming the branch/scope; read the issue back to detect overlapping claims.
+- GitHub Issues owns scope, dependencies, agent ownership and handovers; Project 3's Status field owns workflow state. `IMPLEMENTATION_PROGRESS.md` is historical evidence and an issue index. Temporary `status:*` labels are retired.
+- Pull current main, read the issue, Project Status and recent comments, and check for an existing claim before editing. Claim work with an agent label, Project Status and comment naming the branch/scope; read the issue back to detect overlapping claims.
 - Use an isolated feature branch. Coordinate overlapping shared files/contracts through the issue; do not silently take over another agent's work.
 - Preserve the R/A/H work ID in issue titles. Link commits, verification results, repository evidence, remaining limits and handovers in the issue.
 - Close only when acceptance criteria and intended integration are verified. Distinguish automated, historical and fresh manual evidence. Do not update a duplicate Markdown status table.
