@@ -1,0 +1,41 @@
+name: Work item
+description: Track a feature, defect or acceptance gap with reviewable exit criteria.
+title: "[ID] "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and existing evidence
+      description: Describe the concrete behavior or gap and link relevant repository evidence. Search existing issues first.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Describe the intended outcome, supported limits and anything already delivered.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Use checkboxes with observable results. Separate automated verification from manual acceptance.
+      placeholder: "- [ ] Observable outcome and its verification"
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Link blocking issues; use GitHub blocking relationships as well. Link reports for completed dependencies.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Verification and evidence plan
+      description: Name relevant tests, native format checks and evidence locations. Record unavailable checks as NOT RUN.
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: Before editing, follow docs/development/issue-workflow.md. Record the agent, branch and scope in a claim comment, then read back the issue. The Project auto-add and item-added workflows place new open issues in Backlog; Project Status is authoritative.
