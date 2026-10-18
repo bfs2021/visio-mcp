@@ -35,6 +35,8 @@ public sealed partial class HostServices(MainWindow window)
                 "host.openVsdx" => await OpenVsdxAsync(request, ct),
                 "host.exportVsdx" => await ExportVsdxAsync(request, ct),
                 var m when m.StartsWith("host.library.", StringComparison.Ordinal) => await LibraryAsync(request, ct),
+                "host.app.close" => await window.ApproveCloseAsync(request.Params["discard"]?.GetValue<bool>() == true) ? Ok(request, new JsonObject { ["closing"] = true }) : Err(request, "invalid_request", "the window is not waiting to close"),
+                "host.app.closeCancelled" => Ok(request, new JsonObject { ["cancelled"] = window.CancelClose() }),
                 var m when m.StartsWith("host.recovery.", StringComparison.Ordinal) => await RecoveryAsync(request, ct),
                 _ => Err(request, "method_not_found", $"unknown host method {request.Method}"),
             };

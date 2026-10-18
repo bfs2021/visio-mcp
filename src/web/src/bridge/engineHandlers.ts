@@ -25,6 +25,8 @@ export interface EngineHandlerOptions {
   rasterise?: (sha256: string, maxPixels: number) => Promise<Result<{ base64: string; widthPx: number; heightPx: number }>>;
   /** Text measurement and picture sizes for layout inspection, supplied by the page. */
   layoutContext?: (snapshot: Snapshot, options?: { includeAssets?: boolean }) => Promise<Pick<LayoutContext, 'measureWidth' | 'assetSize'>>;
+  /** The host is closing the window: say whether there are unsaved changes (and, if so, ask the person what to do). */
+  beforeClose?: () => Promise<{ dirty: boolean }>;
 }
 
 /** Used when the page cannot measure text: a rough average advance, and the report says its sizes are estimates either way. */
@@ -42,6 +44,8 @@ export function createEngineHandler(engine: CommandEngine, opts: EngineHandlerOp
     const respond = <T>(r: Result<T>) => toResponse(id, r);
 
     switch (env.method) {
+      case 'app.beforeClose':
+        return respond(ok(opts.beforeClose ? await opts.beforeClose() : { dirty: false }));
       case 'components.list': {
         const snap = await engine.snapshot(scope); if (!snap.ok) return respond(snap);
         if (Object.keys(p).length) return respond(fail('invalid_request', 'Component discovery has no options'));

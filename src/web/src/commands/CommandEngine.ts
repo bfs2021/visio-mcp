@@ -39,7 +39,10 @@ export interface EngineStatus {
   projectionHealthy: boolean;
   savedRevision: number | null;
   savedPath: string | null;
+  /** Not the same as the revision having moved past the save: false for a brand-new blank document nobody has touched. */
   dirty: boolean;
+  /** There is work a person could lose: edits since the last save, or a document that was opened or recovered and never saved. */
+  unsaved: boolean;
 }
 
 /**
@@ -66,6 +69,8 @@ export class CommandEngine {
   private projectionHealthy = true;
   private savedRevision: number | null = null;
   private savedPath: string | null = null;
+  /** The revision of the untouched blank page the app started with; null once any document was opened or recovered into it. */
+  private blankRevision: number | null;
 
   constructor(opts: EngineOptions) {
     this.newId = opts.idFactory ?? (() => crypto.randomUUID());
@@ -75,6 +80,7 @@ export class CommandEngine {
     this.maxHistory = opts.retention?.history ?? 1000;
     this.store = new DocumentStore(opts.document, this.newSessionId());
     this.history = new History(this.store.revision, this.maxHistory);
+    this.blankRevision = this.store.revision;
   }
 
   get documentId(): string { return this.store.documentId; }
@@ -86,6 +92,7 @@ export class CommandEngine {
     return {
       recoveryDegraded: this.recoveryDegraded, checkpointRequested: this.checkpointRequested, projectionHealthy: this.projectionHealthy,
       savedRevision: this.savedRevision, savedPath: this.savedPath, dirty: this.savedRevision !== this.revision,
+      unsaved: this.savedRevision === null ? this.blankRevision === null || this.revision !== this.blankRevision : this.revision !== this.savedRevision,
     };
   }
 
@@ -360,6 +367,7 @@ export class CommandEngine {
       this.sequence = 0;
       this.savedRevision = null;
       this.savedPath = null;
+      this.blankRevision = null;
       this.recoveryDegraded = false;
       this.checkpointRequested = false;
       this.projectionHealthy = true;

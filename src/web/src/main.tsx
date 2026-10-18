@@ -20,6 +20,8 @@ function hostApi(host: HostServices | null): HostApi {
     recoveryFetch: sessionId => host.call('host.recovery.fetch', { sessionId }),
     recoveryDiscard: sessionId => host.call('host.recovery.discard', { sessionId }),
     recoveryFinish: (sessionId, originalPath) => host.call('host.recovery.finish', { sessionId, originalPath }),
+    appClose: discard => host.call('host.app.close', { discard }),
+    appCloseCancelled: () => host.call('host.app.closeCancelled'),
     libraryList: (query, tags) => host.call('host.library.list', { query, tags }),
     libraryImport: () => host.call('host.library.import'),
     libraryUse: (id, hash) => host.call('host.library.use', { id, hash }),
@@ -37,7 +39,7 @@ const assetUrl = (snapshot: { document: { assets: Array<{ id: string; sha256: st
   return a ? `/assets/${a.sha256}` : '';
 };
 const renderer = createSnapshotRenderer({ assetUrl: assetUrl as never });
-const { engine, host, router, sessionChanged } = startApp(window.chrome?.webview, null, { onSessionChanged: () => model?.sessionReplaced(), render: renderer.render, rasterise: renderer.rasterise, layoutContext: createBrowserLayoutContext(assetUrl as never) });
+const { engine, host, router, sessionChanged } = startApp(window.chrome?.webview, null, { onSessionChanged: () => model?.sessionReplaced(), render: renderer.render, rasterise: renderer.rasterise, layoutContext: createBrowserLayoutContext(assetUrl as never), beforeClose: async () => model!.beginClose() });
 model = new EditorModel(engine);
 model.host = hostApi(host);
 model.proposeComponent = async params => {
@@ -57,6 +59,8 @@ if (import.meta.env.VITE_TEST_API === '1') {
   (window as unknown as { __editor: unknown }).__editor = {
     committedEvents: () => JSON.parse(JSON.stringify(recorded)),
     checkRecovery: () => m.checkRecovery(),
+    beginClose: () => m.beginClose(),
+    markSaved: (path: string) => m.engine.markSaved(m.engine.scope(), m.engine.revision, path),
     snapshot: () => JSON.parse(JSON.stringify(m.snapshot)),
     selection: () => [...m.selection],
     status: () => ({ ...m.status, ...m.engine.status() }),

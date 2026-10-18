@@ -34,6 +34,10 @@ export interface HostApi {
   recoveryFetch(sessionId: string): Promise<Result<RecoveryPayload & { loss: RecoveryLossInfo }>>;
   recoveryDiscard(sessionId: string): Promise<Result<{ discarded: string }>>;
   recoveryFinish(sessionId: string, originalPath: string | null): Promise<Result<{ finished: string }>>;
+  /** The person answered the close prompt: close the window now (and let the unsaved work go when `discard`). */
+  appClose(discard: boolean): Promise<Result<{ closing: true }>>;
+  /** The person cancelled the close prompt: the window stays open and may ask again. */
+  appCloseCancelled(): Promise<Result<{ cancelled: true }>>;
   openVsdx(): Promise<Result<NativeOutcome>>;
   /** `path` repeats a choice the person already made when they agree to a lossy export. */
   exportVsdx(opts: { acceptLoss?: boolean; path?: string }): Promise<Result<NativeOutcome>>;
@@ -55,6 +59,8 @@ export const noHost: HostApi = {
   recoveryFetch: async () => fail('not_running', 'there is no host'),
   recoveryDiscard: async () => fail('not_running', 'there is no host'),
   recoveryFinish: async () => fail('not_running', 'there is no host'),
+  appClose: async () => fail('not_running', 'there is no host'),
+  appCloseCancelled: async () => fail('not_running', 'there is no host'),
   libraryList: async () => fail('not_running', 'there is no host to read the picture library'),
   libraryImport: async () => fail('not_running', 'there is no host to add pictures'),
   libraryUse: async () => fail('not_running', 'there is no host to read the picture library'),
@@ -110,6 +116,8 @@ export class EditorModel {
   report: CompatibilityView | null = null;
   /** Unfinished work found at start, waiting for the person's answer. */
   recoveryOffer: RecoveryOffer | null = null;
+  /** Set while the host's close request waits for the person: Save, Don't save or Cancel. */
+  closePrompt: { fileName: string | null; saving: boolean; error: string | null } | null = null;
   /** What a recovery brought back and what it could not, shown after restoring. */
   recoveryReport: { title: string; lines: string[] } | null = null;
   /** Newest revision the host has on disk (the editor's own revision runs ahead of this by whatever is still being written). */
@@ -599,6 +607,37 @@ export class EditorModel {
 
   /** Not now: the work stays on disk and is offered again next time. */
   deferOffered(): void { this.recoveryOffer = null; this.bump(); }
+
+  // ------------------------------------------------------------------ closing the window
+  /** The host wants to close. Nothing unsaved: it may. Otherwise the prompt is shown and the host waits for the person's answer. */
+  beginClose(): { dirty: boolean } {
+    const s = this.engine.status();
+    if (!s.unsaved) return { dirty: false };
+    this.closePrompt = { fileName: s.savedPath ?? null, saving: false, error: null };
+    this.bump();
+    return { dirty: true };
+  }
+
+  async closeSave(): Promise<void> {
+    const p = this.closePrompt; if (!p || p.saving) return;
+    p.saving = true; p.error = null; this.bump();
+    await this.save(false);
+    if (this.engine.status().unsaved) { p.saving = false; p.error = 'The changes were not saved, so the window was not closed.'; this.bump(); return; } // Save as was cancelled or failed
+    await this.finishClose(false);
+  }
+
+  async closeDiscard(): Promise<void> { if (this.closePrompt && !this.closePrompt.saving) await this.finishClose(true); }
+
+  async closeCancel(): Promise<void> {
+    if (!this.closePrompt || this.closePrompt.saving) return;
+    this.closePrompt = null; this.bump();
+    await this.host.appCloseCancelled();
+  }
+
+  private async finishClose(discard: boolean): Promise<void> {
+    const r = await this.host.appClose(discard);
+    if (!r.ok && this.closePrompt) { this.closePrompt.saving = false; this.closePrompt.error = r.error.message; this.bump(); }
+  }
   closeRecoveryReport(): void { this.recoveryReport = null; this.bump(); }
 
   // ------------------------------------------------------------------ pages

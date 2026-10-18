@@ -192,6 +192,18 @@ public sealed class RecoveryManager : IAsyncDisposable
         await store.CompleteAsync(oldSessionId).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// The person closed the window and chose not to save: the current session's changes are thrown away, so the next start does not offer them.
+    /// Anything still queued is written first and then removed with the rest, and later commits from this session are ignored.
+    /// </summary>
+    public async Task DiscardCurrentAsync()
+    {
+        await DrainAsync().ConfigureAwait(false);
+        RecoverySession? s;
+        lock (gate) { s = session; session = null; ready = new(TaskCreationOptions.RunContinuationsAsynchronously); }
+        if (s is not null) await store.CompleteAsync(s.SessionId).ConfigureAwait(false);
+    }
+
     /// <summary>Clean close: the current session is removed only if there is nothing unsaved in it.</summary>
     public async Task CloseCleanlyAsync()
     {

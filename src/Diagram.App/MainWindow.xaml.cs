@@ -1,5 +1,6 @@
 using System.IO;
 using System.Windows;
+using Diagram.Core.Contracts;
 using Diagram.Host.Core;
 using Diagram.Visio;
 using Microsoft.Web.WebView2.Core;
@@ -12,12 +13,12 @@ namespace Diagram.App;
 /// <param name="Offscreen">Place the window out of sight (automated tests).</param>
 /// <param name="PipeName">Pipe the MCP shim connects to; null leaves live control off.</param>
 /// <param name="ExportRoot">Folder a client may export into (besides the open document's own folder).</param>
-public sealed record AppOptions(string ContentRoot, string UserDataDir, string BlobDir, bool Offscreen = false, string? PipeName = null, string? ExportRoot = null, string? LibraryDir = null, string? RecoveryDir = null)
+public sealed record AppOptions(string ContentRoot, string UserDataDir, string BlobDir, bool Offscreen = false, string? PipeName = null, string? ExportRoot = null, string? LibraryDir = null, string? RecoveryDir = null, bool PromptOnClose = false)
 {
     public static AppOptions Default()
     {
         var data = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AgenticDiagram");
-        return new AppOptions(Path.Combine(AppContext.BaseDirectory, "web"), Path.Combine(data, "webview"), Path.Combine(data, "blobs"), PipeName: Diagram.Ipc.PipeNames.For(), ExportRoot: Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AgenticDiagram", "Exports"));
+        return new AppOptions(Path.Combine(AppContext.BaseDirectory, "web"), Path.Combine(data, "webview"), Path.Combine(data, "blobs"), PipeName: Diagram.Ipc.PipeNames.For(), PromptOnClose: true, ExportRoot: Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AgenticDiagram", "Exports"));
     }
 }
 
@@ -35,6 +36,7 @@ public partial class MainWindow : Window
             WindowStartupLocation = WindowStartupLocation.Manual;
             Left = -10000; Top = 0; ShowActivated = false; ShowInTaskbar = false;
         }
+        Closing += OnClosing;
         Blobs = new BlobStore(options.BlobDir);
         Writer = new AtomicFileWriter();
         Preparer = new AssetPreparer(Blobs);
@@ -80,6 +82,49 @@ public partial class MainWindow : Window
             await RecoveryMgr.DisposeAsync();
         };
     }
+
+    // ---------------------------------------------------------------- closing with unsaved changes (W01)
+    bool closeApproved, closeAsked;
+
+    /// <summary>
+    /// The first attempt to close is held while the page says whether anything is unsaved. If nothing is, the window closes. If something is,
+    /// the page shows Save / Don't save / Cancel and answers through host.app.close or host.app.closeCancelled. A page that does not answer in time
+    /// is not allowed to trap the window: it closes, and recovery still holds the work.
+    /// </summary>
+    void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        if (!options.PromptOnClose || closeApproved || host is null) return;
+        e.Cancel = true;
+        if (closeAsked) return; // a prompt is already showing
+        closeAsked = true;
+        _ = AskPageAsync();
+    }
+
+    async Task AskPageAsync()
+    {
+        var dirty = false;
+        try
+        {
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            var r = await Router.SendAsync(new RequestEnvelope { RequestId = Guid.NewGuid().ToString(), Method = "app.beforeClose", Params = new System.Text.Json.Nodes.JsonObject() }, cts.Token);
+            dirty = r.Error is null && r.Result is { } res && res.TryGetProperty("dirty", out var d) && d.GetBoolean();
+        }
+        catch (Exception e) when (e is OperationCanceledException or InvalidOperationException or System.Text.Json.JsonException) { }
+        if (dirty) return; // the page is asking the person; the answer arrives as host.app.close or host.app.closeCancelled
+        await Dispatcher.InvokeAsync(() => { closeApproved = true; Close(); });
+    }
+
+    /// <summary>The person answered the prompt (or the page decided): close now, throwing away the unsaved work when asked.</summary>
+    public async Task<bool> ApproveCloseAsync(bool discard)
+    {
+        if (!closeAsked) return false;
+        if (discard) { try { await RecoveryMgr.DiscardCurrentAsync(); } catch (Exception e) when (e is IOException or UnauthorizedAccessException) { } }
+        await Dispatcher.InvokeAsync(() => { closeApproved = true; Close(); });
+        return true;
+    }
+
+    /// <summary>The person chose Cancel: stay open, and ask again next time.</summary>
+    public bool CancelClose() { var was = closeAsked; closeAsked = false; return was; }
 
     public void Navigate() => Host.Navigate();
 }
