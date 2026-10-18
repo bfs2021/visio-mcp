@@ -658,6 +658,9 @@ public sealed class NativeVsdxExporter : IVsdxExporter
                 shape.Add(Cell("PinX", (bx + ex) / 2, "GUARD((BeginX+EndX)/2)"), Cell("PinY", (by + ey) / 2, "GUARD((BeginY+EndY)/2)"), Cell("Width", ex - bx, "GUARD(EndX-BeginX)"), Cell("Height", ey - by, "GUARD(EndY-BeginY)"),
                     Cell("LocPinX", (ex - bx) / 2, "GUARD(Width*0.5)"), Cell("LocPinY", (ey - by) / 2, "GUARD(Height*0.5)"), Cell("Angle", 0, "GUARD(0)"), Cell("FlipX", 0, "GUARD(FALSE)"), Cell("FlipY", 0, "GUARD(FALSE)"),
                     Cell("ObjType", 2), Cell("ShapeRouteStyle", c.Route == "straight" ? 2 : 1), Cell("ConLineRouteExt", c.Route == "curved" ? 2 : 0));
+                // R08c: a route the author steered with waypoints must not be recalculated when Visio moves an attached shape.
+                // ConFixedCode 1 keeps the bends where they are and lets only the glued ends follow (measured in Visio; see docs/m5/R08c).
+                if (c.Route == "orthogonal" && c.Waypoints.Count > 0) shape.Add(Cell("ConFixedCode", 1));
                 void EndCells(bool begin, Endpoint ep, double x, double y, int ix, bool dyn)
                 {
                     var (cx, cy) = begin ? ("BeginX", "BeginY") : ("EndX", "EndY");

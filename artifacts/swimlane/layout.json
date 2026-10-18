@@ -1,17 +1,19 @@
 {
- "documentId": "ab5385df-c028-432d-8519-639c2107a1b6",
- "sessionId": "c1fc1560-2406-406a-b255-bf2631ebb6dc",
+ "documentId": "e9781f4c-349a-4196-b744-3671e1740558",
+ "sessionId": "787c3106-4328-49f8-9738-0ad9a7c28ca2",
  "revision": 1,
  "issues": [
   {
    "code": "CONNECTOR_CROSSES_SHAPE",
    "severity": "warning",
    "elementIds": [
-    "070f4211-39ee-4d0f-a834-32ef7526c60b",
-    "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-    "f13a9f12-a560-4a9a-8172-5d6c03039cae"
+    "03c7592e-7b66-4c93-ad35-ea1d82a6e9f4",
+    "08b629a4-e387-4909-9a18-3bda92230509",
+    "1ff1d20a-8a85-45db-88da-d1501a7c02fb",
+    "7e7a1ed2-7068-448a-bac1-125279c1fea5",
+    "fb4dfdd6-3380-4e20-9249-e8313d8308af"
    ],
-   "pageId": "a67a5861-ee53-4116-bc3e-86b4eb403c18",
+   "pageId": "8b88a1f1-8a3e-48b2-a38c-bece42cbbf80",
    "bounds": {
     "x": 29.59,
     "y": 29.61,
@@ -21,8 +23,10 @@
    "message": "The connector passes through shapes it is not attached to.",
    "evidence": {
     "crossedElementIds": [
-     "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-     "f13a9f12-a560-4a9a-8172-5d6c03039cae"
+     "08b629a4-e387-4909-9a18-3bda92230509",
+     "1ff1d20a-8a85-45db-88da-d1501a7c02fb",
+     "7e7a1ed2-7068-448a-bac1-125279c1fea5",
+     "fb4dfdd6-3380-4e20-9249-e8313d8308af"
     ],
     "routeFrom": "resolved route"
    }
@@ -31,13 +35,14 @@
    "code": "CONNECTOR_CROSSES_SHAPE",
    "severity": "warning",
    "elementIds": [
-    "1cbe6744-eceb-4e3a-8400-fd4c7f1a8a9c",
-    "62abc89f-76af-415d-a3d1-3de2a29ac618",
-    "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-    "e3276c76-d215-47ea-bfea-f7d2615dba08",
-    "f13a9f12-a560-4a9a-8172-5d6c03039cae"
+    "1e019c84-ec28-4eeb-b3b8-e7871aa1b346",
+    "08b629a4-e387-4909-9a18-3bda92230509",
+    "1ff1d20a-8a85-45db-88da-d1501a7c02fb",
+    "4f93db5a-a36f-4ab9-a18a-21e917cac7da",
+    "7e7a1ed2-7068-448a-bac1-125279c1fea5",
+    "fb4dfdd6-3380-4e20-9249-e8313d8308af"
    ],
-   "pageId": "a67a5861-ee53-4116-bc3e-86b4eb403c18",
+   "pageId": "8b88a1f1-8a3e-48b2-a38c-bece42cbbf80",
    "bounds": {
     "x": 29.59,
     "y": 29.61,
@@ -47,10 +52,11 @@
    "message": "The connector passes through shapes it is not attached to.",
    "evidence": {
     "crossedElementIds": [
-     "62abc89f-76af-415d-a3d1-3de2a29ac618",
-     "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-     "e3276c76-d215-47ea-bfea-f7d2615dba08",
-     "f13a9f12-a560-4a9a-8172-5d6c03039cae"
+     "08b629a4-e387-4909-9a18-3bda92230509",
+     "1ff1d20a-8a85-45db-88da-d1501a7c02fb",
+     "4f93db5a-a36f-4ab9-a18a-21e917cac7da",
+     "7e7a1ed2-7068-448a-bac1-125279c1fea5",
+     "fb4dfdd6-3380-4e20-9249-e8313d8308af"
     ],
     "routeFrom": "resolved route"
    }
@@ -59,12 +65,12 @@
    "code": "CONNECTOR_CROSSES_SHAPE",
    "severity": "warning",
    "elementIds": [
-    "28f5df3f-88f9-4c04-9f36-ecbfa71d9cb4",
-    "62abc89f-76af-415d-a3d1-3de2a29ac618",
-    "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-    "f13a9f12-a560-4a9a-8172-5d6c03039cae"
+    "479e56a6-a829-47e5-ab46-8f63c9deb3d0",
+    "1ff1d20a-8a85-45db-88da-d1501a7c02fb",
+    "7e7a1ed2-7068-448a-bac1-125279c1fea5",
+    "fb4dfdd6-3380-4e20-9249-e8313d8308af"
    ],
-   "pageId": "a67a5861-ee53-4116-bc3e-86b4eb403c18",
+   "pageId": "8b88a1f1-8a3e-48b2-a38c-bece42cbbf80",
    "bounds": {
     "x": 29.59,
     "y": 29.61,
@@ -74,9 +80,9 @@
    "message": "The connector passes through shapes it is not attached to.",
    "evidence": {
     "crossedElementIds": [
-     "62abc89f-76af-415d-a3d1-3de2a29ac618",
-     "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-     "f13a9f12-a560-4a9a-8172-5d6c03039cae"
+     "1ff1d20a-8a85-45db-88da-d1501a7c02fb",
+     "7e7a1ed2-7068-448a-bac1-125279c1fea5",
+     "fb4dfdd6-3380-4e20-9249-e8313d8308af"
     ],
     "routeFrom": "resolved route"
    }
@@ -85,11 +91,11 @@
    "code": "CONNECTOR_CROSSES_SHAPE",
    "severity": "warning",
    "elementIds": [
-    "33d46777-94f9-461c-9452-13634b1343bb",
-    "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-    "f13a9f12-a560-4a9a-8172-5d6c03039cae"
+    "506e6cea-65ab-4f2b-b329-08b1e415f5ae",
+    "08b629a4-e387-4909-9a18-3bda92230509",
+    "7e7a1ed2-7068-448a-bac1-125279c1fea5"
    ],
-   "pageId": "a67a5861-ee53-4116-bc3e-86b4eb403c18",
+   "pageId": "8b88a1f1-8a3e-48b2-a38c-bece42cbbf80",
    "bounds": {
     "x": 29.59,
     "y": 29.61,
@@ -99,8 +105,8 @@
    "message": "The connector passes through shapes it is not attached to.",
    "evidence": {
     "crossedElementIds": [
-     "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-     "f13a9f12-a560-4a9a-8172-5d6c03039cae"
+     "08b629a4-e387-4909-9a18-3bda92230509",
+     "7e7a1ed2-7068-448a-bac1-125279c1fea5"
     ],
     "routeFrom": "resolved route"
    }
@@ -109,12 +115,12 @@
    "code": "CONNECTOR_CROSSES_SHAPE",
    "severity": "warning",
    "elementIds": [
-    "34e5cc73-bbc9-40b2-926c-b9ce8de192ab",
-    "62abc89f-76af-415d-a3d1-3de2a29ac618",
-    "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-    "e3276c76-d215-47ea-bfea-f7d2615dba08"
+    "6c9f5980-029c-4007-8120-ca78b9fdf1e7",
+    "1ff1d20a-8a85-45db-88da-d1501a7c02fb",
+    "7e7a1ed2-7068-448a-bac1-125279c1fea5",
+    "c99af176-37dc-453f-be47-89055def76dd"
    ],
-   "pageId": "a67a5861-ee53-4116-bc3e-86b4eb403c18",
+   "pageId": "8b88a1f1-8a3e-48b2-a38c-bece42cbbf80",
    "bounds": {
     "x": 29.59,
     "y": 29.61,
@@ -124,9 +130,9 @@
    "message": "The connector passes through shapes it is not attached to.",
    "evidence": {
     "crossedElementIds": [
-     "62abc89f-76af-415d-a3d1-3de2a29ac618",
-     "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-     "e3276c76-d215-47ea-bfea-f7d2615dba08"
+     "1ff1d20a-8a85-45db-88da-d1501a7c02fb",
+     "7e7a1ed2-7068-448a-bac1-125279c1fea5",
+     "c99af176-37dc-453f-be47-89055def76dd"
     ],
     "routeFrom": "resolved route"
    }
@@ -135,12 +141,15 @@
    "code": "CONNECTOR_CROSSES_SHAPE",
    "severity": "warning",
    "elementIds": [
-    "3773fdd6-c943-4524-81f4-4b37fe6ff803",
-    "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-    "aefdf89d-5201-48ce-82a2-e50e89d283ec",
-    "e3276c76-d215-47ea-bfea-f7d2615dba08"
+    "85d63b9c-639e-44e5-a3e5-633d21ce92a5",
+    "08b629a4-e387-4909-9a18-3bda92230509",
+    "1ff1d20a-8a85-45db-88da-d1501a7c02fb",
+    "4f93db5a-a36f-4ab9-a18a-21e917cac7da",
+    "7e7a1ed2-7068-448a-bac1-125279c1fea5",
+    "c99af176-37dc-453f-be47-89055def76dd",
+    "fb4dfdd6-3380-4e20-9249-e8313d8308af"
    ],
-   "pageId": "a67a5861-ee53-4116-bc3e-86b4eb403c18",
+   "pageId": "8b88a1f1-8a3e-48b2-a38c-bece42cbbf80",
    "bounds": {
     "x": 29.59,
     "y": 29.61,
@@ -150,9 +159,12 @@
    "message": "The connector passes through shapes it is not attached to.",
    "evidence": {
     "crossedElementIds": [
-     "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-     "aefdf89d-5201-48ce-82a2-e50e89d283ec",
-     "e3276c76-d215-47ea-bfea-f7d2615dba08"
+     "08b629a4-e387-4909-9a18-3bda92230509",
+     "1ff1d20a-8a85-45db-88da-d1501a7c02fb",
+     "4f93db5a-a36f-4ab9-a18a-21e917cac7da",
+     "7e7a1ed2-7068-448a-bac1-125279c1fea5",
+     "c99af176-37dc-453f-be47-89055def76dd",
+     "fb4dfdd6-3380-4e20-9249-e8313d8308af"
     ],
     "routeFrom": "resolved route"
    }
@@ -161,15 +173,11 @@
    "code": "CONNECTOR_CROSSES_SHAPE",
    "severity": "warning",
    "elementIds": [
-    "37b3b49e-df75-460b-b5e9-97b54b8a8ecd",
-    "62abc89f-76af-415d-a3d1-3de2a29ac618",
-    "6aa7a711-6243-49d8-ad89-a87b8e349037",
-    "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-    "aefdf89d-5201-48ce-82a2-e50e89d283ec",
-    "e3276c76-d215-47ea-bfea-f7d2615dba08",
-    "f13a9f12-a560-4a9a-8172-5d6c03039cae"
+    "bbc2e5ce-ae52-46d6-816a-07102df23fd2",
+    "08b629a4-e387-4909-9a18-3bda92230509",
+    "7e7a1ed2-7068-448a-bac1-125279c1fea5"
    ],
-   "pageId": "a67a5861-ee53-4116-bc3e-86b4eb403c18",
+   "pageId": "8b88a1f1-8a3e-48b2-a38c-bece42cbbf80",
    "bounds": {
     "x": 29.59,
     "y": 29.61,
@@ -179,12 +187,8 @@
    "message": "The connector passes through shapes it is not attached to.",
    "evidence": {
     "crossedElementIds": [
-     "62abc89f-76af-415d-a3d1-3de2a29ac618",
-     "6aa7a711-6243-49d8-ad89-a87b8e349037",
-     "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-     "aefdf89d-5201-48ce-82a2-e50e89d283ec",
-     "e3276c76-d215-47ea-bfea-f7d2615dba08",
-     "f13a9f12-a560-4a9a-8172-5d6c03039cae"
+     "08b629a4-e387-4909-9a18-3bda92230509",
+     "7e7a1ed2-7068-448a-bac1-125279c1fea5"
     ],
     "routeFrom": "resolved route"
    }
@@ -193,11 +197,18 @@
    "code": "CONNECTOR_CROSSES_SHAPE",
    "severity": "warning",
    "elementIds": [
-    "3d71f13f-86c6-4944-8186-b62c61d17681",
-    "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-    "f13a9f12-a560-4a9a-8172-5d6c03039cae"
+    "c24b1215-d1a8-47f4-9836-7dccde6bb69d",
+    "04288188-ad95-4539-a5d9-de0bbd827ce8",
+    "08b629a4-e387-4909-9a18-3bda92230509",
+    "1ff1d20a-8a85-45db-88da-d1501a7c02fb",
+    "4f93db5a-a36f-4ab9-a18a-21e917cac7da",
+    "7e7a1ed2-7068-448a-bac1-125279c1fea5",
+    "c99af176-37dc-453f-be47-89055def76dd",
+    "ed837f67-766b-48c6-a727-f821c6d577d3",
+    "f2a2fa7d-2451-4059-9598-283700a06d04",
+    "fb4dfdd6-3380-4e20-9249-e8313d8308af"
    ],
-   "pageId": "a67a5861-ee53-4116-bc3e-86b4eb403c18",
+   "pageId": "8b88a1f1-8a3e-48b2-a38c-bece42cbbf80",
    "bounds": {
     "x": 29.59,
     "y": 29.61,
@@ -207,8 +218,15 @@
    "message": "The connector passes through shapes it is not attached to.",
    "evidence": {
     "crossedElementIds": [
-     "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-     "f13a9f12-a560-4a9a-8172-5d6c03039cae"
+     "04288188-ad95-4539-a5d9-de0bbd827ce8",
+     "08b629a4-e387-4909-9a18-3bda92230509",
+     "1ff1d20a-8a85-45db-88da-d1501a7c02fb",
+     "4f93db5a-a36f-4ab9-a18a-21e917cac7da",
+     "7e7a1ed2-7068-448a-bac1-125279c1fea5",
+     "c99af176-37dc-453f-be47-89055def76dd",
+     "ed837f67-766b-48c6-a727-f821c6d577d3",
+     "f2a2fa7d-2451-4059-9598-283700a06d04",
+     "fb4dfdd6-3380-4e20-9249-e8313d8308af"
     ],
     "routeFrom": "resolved route"
    }
@@ -217,11 +235,11 @@
    "code": "CONNECTOR_CROSSES_SHAPE",
    "severity": "warning",
    "elementIds": [
-    "435d9a1e-5200-4b63-b8e4-98bd22382637",
-    "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-    "e3276c76-d215-47ea-bfea-f7d2615dba08"
+    "c3fcdd6c-03df-4a19-838c-6f16b76256aa",
+    "1ff1d20a-8a85-45db-88da-d1501a7c02fb",
+    "7e7a1ed2-7068-448a-bac1-125279c1fea5"
    ],
-   "pageId": "a67a5861-ee53-4116-bc3e-86b4eb403c18",
+   "pageId": "8b88a1f1-8a3e-48b2-a38c-bece42cbbf80",
    "bounds": {
     "x": 29.59,
     "y": 29.61,
@@ -231,8 +249,8 @@
    "message": "The connector passes through shapes it is not attached to.",
    "evidence": {
     "crossedElementIds": [
-     "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-     "e3276c76-d215-47ea-bfea-f7d2615dba08"
+     "1ff1d20a-8a85-45db-88da-d1501a7c02fb",
+     "7e7a1ed2-7068-448a-bac1-125279c1fea5"
     ],
     "routeFrom": "resolved route"
    }
@@ -241,15 +259,11 @@
    "code": "CONNECTOR_CROSSES_SHAPE",
    "severity": "warning",
    "elementIds": [
-    "443e1337-27fd-44ce-a1d0-b1fbc221c568",
-    "62abc89f-76af-415d-a3d1-3de2a29ac618",
-    "6aa7a711-6243-49d8-ad89-a87b8e349037",
-    "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-    "aefdf89d-5201-48ce-82a2-e50e89d283ec",
-    "e3276c76-d215-47ea-bfea-f7d2615dba08",
-    "f13a9f12-a560-4a9a-8172-5d6c03039cae"
+    "cf5fc86a-f6ca-40eb-bebe-ad8d07944752",
+    "08b629a4-e387-4909-9a18-3bda92230509",
+    "7e7a1ed2-7068-448a-bac1-125279c1fea5"
    ],
-   "pageId": "a67a5861-ee53-4116-bc3e-86b4eb403c18",
+   "pageId": "8b88a1f1-8a3e-48b2-a38c-bece42cbbf80",
    "bounds": {
     "x": 29.59,
     "y": 29.61,
@@ -259,12 +273,8 @@
    "message": "The connector passes through shapes it is not attached to.",
    "evidence": {
     "crossedElementIds": [
-     "62abc89f-76af-415d-a3d1-3de2a29ac618",
-     "6aa7a711-6243-49d8-ad89-a87b8e349037",
-     "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-     "aefdf89d-5201-48ce-82a2-e50e89d283ec",
-     "e3276c76-d215-47ea-bfea-f7d2615dba08",
-     "f13a9f12-a560-4a9a-8172-5d6c03039cae"
+     "08b629a4-e387-4909-9a18-3bda92230509",
+     "7e7a1ed2-7068-448a-bac1-125279c1fea5"
     ],
     "routeFrom": "resolved route"
    }
@@ -273,11 +283,15 @@
    "code": "CONNECTOR_CROSSES_SHAPE",
    "severity": "warning",
    "elementIds": [
-    "4cc7bb13-fbbe-4d71-9117-e264d6ed9d92",
-    "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-    "e3276c76-d215-47ea-bfea-f7d2615dba08"
+    "dddc7be7-0dd3-4b2f-8fba-6911ef9b4949",
+    "08b629a4-e387-4909-9a18-3bda92230509",
+    "1ff1d20a-8a85-45db-88da-d1501a7c02fb",
+    "4f93db5a-a36f-4ab9-a18a-21e917cac7da",
+    "7e7a1ed2-7068-448a-bac1-125279c1fea5",
+    "c99af176-37dc-453f-be47-89055def76dd",
+    "fb4dfdd6-3380-4e20-9249-e8313d8308af"
    ],
-   "pageId": "a67a5861-ee53-4116-bc3e-86b4eb403c18",
+   "pageId": "8b88a1f1-8a3e-48b2-a38c-bece42cbbf80",
    "bounds": {
     "x": 29.59,
     "y": 29.61,
@@ -287,8 +301,12 @@
    "message": "The connector passes through shapes it is not attached to.",
    "evidence": {
     "crossedElementIds": [
-     "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-     "e3276c76-d215-47ea-bfea-f7d2615dba08"
+     "08b629a4-e387-4909-9a18-3bda92230509",
+     "1ff1d20a-8a85-45db-88da-d1501a7c02fb",
+     "4f93db5a-a36f-4ab9-a18a-21e917cac7da",
+     "7e7a1ed2-7068-448a-bac1-125279c1fea5",
+     "c99af176-37dc-453f-be47-89055def76dd",
+     "fb4dfdd6-3380-4e20-9249-e8313d8308af"
     ],
     "routeFrom": "resolved route"
    }
@@ -297,14 +315,15 @@
    "code": "CONNECTOR_CROSSES_SHAPE",
    "severity": "warning",
    "elementIds": [
-    "5200e26b-98ef-4ca9-9290-0baf86746544",
-    "62abc89f-76af-415d-a3d1-3de2a29ac618",
-    "6aa7a711-6243-49d8-ad89-a87b8e349037",
-    "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-    "e3276c76-d215-47ea-bfea-f7d2615dba08",
-    "f13a9f12-a560-4a9a-8172-5d6c03039cae"
+    "e68e0584-b38a-4b01-83ac-762dd2749fa7",
+    "08b629a4-e387-4909-9a18-3bda92230509",
+    "1ff1d20a-8a85-45db-88da-d1501a7c02fb",
+    "4f93db5a-a36f-4ab9-a18a-21e917cac7da",
+    "7e7a1ed2-7068-448a-bac1-125279c1fea5",
+    "c99af176-37dc-453f-be47-89055def76dd",
+    "fb4dfdd6-3380-4e20-9249-e8313d8308af"
    ],
-   "pageId": "a67a5861-ee53-4116-bc3e-86b4eb403c18",
+   "pageId": "8b88a1f1-8a3e-48b2-a38c-bece42cbbf80",
    "bounds": {
     "x": 29.59,
     "y": 29.61,
@@ -314,11 +333,12 @@
    "message": "The connector passes through shapes it is not attached to.",
    "evidence": {
     "crossedElementIds": [
-     "62abc89f-76af-415d-a3d1-3de2a29ac618",
-     "6aa7a711-6243-49d8-ad89-a87b8e349037",
-     "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-     "e3276c76-d215-47ea-bfea-f7d2615dba08",
-     "f13a9f12-a560-4a9a-8172-5d6c03039cae"
+     "08b629a4-e387-4909-9a18-3bda92230509",
+     "1ff1d20a-8a85-45db-88da-d1501a7c02fb",
+     "4f93db5a-a36f-4ab9-a18a-21e917cac7da",
+     "7e7a1ed2-7068-448a-bac1-125279c1fea5",
+     "c99af176-37dc-453f-be47-89055def76dd",
+     "fb4dfdd6-3380-4e20-9249-e8313d8308af"
     ],
     "routeFrom": "resolved route"
    }
@@ -327,15 +347,11 @@
    "code": "CONNECTOR_CROSSES_SHAPE",
    "severity": "warning",
    "elementIds": [
-    "79d4de13-4ac0-4c54-a98d-de4927ddb3cc",
-    "62abc89f-76af-415d-a3d1-3de2a29ac618",
-    "6aa7a711-6243-49d8-ad89-a87b8e349037",
-    "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-    "aefdf89d-5201-48ce-82a2-e50e89d283ec",
-    "e3276c76-d215-47ea-bfea-f7d2615dba08",
-    "f13a9f12-a560-4a9a-8172-5d6c03039cae"
+    "ec9b0dd9-5cfc-40cf-b608-cf1cf92bd4e9",
+    "08b629a4-e387-4909-9a18-3bda92230509",
+    "7e7a1ed2-7068-448a-bac1-125279c1fea5"
    ],
-   "pageId": "a67a5861-ee53-4116-bc3e-86b4eb403c18",
+   "pageId": "8b88a1f1-8a3e-48b2-a38c-bece42cbbf80",
    "bounds": {
     "x": 29.59,
     "y": 29.61,
@@ -345,12 +361,8 @@
    "message": "The connector passes through shapes it is not attached to.",
    "evidence": {
     "crossedElementIds": [
-     "62abc89f-76af-415d-a3d1-3de2a29ac618",
-     "6aa7a711-6243-49d8-ad89-a87b8e349037",
-     "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-     "aefdf89d-5201-48ce-82a2-e50e89d283ec",
-     "e3276c76-d215-47ea-bfea-f7d2615dba08",
-     "f13a9f12-a560-4a9a-8172-5d6c03039cae"
+     "08b629a4-e387-4909-9a18-3bda92230509",
+     "7e7a1ed2-7068-448a-bac1-125279c1fea5"
     ],
     "routeFrom": "resolved route"
    }
@@ -359,18 +371,12 @@
    "code": "CONNECTOR_CROSSES_SHAPE",
    "severity": "warning",
    "elementIds": [
-    "90c8cf7a-0026-46b6-8381-08c6ba16468e",
-    "14614db3-d6b1-4563-b3ff-a7b9e75c6b8c",
-    "62abc89f-76af-415d-a3d1-3de2a29ac618",
-    "6aa7a711-6243-49d8-ad89-a87b8e349037",
-    "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-    "8066b269-9e16-47c2-af6c-0c931d75a4cf",
-    "aefdf89d-5201-48ce-82a2-e50e89d283ec",
-    "b528a219-6fd4-4518-806b-cdaf85f1fc1b",
-    "e3276c76-d215-47ea-bfea-f7d2615dba08",
-    "f13a9f12-a560-4a9a-8172-5d6c03039cae"
+    "f56ce955-c372-4f39-8d4c-ee4a7360d3eb",
+    "08b629a4-e387-4909-9a18-3bda92230509",
+    "7e7a1ed2-7068-448a-bac1-125279c1fea5",
+    "fb4dfdd6-3380-4e20-9249-e8313d8308af"
    ],
-   "pageId": "a67a5861-ee53-4116-bc3e-86b4eb403c18",
+   "pageId": "8b88a1f1-8a3e-48b2-a38c-bece42cbbf80",
    "bounds": {
     "x": 29.59,
     "y": 29.61,
@@ -380,15 +386,9 @@
    "message": "The connector passes through shapes it is not attached to.",
    "evidence": {
     "crossedElementIds": [
-     "14614db3-d6b1-4563-b3ff-a7b9e75c6b8c",
-     "62abc89f-76af-415d-a3d1-3de2a29ac618",
-     "6aa7a711-6243-49d8-ad89-a87b8e349037",
-     "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-     "8066b269-9e16-47c2-af6c-0c931d75a4cf",
-     "aefdf89d-5201-48ce-82a2-e50e89d283ec",
-     "b528a219-6fd4-4518-806b-cdaf85f1fc1b",
-     "e3276c76-d215-47ea-bfea-f7d2615dba08",
-     "f13a9f12-a560-4a9a-8172-5d6c03039cae"
+     "08b629a4-e387-4909-9a18-3bda92230509",
+     "7e7a1ed2-7068-448a-bac1-125279c1fea5",
+     "fb4dfdd6-3380-4e20-9249-e8313d8308af"
     ],
     "routeFrom": "resolved route"
    }
@@ -397,11 +397,11 @@
    "code": "CONNECTOR_CROSSES_SHAPE",
    "severity": "warning",
    "elementIds": [
-    "d2539820-7237-445f-9ff8-adfe1500c732",
-    "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-    "f13a9f12-a560-4a9a-8172-5d6c03039cae"
+    "f5dded17-d3ec-42dd-9e34-6ce2fd690844",
+    "1ff1d20a-8a85-45db-88da-d1501a7c02fb",
+    "7e7a1ed2-7068-448a-bac1-125279c1fea5"
    ],
-   "pageId": "a67a5861-ee53-4116-bc3e-86b4eb403c18",
+   "pageId": "8b88a1f1-8a3e-48b2-a38c-bece42cbbf80",
    "bounds": {
     "x": 29.59,
     "y": 29.61,
@@ -411,8 +411,8 @@
    "message": "The connector passes through shapes it is not attached to.",
    "evidence": {
     "crossedElementIds": [
-     "6bd86fca-0df0-4d1e-a304-1afc11cc4b86",
-     "f13a9f12-a560-4a9a-8172-5d6c03039cae"
+     "1ff1d20a-8a85-45db-88da-d1501a7c02fb",
+     "7e7a1ed2-7068-448a-bac1-125279c1fea5"
     ],
     "routeFrom": "resolved route"
    }
@@ -421,9 +421,9 @@
    "code": "LOW_CONTRAST",
    "severity": "warning",
    "elementIds": [
-    "2bf7bbec-01ee-4f8a-ac01-183f3b4672f3"
+    "e7c90e48-8861-4fd2-b3fa-d6e92ce25361"
    ],
-   "pageId": "a67a5861-ee53-4116-bc3e-86b4eb403c18",
+   "pageId": "8b88a1f1-8a3e-48b2-a38c-bece42cbbf80",
    "bounds": {
     "x": 29.59500000000002,
     "y": 415.62499999999994,
@@ -442,9 +442,9 @@
    "code": "LOW_CONTRAST",
    "severity": "warning",
    "elementIds": [
-    "7ba00166-4736-4e68-abeb-9d4b0b1a3adc"
+    "f3c251b7-7079-4c2c-a8dd-4bd6072ddb4f"
    ],
-   "pageId": "a67a5861-ee53-4116-bc3e-86b4eb403c18",
+   "pageId": "8b88a1f1-8a3e-48b2-a38c-bece42cbbf80",
    "bounds": {
     "height": 28.08,
     "width": 842.04,
@@ -463,15 +463,15 @@
    "code": "OVERLAP",
    "severity": "warning",
    "elementIds": [
-    "62abc89f-76af-415d-a3d1-3de2a29ac618",
-    "9475577f-e914-4e4c-ade4-20e017597eef"
+    "08b629a4-e387-4909-9a18-3bda92230509",
+    "382c25f3-eff7-42b5-939e-d5d8a9edfb42"
    ],
-   "pageId": "a67a5861-ee53-4116-bc3e-86b4eb403c18",
+   "pageId": "8b88a1f1-8a3e-48b2-a38c-bece42cbbf80",
    "bounds": {
     "x": 197.72,
-    "y": 241.95,
+    "y": 326.99,
     "width": 18.419999999999987,
-    "height": 8.580000000000041
+    "height": 8.579999999999984
    },
    "message": "Two shapes overlap without one containing the other.",
    "evidence": {
@@ -483,30 +483,10 @@
    "code": "OVERLAP",
    "severity": "warning",
    "elementIds": [
-    "62abc89f-76af-415d-a3d1-3de2a29ac618",
-    "a6992dc3-7650-49cf-b004-8a5ca6bc8309"
+    "1ff1d20a-8a85-45db-88da-d1501a7c02fb",
+    "51f7e943-00f7-4baa-81fd-efe7fda38c7f"
    ],
-   "pageId": "a67a5861-ee53-4116-bc3e-86b4eb403c18",
-   "bounds": {
-    "x": 197.72,
-    "y": 317.15,
-    "width": 18.419999999999987,
-    "height": 9.840000000000032
-   },
-   "message": "Two shapes overlap without one containing the other.",
-   "evidence": {
-    "overlapAreaPt2": 181,
-    "fractionOfSmaller": 0.53
-   }
-  },
-  {
-   "code": "OVERLAP",
-   "severity": "warning",
-   "elementIds": [
-    "9475577f-e914-4e4c-ade4-20e017597eef",
-    "e3276c76-d215-47ea-bfea-f7d2615dba08"
-   ],
-   "pageId": "a67a5861-ee53-4116-bc3e-86b4eb403c18",
+   "pageId": "8b88a1f1-8a3e-48b2-a38c-bece42cbbf80",
    "bounds": {
     "x": 197.72,
     "y": 232.11,
@@ -523,15 +503,35 @@
    "code": "OVERLAP",
    "severity": "warning",
    "elementIds": [
-    "a6992dc3-7650-49cf-b004-8a5ca6bc8309",
-    "f13a9f12-a560-4a9a-8172-5d6c03039cae"
+    "382c25f3-eff7-42b5-939e-d5d8a9edfb42",
+    "fb4dfdd6-3380-4e20-9249-e8313d8308af"
    ],
-   "pageId": "a67a5861-ee53-4116-bc3e-86b4eb403c18",
+   "pageId": "8b88a1f1-8a3e-48b2-a38c-bece42cbbf80",
    "bounds": {
     "x": 197.72,
-    "y": 326.99,
+    "y": 317.15,
     "width": 18.419999999999987,
-    "height": 8.579999999999984
+    "height": 9.840000000000032
+   },
+   "message": "Two shapes overlap without one containing the other.",
+   "evidence": {
+    "overlapAreaPt2": 181,
+    "fractionOfSmaller": 0.53
+   }
+  },
+  {
+   "code": "OVERLAP",
+   "severity": "warning",
+   "elementIds": [
+    "51f7e943-00f7-4baa-81fd-efe7fda38c7f",
+    "fb4dfdd6-3380-4e20-9249-e8313d8308af"
+   ],
+   "pageId": "8b88a1f1-8a3e-48b2-a38c-bece42cbbf80",
+   "bounds": {
+    "x": 197.72,
+    "y": 241.95,
+    "width": 18.419999999999987,
+    "height": 8.580000000000041
    },
    "message": "Two shapes overlap without one containing the other.",
    "evidence": {
@@ -543,9 +543,9 @@
    "code": "TEXT_OVERFLOW",
    "severity": "warning",
    "elementIds": [
-    "2a07e658-6c36-4357-887a-7070ad619d5c"
+    "55814e97-270f-4c87-9ce9-a3464005f67f"
    ],
-   "pageId": "a67a5861-ee53-4116-bc3e-86b4eb403c18",
+   "pageId": "8b88a1f1-8a3e-48b2-a38c-bece42cbbf80",
    "bounds": {
     "height": 14.18,
     "width": 129.02,
@@ -566,32 +566,9 @@
    "code": "TEXT_OVERFLOW",
    "severity": "warning",
    "elementIds": [
-    "7ba00166-4736-4e68-abeb-9d4b0b1a3adc"
+    "ed837f67-766b-48c6-a727-f821c6d577d3"
    ],
-   "pageId": "a67a5861-ee53-4116-bc3e-86b4eb403c18",
-   "bounds": {
-    "height": 28.08,
-    "width": 842.04,
-    "x": 29.59,
-    "y": 29.61
-   },
-   "message": "The text needs more height than the element has and will be clipped.",
-   "evidence": {
-    "neededWidthPt": 84.9,
-    "availableWidthPt": 830,
-    "neededHeightPt": 16.8,
-    "availableHeightPt": 16.1,
-    "lines": 1,
-    "measured": "estimated"
-   }
-  },
-  {
-   "code": "TEXT_OVERFLOW",
-   "severity": "warning",
-   "elementIds": [
-    "8066b269-9e16-47c2-af6c-0c931d75a4cf"
-   ],
-   "pageId": "a67a5861-ee53-4116-bc3e-86b4eb403c18",
+   "pageId": "8b88a1f1-8a3e-48b2-a38c-bece42cbbf80",
    "bounds": {
     "height": 14.18,
     "width": 453.53,
@@ -612,9 +589,32 @@
    "code": "TEXT_OVERFLOW",
    "severity": "warning",
    "elementIds": [
-    "bf239c46-9c1f-4fa3-80e1-050e7eff9caa"
+    "f3c251b7-7079-4c2c-a8dd-4bd6072ddb4f"
    ],
-   "pageId": "a67a5861-ee53-4116-bc3e-86b4eb403c18",
+   "pageId": "8b88a1f1-8a3e-48b2-a38c-bece42cbbf80",
+   "bounds": {
+    "height": 28.08,
+    "width": 842.04,
+    "x": 29.59,
+    "y": 29.61
+   },
+   "message": "The text needs more height than the element has and will be clipped.",
+   "evidence": {
+    "neededWidthPt": 84.9,
+    "availableWidthPt": 830,
+    "neededHeightPt": 16.8,
+    "availableHeightPt": 16.1,
+    "lines": 1,
+    "measured": "estimated"
+   }
+  },
+  {
+   "code": "TEXT_OVERFLOW",
+   "severity": "warning",
+   "elementIds": [
+    "f726e4c0-b325-46af-87f0-0a967ade833c"
+   ],
+   "pageId": "8b88a1f1-8a3e-48b2-a38c-bece42cbbf80",
    "bounds": {
     "height": 14.18,
     "width": 222.7,

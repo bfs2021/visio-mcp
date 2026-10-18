@@ -109,6 +109,28 @@ public class StructuralTests
     }
 
     [Fact]
+    public void OnlyAuthoredWaypointRoutesAreFixedAgainstVisioRerouting()
+    {
+        var wp = new[] { new { x = 200.0, y = 40.0 }, new { x = 200.0, y = 300.0 } };
+        var shapes = new object[]
+        {
+            Doc.Shape(1, 60, 80, 100, 50, new { alias = "a" }), Doc.Shape(2, 400, 80, 100, 50, new { alias = "b" }),
+            Doc.Connector(10, Doc.Glue(1), Doc.Glue(2), "orthogonal", new { waypoints = wp }),
+            Doc.Connector(11, Doc.Glue(1), Doc.Glue(2), "orthogonal"),
+            Doc.Connector(12, Doc.Glue(1), Doc.Glue(2), "straight"),
+        };
+        var (exp, back) = RT.Trip(Doc.Snapshot(Doc.Page(shapes)));
+        var page = Fx.Part(exp.Package, "visio/pages/page1.xml");
+        string? Fixed(string agentId) => page.Descendants().Where(e => e.Name.LocalName == "Shape")
+            .First(sh => sh.Descendants().Any(r => r.Name.LocalName == "Row" && (string?)r.Attribute("N") == "AgentId" && r.Elements().Any(c => (string?)c.Attribute("V") == agentId)))
+            .Elements().FirstOrDefault(c => c.Name.LocalName == "Cell" && (string?)c.Attribute("N") == "ConFixedCode")?.Attribute("V")?.Value;
+        Assert.Equal("1", Fixed(Doc.Id(10)));   // steered by the author: Visio must keep the bends and move only the glued ends
+        Assert.Null(Fixed(Doc.Id(11)));          // automatic: Visio may reroute it
+        Assert.Null(Fixed(Doc.Id(12)));
+        Assert.Equal(2, RT.El(back.Document, Doc.Id(10))["waypoints"]!.AsArray().Count); // and the waypoints still come back
+    }
+
+    [Fact]
     public void ArrowSizesSurviveTheRoundTripAndMediumStaysImplicit()
     {
         var shapes = new object[]
