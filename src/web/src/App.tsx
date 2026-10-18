@@ -25,7 +25,8 @@ function useShortcuts(ws: WorkspaceModel) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const model = ws.active;
-      if (e.ctrlKey && e.key === 'Tab') { e.preventDefault(); ws.step(e.shiftKey ? -1 : 1); return; } // works while typing too, like a browser
+      if (e.ctrlKey && e.key === 'Tab') { e.preventDefault(); ws.cycle(e.shiftKey ? -1 : 1); return; } // most recently used first; works while typing too, like a browser
+      if (e.ctrlKey && (e.key === 'PageDown' || e.key === 'PageUp')) { e.preventDefault(); ws.step(e.key === 'PageDown' ? 1 : -1); return; } // in tab order
       if (typing(e.target)) return;
       const mod = e.ctrlKey || e.metaKey;
       const key = e.key.toLowerCase();
@@ -53,8 +54,12 @@ function useShortcuts(ws: WorkspaceModel) {
         void model.nudge(e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0, e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0);
       }
     };
+    const onKeyUp = (e: KeyboardEvent) => { if (e.key === 'Control') ws.endCycle(); };
+    const onBlur = () => ws.endCycle();
     document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
+    document.addEventListener('keyup', onKeyUp);
+    window.addEventListener('blur', onBlur);
+    return () => { document.removeEventListener('keydown', onKey); document.removeEventListener('keyup', onKeyUp); window.removeEventListener('blur', onBlur); };
   }, [ws]);
 }
 

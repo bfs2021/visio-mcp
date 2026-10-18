@@ -36,6 +36,8 @@ function hostApi(host: HostServices | null): HostApi {
     documentShow: documentId => host.call('host.documents.show', { documentId }),
     documentDiscard: documentId => host.call('host.documents.discard', { documentId }),
     agentDocuments: () => host.call('host.documents.agent'),
+    documentReveal: documentId => host.call('host.documents.reveal', { documentId }),
+    documentCopyPath: documentId => host.call('host.documents.copyPath', { documentId }),
     exportVsdx: opts => host.call('host.exportVsdx', opts),
   };
 }
@@ -130,6 +132,7 @@ if (import.meta.env.VITE_TEST_API === '1') {
     openFile: (kind?: 'json' | 'vsdx') => shell.openFile(kind),
     closeTab: (index?: number) => shell.closeTab(index === undefined ? shell.active : shell.tabs[index]!),
     activateTab: (index: number) => shell.activate(shell.tabs[index]!),
+    moveTab: (from: number, to: number) => shell.moveTab(shell.tabs[from]!, to),
     agentOpenDocument: (opts?: { activate?: boolean }) => app.openDocument(opts ?? {}).engine.scope(),
   };
 }

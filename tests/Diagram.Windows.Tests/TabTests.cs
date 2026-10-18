@@ -1,4 +1,6 @@
 using System.IO;
+using System.Text.Json.Nodes;
+using Diagram.Core.Contracts;
 using Diagram.Host.Core;
 using Xunit;
 
@@ -118,6 +120,34 @@ public class TabTests
         {
             await h.Window.RecoveryMgr.DisposeAsync(); // the application dies: no clean close, nothing discarded
             Assert.Equal(2, Sessions(root).Length);
+        }
+        finally { await h.DisposeAsync(); try { Directory.Delete(root, true); } catch { } }
+    }
+
+    [Fact]
+    public async Task ShowInExplorerAndCopyPathNameOnlyTheFileOfAnOpenSavedDocument()
+    {
+        var (h, root, _) = await StartWithTwoDirtyTabs();
+        try
+        {
+            var seen = new List<(string, string)>();
+            h.Window.Services.ShellOverride = (what, path) => seen.Add((what, path));
+            var file = Path.Combine(root, "plan.diagram.json");
+            h.Window.Services.DialogOverride = _ => file;
+            var saved = await h.Window.Services.HandleAsync(new RequestEnvelope { RequestId = "s", Method = "host.saveJson", Params = new JsonObject { ["saveAs"] = true } }, default);
+            Assert.Null(saved.Error);
+            var id = h.Router.CurrentScope!.DocumentId;
+            Task<ResponseEnvelope> Ask(string method, string? doc) => h.Window.Services.HandleAsync(new RequestEnvelope { RequestId = "x", Method = method, Params = new JsonObject { ["documentId"] = doc } }, default);
+
+            Assert.Null((await Ask("host.documents.reveal", id)).Error);
+            Assert.Null((await Ask("host.documents.copyPath", id)).Error);
+            Assert.Equal(new[] { ("reveal", file), ("copyPath", file) }, seen);
+            // the other tab has never been saved, and an id that is not open names nothing: no path can be made up
+            var other = h.Router.Documents.First(d => d.DocumentId != id).DocumentId;
+            Assert.Equal("not_found", (await Ask("host.documents.reveal", other)).Error!.Code);
+            Assert.Equal("not_found", (await Ask("host.documents.copyPath", Guid.NewGuid().ToString())).Error!.Code);
+            Assert.Equal("not_found", (await Ask("host.documents.reveal", null)).Error!.Code);
+            Assert.Equal(2, seen.Count);
         }
         finally { await h.DisposeAsync(); try { Directory.Delete(root, true); } catch { } }
     }

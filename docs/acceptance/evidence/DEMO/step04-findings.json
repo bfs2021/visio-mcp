@@ -10,13 +10,42 @@
     "expected": 0
   },
   "layoutInspector": {
-    "documentId": "34ccd55e-467b-42e2-8244-5dbd3370d5a4",
-    "sessionId": "572cff35-564b-465b-80e4-7696e792e4f4",
+    "documentId": "6574e723-3fb8-4034-94e8-19a4953a34eb",
+    "sessionId": "efedde6f-21cb-4ff7-aa3b-c7bed2b5c8f3",
     "revision": 1,
-    "issues": [],
+    "issues": [
+      {
+        "code": "NEAR_ALIGNMENT",
+        "severity": "info",
+        "elementIds": [
+          "0b804f9d-57e9-49cf-a03a-684f884d635f",
+          "2d370431-f15a-4a4f-a05c-493b3459cfe4"
+        ],
+        "pageId": "aa0c747f-44b4-4d26-893f-c6e5c978f125",
+        "bounds": {
+          "x": 56.69291338582678,
+          "y": 113.38582677165356,
+          "width": 453.5433070866142,
+          "height": 73.7007874015748
+        },
+        "message": "Comparable peer shapes are nearly aligned. Check whether this offset is intentional before changing either object.",
+        "evidence": {
+          "heuristic": true,
+          "axis": "y",
+          "anchor": "start",
+          "deltaPt": 11.338582677165348,
+          "tolerancePt": 12,
+          "coordinatesPt": {
+            "0b804f9d-57e9-49cf-a03a-684f884d635f": 124.7244094488189,
+            "2d370431-f15a-4a4f-a05c-493b3459cfe4": 113.38582677165356
+          }
+        }
+      }
+    ],
     "notes": [
-      "Text size is estimated from font metrics measured in the editor; a borderline overflow may render differently."
+      "Text size is estimated from font metrics measured in the editor; a borderline overflow may render differently.",
+      "Near-alignment hints are heuristic observations of comparable peer shapes, not proof that either object should move."
     ]
   },
-  "note": "inspect_layout has no alignment check; the agent compares the bounds returned with the preview."
+  "note": "Near-alignment hints are heuristic; the agent also checks the intended row against explicit bounds."
 }

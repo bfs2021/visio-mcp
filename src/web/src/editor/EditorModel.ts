@@ -54,6 +54,10 @@ export interface HostApi {
   documentDiscard(documentId: string): Promise<Result<{ discarded: string }>>;
   /** The documents agents have open in the background. */
   agentDocuments(): Promise<Result<{ documents: AgentDocument[] }>>;
+  /** Shows a document's file in Explorer. */
+  documentReveal(documentId: string): Promise<Result<{ revealed: string }>>;
+  /** Puts a document's file path on the clipboard. */
+  documentCopyPath(documentId: string): Promise<Result<{ copied: string }>>;
 }
 
 export interface LibraryEntry { id: string; name: string; tags: string[]; mimeType: string; sha256: string; width: number; height: number; version: number; scope: 'library' }
@@ -90,6 +94,8 @@ export const noHost: HostApi = {
   documentShow: async () => fail('not_running', 'there is no host'),
   documentDiscard: async () => fail('not_running', 'there is no host'),
   agentDocuments: async () => ok({ documents: [] }),
+  documentReveal: async () => fail('not_running', 'there is no host'),
+  documentCopyPath: async () => fail('not_running', 'there is no host'),
   workspaceLoad: async () => ok({ found: false }),
   saveJson: async () => fail('not_running', 'there is no host to save files'),
 };
@@ -727,6 +733,8 @@ export class EditorModel {
   // ------------------------------------------------------------------ closing the window or a tab
   /** What the shell does when the prompt is answered for a tab: close it (throwing the work away when `discard`). Set by the shell. */
   closeTabNow: (discard: boolean) => Promise<void> = async () => {};
+  /** Told whether the tab was closed (true) or the person said Cancel (false); lets "Close others" go on to the next tab or stop. */
+  tabCloseResult: ((closed: boolean) => void) | null = null;
   /** Saves everything the window close would lose (all unsaved tabs). Set by the shell; this document alone when absent. */
   saveAllForClose: (() => Promise<boolean>) | null = null;
 
@@ -765,11 +773,12 @@ export class EditorModel {
     if (!p || p.saving) return;
     this.closePrompt = null; this.bump();
     if (p.mode === 'window') await this.host.appCloseCancelled();
+    else { this.tabCloseResult?.(false); this.tabCloseResult = null; }
   }
 
   private async finishClose(discard: boolean): Promise<void> {
     const mode = this.closePrompt?.mode;
-    if (mode === 'tab') { this.closePrompt = null; this.bump(); await this.closeTabNow(discard); return; }
+    if (mode === 'tab') { this.closePrompt = null; this.bump(); await this.closeTabNow(discard); this.tabCloseResult?.(true); this.tabCloseResult = null; return; }
     const r = await this.host.appClose(discard);
     if (!r.ok && this.closePrompt) { this.closePrompt.saving = false; this.closePrompt.error = r.error.message; this.bump(); }
   }

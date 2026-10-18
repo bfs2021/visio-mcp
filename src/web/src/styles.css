@@ -126,7 +126,9 @@ textarea { width: 100%; resize: vertical; }
 .recovery-actions { gap: 6px; margin-top: 4px; }
 
 /* Document tabs (W02b) */
-.tabstrip { grid-area: docs; display: flex; align-items: stretch; gap: 2px; padding: 3px 6px 0; background: #e2e8f0; border-bottom: 1px solid var(--line); overflow-x: auto; min-height: 30px; }
+.tabstrip { grid-area: docs; display: flex; align-items: stretch; gap: 2px; padding: 3px 6px 0; background: #e2e8f0; border-bottom: 1px solid var(--line); min-height: 30px; min-width: 0; }
+.tabs-scroll { display: flex; align-items: stretch; gap: 2px; flex: 0 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.tabs-scroll::-webkit-scrollbar { display: none; }
 .tab { display: flex; align-items: center; gap: 6px; padding: 3px 6px 3px 12px; border: 1px solid var(--line); border-bottom: 0; border-radius: 5px 5px 0 0; background: #cbd5e1; cursor: default; white-space: nowrap; max-width: 220px; }
 .tab.selected { background: #fff; font-weight: 600; }
 .tab:focus-visible { outline: 2px solid #2563eb; outline-offset: -2px; }
@@ -140,3 +142,9 @@ textarea { width: 100%; resize: vertical; }
 .tab-banner button { border: 0; background: transparent; padding: 0 4px; }
 .tab.agent { background: #e0e7ff; border-style: dashed; cursor: pointer; }
 .tab.agent .tab-dot { color: #4f46e5; }
+.tab { touch-action: none; user-select: none; flex: 0 0 auto; }
+.tab.dragging { opacity: .7; box-shadow: 0 2px 8px rgba(15, 23, 42, .3); }
+.tab-scroll { border: 0; background: transparent; border-radius: 3px; padding: 0 7px; font-size: 16px; line-height: 20px; align-self: center; }
+.tab-scroll:hover { background: rgba(15, 23, 42, .12); }
+.tab-menu { position: fixed; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

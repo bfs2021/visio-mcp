@@ -16,7 +16,8 @@ export interface DocumentState<Ui = unknown> {
 export type WorkspaceEvent =
   | { kind: 'opened'; state: DocumentState }
   | { kind: 'closed'; documentId: string }
-  | { kind: 'activated'; state: DocumentState };
+  | { kind: 'activated'; state: DocumentState }
+  | { kind: 'moved'; state: DocumentState };
 
 /**
  * The documents open in this page, in tab order, and which one is active. It is the one place that maps a document id to its
@@ -58,6 +59,18 @@ export class Workspace<Ui = unknown> {
     const s = this.find(documentId);
     if (!s) return false;
     if (s !== this.activeState) { this.activeState = s; this.emit({ kind: 'activated', state: s as DocumentState }); }
+    return true;
+  }
+
+  /** Moves a document to a position in the tab order. */
+  move(documentId: string, index: number): boolean {
+    const from = this.states.findIndex(s => s.engine.scope().documentId === documentId);
+    if (from < 0) return false;
+    const to = Math.max(0, Math.min(this.states.length - 1, index));
+    if (to === from) return true;
+    const [s] = this.states.splice(from, 1);
+    this.states.splice(to, 0, s!);
+    this.emit({ kind: 'moved', state: s as DocumentState });
     return true;
   }
 

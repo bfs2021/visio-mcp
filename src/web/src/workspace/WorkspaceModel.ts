@@ -33,6 +33,11 @@ export class WorkspaceModel {
   armedDiscard: string | null = null;
   /** True while the person is mid-gesture: documents are not moved or switched under their hands. Set by the page. */
   isBusy: () => boolean = () => false;
+  /** Tabs most recently used first: what Ctrl+Tab steps through. */
+  private mru: EditorModel[] = [];
+  private cycling: { order: EditorModel[]; index: number } | null = null;
+  /** Said to screen readers when the tab order changes. */
+  liveMessage = '';
   private persisting = false;
   private persistTimer: ReturnType<typeof setTimeout> | null = null;
   private lastPersisted = '';
@@ -40,12 +45,16 @@ export class WorkspaceModel {
   constructor(private readonly app: App, first: EditorModel) {
     this.adopt(first, app.workspace.active!);
     // every document that appears in the workspace gets an editor, whoever opened it (the person, or an agent in the background)
+    this.touch(first);
     app.workspace.subscribe(e => {
       if (e.kind === 'opened' && !e.state.ui) {
         const model = new EditorModel(e.state.engine);
         this.adopt(model, e.state);
         this.configure(model, e.state);
       }
+      if (e.kind === 'opened' && app.workspace.active === e.state) this.touch(e.state.ui as EditorModel);
+      else if (e.kind === 'activated') this.touch(e.state.ui as EditorModel);
+      else if (e.kind === 'closed') this.mru = this.mru.filter(m => this.tabs.includes(m));
       this.bump();
     });
   }
@@ -85,7 +94,43 @@ export class WorkspaceModel {
     if (s && this.app.workspace.active !== s) { this.app.activateDocument(s.engine.scope().documentId); this.bump(); }
   }
 
-  /** Steps to the next (or previous) tab, wrapping round. */
+  private touch(model: EditorModel | null): void {
+    if (!model || this.cycling) return; // while Ctrl+Tab is held the order stays as it was when it began
+    this.mru = [model, ...this.mru.filter(m => m !== model)];
+  }
+
+  /**
+   * Ctrl+Tab: step through the tabs most recently used first, as long as Ctrl stays down (the first press goes to the previous tab, and
+   * pressing Ctrl+Tab twice quickly toggles between two). Releasing Ctrl makes the chosen tab the most recent (`endCycle`).
+   */
+  cycle(delta: 1 | -1): void {
+    const tabs = this.tabs;
+    if (tabs.length < 2) return;
+    if (!this.cycling) this.cycling = { order: [...this.mru.filter(m => tabs.includes(m)), ...tabs.filter(t => !this.mru.includes(t))], index: 0 };
+    const c = this.cycling;
+    c.index = (c.index + delta + c.order.length) % c.order.length;
+    this.activate(c.order[c.index]!);
+  }
+
+  endCycle(): void {
+    const c = this.cycling;
+    if (!c) return;
+    this.cycling = null;
+    this.touch(c.order[c.index]!);
+  }
+
+  /** Moves a tab to a position in the tab order (the order is remembered with the rest of the workspace). */
+  moveTab(model: EditorModel, index: number): void {
+    const s = this.stateOf(model);
+    if (!s) return;
+    const before = this.tabs.indexOf(model);
+    this.app.workspace.move(s.engine.scope().documentId, index);
+    const after = this.tabs.indexOf(model);
+    if (after !== before) this.liveMessage = `${model.tabLabel} moved to position ${after + 1} of ${this.tabs.length}`;
+    this.bump();
+  }
+
+  /** Steps to the next (or previous) tab in tab order, wrapping round. */
   step(delta: 1 | -1): void {
     const tabs = this.tabs;
     if (tabs.length < 2) return;
@@ -108,12 +153,30 @@ export class WorkspaceModel {
     this.bump();
   }
 
-  /** The person asked to close a tab. Unsaved work asks first. */
-  async closeTab(model: EditorModel): Promise<void> {
-    if (!this.tabs.includes(model)) return;
+  /** The person asked to close a tab. Unsaved work asks first. Resolves true once it is closed, false if they chose Cancel. */
+  async closeTab(model: EditorModel): Promise<boolean> {
+    if (!this.tabs.includes(model)) return true;
     this.activate(model);
-    if (model.beginTabClose()) return; // the dialog asks; its answer comes back through closeTabNow
+    if (model.beginTabClose()) return new Promise<boolean>(resolve => { model.tabCloseResult = resolve; }); // the dialog asks; its answer comes back through closeTabNow
     await this.closeNow(model, false);
+    return true;
+  }
+
+  /** Closes several tabs one after another, asking about each that has unsaved work; Cancel on any of them leaves the rest open. */
+  async closeMany(models: EditorModel[]): Promise<void> {
+    for (const m of [...models]) if (!(await this.closeTab(m))) return;
+  }
+
+  /** Puts a saved tab's file path on the clipboard. */
+  async copyPath(model: EditorModel): Promise<void> {
+    const r = await this.hostApi.documentCopyPath(model.engine.scope().documentId);
+    model.say(r.ok ? 'Path copied.' : r.error.message, r.ok ? 'info' : 'warning');
+  }
+
+  /** Shows a saved tab's file in Explorer. */
+  async reveal(model: EditorModel): Promise<void> {
+    const r = await this.hostApi.documentReveal(model.engine.scope().documentId);
+    if (!r.ok) model.say(r.error.message, 'warning');
   }
 
   /** Closes a tab without asking. `discard` throws away its recovery session (Don't save); a closed unchanged tab leaves nothing behind either way. */
