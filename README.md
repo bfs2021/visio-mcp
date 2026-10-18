@@ -96,3 +96,11 @@ See [R06/R07](docs/m5/R06-R07-reference-comparison.md) for examples and limits.
 ## Licence
 
 [MIT](LICENSE)
+
+## Vector icons
+
+The Icons panel searches a bundled Lucide subset and places editable vector shapes.
+MCP clients can use `search_icons` and `get_icon` to inspect previews and obtain
+normal shape operations, then apply those through `apply_operations`.
+See [R03 usage and verification](docs/m5/R03-vector-icons.md) for units, supported
+custom paths, native Visio behavior and catalogue licensing.

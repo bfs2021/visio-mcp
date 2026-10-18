@@ -1,0 +1,51 @@
+{
+  "verifiedOn": "2026-10-18",
+  "baseCommit": "18a9685",
+  "frontendTests": 285,
+  "browserTests": 43,
+  "dotnetTests": [
+    {
+      "project": "Diagram.Contracts.Tests",
+      "total": 24,
+      "passed": 24,
+      "failed": 0
+    },
+    {
+      "project": "Diagram.Host.Tests",
+      "total": 119,
+      "passed": 119,
+      "failed": 0
+    },
+    {
+      "project": "Diagram.Ipc.Tests",
+      "total": 17,
+      "passed": 17,
+      "failed": 0
+    },
+    {
+      "project": "Diagram.Mcp.Tests",
+      "total": 13,
+      "passed": 13,
+      "failed": 0
+    },
+    {
+      "project": "Diagram.Visio.Tests",
+      "total": 124,
+      "passed": 124,
+      "failed": 0
+    },
+    {
+      "project": "Diagram.Windows.Tests",
+      "total": 31,
+      "passed": 31,
+      "failed": 0
+    }
+  ],
+  "typecheck": "pass",
+  "build": "pass",
+  "generatedContracts": "unchanged",
+  "iconCatalogueRegeneration": "unchanged from committed catalogue",
+  "nativeVisioIcons": 26,
+  "review": "No blocking regressions after fixes",
+  "installedVersionChanged": false
+}

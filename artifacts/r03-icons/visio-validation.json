@@ -1,0 +1,188 @@
+{
+  "VisioVersion": "16.0",
+  "ShapeCount": 26,
+  "Icons": [
+    {
+      "IconId": "lucide:git-branch",
+      "Editable": true,
+      "GeometryRows": 167,
+      "WidthPt": 64,
+      "StrokePt": 4
+    },
+    {
+      "IconId": "lucide:git-pull-request",
+      "Editable": true,
+      "GeometryRows": 152,
+      "WidthPt": 64,
+      "StrokePt": 4
+    },
+    {
+      "IconId": "lucide:git-merge",
+      "Editable": true,
+      "GeometryRows": 167,
+      "WidthPt": 64,
+      "StrokePt": 4
+    },
+    {
+      "IconId": "lucide:container",
+      "Editable": true,
+      "GeometryRows": 66,
+      "WidthPt": 64,
+      "StrokePt": 4
+    },
+    {
+      "IconId": "lucide:package",
+      "Editable": true,
+      "GeometryRows": 64,
+      "WidthPt": 64,
+      "StrokePt": 4
+    },
+    {
+      "IconId": "lucide:box",
+      "Editable": true,
+      "GeometryRows": 62,
+      "WidthPt": 64,
+      "StrokePt": 4
+    },
+    {
+      "IconId": "lucide:code-xml",
+      "Editable": true,
+      "GeometryRows": 9,
+      "WidthPt": 64,
+      "StrokePt": 4
+    },
+    {
+      "IconId": "lucide:server",
+      "Editable": true,
+      "GeometryRows": 129,
+      "WidthPt": 64,
+      "StrokePt": 4
+    },
+    {
+      "IconId": "lucide:cloud",
+      "Editable": true,
+      "GeometryRows": 109,
+      "WidthPt": 64,
+      "StrokePt": 4
+    },
+    {
+      "IconId": "lucide:database",
+      "Editable": true,
+      "GeometryRows": 199,
+      "WidthPt": 64,
+      "StrokePt": 4
+    },
+    {
+      "IconId": "lucide:shield-check",
+      "Editable": true,
+      "GeometryRows": 110,
+      "WidthPt": 64,
+      "StrokePt": 4
+    },
+    {
+      "IconId": "lucide:shield",
+      "Editable": true,
+      "GeometryRows": 107,
+      "WidthPt": 64,
+      "StrokePt": 4
+    },
+    {
+      "IconId": "lucide:lock",
+      "Editable": true,
+      "GeometryRows": 98,
+      "WidthPt": 64,
+      "StrokePt": 4
+    },
+    {
+      "IconId": "lucide:lock-keyhole",
+      "Editable": true,
+      "GeometryRows": 132,
+      "WidthPt": 64,
+      "StrokePt": 4
+    },
+    {
+      "IconId": "lucide:circle-check",
+      "Editable": true,
+      "GeometryRows": 134,
+      "WidthPt": 64,
+      "StrokePt": 4
+    },
+    {
+      "IconId": "lucide:check",
+      "Editable": true,
+      "GeometryRows": 4,
+      "WidthPt": 64,
+      "StrokePt": 4
+    },
+    {
+      "IconId": "lucide:network",
+      "Editable": true,
+      "GeometryRows": 137,
+      "WidthPt": 64,
+      "StrokePt": 4
+    },
+    {
+      "IconId": "lucide:workflow",
+      "Editable": true,
+      "GeometryRows": 142,
+      "WidthPt": 64,
+      "StrokePt": 4
+    },
+    {
+      "IconId": "lucide:file-code",
+      "Editable": true,
+      "GeometryRows": 83,
+      "WidthPt": 64,
+      "StrokePt": 4
+    },
+    {
+      "IconId": "lucide:folder-git-2",
+      "Editable": true,
+      "GeometryRows": 200,
+      "WidthPt": 64,
+      "StrokePt": 4
+    },
+    {
+      "IconId": "lucide:book-open",
+      "Editable": true,
+      "GeometryRows": 115,
+      "WidthPt": 64,
+      "StrokePt": 4
+    },
+    {
+      "IconId": "lucide:cpu",
+      "Editable": true,
+      "GeometryRows": 125,
+      "WidthPt": 64,
+      "StrokePt": 4
+    },
+    {
+      "IconId": "lucide:layers",
+      "Editable": true,
+      "GeometryRows": 109,
+      "WidthPt": 64,
+      "StrokePt": 4
+    },
+    {
+      "IconId": "lucide:arrow-down",
+      "Editable": true,
+      "GeometryRows": 6,
+      "WidthPt": 64,
+      "StrokePt": 4
+    },
+    {
+      "IconId": "lucide:chevron-down",
+      "Editable": true,
+      "GeometryRows": 4,
+      "WidthPt": 64,
+      "StrokePt": 4
+    },
+    {
+      "IconId": "lucide:globe",
+      "Editable": true,
+      "GeometryRows": 198,
+      "WidthPt": 64,
+      "StrokePt": 4
+    }
+  ]
+}
