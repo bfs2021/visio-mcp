@@ -8,6 +8,10 @@ export type Dispatch = (envelope: RequestEnvelope) => Promise<ResponseEnvelope>;
 export interface GateOptions {
   /** The editor's current scope, or null when no document is open. */
   scope: () => Scope | null;
+  /** The scope of the named open document, or null if there is none; without it only the editor's current scope can be addressed. */
+  scopeOf?: (documentId: string) => Scope | null;
+  /** Whether the named document is the one the person is working in. The user-gesture hold applies only to that one; default: yes. */
+  isActive?: (documentId: string | undefined) => boolean;
   holdMs?: number;
   maxPending?: number;
 }
@@ -71,7 +75,7 @@ export class AdmissionGate {
       try {
         const rejected = this.checkScope(envelope);
         if (rejected) return rejected;
-        if (mutation && this.gestureActive) {
+        if (mutation && this.gestureActive && (this.opts.isActive?.(envelope.documentId) ?? true)) {
           const timedOut = await this.holdUntilFree(this.holdMs - (Date.now() - arrival));
           if (timedOut) return error(id, { code: 'busy_user_editing', message: 'the user is editing; try again in a moment', retryable: true, outcome: 'none' });
           const again = this.checkScope(envelope);
@@ -90,11 +94,12 @@ export class AdmissionGate {
   }
 
   private checkScope(env: RequestEnvelope): ResponseEnvelope | null {
-    const current = this.opts.scope();
-    if (!current) return error(env.requestId, { code: 'no_document', message: 'no document is open', retryable: true, outcome: 'none' });
+    const active = this.opts.scope();
+    if (!active) return error(env.requestId, { code: 'no_document', message: 'no document is open', retryable: true, outcome: 'none' });
     if (!env.method.startsWith('doc.') && !env.method.startsWith('assets.')) return null;
     if (!env.documentId || !env.sessionId) return error(env.requestId, { code: 'invalid_request', message: 'document methods need documentId and sessionId', outcome: 'none' });
-    if (env.documentId !== current.documentId) return error(env.requestId, { code: 'document_mismatch', message: 'the document is not the open one', outcome: 'none' });
+    const current = this.opts.scopeOf?.(env.documentId) ?? (env.documentId === active.documentId ? active : null);
+    if (!current) return error(env.requestId, { code: 'document_mismatch', message: 'the document is not the open one', outcome: 'none' });
     if (env.sessionId !== current.sessionId) return error(env.requestId, { code: 'session_mismatch', message: 'the session is not the current one', outcome: 'none' });
     return null;
   }

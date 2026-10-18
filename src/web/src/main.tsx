@@ -39,8 +39,9 @@ const assetUrl = (snapshot: { document: { assets: Array<{ id: string; sha256: st
   return a ? `/assets/${a.sha256}` : '';
 };
 const renderer = createSnapshotRenderer({ assetUrl: assetUrl as never });
-const { engine, host, router, sessionChanged } = startApp(window.chrome?.webview, null, { onSessionChanged: () => model?.sessionReplaced(), render: renderer.render, rasterise: renderer.rasterise, layoutContext: createBrowserLayoutContext(assetUrl as never), beforeClose: async () => model!.beginClose() });
+const { engine, host, router, sessionChanged, workspace } = startApp(window.chrome?.webview, null, { onSessionChanged: () => model?.sessionReplaced(), render: renderer.render, rasterise: renderer.rasterise, layoutContext: createBrowserLayoutContext(assetUrl as never), beforeClose: async () => model!.beginClose() });
 model = new EditorModel(engine);
+workspace.active!.ui = model; // the first tab's editor; the tab strip (W02b) gives every document its own
 model.host = hostApi(host);
 model.proposeComponent = async params => {
   if (!router) return { ok: false, error: { code: 'not_ready', message: 'The editor bridge is unavailable', retryable: false } };

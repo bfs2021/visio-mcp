@@ -16,9 +16,12 @@ import { iconPreview } from '../icons/preview';
 const toResponse = <T>(requestId: string, r: Result<T>): ResponseEnvelope =>
   r.ok ? { protocolVersion: 1, kind: 'response', requestId, result: r.value } : { protocolVersion: 1, kind: 'response', requestId, error: r.error as AppError };
 
+/** Finds the engine of the document a request names; with no document named, the active one. */
+export type EngineResolver = (documentId: string | undefined) => CommandEngine | null;
+
 export interface EngineHandlerOptions {
   /** Called after the engine starts a new session (document replaced), so the host can learn the new scope. */
-  onSessionChanged?: (scope: Scope, revision: number) => void;
+  onSessionChanged?: (scope: Scope, revision: number, engine: CommandEngine) => void;
   /** Rasterises a committed snapshot. Only the page has a drawing surface; without it, render answers not_ready. */
   render?: (snapshot: Snapshot, projection: Projection | undefined, params: RenderParams) => Promise<Result<RenderResult>>;
   /** Turns an approved asset (by hash) into a PNG, for formats that cannot hold the original (an SVG picture inside a Visio file). */
@@ -36,9 +39,11 @@ const approximateWidth: LayoutContext['measureWidth'] = (text, font) => text.len
  * Routes host-initiated doc.* requests to the engine. Scope arrives at the envelope top level and is merged into the
  * request here; the engine remains the authority on session, duplicate delivery and revision.
  */
-export function createEngineHandler(engine: CommandEngine, opts: EngineHandlerOptions = {}) {
+export function createEngineHandler(source: CommandEngine | EngineResolver, opts: EngineHandlerOptions = {}) {
   return async (env: RequestEnvelope): Promise<ResponseEnvelope> => {
     const id = env.requestId;
+    const engine = typeof source === 'function' ? source(env.documentId) : source;
+    if (!engine) return toResponse(id, fail('document_mismatch', 'the document is not the open one'));
     const scope = { documentId: env.documentId ?? '', sessionId: env.sessionId ?? '' };
     const p = env.params as Record<string, unknown>;
     const respond = <T>(r: Result<T>) => toResponse(id, r);
@@ -182,7 +187,7 @@ export function createEngineHandler(engine: CommandEngine, opts: EngineHandlerOp
         const doc = validateDocument(p.document);
         if (!doc.ok) return respond(doc);
         const r = await engine.replaceDocument(doc.value as DiagramDocument, { ...scope, baseRevision: p.baseRevision });
-        if (r.ok) opts.onSessionChanged?.(engine.scope(), engine.revision);
+        if (r.ok) opts.onSessionChanged?.(engine.scope(), engine.revision, engine);
         return respond(r);
       }
       case 'doc.markSaved': {
