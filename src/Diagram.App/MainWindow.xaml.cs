@@ -70,6 +70,7 @@ public partial class MainWindow : Window
         host = new WebViewHost(Web.CoreWebView2, Dispatcher, options.ContentRoot, Blobs, services.HandleAsync);
         Coordinator = new SessionCoordinator(host.Router, Blobs, Preparer, Writer);
         Services = services;
+        services.Attach(host.Router);
         Native = new NativeFileCoordinator(host.Router, host.Router, Blobs, Writer, new NativeVsdxImporter(), new NativeVsdxExporter(), host.Router);
         Exports = new ExportService(this, options.ExportRoot ?? Path.Combine(Path.GetTempPath(), "AgenticDiagramExports"), options.Offscreen ? null : new ExportConsentWindow(this));
         RecoveryMgr = new RecoveryManager(host.Router, Recovery, Blobs, () => Services.CurrentPath);

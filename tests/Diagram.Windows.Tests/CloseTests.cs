@@ -158,6 +158,7 @@ public class CloseTests
             await closed.WaitAsync(TimeSpan.FromSeconds(30));
             Assert.True(File.Exists(file));
             Assert.Contains("crm", File.ReadAllText(file));
+            await WaitFor(() => Sessions(root).Length == 0, 15); // the window's own close handler removes the session just after Closed is raised
             Assert.Empty(Sessions(root));
         }
         finally { await h.DisposeAsync(); try { Directory.Delete(root, true); } catch { } }

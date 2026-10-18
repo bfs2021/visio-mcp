@@ -24,10 +24,10 @@ public sealed partial class HostServices
             var state = status.Result!.Value;
             if (state.GetProperty("revision").GetInt32() != expected.BaseRevision) return Err(request, "revision_conflict", "the drawing changed; cancel New and try again");
             if (state.GetProperty("unsaved").GetBoolean() && request.Params["discard"]?.GetValue<bool>() != true) return Err(request, "invalid_request", "save the drawing or explicitly choose Don't save before replacing it");
-            var previousPath = CurrentPath;
-            CurrentPath = null; // session creation must see the new document's path, including its first recovery checkpoint
+            var previousPath = PathOf(expected.DocumentId);
+            SetPath(expected.DocumentId, null); // session creation must see the new document's path, including its first recovery checkpoint
             var replaced = await window.Router.ReplaceAsync(document, expected, ct);
-            if (!replaced.IsOk) { CurrentPath = previousPath; return Err(request, replaced.Error!); }
+            if (!replaced.IsOk) { SetPath(expected.DocumentId, previousPath); return Err(request, replaced.Error!); }
             string? warning = null;
             try
             {
@@ -44,3 +44,4 @@ public sealed partial class HostServices
         finally { newDocumentGate.Release(); }
     }
 }
+

@@ -36,8 +36,9 @@ public sealed class BridgeRouter : IEditorChannel, IExportSource, IRasteriser
     readonly object gate = new();
     readonly Dictionary<string, (TaskCompletionSource<JsonObject> Tcs, bool Mutation)> pending = new();
     readonly List<string> rejected = new();
-    Scope? scope;
-    int revision;
+    // Every open document, by id, with the newest revision seen for it. The active one is what single-document callers mean by "current".
+    readonly Dictionary<string, (Scope Scope, int Revision)> docs = new();
+    string? activeId;
     long correlation;
     TaskCompletionSource ready = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -47,9 +48,16 @@ public sealed class BridgeRouter : IEditorChannel, IExportSource, IRasteriser
         this.hostHandler = hostHandler;
     }
 
-    public Scope? CurrentScope { get { lock (gate) return scope; } }
-    public int CurrentRevision { get { lock (gate) return revision; } }
-    public bool IsReady { get { lock (gate) return scope is not null; } }
+    /// <summary>The active document's scope: what a caller that names no document means.</summary>
+    public Scope? CurrentScope { get { lock (gate) return activeId is not null && docs.TryGetValue(activeId, out var d) ? d.Scope : null; } }
+    public int CurrentRevision { get { lock (gate) return activeId is not null && docs.TryGetValue(activeId, out var d) ? d.Revision : 0; } }
+    public bool IsReady { get { lock (gate) return docs.Count > 0; } }
+
+    /// <summary>The scope of one open document, or null if no such document is open.</summary>
+    public Scope? ScopeOf(string documentId) { lock (gate) return docs.TryGetValue(documentId, out var d) ? d.Scope : null; }
+
+    /// <summary>Every open document's scope, the active one first.</summary>
+    public IReadOnlyList<Scope> Documents { get { lock (gate) return docs.Values.Select(d => d.Scope).OrderBy(s => s.DocumentId == activeId ? 0 : 1).ToList(); } }
     public int PendingCount { get { lock (gate) return pending.Count; } }
     public IReadOnlyList<string> Rejected { get { lock (gate) return rejected.ToArray(); } }
 
@@ -66,7 +74,7 @@ public sealed class BridgeRouter : IEditorChannel, IExportSource, IRasteriser
     public async Task WaitReadyAsync(CancellationToken ct)
     {
         Task t;
-        lock (gate) t = scope is not null ? Task.CompletedTask : ready.Task;
+        lock (gate) t = docs.Count > 0 ? Task.CompletedTask : ready.Task;
         await t.WaitAsync(ct);
     }
 
@@ -87,14 +95,23 @@ public sealed class BridgeRouter : IEditorChannel, IExportSource, IRasteriser
         {
             case ("event", "editor.ready"):
             case ("event", "editor.session"):
-                SetScope(msg["params"] as JsonObject);
+                SetScope(msg["params"] as JsonObject, replacesActive: true);
+                break;
+            case ("event", "editor.document.opened"):
+                SetScope(msg["params"] as JsonObject, replacesActive: false);
+                break;
+            case ("event", "editor.document.closed"):
+                CloseDocument(msg["params"]?["documentId"]?.GetValue<string>());
+                break;
+            case ("event", "editor.document.activated"):
+                Activate(msg["params"]?["documentId"]?.GetValue<string>());
                 break;
             case ("event", "editor.committed"):
                 try
                 {
                     if (msg["params"].Deserialize<CommittedEvent>(ContractJson.Options) is { } e)
                     {
-                        lock (gate) revision = e.Revision;
+                        lock (gate) if (docs.TryGetValue(e.DocumentId, out var d)) docs[e.DocumentId] = (d.Scope, Math.Max(d.Revision, e.Revision));
                         Committed?.Invoke(e);
                     }
                 }
@@ -112,20 +129,57 @@ public sealed class BridgeRouter : IEditorChannel, IExportSource, IRasteriser
         }
     }
 
-    void SetScope(JsonObject? p)
+    /// <summary>
+    /// A document announced itself. <c>editor.ready</c> and <c>editor.session</c> mean the document was (re)started and take the place of
+    /// <c>replaces</c> (default: the active document) and become active unless the page says <c>active:false</c>; <c>editor.document.opened</c> adds one.
+    /// </summary>
+    void SetScope(JsonObject? p, bool replacesActive)
     {
         if (p?["documentId"]?.GetValue<string>() is not { } doc || p["sessionId"]?.GetValue<string>() is not { } session) { Reject("bad_scope"); return; }
         TaskCompletionSource toRelease;
-        Scope announced; int announcedRevision;
+        Scope announced; int announcedRevision; Scope? replaced = null;
         lock (gate)
         {
-            scope = announced = new Scope { DocumentId = doc, SessionId = session };
-            revision = announcedRevision = p["revision"]?.GetValue<int>() ?? 0;
+            var replaces = replacesActive ? p["replaces"]?.GetValue<string>() ?? activeId : null;
+            if (replaces is not null && replaces != doc && docs.Remove(replaces, out var gone)) replaced = gone.Scope;
+            announced = new Scope { DocumentId = doc, SessionId = session };
+            announcedRevision = p["revision"]?.GetValue<int>() ?? 0;
+            docs[doc] = (announced, announcedRevision);
+            if (p["active"]?.GetValue<bool>() != false || activeId is null || !docs.ContainsKey(activeId)) activeId = doc;
             toRelease = ready;
         }
         toRelease.TrySetResult();
+        if (replaced is not null) try { DocumentReplaced?.Invoke(replaced, announced); } catch (Exception) { }
         try { SessionChanged?.Invoke(announced, announcedRevision); } catch (Exception) { /* a recovery failure must not break the bridge */ }
     }
+
+    void CloseDocument(string? documentId)
+    {
+        if (documentId is null) { Reject("bad_scope"); return; }
+        Scope? closed;
+        lock (gate)
+        {
+            if (!docs.Remove(documentId, out var d)) return;
+            closed = d.Scope;
+            if (activeId == documentId) activeId = null; // the page names the next one with editor.document.activated
+        }
+        try { DocumentClosed?.Invoke(closed); } catch (Exception) { }
+    }
+
+    void Activate(string? documentId)
+    {
+        lock (gate)
+        {
+            if (documentId is null || !docs.ContainsKey(documentId)) { rejected.Add("bad_scope"); return; }
+            activeId = documentId;
+        }
+    }
+
+    /// <summary>Raised when the page closes a document (its tab). The recovery manager decides what becomes of its session.</summary>
+    public event Action<Scope>? DocumentClosed;
+
+    /// <summary>Raised when a document was restarted as another (open, import, recovery): what belonged to the old one, such as its file, belongs to the new one.</summary>
+    public event Action<Scope, Scope>? DocumentReplaced;
 
     void Complete(JsonObject msg)
     {
@@ -159,7 +213,7 @@ public sealed class BridgeRouter : IEditorChannel, IExportSource, IRasteriser
         List<TaskCompletionSource<JsonObject>> all;
         lock (gate)
         {
-            scope = null;
+            docs.Clear(); activeId = null;
             RendererFailedRecently = true;
             ready = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             all = pending.Values.Select(p => p.Tcs).ToList();
@@ -184,14 +238,18 @@ public sealed class BridgeRouter : IEditorChannel, IExportSource, IRasteriser
 
     public async Task<ResponseEnvelope> SendAsync(RequestEnvelope request, CancellationToken ct)
     {
-        Scope? current;
-        lock (gate) current = scope;
-        if (current is null) return Fail(request.RequestId, "not_ready", "the editor has not signalled ready", retryable: true);
+        bool any; Scope? target = null;
+        lock (gate)
+        {
+            any = docs.Count > 0;
+            if (request.DocumentId is not null && docs.TryGetValue(request.DocumentId, out var d)) target = d.Scope;
+        }
+        if (!any) return Fail(request.RequestId, "not_ready", "the editor has not signalled ready", retryable: true);
         if (request.Method.StartsWith("doc."))
         {
             if (request.DocumentId is null || request.SessionId is null) return Fail(request.RequestId, "invalid_request", "document methods need documentId and sessionId");
-            if (request.DocumentId != current.DocumentId) return Fail(request.RequestId, "document_mismatch", "the document is not the open one");
-            if (request.SessionId != current.SessionId) return Fail(request.RequestId, "session_mismatch", "the session is not the current one");
+            if (target is null) return Fail(request.RequestId, "document_mismatch", "the document is not the open one");
+            if (request.SessionId != target.SessionId) return Fail(request.RequestId, "session_mismatch", "the session is not the current one");
         }
 
         var correlationId = $"c{Interlocked.Increment(ref correlation)}-{Guid.NewGuid():N}"; // host-generated: caller ids can collide, these cannot
@@ -210,7 +268,7 @@ public sealed class BridgeRouter : IEditorChannel, IExportSource, IRasteriser
             if (msg["error"] is JsonNode e) return new ResponseEnvelope { RequestId = request.RequestId, Error = e.Deserialize<AppError>(ContractJson.Options)! };
             var result = msg["result"] is JsonNode r ? JsonSerializer.SerializeToElement(r) : (JsonElement?)null;
             if (result is { } rv && rv.ValueKind == JsonValueKind.Object && rv.TryGetProperty("revision", out var rev) && rev.TryGetInt32(out var n))
-                lock (gate) revision = Math.Max(revision, n);
+                lock (gate) if (request.DocumentId is not null && docs.TryGetValue(request.DocumentId, out var d)) docs[request.DocumentId] = (d.Scope, Math.Max(d.Revision, n));
             return new ResponseEnvelope { RequestId = request.RequestId, Result = result };
         }
         catch (OperationCanceledException)

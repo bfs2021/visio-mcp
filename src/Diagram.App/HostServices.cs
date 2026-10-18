@@ -15,9 +15,34 @@ public sealed partial class HostServices(MainWindow window)
         [".png"] = "image/png", [".jpg"] = "image/jpeg", [".jpeg"] = "image/jpeg", [".bmp"] = "image/bmp", [".svg"] = "image/svg+xml",
     };
 
-    /// <summary>Path of the last successful open or save (informational; the editor tracks the saved revision).</summary>
-    public string? CurrentPath { get; private set; }
-    internal void SetCurrentPath(string? path) => CurrentPath = path;
+    readonly object pathGate = new();
+    readonly Dictionary<string, string> paths = new();         // the file each open document came from or was last saved to
+    readonly Dictionary<string, string> successors = new();    // old document id -> the one that replaced it, for a reply that arrives after the swap
+
+    /// <summary>Listens for documents being closed or replaced so each one's file follows it. Called once the router exists.</summary>
+    internal void Attach(BridgeRouter router)
+    {
+        router.DocumentReplaced += (old, next) => { lock (pathGate) { successors[old.DocumentId] = next.DocumentId; if (paths.Remove(old.DocumentId, out var p)) paths[next.DocumentId] = p; } };
+        router.DocumentClosed += s => { lock (pathGate) paths.Remove(s.DocumentId); };
+    }
+
+    /// <summary>Path of the active document's last successful open or save (informational; the editor tracks the saved revision).</summary>
+    public string? CurrentPath => window.Router.CurrentScope is { } s ? PathOf(s.DocumentId) : null;
+
+    /// <summary>The file one open document came from or was saved to.</summary>
+    public string? PathOf(string documentId) { lock (pathGate) return paths.TryGetValue(documentId, out var p) ? p : null; }
+
+    /// <summary>Sets a document's file. If that document has been replaced already, the replacement gets it.</summary>
+    internal void SetPath(string documentId, string? path)
+    {
+        lock (pathGate)
+        {
+            for (var i = 0; i < 8 && successors.TryGetValue(documentId, out var next); i++) documentId = next;
+            if (path is null) paths.Remove(documentId); else paths[documentId] = path;
+        }
+    }
+
+    internal void SetCurrentPath(string? path) { if (window.Router.CurrentScope is { } s) SetPath(s.DocumentId, path); }
 
     /// <summary>Test seam: replaces the native dialogs so automated tests can drive open, save and insert without UI.</summary>
     public Func<string, string?>? DialogOverride { get; set; }
@@ -75,7 +100,7 @@ public sealed partial class HostServices(MainWindow window)
 
         var opened = await window.Coordinator.OpenJsonAsync(path, expected, ct);
         if (!opened.IsOk) return Err(request, opened.Error!);
-        CurrentPath = path;
+        SetPath(expected.DocumentId, path);
         return Ok(request, new JsonObject { ["path"] = path, ["notes"] = new JsonArray(opened.Value.Notes.Select(n => (JsonNode)n).ToArray()) });
     }
 
@@ -97,7 +122,7 @@ public sealed partial class HostServices(MainWindow window)
 
         var opened = await window.Native.OpenAsync(path, expected, ct);
         if (!opened.IsOk) return Err(request, opened.Error!);
-        CurrentPath = null; // the JSON file the person had open is not this document's home any more: Save asks where to put it
+        SetPath(expected.DocumentId, null); // the JSON file the person had open is not this document's home any more: Save asks where to put it
         return Ok(request, new JsonObject { ["path"] = opened.Value.Path, ["summary"] = opened.Value.Report.Summary, ["diagnostics"] = opened.Value.Report.ToJson(), ["lossy"] = opened.Value.Report.IsLossy });
     }
 
@@ -126,20 +151,22 @@ public sealed partial class HostServices(MainWindow window)
     async Task<ResponseEnvelope> SaveAsync(RequestEnvelope request, CancellationToken ct)
     {
         var saveAs = request.Params["saveAs"]?.GetValue<bool>() ?? false;
-        var path = saveAs || CurrentPath is null
+        var target = window.Router.CurrentScope;
+        var known = target is null ? null : PathOf(target.DocumentId);
+        var path = saveAs || known is null
             ? Ask("save", () =>
             {
                 var d = new SaveFileDialog { Title = "Save diagram", Filter = "Diagram JSON (*.diagram.json)|*.diagram.json", DefaultExt = ".diagram.json", AddExtension = true };
                 return d.ShowDialog(window) == true ? d.FileName : null;
             })
-            : CurrentPath;
+            : known;
         if (path is null) return Ok(request, new JsonObject { ["cancelled"] = true });
-        var scope = window.Router.CurrentScope;
+        var scope = target;
         if (scope is null) return Err(request, "not_ready", "the editor is not ready", retryable: true);
 
         var saved = await window.Coordinator.SaveJsonAsync(path, scope, ct);
         if (!saved.IsOk) return Err(request, saved.Error!);
-        CurrentPath = saved.Value.Path;
+        SetPath(scope.DocumentId, saved.Value.Path);
         await window.RecoveryMgr.OnSavedAsync(scope.SessionId, saved.Value.Revision, saved.Value.Path); // work saved up to here needs no recovery
         return Ok(request, new JsonObject { ["path"] = saved.Value.Path, ["revision"] = saved.Value.Revision });
     }
