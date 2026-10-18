@@ -53,6 +53,18 @@ saved snapshots by `node tools/demo/verify-demo.mjs`. Step 11 to 13 ran on this 
 | 14 Reopened in the POC; agent ids resolve | PASS | the app's own export and the file Visio saved: all ids resolve; Visio's edits and the human's fill arrive |
 
 ## Open items and risks
+
+These descriptions preserve the acceptance snapshot. Current work status and ownership live in GitHub Issues:
+[second-user isolation A01](https://github.com/rp2839/visio-mcp/issues/14),
+[manual pass A02](https://github.com/rp2839/visio-mcp/issues/15),
+[additional environments A03](https://github.com/rp2839/visio-mcp/issues/16),
+[inspector UI coverage A04](https://github.com/rp2839/visio-mcp/issues/17),
+[test-harness pause A05](https://github.com/rp2839/visio-mcp/issues/18),
+[performance measurement gaps A06](https://github.com/rp2839/visio-mcp/issues/21),
+[repeat recovery H01](https://github.com/rp2839/visio-mcp/issues/19),
+[library cleanup H02](https://github.com/rp2839/visio-mcp/issues/20), and
+[layout/regression R05](https://github.com/rp2839/visio-mcp/issues/1).
+
 1. **The M0 second-Windows-user pipe check is still open (NOT RUN).** Nothing here tests that another Windows user cannot reach the pipe; only the
    same-user ACL and ownership checks from M0 and I30 were run.
 2. **A complete manual pass on the current build is not recorded.** The earlier [M0 G1 results](../m0/results.md) explicitly record the user as manual

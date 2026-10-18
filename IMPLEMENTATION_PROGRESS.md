@@ -2,6 +2,8 @@
 
 Updated: 2026-10-18 (Europe/London).
 
+**Current work is tracked in [GitHub Issues](https://github.com/rp2839/visio-mcp/issues).** This file preserves completed implementation history and evidence links. Active R work and I51/I52 follow-ups were migrated on 2026-10-18; use the issue index below and the [agent coordination workflow](docs/development/issue-workflow.md). Historical ownership/access notes and open-item summaries below describe the versions originally recorded, not current assignments.
+
 Status: **M0 (I00 to I05) and M1 (I10, I11, I12) done, see [docs/m1/results.md](docs/m1/results.md); I20, I21, I30 and I31 done, see [docs/m2/results.md](docs/m2/results.md); I40 done, see [docs/m4/results.md](docs/m4/results.md); I41 done, see [docs/acceptance/WA-results-2026-10-17.md](docs/acceptance/WA-results-2026-10-17.md); I50 done, see [docs/m5/results.md](docs/m5/results.md)**; I51 done, see [docs/m5/results.md](docs/m5/results.md); I52 done, see [docs/acceptance/definition-of-done.md](docs/acceptance/definition-of-done.md) and [docs/acceptance/performance.md](docs/acceptance/performance.md). This file splits future implementation into bounded work
 packages. It is a progress and dependency register, not a claim that feasibility
 spikes, builds, tests or Windows acceptance have run.
@@ -48,33 +50,51 @@ Evidence: [reference-diagram test report](artifacts/reference-diagram/TEST-REPOR
 The probe reproduced 62 editable objects and all 39 text blocks, with icon approximations,
 Visio wrapping differences that required correction, and five false thin-rule warnings.
 
+### Completed reproduction packages (historical evidence)
+
+These rows preserve delivery evidence at the time recorded. Installation notes are historical, not current deployment status.
+
 | ID | Improvement | Depends on | Status | Exit evidence |
 |---|---|---|---|---|
 | R01 | Discoverable MCP operation schemas, examples, units, limits and targeting guidance | I30, canonical contracts | done (2026-10-18); installed companion updated | 29 self-contained schemas and validated examples; offline real-MCP canonical parity test; 12 MCP tests and 258 frontend tests pass; typecheck passes; published companion verified outside repo. See [R01 results](docs/m5/R01-operation-discovery.md) |
 | R02 | Text measurement and fitting, including Visio export-aware checks | I31, I40 | done (2026-10-18); update installed alongside open app | get_text_layout with revision-tagged grow-box/shrink-font proposals and shared layout metrics; 267 frontend tests, 13 MCP tests, 24 Windows tests; typecheck/build pass; native Visio arrow widths fit. See [R02 results](docs/m5/R02-text-layout.md) |
 | R03 | Consistent, searchable vector icons and custom geometry across editor, render and Visio | I12, I31, I40 | done (2026-10-18); development branch, activation pending | 26 pinned Lucide vectors; searchable Icons panel and read-only search_icons/get_icon previews with editable proposals; size/colour/stroke controls; shared supported path rendering; exact native round trips, live MCP/browser checks and real Visio gallery verification. See [R03 results](docs/m5/R03-vector-icons.md) |
 | R04 | Reusable layout components with padding and alignment rules | I20, R02; R03 for icon-bearing components | done (2026-10-18); development branch, activation pending | Four measured editable templates; versioned MCP discovery and preview/create/reflow proposals; UI controls; current text/style/ID preservation and explicit alignment; plain SVG wrapping; real MCP native round trip and native Visio checks for four groups/32 fitting text boxes. See [R04 results](docs/m5/R04-layout-components.md) |
-| R05 | Reference-diagram regression fixture and improved layout diagnostics | I31, I40; incremental coverage of R01–R04 | partial coverage from R02; not complete | R02 adds the 62-object fixture, reference fitting/preservation/export test and native Visio width verifier. Remaining: broader semantic/geometry and tolerant image comparisons; valid thin rules no longer receive ZERO_SIZE warnings; preserve explicit approximation reports |
 | R06 | Enlarged source-reference crops through MCP | I31, I50 | done (2026-10-18); installed update requires app/MCP restart | render_reference_region resolves approved raster IDs and pinned hashes, crops integer source pixels and magnifies with exact nearest-pixel sampling; dimensions/mapping and invalid/oversized crop checks. See [R06/R07 results](docs/m5/R06-R07-reference-comparison.md) |
 | R07 | Paired reference/canvas comparison through MCP | I31, R06 | done (2026-10-18); installed update requires app/MCP restart | compare_reference returns side-by-side or 50% overlay PNGs, one committed revision and source/canvas mappings including raster margins; real branch/container fixtures; source-version/document-pin/read-only/pixel/limit checks; no automatic alignment or accuracy score. See [R06/R07 results](docs/m5/R06-R07-reference-comparison.md) |
 | R08 | Orthogonal connector routing that honours port direction and explicit waypoints, carried into Visio | I20, I40 | done (2026-10-18); installed as `r08-routing` | New pure router `src/web/src/layout/orthogonalRoute.ts` (10 unit tests): each end leaves/enters along its port or facing side (rotation aware), L/Z/U shapes, waypoints honoured in order with elbows inserted, no diagonals. The editor draws that route and the exporter writes it as Visio geometry (no `waypoints_dropped`, lossy:false). Both reference diagrams re-rendered in Visio match the originals' routing; 311 unit, 48 browser, 124 Visio, 13 MCP tests pass. See [R08 results](docs/m5/R08-orthogonal-routing.md). Follow-ups: R08b obstacle avoidance, R08c Visio reroute on edit |
-| R08b | Route orthogonal connectors around other shapes | R08 | proposed (2026-10-18) | R08 does not avoid shapes; routes pass through anything in the way unless waypoints are given. Needs an obstacle-aware router that treats non-endpoint shapes as blocked, with a lane/spacing rule for parallel connectors |
-| R08c | Keep routes when Visio edits a glued connector | R08, I40 | proposed (2026-10-18) | Exported connectors carry the authored polyline, but Visio recalculates a glued connector's own route when an attached shape is moved, losing the waypoints. Investigate user-defined route cells or locking the route geometry |
-| R09 | Swim-lane and phase-column structures (container with lanes and columns) | I20, R04 | proposed (2026-10-18) | The 5 lanes, 3 day columns, title bar and header cells took about 20 hand-placed objects. Need a lane/phase component (resizable lanes, labels, colours) that shapes drop into, reports lane membership and exports as a Visio swim-lane list. Layout checks gave 15 CONNECTOR_CROSSES_SHAPE and 4 OVERLAP warnings that were only lanes, strips and the frame, so containers must be understood by the inspector |
-| R10 | Flowchart shape set (terminator, stored data, document, lined document, process, decision) | R03 | proposed (2026-10-18) | Terminator, stored-data and lined-document shapes were authored as `svgPath`; Visio draws their curves as short straight segments (`curves_flattened`). Need named presets with native Visio geometry and port sets |
-| R11 | Gradient fills | I12, I40 | proposed (2026-10-18) | Original lane labels and shapes use Visio theme gradients; paints are solid or none only, so the recreation is flat. Needs a linear-gradient paint rendered in editor, snapshot and exported to Visio |
-| R12 | Line element and connector styling (free line, arrowhead size, open ends) | I20 | proposed (2026-10-18) | Column rules and the dashed Day 2 line had to be unglued connectors and raised 8 UNGLUED_CONNECTOR_END warnings. Arrowheads are large relative to Visio's at 2.25 pt. Need a line primitive without glue warnings and an arrowhead size setting |
-| R13 | Label attached to a connector and shape-on-connector placement | R04 | proposed (2026-10-18) | The original puts a small "PSGL Report" document on a connector; the recreation placed it by coordinates. Need a connector-anchored object or label that follows reroutes and moves with the connector |
-| R14 | Text defaults and fit for reference reproduction (insets, vertical lane titles, default size) | R02 | proposed (2026-10-18) | Text had to be given explicit line breaks and per-shape sizes to wrap like the original; rotated lane titles needed a manual pre-rotation frame. Need inset/wrap control matching Visio and a rotated-text option on lane labels |
-| R15 | Import a `.vsdx` (or read its structure) through MCP as a reference | I40 | proposed (2026-10-18) | No MCP tool opens a Visio file. Both comparison tests had to hand-parse the package XML (positions, groups, layers, geometry, text, arrows) to place objects exactly. An `import_visio_reference` tool returning a flattened, absolute-coordinate description (or an editable import with a loss report) would remove that work |
-| R16 | Multi-branch connectors, joins and automatic line hops | R08, R12 | proposed (2026-10-18) | The Lego diagram has 67 lines that the original draws as many single-segment shapes with T-junctions (PAF/Logging/PWF… bus into MEEP) and 5 hand-placed arc "hops" where lines cross. Need connector branches that join an existing connector, and optional automatic hops at crossings, both carried to Visio |
-| R17 | Nested containers whose contents move and resize together | R09 | proposed (2026-10-18) | Public cloud > tenant > component frames (four levels, dashed outlines, 66% transparent fills) were 14 loose rectangles with no containment. Need container objects with membership, inspector awareness (no false OVERLAP/CROSSES) and Visio container export |
-| R18 | Reusable symbol shapes with an embedded label and ports (database cylinder, cloud, server) | R10 | proposed (2026-10-18) | The original uses stencil masters (13 blue databases, a cloud, an Azure AD icon). They were rebuilt as a cylinder plus a separate text box, and the Azure icon as a diamond. Need named symbols with label, ports and size behaviour that survive Visio export |
+
+### Active work — GitHub Issues
+
+Current status, ownership, dependencies and handovers live in [GitHub Issues](https://github.com/rp2839/visio-mcp/issues), not this document. The user created [Project 3](https://github.com/users/rp2839/projects/3/views/1); population awaits authenticated Project access. This is an ID-to-issue index, not a second status table.
+
+| Work ID | Issue |
+|---|---|
+| R05 | [#1 — Reference-diagram regression fixture and improved layout diagnostics](https://github.com/rp2839/visio-mcp/issues/1) |
+| R08b | [#2 — Route orthogonal connectors around other shapes](https://github.com/rp2839/visio-mcp/issues/2) |
+| R08c | [#3 — Keep routes when Visio edits a glued connector](https://github.com/rp2839/visio-mcp/issues/3) |
+| R09 | [#4 — Swim-lane and phase-column structures (container with lanes and columns)](https://github.com/rp2839/visio-mcp/issues/4) |
+| R10 | [#5 — Flowchart shape set (terminator, stored data, document, lined document, process, decision)](https://github.com/rp2839/visio-mcp/issues/5) |
+| R11 | [#6 — Gradient fills](https://github.com/rp2839/visio-mcp/issues/6) |
+| R12 | [#7 — Line element and connector styling (free line, arrowhead size, open ends)](https://github.com/rp2839/visio-mcp/issues/7) |
+| R13 | [#8 — Label attached to a connector and shape-on-connector placement](https://github.com/rp2839/visio-mcp/issues/8) |
+| R14 | [#9 — Text defaults and fit for reference reproduction (insets, vertical lane titles, default size)](https://github.com/rp2839/visio-mcp/issues/9) |
+| R15 | [#10 — Import a `.vsdx` (or read its structure) through MCP as a reference](https://github.com/rp2839/visio-mcp/issues/10) |
+| R16 | [#11 — Multi-branch connectors, joins and automatic line hops](https://github.com/rp2839/visio-mcp/issues/11) |
+| R17 | [#12 — Nested containers whose contents move and resize together](https://github.com/rp2839/visio-mcp/issues/12) |
+| R18 | [#13 — Reusable symbol shapes with an embedded label and ports (database cylinder, cloud, server)](https://github.com/rp2839/visio-mcp/issues/13) |
+| A01 | [#14 — Run the second-Windows-user named-pipe isolation acceptance check](https://github.com/rp2839/visio-mcp/issues/14) |
+| A02 | [#15 — Complete the current-build manual editor, Visio and Word acceptance pass](https://github.com/rp2839/visio-mcp/issues/15) |
+| A03 | [#16 — Expand acceptance coverage beyond the current Windows and Office environment](https://github.com/rp2839/visio-mcp/issues/16) |
+| A04 | [#17 — Cover inspector line, arrowhead and font controls through browser interaction](https://github.com/rp2839/visio-mcp/issues/17) |
+| A05 | [#18 — Diagnose the shim startup pause observed in the Windows test harness](https://github.com/rp2839/visio-mcp/issues/18) |
+| H01 | [#19 — Prevent repeated recovery offers for an unchanged restored session](https://github.com/rp2839/visio-mcp/issues/19) |
+| H02 | [#20 — Schedule safe garbage collection of unreferenced library picture bytes](https://github.com/rp2839/visio-mcp/issues/20) |
+| A06 | [#21 — Measure remaining multipage, heavy-content and UI responsiveness scenarios](https://github.com/rp2839/visio-mcp/issues/21) |
 
 R08–R14 came from the PSGL swim-lane recreation and R15–R18 from the Lego infrastructure recreation (2026-10-18). Evidence and side-by-side Visio renders: [swim-lane comparison](docs/m5/R08-swimlane-comparison.md) and [Lego infrastructure comparison](docs/m5/R15-lego-infrastructure-comparison.md).
 
-R06/R07 are delivered. Prioritise R03 next, then R04, while retaining I51 recovery as reliability work.
-Use R05 incrementally and include the reproduction workflow in I52 final acceptance.
+R03, R04 and R08 are delivered. Current priorities and assignments belong in GitHub Issues; R05 remains incremental regression work, and acceptance/reliability gaps have separate A/H issues above. Do not maintain issue status in this historical register.
 
 R06/R07 were requested after the split application-release-flow reproduction. Existing
 `render_region` already enlarges canvas details by up to 8×, but cannot show a source
