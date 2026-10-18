@@ -61,11 +61,23 @@ One WebView, one page, several documents.
 - `HostServices` stops holding `CurrentPath`; Save, Save as, Open, Export and the export-path policy are scoped by the document id the page sends.
 - `MainWindow.Closing` generalises W01: `app.beforeClose` returns the list of documents with unsaved work and the page walks them (section 5).
 
+### 3.2a A second, agent-only WebView (decided 2026-10-18)
+
+The window gets two WebView2 controls on the same environment and the same bundle: the **user view** (visible, the tabs above) and the **agent view** (never shown, no tab strip, no canvas on screen). Each page runs its own `Workspace` of `DocumentState`s; the host registry records which view **owns** each document, and `BridgeRouter` resolves `documentId -> owning page`. The single-writer rule is unchanged: a document lives in exactly one page at a time, and that page's `CommandEngine` is its only writer.
+
+- **Agent creates a document:** it is created in the agent view and the user sees a tab with a "new activity" mark. Agents edit, lay out, render and export it without touching the user's canvas, undo history, input thread or memory, and a slow layout or a crash in the agent view cannot freeze or lose what the user is doing.
+- **Showing it:** `show_document` (or the user clicking the tab) **hands the document over**: the agent view serialises it (document, revision, recovery session id), the user view opens it as a tab with the same `documentId` and `sessionId`, and the agent view drops it. The recovery session continues unbroken (the journal belongs to the session, not the page), so nothing is lost if the process dies mid-handoff: until the user view acknowledges, the agent view stays the owner. Undo history starts fresh on handover; this is stated in the tab's tooltip.
+- **After handover** the user view owns it, and agent edits route there like edits to any user tab. Documents the user opens or creates stay in the user view; agents reach them through the same routing (this is how single-document use works today).
+- **Hand back is not offered** in the first release: once shown, a document stays with the user.
+- **Recovery:** one `RecoverySession` per document regardless of owner, so a crash of either view or the whole app restores everything. The agent view being a separate renderer process means its crash restores only agent-owned documents.
+- **Cost:** one more browser process (about 100 to 200 MB) created lazily on the first agent call that needs it, and a handover path to test. The handover reuses the recovery restore code (`restoreRecovery`), which is already proven.
+- **Consequence for the tab design:** background tabs in the user view are now only the user's own, so the "agent edits a background tab while the user draws" case shrinks to documents the user already owns (still supported by per-document gating).
+
 ### 3.3 Why not the alternatives
 
 | Alternative | Why not (for now) |
 |---|---|
-| One WebView per tab | Strong isolation, but each tab pays for a browser process, fonts and the bundle; the router, recovery and agent plumbing still need the same registry; background rendering becomes N renderers. A renderer crash today restores one document; with one WebView it would restore all tabs from the workspace file, which is acceptable. Revisit only if a single page proves unstable with many large documents. |
+| One WebView per tab | (The agent-only view in 3.2a takes the isolation benefit that matters, agent work against user work, without this cost.) Strong isolation, but each tab pays for a browser process, fonts and the bundle; the router, recovery and agent plumbing still need the same registry; background rendering becomes N renderers. A renderer crash today restores one document; with one WebView it would restore all tabs from the workspace file, which is acceptable. Revisit only if a single page proves unstable with many large documents. |
 | One window per document | Not what was asked, and multiplies window-level state (title, close, MCP default). |
 | Keep one document, add a "recent files" menu | Does not satisfy tabs or session restore. |
 
@@ -83,7 +95,7 @@ One WebView, one page, several documents.
 
 - **Close a tab with no unsaved work:** closes. The recovery session is completed and the tab leaves the workspace.
 - **Close a tab with unsaved work:** the W01 prompt for that document: *Save* (Save as when untitled; the tab closes only if the save succeeded), *Don't save* (discard that document's recovery session, close), *Cancel*. Don't save means the changes are gone and are never offered again.
-- **Close the window with unsaved tabs:** one prompt per changed tab, in tab order, activating each so the person sees what is being asked about, with extra buttons *Save all* and *Don't save any*. Cancel anywhere stops the close. A page that does not answer within 5 s still cannot trap the window (W01 rule). See question 2 for the alternative of not asking on exit.
+- **Close the window with unsaved tabs (decided: silently):** no prompt, as in Notepad++. Every unsaved tab's work is already protected by its recovery session, the tab list is written to `workspace.json` with `cleanExit = true`, and the next start brings all of it back as unsaved tabs. The W01 window-close prompt therefore goes away when W02 lands (closing a **tab** still asks Save / Don't save / Cancel, and Don't save is the only way to throw work away). Closing the window with just one unsaved tab behaves the same; if the person wants the old behaviour it becomes a preference under W13.
 - **Crash or kill:** nothing is asked at exit; section 6 brings the work back.
 
 ## 6. Session restore
@@ -97,7 +109,7 @@ At start:
    - unsaved work: rebuild from its recovery session using the existing `restoreRecovery` (checkpoint plus journal), mark it unsaved, keep its original path;
    - untitled and untouched: dropped.
 2. Reactivate the previous active tab.
-3. If `cleanExit` was false, show a single non-modal notice: "Restored N documents after an unexpected exit. Unsaved changes are kept." with a link to the loss report when a journal was damaged.
+3. Restoration is automatic (decided), after a clean exit and after a crash. If `cleanExit` was false, show a single non-modal notice: "Restored N documents after an unexpected exit. Unsaved changes are kept." with a link to the loss report when a journal was damaged.
 4. **Orphans:** recovery sessions that no workspace tab owns (the workspace file was lost, or a tab was closed during a crash) are the only ones that still raise the W06 dialog, now with each choice opening **as its own tab**.
 
 This resolves the repeated-dialog complaint: after W01 and this change the question appears only for work the app cannot place.
@@ -110,8 +122,8 @@ Existing tools keep their shape. What changes:
 |---|---|
 | `get_document_summary` with no arguments | Describes the **active** tab and now also lists the other open documents (id, title, path, unsaved, revision). With identity arguments it describes that document. |
 | `list_documents` (new, read-only) | All open documents: `documentId`, `sessionId`, title, path, active, unsaved, revision, page count. |
-| `create_document` (new) | Adds an untitled tab (title, page size). By default it does **not** take focus (the tab gets a "new activity" mark) so an agent cannot yank the user out of their work. Returns the identity. |
-| `show_document` (new) | Activates a tab. Refused with `busy_user_editing` while the user is mid-gesture, as mutations are today. |
+| `create_document` (new) | Creates the document in the **agent view** (3.2a) and adds a tab with a "new activity" mark in the user view. It never takes focus (decided). Returns the identity. |
+| `show_document` (new) | Hands an agent-owned document over to the user view and activates it, or just activates a user-owned tab. Refused with `busy_user_editing` while the user is mid-gesture. |
 | Opening, saving and closing documents | **Not offered to agents in this step.** Open and Save touch the file system, which the pipe deliberately never exposes (`LiveControl` offers document tools only). A later `open_document` could use the same consent window as export ("Claude asks to open C:\...: Allow?"). Agents cannot close tabs. |
 | Errors | `document_mismatch` becomes `document_not_open` when the id matches no tab, and still `session_mismatch` when the tab was reopened. The `Identity` text on every tool says to call `list_documents` first. |
 | Safety | Because every call pins `documentId` and `sessionId`, switching tabs between an agent's read and write cannot misdirect an edit. Existing single-document clients behave as before while one tab is open. |
@@ -125,7 +137,7 @@ Phases, each shippable and each keeping the existing suites green:
 | P1 | Refactor with no visible change: `Workspace` + `DocumentState` in the page, `DocumentRegistry` and per-session `RecoveryManager` in the host, one tab. All current browser and Windows tests pass unchanged. | L |
 | P2 | Tab strip, New and Open as tabs, switching with view state, per-tab close prompt, title and status, duplicate-open focus, replace-untouched-blank. | M |
 | P3 | `workspace.json`, session restore, crash notice, orphan dialog opening tabs. | M |
-| P4 | MCP: `list_documents`, `create_document`, `show_document`, summary lists others, gate routing and interlock per document, tool text and tests. | M |
+| P4 | Agent view: second WebView2 created lazily, per-owner routing in `BridgeRouter`, handover protocol, then MCP `list_documents`, `create_document`, `show_document`, summary lists others, gate routing and interlock per document, tool text and tests. | L |
 | P5 | Polish: drag reorder, MRU Ctrl+Tab, context menu, overflow, tab limit, accessibility roles. | S |
 
 Tests to add: registry and per-session recovery unit tests; blob GC with two open documents (a picture used only by the background tab survives); browser tests for open, switch, reorder, close with each of the three answers, duplicate-open focus, view state restore; real-window tests for multi-tab close (Save all, Don't save any, Cancel midway), crash then restore (kill with two dirty tabs, restart, both back and unsaved), orphan dialog; MCP tests for `list_documents`, create without focus, edit a background tab while the user drags in the active one, wrong-document errors.
@@ -141,7 +153,9 @@ Risks and mitigations:
 - **Clipboard across documents with pictures:** reuse the approved-asset pin on paste; test with a picture.
 - **Memory:** bounded per tab; add a soft tab limit and show memory use in About (W12) later.
 
-## 9. Decisions needed
+## 9. Decisions
+
+**Decided 2026-10-18:** (1) restore unsaved work automatically; (2) closing the window is silent, work is kept; (3) agent documents open in the background; plus a second, agent-only WebView (3.2a). Items 4 to 8 proceed on the recommendations below unless the person objects.
 
 Each has a recommendation; none blocks starting P1.
 
