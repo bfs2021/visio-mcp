@@ -27,8 +27,25 @@
         "opacity": { "type": "number", "minimum": 0, "maximum": 1 }
       }
     },
+    "GradientStop": {
+      "type": "object", "additionalProperties": false, "required": ["offset", "colour", "opacity"],
+      "properties": {
+        "offset": { "type": "number", "minimum": 0, "maximum": 1 },
+        "colour": { "$ref": "#/$defs/Colour" },
+        "opacity": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "LinearGradientPaint": {
+      "description": "A fill that blends between 2 to 8 colour stops along a straight line across the shape. angleDeg 0 runs left to right, 90 top to bottom (clockwise as seen on screen). Offsets rise from 0 to 1. Fills only: strokes and page backgrounds are solid or none.",
+      "type": "object", "additionalProperties": false, "required": ["kind", "angleDeg", "stops"],
+      "properties": {
+        "kind": { "const": "linear-gradient" },
+        "angleDeg": { "type": "number", "minimum": -360, "maximum": 360 },
+        "stops": { "type": "array", "minItems": 2, "maxItems": 8, "items": { "$ref": "#/$defs/GradientStop" } }
+      }
+    },
     "Paint": {
-      "oneOf": [{ "$ref": "#/$defs/NonePaint" }, { "$ref": "#/$defs/SolidPaint" }],
+      "oneOf": [{ "$ref": "#/$defs/NonePaint" }, { "$ref": "#/$defs/SolidPaint" }, { "$ref": "#/$defs/LinearGradientPaint" }],
       "x-discriminator": "kind"
     },
     "Guide": {

@@ -494,11 +494,43 @@ public sealed class NativeVsdxImporter : IVsdxImporter
                 Add(shape);
             }
 
+            /// <summary>
+            /// A linear Visio gradient (direction 0) as a gradient paint: angle in degrees and the stops in order. Other gradient types (radial, rectangular,
+            /// path) are kept as the first stop's solid colour, and a note says so.
+            /// </summary>
+            JsonNode? ReadGradient(XElement s, string elementId)
+            {
+                var sid = (string?)s.Attribute("ID") ?? "";
+                var dir = (int)D(rd.FillC(s, "FillGradientDir"), 0);
+                var rows = s.Elements(V + "Section").Where(x => (string?)x.Attribute("N") == "FillGradient").Elements(V + "Row").OrderBy(r => D((string?)r.Attribute("IX"), 0)).ToList();
+                var stops = new List<(double Offset, string Colour, double Opacity)>();
+                foreach (var row in rows)
+                {
+                    string? Cv(string n) => row.Elements(V + "Cell").FirstOrDefault(c => (string?)c.Attribute("N") == n)?.Attribute("V")?.Value;
+                    stops.Add((Math.Clamp(D(Cv("GradientStopPosition"), 0), 0, 1), rd.Colour(Cv("GradientStopColor"), "#ffffff", elementId, pageId), Math.Clamp(1 - D(Cv("GradientStopColorTrans"), 0), 0, 1)));
+                }
+                if (stops.Count < 2) return null; // no stops written: Visio draws its own theme gradient, which is not a thing this file defines
+                if (dir != 0)
+                {
+                    Note("gradient_approximated", "A radial or rectangular gradient fill is not supported; the first colour is used as a solid fill.", elementId, sid, "solid fill", "info");
+                    return null;
+                }
+                stops = stops.Take(8).OrderBy(x => x.Offset).ToList();
+                var angle = D(rd.FillC(s, "FillGradientAngle"), 0) * 180 / Math.PI;
+                angle = Math.Round(angle % 360, 4);
+                return new JsonObject
+                {
+                    ["kind"] = "linear-gradient", ["angleDeg"] = angle,
+                    ["stops"] = new JsonArray(stops.Select(x => (JsonNode)new JsonObject { ["offset"] = Math.Round(x.Offset, 6), ["colour"] = x.Colour, ["opacity"] = Math.Round(x.Opacity, 6) }).ToArray()),
+                };
+            }
+
             JsonObject Style(XElement s, string elementId, Dictionary<string, string> u)
             {
                 var fillColour = rd.Colour(rd.FillC(s, "FillForegnd"), "#ffffff", elementId, pageId);
                 var fillTrans = D(rd.FillC(s, "FillForegndTrans"), 0);
                 JsonNode fill = rd.FillC(s, "FillPattern") == "0" ? new JsonObject { ["kind"] = "none" } : new JsonObject { ["kind"] = "solid", ["colour"] = fillColour, ["opacity"] = Math.Round(Math.Clamp(1 - fillTrans, 0, 1), 6) };
+                if (rd.FillC(s, "FillGradientEnabled") is "1" or "TRUE" && rd.FillC(s, "FillPattern") != "0" && ReadGradient(s, elementId) is { } gradient) fill = gradient;
                 var lineColour = rd.Colour(rd.Line(s, "LineColor"), "#000000", elementId, pageId);
                 var lineTrans = D(rd.Line(s, "LineColorTrans"), 0);
                 var pattern = (int)D(rd.Line(s, "LinePattern"), 1);

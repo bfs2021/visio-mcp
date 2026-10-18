@@ -15,6 +15,7 @@ import { ancestorsOf, groupBoundsFrom, leavesUnder } from './groups';
 import { lookupTarget } from './resolveTarget';
 import { parsePath } from '../geometry/svgPath';
 import { isOutlinePreset, PRESET_PORTS } from '../geometry/presetOutlines';
+import { paintProblem } from '../model/paint';
 
 export interface PlanContext {
   newId(): string;
@@ -409,6 +410,7 @@ class Planner {
           geometry: merge({ preset: 'rectangle' } as ShapeElement['geometry'], (op.geometry ?? {}) as PatchObj),
           style: merge(DEFAULT_SHAPE_STYLE, (op.style ?? {}) as PatchObj),
         };
+        const bad = paintProblem(el.style.fill, 'fill') ?? paintProblem(el.style.stroke, 'stroke'); if (bad) stop('invalid_request', bad);
         if (op.alias) el.alias = op.alias;
         if (op.name !== undefined) el.name = op.name;
         if (op.text) el.text = merge(DEFAULT_TEXT, op.text as PatchObj);
@@ -541,7 +543,7 @@ class Planner {
         if (p.name !== undefined) next.name = p.name;
         if (p.widthPt !== undefined) next.widthPt = p.widthPt;
         if (p.heightPt !== undefined) next.heightPt = p.heightPt;
-        if (p.background !== undefined) next.background = p.background;
+        if (p.background !== undefined) { const bad = paintProblem(p.background, 'background'); if (bad) stop('invalid_request', bad); next.background = p.background; }
         if (p.grid) next.grid = { ...page.grid, ...p.grid };
         this.assertFinite(next.widthPt, 'widthPt'); this.assertFinite(next.heightPt, 'heightPt');
         this.pages[idx] = next;
@@ -870,6 +872,7 @@ class Planner {
           const forbidden = element.kind === 'shape' ? LINE_ONLY_STYLE : SHAPE_ONLY_STYLE;
           for (const k of Object.keys(value as object)) if (forbidden.includes(k)) stop('invalid_request', `style.${k} does not apply to a ${element.kind}`, { target: element.id });
           next.style = merge((element as ShapeElement | ConnectorElement).style as object, value as PatchObj);
+          if (element.kind === 'shape') { const s = next.style as ShapeElement['style']; const bad = paintProblem(s.fill, 'fill') ?? paintProblem(s.stroke, 'stroke'); if (bad) stop('invalid_request', bad, { target: element.id }); }
           break;
         }
         case 'text': {

@@ -39,9 +39,23 @@ public sealed record SolidPaint : Paint
     [JsonPropertyName("opacity")] public required double Opacity { get; init; }
 }
 
+public sealed record GradientStop
+{
+    [JsonPropertyName("offset")] public required double Offset { get; init; }
+    [JsonPropertyName("colour")] public required string Colour { get; init; }
+    [JsonPropertyName("opacity")] public required double Opacity { get; init; }
+}
+
+public sealed record LinearGradientPaint : Paint
+{
+    [JsonPropertyName("angleDeg")] public required double AngleDeg { get; init; }
+    [JsonPropertyName("stops")] public required IReadOnlyList<GradientStop> Stops { get; init; }
+}
+
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "kind")]
 [JsonDerivedType(typeof(NonePaint), "none")]
 [JsonDerivedType(typeof(SolidPaint), "solid")]
+[JsonDerivedType(typeof(LinearGradientPaint), "linear-gradient")]
 public abstract record Paint;
 
 public sealed record Guide

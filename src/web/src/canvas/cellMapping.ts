@@ -3,6 +3,7 @@ import { HexagonShape, PerimeterRegistry, Point, ShapeRegistry, type AbstractCan
 // HexagonShape is the public path-shape base: its redrawPath is replaced below, keeping addPoints/rounding helpers.
 import type { ConnectorElement, Element, ImageElement, Layer, Paint, ShapeElement, TextBlock, TextElement } from '../contracts/generated';
 import { parsePath } from '../geometry/svgPath';
+import { gradientDirection, patchGradients } from './gradients';
 import { arcParameters, outlineOf, outlinePolygon, OUTLINE_PRESETS, type OutlinePreset } from '../geometry/presetOutlines';
 
 class CustomPathShape extends HexagonShape {
@@ -102,6 +103,7 @@ let registered = false;
 export function registerCustomShapes(): void {
   if (registered) return;
   registered = true;
+  patchGradients();
   ShapeRegistry.add('parallelogram', ParallelogramShape);
   ShapeRegistry.add('callout', CalloutShape);
   ShapeRegistry.add('custom-path', CustomPathShape);
@@ -126,6 +128,12 @@ const ARROW: Record<string, string> = { none: 'none', block: 'block', open: 'ope
 
 function paint(style: CellStyle, colourKey: 'fillColor' | 'strokeColor', opacityKey: 'fillOpacity' | 'strokeOpacity', p: Paint): void {
   if (p.kind === 'none') { style[colourKey] = 'none'; return; }
+  if (p.kind === 'linear-gradient') {
+    // maxGraph holds the first and last colour; the whole gradient (angle, every stop, per-stop opacity) rides in the direction string (see gradients.ts)
+    style[colourKey] = p.stops[0]!.colour;
+    if (colourKey === 'fillColor') { style.gradientColor = p.stops[p.stops.length - 1]!.colour; style.gradientDirection = gradientDirection(p) as never; }
+    return;
+  }
   style[colourKey] = p.colour;
   style[opacityKey] = Math.round(p.opacity * 100);
 }

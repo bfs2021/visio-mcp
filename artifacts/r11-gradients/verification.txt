@@ -1,0 +1,1 @@
+native Visio read all five shapes as gradients, drew them (visio.png) and re-saved them with the same angles, stops and transparency

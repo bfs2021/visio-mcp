@@ -1,5 +1,5 @@
 {
-  "recorded": "2026-10-18T21:35:54.6028874Z",
+  "recorded": "2026-10-18T22:15:36.6015962Z",
   "machine": {
     "os": "Microsoft Windows NT 10.0.26300.0",
     "cpus": 4,
@@ -9,7 +9,7 @@
   },
   "warmup": {
     "seconds": 10,
-    "longestCallMs": 68.5,
+    "longestCallMs": 79.7,
     "note": "the shim start-up freeze of the test process, kept out of the measurements"
   },
   "fixture": {
@@ -17,30 +17,30 @@
     "shapes": 460,
     "connectors": 40,
     "pages": 1,
-    "buildMs": 130.8,
+    "buildMs": 126.5,
     "canvasGroups": 1425,
     "summaryBytes": 82732,
     "previewBytes": 196786,
-    "vsdxBytes": 42848
+    "vsdxBytes": 42875
   },
   "singleEditAgent": {
     "runs": 10,
     "samplesMs": [
-      10.8,
-      10.2,
-      12.7,
-      8.2,
-      9.4,
-      7.3,
-      10.1,
+      11.6,
+      8,
+      8.8,
       9,
-      7.5,
-      6.9
+      9.1,
+      8.6,
+      10.2,
+      10.1,
+      8,
+      9
     ],
-    "minMs": 6.9,
-    "medianMs": 9.4,
-    "p95Ms": 12.7,
-    "maxMs": 12.7,
+    "minMs": 8,
+    "medianMs": 9,
+    "p95Ms": 11.6,
+    "maxMs": 11.6,
     "preferredMs": 100,
     "acceptableMs": 250,
     "meetsPreferred": true
@@ -49,18 +49,18 @@
     "runs": 10,
     "samplesMs": [
       42.9,
-      32.2,
-      31.2,
-      31.4,
-      30,
-      31.9,
-      31.6,
-      30.4,
-      32.3,
-      29.8
+      29.9,
+      31.7,
+      31.5,
+      30.5,
+      32,
+      29.8,
+      32.5,
+      31.5,
+      31.5
     ],
     "minMs": 29.8,
-    "medianMs": 31.6,
+    "medianMs": 31.5,
     "p95Ms": 42.9,
     "maxMs": 42.9,
     "preferredMs": 100,
@@ -70,16 +70,16 @@
   "batch100": {
     "runs": 5,
     "samplesMs": [
-      37.4,
-      34.7,
-      35.2,
-      38,
-      34.7
+      41,
+      37.8,
+      36.5,
+      34.2,
+      36.3
     ],
-    "minMs": 34.7,
-    "medianMs": 35.2,
-    "p95Ms": 38,
-    "maxMs": 38,
+    "minMs": 34.2,
+    "medianMs": 36.5,
+    "p95Ms": 41,
+    "maxMs": 41,
     "preferredMs": 500,
     "acceptableMs": null,
     "meetsPreferred": true
@@ -87,19 +87,19 @@
   "summaryOverMcp": {
     "runs": 10,
     "samplesMs": [
-      9.9,
-      7.9,
-      8.4,
-      7.3,
       11,
-      7.1,
-      7.2,
-      6.8,
-      7.6,
-      7.4
+      6.7,
+      7,
+      7,
+      9.2,
+      7,
+      6.7,
+      6.3,
+      8.4,
+      6.9
     ],
-    "minMs": 6.8,
-    "medianMs": 7.6,
+    "minMs": 6.3,
+    "medianMs": 7,
     "p95Ms": 11,
     "maxMs": 11,
     "preferredMs": 250,
@@ -109,21 +109,21 @@
   "summaryHostOnly": {
     "runs": 10,
     "samplesMs": [
-      1.5,
+      1.9,
+      1.3,
+      1.2,
       1.2,
       1.1,
       1.1,
       1.1,
       1.1,
-      1.5,
-      1.2,
       1.2,
       1.1
     ],
     "minMs": 1.1,
     "medianMs": 1.2,
-    "p95Ms": 1.5,
-    "maxMs": 1.5,
+    "p95Ms": 1.9,
+    "maxMs": 1.9,
     "preferredMs": 250,
     "acceptableMs": null,
     "meetsPreferred": true
@@ -131,16 +131,16 @@
   "previewPage1600x1200": {
     "runs": 5,
     "samplesMs": [
-      183.2,
-      47.6,
-      77.6,
-      43.3,
-      47.7
+      196,
+      48.5,
+      74.2,
+      45.7,
+      57
     ],
-    "minMs": 43.3,
-    "medianMs": 47.7,
-    "p95Ms": 183.2,
-    "maxMs": 183.2,
+    "minMs": 45.7,
+    "medianMs": 57,
+    "p95Ms": 196,
+    "maxMs": 196,
     "preferredMs": 1000,
     "acceptableMs": null,
     "meetsPreferred": true
@@ -148,16 +148,16 @@
   "vsdxSave": {
     "runs": 5,
     "samplesMs": [
-      116.2,
-      79.5,
-      108.8,
-      95.7,
-      90.9
+      100.4,
+      85.4,
+      74,
+      70.7,
+      102.3
     ],
-    "minMs": 79.5,
-    "medianMs": 95.7,
-    "p95Ms": 116.2,
-    "maxMs": 116.2,
+    "minMs": 70.7,
+    "medianMs": 85.4,
+    "p95Ms": 102.3,
+    "maxMs": 102.3,
     "preferredMs": 3000,
     "acceptableMs": null,
     "meetsPreferred": true

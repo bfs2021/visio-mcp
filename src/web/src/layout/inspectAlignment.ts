@@ -45,6 +45,6 @@ function paintedShape(e: Extract<Element, { kind: 'shape' }>): boolean {
 export function isVisibleThinRule(el: Element): boolean {
   if (el.kind !== 'shape' || el.geometry.preset !== 'rectangle' || el.geometry.svgPath !== undefined) return false;
   const short = Math.min(el.bounds.width, el.bounds.height), long = Math.max(el.bounds.width, el.bounds.height);
-  const painted = el.style.fill.kind === 'solid' && el.style.fill.opacity > 0 || el.style.stroke.kind === 'solid' && el.style.stroke.opacity > 0 && el.style.strokeWidthPt >= 0.25;
+  const painted = el.style.fill.kind === 'solid' && el.style.fill.opacity > 0 || el.style.fill.kind === 'linear-gradient' || el.style.stroke.kind === 'solid' && el.style.stroke.opacity > 0 && el.style.strokeWidthPt >= 0.25;
   return painted && short >= 0.25 && short < 1 && long >= 16 && long / short >= 20;
 }

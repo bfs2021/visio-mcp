@@ -26,7 +26,19 @@ export interface SolidPaint {
   opacity: number;
 }
 
-export type Paint = NonePaint | SolidPaint;
+export interface GradientStop {
+  offset: number;
+  colour: Colour;
+  opacity: number;
+}
+
+export interface LinearGradientPaint {
+  kind: "linear-gradient";
+  angleDeg: number;
+  stops: GradientStop[];
+}
+
+export type Paint = NonePaint | SolidPaint | LinearGradientPaint;
 
 export interface Guide {
   id: Uuid;

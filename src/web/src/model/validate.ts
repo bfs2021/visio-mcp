@@ -1,3 +1,4 @@
+import { paintProblem } from './paint';
 import type { DiagramDocument, MutationRequest, Operation, RequestEnvelope, ScriptRequest, UndoRequest } from '../contracts/generated';
 import { fail, ok, type Result } from './result';
 import * as V from './validators.generated.js';
@@ -115,6 +116,7 @@ export function validateDocument(value: unknown): Result<DiagramDocument> {
   for (const page of doc.pages) {
     if (pageIds.has(page.id)) return fail('invalid_request', `duplicate page id ${page.id}`);
     pageIds.add(page.id);
+    { const bad = paintProblem(page.background, 'background'); if (bad) return fail('invalid_request', bad); }
     const layerIds = new Set<string>();
     for (const l of page.layers) {
       if (layerIds.has(l.id)) return fail('invalid_request', `duplicate layer id ${l.id}`);
@@ -134,6 +136,7 @@ export function validateDocument(value: unknown): Result<DiagramDocument> {
       if (el.kind === 'shape' || el.kind === 'image') {
         if (!(el.bounds.width > 0 && el.bounds.height > 0)) return fail('invalid_request', `element ${el.id} must have positive size`);
       }
+      if (el.kind === 'shape') { const bad = paintProblem(el.style.fill, 'fill') ?? paintProblem(el.style.stroke, 'stroke'); if (bad) return fail('invalid_request', `${bad} (element ${el.id})`); }
       if (el.kind === 'image' && !assetIds.has(el.assetId)) return fail('invalid_request', `image ${el.id} references unknown asset ${el.assetId}`);
       if (el.kind === 'connector') {
         for (const ep of [el.from, el.to]) {

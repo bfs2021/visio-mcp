@@ -207,11 +207,33 @@ class Compiler {
   private paint(n: Named): Paint {
     const v = n.value;
     if (v.type === 'word' && v.text === 'none') return { kind: 'none' };
+    if (v.type === 'string' && /^(linear-)?gradient\b/i.test(v.value)) return this.gradient(v.value, n, v);
     if (v.type === 'string') {
       const m = /^#([0-9a-fA-F]{6})([0-9a-fA-F]{2})?$/.exec(v.value);
       if (m) return { kind: 'solid', colour: `#${m[1]!.toLowerCase()}`, opacity: m[2] ? Math.round((parseInt(m[2], 16) / 255) * 1000) / 1000 : 1 };
     }
-    return this.err(`${n.key}= takes "#RRGGBB", "#RRGGBBAA" or none`, v, 'colours are quoted because # starts a comment outside quotes');
+    return this.err(`${n.key}= takes "#RRGGBB", "#RRGGBBAA", none or a gradient such as "gradient 90 #ffffff #336699"`, v, 'colours are quoted because # starts a comment outside quotes');
+  }
+
+  /** "gradient ANGLE STOP STOP ..." where a stop is #RRGGBB or #RRGGBBAA, optionally followed by @OFFSET (0 to 1). Stops without an offset are spread evenly. */
+  private gradient(text: string, n: Named, at: ValueToken): Paint {
+    const bad = (why: string): Paint => this.err(`${n.key}= gradient: ${why}`, at, 'for example "gradient 90 #ffffff #336699" or "gradient 0 #ff0000 #ffff00@0.3 #0000ff"');
+    const parts = text.trim().split(/\s+/).slice(1);
+    const angle = Number(parts.shift());
+    if (!Number.isFinite(angle) || angle < -360 || angle > 360) return bad('the angle must be a number of degrees from -360 to 360 (0 runs left to right, 90 top to bottom)');
+    if (parts.length < 2 || parts.length > 8) return bad('give 2 to 8 colour stops');
+    const stops: Array<{ offset: number | null; colour: string; opacity: number }> = [];
+    for (const part of parts) {
+      const m = /^#([0-9a-fA-F]{6})([0-9a-fA-F]{2})?(?:@(\d*\.?\d+))?$/.exec(part);
+      if (!m) return bad(`"${part}" is not a stop (#RRGGBB, #RRGGBBAA, optionally @offset)`);
+      const offset = m[3] === undefined ? null : Number(m[3]);
+      if (offset !== null && !(offset >= 0 && offset <= 1)) return bad('a stop offset must be from 0 to 1');
+      stops.push({ offset, colour: `#${m[1]!.toLowerCase()}`, opacity: m[2] ? Math.round((parseInt(m[2], 16) / 255) * 1000) / 1000 : 1 });
+    }
+    const last = stops.length - 1;
+    const resolved = stops.map((s, i) => ({ offset: s.offset ?? i / last, colour: s.colour, opacity: s.opacity }));
+    for (let i = 1; i < resolved.length; i++) if (resolved[i]!.offset < resolved[i - 1]!.offset) return bad('stop offsets must not go backwards');
+    return { kind: 'linear-gradient', angleDeg: angle, stops: resolved };
   }
 
   private colour(n: Named): string {

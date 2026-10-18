@@ -188,10 +188,14 @@ function textChecks(el: Exclude<Element, { kind: 'connector' } | { kind: 'group'
     });
   }
   // contrast against what is behind the text: the shape's own fill, or the page
-  const back = el.kind === 'shape' ? (el.style.fill.kind === 'solid' && el.style.fill.opacity >= 0.5 ? el.style.fill.colour : el.style.fill.kind === 'none' ? undefined : undefined) : undefined;
-  const bg = back ?? (page.background.kind === 'solid' ? page.background.colour : '#ffffff');
-  const ratio = contrastRatio(text.colour, bg);
-  if (ratio < 3) add('LOW_CONTRAST', 'warning', [el.id], box, 'The text colour is hard to read against its background.', { textColour: text.colour, backgroundColour: bg, contrastRatio: Math.round(ratio * 100) / 100, minimum: 3 });
+  // (a gradient is judged by its worst stop: the text has to be readable wherever it falls)
+  const fill = el.kind === 'shape' ? el.style.fill : undefined;
+  const backs: string[] = fill?.kind === 'solid' && fill.opacity >= 0.5 ? [fill.colour]
+    : fill?.kind === 'linear-gradient' ? fill.stops.filter(s => s.opacity >= 0.5).map(s => s.colour) : [];
+  if (backs.length === 0) backs.push(page.background.kind === 'solid' ? page.background.colour : '#ffffff');
+  const worst = backs.reduce((a, b) => (contrastRatio(text.colour, b) < contrastRatio(text.colour, a) ? b : a));
+  const ratio = contrastRatio(text.colour, worst);
+  if (ratio < 3) add('LOW_CONTRAST', 'warning', [el.id], box, 'The text colour is hard to read against its background.', { textColour: text.colour, backgroundColour: worst, contrastRatio: Math.round(ratio * 100) / 100, minimum: 3 });
 }
 
 function connectorChecks(

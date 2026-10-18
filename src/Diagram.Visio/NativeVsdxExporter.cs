@@ -403,11 +403,27 @@ public sealed class NativeVsdxExporter : IVsdxExporter
                 return shape;
             }
 
-            static string Fill(Paint p) => p is SolidPaint s ? Colour(s.Colour) : "#ffffff";
+            static string Fill(Paint p) => p is SolidPaint s ? Colour(s.Colour) : p is LinearGradientPaint g ? Colour(g.Stops[0].Colour) : "#ffffff";
+
+            /// <summary>The stops of a gradient fill, as Visio keeps them: one row per stop with colour, transparency (1 minus opacity) and position.</summary>
+            XElement? GradientSection(Paint fill)
+            {
+                if (fill is not LinearGradientPaint g) return null;
+                var sec = new XElement(V + "Section", new XAttribute("N", "FillGradient"));
+                for (var i = 0; i < g.Stops.Count; i++)
+                    sec.Add(new XElement(V + "Row", new XAttribute("IX", i), CellS("GradientStopColor", Colour(g.Stops[i].Colour)), Cell("GradientStopColorTrans", 1 - g.Stops[i].Opacity), Cell("GradientStopPosition", g.Stops[i].Offset)));
+                return sec;
+            }
 
             void FillAndLine(XElement shape, Paint fill, Paint stroke, double strokeWidthPt, string dash, string cap, string join, string? elementId)
             {
                 if (fill is SolidPaint f) shape.Add(CellS("FillForegnd", Colour(f.Colour)), Cell("FillForegndTrans", 1 - f.Opacity), Cell("FillPattern", 1));
+                else if (fill is LinearGradientPaint g)
+                {
+                    // the first stop stays as the plain fill colour for anything that does not read gradients; the gradient itself turns on beside it
+                    shape.Add(CellS("FillForegnd", Colour(g.Stops[0].Colour)), Cell("FillForegndTrans", 1 - g.Stops[0].Opacity), Cell("FillPattern", 1),
+                        Cell("FillGradientEnabled", 1), Cell("FillGradientDir", 0), Cell("FillGradientAngle", g.AngleDeg * Math.PI / 180), Cell("RotateGradientWithShape", 1));
+                }
                 else shape.Add(Cell("FillPattern", 0));
                 if (stroke is SolidPaint s) shape.Add(CellS("LineColor", Colour(s.Colour)), Cell("LineColorTrans", 1 - s.Opacity), Cell("LinePattern", LinePattern(dash)), Cell("LineWeight", strokeWidthPt / PtPerInch));
                 else shape.Add(Cell("LinePattern", 0), Cell("LineWeight", strokeWidthPt / PtPerInch));
@@ -446,6 +462,7 @@ public sealed class NativeVsdxExporter : IVsdxExporter
                 if (s.Geometry.CornerRadiusPt is { } r) extra.Add(UserRow("AgentCornerRadiusPt", N(r)));
                 if (s.Geometry.SvgPath is { Length: > 0 and <= 30000 } keep) extra.Add(UserRow("AgentSvgPath", keep));
                 shape.Add(UserSection(s, extra.Concat(PortRows(s.Id)).ToArray()));
+                if (GradientSection(s.Style.Fill) is { } gradient) shape.Add(gradient);
                 shape.Add(GeometrySections(geo, s.Bounds, s.Hidden));
                 if (PortSection(s.Id, s.Bounds) is { } ps) shape.Add(ps);
                 run.nativeIds[s.Id] = $"{pageIndex}/{id}";

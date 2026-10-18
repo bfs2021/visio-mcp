@@ -30,7 +30,24 @@ function NumberField({ label, value, onCommit, testId, step = 'any', min }: { la
   );
 }
 
-function PaintField({ label, paint, testId, onCommit }: { label: string; paint: Paint; testId: string; onCommit: (p: Paint) => void }) {
+function PaintField({ label, paint, testId, onCommit, gradients = false }: { label: string; paint: Paint; testId: string; onCommit: (p: Paint) => void; gradients?: boolean }) {
+  if (paint.kind === 'linear-gradient') {
+    const first = paint.stops[0]!, last = paint.stops[paint.stops.length - 1]!;
+    const withStops = (a: typeof first, b: typeof last): Paint => ({ ...paint, stops: [a, ...paint.stops.slice(1, -1), b] });
+    return (
+      <div className="field paint gradient" data-testid={`${testId}-gradient`}>
+        <span>{label}</span>
+        <select value="gradient" aria-label={`${label} type`} data-testid={`${testId}-kind`} onChange={e => onCommit(e.target.value === 'solid' ? { kind: 'solid', colour: first.colour, opacity: first.opacity } : e.target.value === 'none' ? { kind: 'none' } : paint)}>
+          <option value="solid">Solid</option><option value="gradient">Gradient</option><option value="none">None</option>
+        </select>
+        <input type="color" value={first.colour} aria-label={`${label} gradient start`} data-testid={`${testId}-stop-first`} onChange={e => onCommit(withStops({ ...first, colour: e.target.value }, last))} />
+        <input type="color" value={last.colour} aria-label={`${label} gradient end`} data-testid={`${testId}-stop-last`} onChange={e => onCommit(withStops(first, { ...last, colour: e.target.value }))} />
+        <input type="number" min={-360} max={360} value={paint.angleDeg} aria-label={`${label} gradient angle`} data-testid={`${testId}-angle`}
+          onChange={e => onCommit({ ...paint, angleDeg: Math.min(360, Math.max(-360, Number(e.target.value) || 0)) })} />
+        <small>° (0 left to right, 90 top to bottom){paint.stops.length > 2 ? `, ${paint.stops.length} stops` : ''}</small>
+      </div>
+    );
+  }
   const colour = paint.kind === 'solid' ? paint.colour : '#ffffff';
   const opacity = paint.kind === 'solid' ? paint.opacity : 1;
   return (
@@ -42,6 +59,10 @@ function PaintField({ label, paint, testId, onCommit }: { label: string; paint: 
         onChange={e => onCommit({ kind: 'solid', colour: e.target.value, opacity })} />
       <input type="number" min={0} max={100} value={Math.round(opacity * 100)} disabled={paint.kind === 'none'} aria-label={`${label} opacity %`} data-testid={`${testId}-opacity`}
         onChange={e => onCommit({ kind: 'solid', colour, opacity: Math.min(1, Math.max(0, Number(e.target.value) / 100)) })} />
+      {gradients && paint.kind === 'solid' && (
+        <button type="button" data-testid={`${testId}-to-gradient`} title="Blend from this colour to white"
+          onClick={() => onCommit({ kind: 'linear-gradient', angleDeg: 90, stops: [{ offset: 0, colour, opacity }, { offset: 1, colour: '#ffffff', opacity }] })}>Gradient</button>
+      )}
     </div>
   );
 }
@@ -182,7 +203,7 @@ function ShapeStyle({ el, set }: { model: EditorModel; el: ShapeElement; set: (p
   return (
     <section>
       <h3>Style</h3>
-      <PaintField label="Fill" testId="field-fill" paint={el.style.fill} onCommit={fill => set({ style: { fill } })} />
+      <PaintField label="Fill" testId="field-fill" paint={el.style.fill} gradients onCommit={fill => set({ style: { fill } })} />
       <PaintField label="Line" testId="field-stroke" paint={el.style.stroke} onCommit={stroke => set({ style: { stroke } })} />
       <div className="grid2">
         <NumberField label="Width pt" testId="field-strokewidth" value={el.style.strokeWidthPt} min={0} onCommit={v => set({ style: { strokeWidthPt: v } })} />
