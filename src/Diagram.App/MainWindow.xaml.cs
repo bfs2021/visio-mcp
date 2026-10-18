@@ -63,9 +63,13 @@ public partial class MainWindow : Window
     public ExportService Exports { get; private set; } = null!;
     public ReferenceComparisonService Comparisons { get; private set; } = null!;
 
+    CoreWebView2Environment? webEnvironment;
+    public AgentView Agents { get; private set; } = null!;
+    public DocumentService Documents { get; private set; } = null!;
+
     public async Task InitializeAsync()
     {
-        var env = await CoreWebView2Environment.CreateAsync(userDataFolder: options.UserDataDir);
+        var env = webEnvironment = await CoreWebView2Environment.CreateAsync(userDataFolder: options.UserDataDir);
         await Web.EnsureCoreWebView2Async(env);
         Web.CoreWebView2.DocumentTitleChanged += (_, _) => Title = Web.CoreWebView2.DocumentTitle; // the page names the file and marks unsaved work (W04)
         var services = new HostServices(this);
@@ -77,11 +81,14 @@ public partial class MainWindow : Window
         Exports = new ExportService(this, options.ExportRoot ?? Path.Combine(Path.GetTempPath(), "AgenticDiagramExports"), options.Offscreen ? null : new ExportConsentWindow(this));
         RecoveryMgr = new RecoveryManager(host.Router, Recovery, Blobs, () => Services.CurrentPath);
         RecoveryMgr.Start();
+        Agents = new AgentView(() => Dispatcher, () => Task.FromResult(webEnvironment!), () => host!.Router, options.ContentRoot, Blobs);
+        Documents = new DocumentService(this);
         Comparisons = new ReferenceComparisonService(this);
-        if (options.PipeName is { } pipe) Live = new LiveControl(pipe, host.Router, Exports.HandleAsync, Library, Resolver, Comparisons.HandleAsync); // fails on a name collision rather than attaching to another owner
+        if (options.PipeName is { } pipe) Live = new LiveControl(pipe, host.Router, Exports.HandleAsync, Library, Resolver, Comparisons.HandleAsync, Documents); // fails on a name collision rather than attaching to another owner
         Closed += async (_, _) =>
         {
             if (Live is not null) await Live.DisposeAsync();
+            await Agents.DisposeAsync();
             try { await RecoveryMgr.CloseCleanlyAsync(); await Workspace.MarkCleanExitAsync(); } catch (Exception e) when (e is IOException or UnauthorizedAccessException) { } // leaving recovery files behind is the safe failure
             await RecoveryMgr.DisposeAsync();
         };

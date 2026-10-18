@@ -43,6 +43,8 @@ export class AdmissionGate {
     this.maxPending = opts.maxPending ?? MAX_PENDING_PER_CONNECTION;
   }
 
+  get isGestureActive(): boolean { return this.gestureActive; }
+
   /** Fed by the editor's gesture events: pointer drags, resizes, rotations, bends and in-place text edits. */
   setGestureActive(active: boolean): void {
     this.gestureActive = active;

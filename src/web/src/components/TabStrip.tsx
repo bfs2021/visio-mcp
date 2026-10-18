@@ -31,6 +31,18 @@ export function TabStrip({ ws }: { ws: WorkspaceModel }) {
           </div>
         );
       })}
+      {ws.agentDocs.map(d => (
+        <div key={d.documentId} className="tab agent" role="tab" aria-selected="false" tabIndex={0} data-testid="agent-tab"
+          title="Made in the background by an agent. Click to open it here."
+          onClick={() => void ws.showAgentDocument(d.documentId)}
+          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); void ws.showAgentDocument(d.documentId); } }}>
+          <span className="tab-dot" aria-hidden="true">✦</span>
+          <span className="tab-name" data-testid="agent-tab-name">{d.title ?? 'Untitled'}</span>
+          <button type="button" className="tab-close" tabIndex={-1} data-testid="agent-tab-close"
+            aria-label={ws.armedDiscard === d.documentId ? `Discard ${d.title ?? 'document'} for good` : `Close ${d.title ?? 'document'}`}
+            onClick={e => { e.stopPropagation(); void ws.discardAgentDocument(d.documentId); }}>{ws.armedDiscard === d.documentId ? 'Discard?' : '×'}</button>
+        </div>
+      ))}
       <button type="button" className="tab-new" aria-label="New document" title="New document (Ctrl+N)" data-testid="tab-new" onClick={() => ws.newTab()}>+</button>
       {ws.notice && <span className="tab-notice" role="status" data-testid="tab-notice">{ws.notice}</span>}
       {ws.banner && (

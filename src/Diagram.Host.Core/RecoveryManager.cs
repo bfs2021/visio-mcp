@@ -57,6 +57,7 @@ public sealed class RecoveryManager : IAsyncDisposable
         router.Committed += OnCommitted;
         router.SessionChanged += OnSession;
         router.DocumentClosed += OnClosed;
+        router.ChannelReset += OnChannelReset;
         foreach (var s in router.Documents) OnSession(s, router.CurrentRevision); // the page may have announced itself before we were listening
     }
 
@@ -132,6 +133,12 @@ public sealed class RecoveryManager : IAsyncDisposable
     }
 
     /// <summary>The page closed a document. Its session goes if there is nothing to keep; unsaved work stays on disk until the person decides (Don't save discards it).</summary>
+    /// <summary>A page's renderer died and its documents are gone from the registry. Their sessions stop being followed but stay on disk, to be offered as unfinished work.</summary>
+    void OnChannelReset(string channel)
+    {
+        lock (gate) foreach (var t in tracks.Values.Where(t => router.ScopeOf(t.DocumentId)?.SessionId != t.SessionId).ToList()) tracks.Remove(t.SessionId);
+    }
+
     void OnClosed(Scope scope)
     {
         Track? t;
@@ -315,6 +322,7 @@ public sealed class RecoveryManager : IAsyncDisposable
         router.Committed -= OnCommitted;
         router.SessionChanged -= OnSession;
         router.DocumentClosed -= OnClosed;
+        router.ChannelReset -= OnChannelReset;
         await timer.DisposeAsync().ConfigureAwait(false);
         work.Writer.TryComplete();
         try { await worker.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false); } catch (TimeoutException) { }

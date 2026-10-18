@@ -15,7 +15,7 @@ declare global {
  * announces readiness. `editor.ready` is sent only after the handler is registered, so the host never sees a ready editor that cannot answer.
  * Documents opened or closed later are announced to the host as they happen, so it always knows which are open and which is active.
  */
-export function startApp(webview: WebViewLike | undefined, root: HTMLElement | null = typeof document !== 'undefined' ? document.getElementById('status') : null, hooks: { onSessionChanged?: (state: DocumentState) => void; render?: EngineHandlerOptions['render']; layoutContext?: EngineHandlerOptions['layoutContext']; rasterise?: EngineHandlerOptions['rasterise']; beforeClose?: EngineHandlerOptions['beforeClose'] } = {}) {
+export function startApp(webview: WebViewLike | undefined, root: HTMLElement | null = typeof document !== 'undefined' ? document.getElementById('status') : null, hooks: { onSessionChanged?: (state: DocumentState) => void; render?: EngineHandlerOptions['render']; layoutContext?: EngineHandlerOptions['layoutContext']; rasterise?: EngineHandlerOptions['rasterise']; beforeClose?: EngineHandlerOptions['beforeClose']; app?: EngineHandlerOptions['app'] } = {}) {
   const workspace = new Workspace();
   const first = workspace.add(new CommandEngine({ document: newDocument() }));
   const engine = first.engine;
@@ -39,7 +39,7 @@ export function startApp(webview: WebViewLike | undefined, root: HTMLElement | n
   };
   // The router exists with or without a host, so a plain browser (tests, development) can exercise the same request path.
   const router = createRequestRouter(workspace.engineOf, {
-    ...(hooks.render ? { render: hooks.render } : {}), ...(hooks.layoutContext ? { layoutContext: hooks.layoutContext } : {}), ...(hooks.rasterise ? { rasterise: hooks.rasterise } : {}), ...(hooks.beforeClose ? { beforeClose: hooks.beforeClose } : {}),
+    ...(hooks.render ? { render: hooks.render } : {}), ...(hooks.layoutContext ? { layoutContext: hooks.layoutContext } : {}), ...(hooks.rasterise ? { rasterise: hooks.rasterise } : {}), ...(hooks.beforeClose ? { beforeClose: hooks.beforeClose } : {}), ...(hooks.app ? { app: hooks.app } : {}),
     onSessionChanged: (_scope, _revision, e) => { const s = workspace.stateOfEngine(e); if (s) sessionChanged(s); },
     isActive: workspace.isActive,
   });

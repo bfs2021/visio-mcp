@@ -1,0 +1,51 @@
+{
+  "revision": 1,
+  "preview": "step04-preview.png",
+  "misaligned": {
+    "elements": [
+      "crm",
+      "erp"
+    ],
+    "rowDeltaPt": 11.34,
+    "expected": 0
+  },
+  "layoutInspector": {
+    "documentId": "7f0ff22e-4009-47e5-bdf6-d4d86d6b10b5",
+    "sessionId": "57d021b6-1a5c-413d-9d67-107071326e42",
+    "revision": 1,
+    "issues": [
+      {
+        "code": "NEAR_ALIGNMENT",
+        "severity": "info",
+        "elementIds": [
+          "4f449fb1-bafb-4e5a-8be4-45f5c4b97c5d",
+          "c4df2cef-07e0-4818-a222-4cec0e6b2311"
+        ],
+        "pageId": "e56c47fd-0c1e-4e05-9339-15ea57cbfcaf",
+        "bounds": {
+          "x": 56.69291338582678,
+          "y": 113.38582677165356,
+          "width": 453.5433070866142,
+          "height": 73.7007874015748
+        },
+        "message": "Comparable peer shapes are nearly aligned. Check whether this offset is intentional before changing either object.",
+        "evidence": {
+          "heuristic": true,
+          "axis": "y",
+          "anchor": "start",
+          "deltaPt": 11.338582677165348,
+          "tolerancePt": 12,
+          "coordinatesPt": {
+            "4f449fb1-bafb-4e5a-8be4-45f5c4b97c5d": 124.7244094488189,
+            "c4df2cef-07e0-4818-a222-4cec0e6b2311": 113.38582677165356
+          }
+        }
+      }
+    ],
+    "notes": [
+      "Text size is estimated from font metrics measured in the editor; a borderline overflow may render differently.",
+      "Near-alignment hints are heuristic observations of comparable peer shapes, not proof that either object should move."
+    ]
+  },
+  "note": "Near-alignment hints are heuristic; the agent also checks the intended row against explicit bounds."
+}

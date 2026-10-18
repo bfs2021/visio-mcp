@@ -29,14 +29,19 @@ public sealed class WebViewHost : IFrontendTransport
     public int BlockedWindows => Volatile.Read(ref blockedWindows);
     public int RendererFailures => Volatile.Read(ref rendererFailures);
 
+    readonly string channel;
+
+    /// <param name="shared">Another page's router to join (the agent-only view): both pages then answer through one router, each holding its own documents.</param>
     public WebViewHost(CoreWebView2 core, Dispatcher ui, string contentRoot, BlobStore blobs,
-        Func<RequestEnvelope, CancellationToken, Task<ResponseEnvelope>>? hostHandler = null)
+        Func<RequestEnvelope, CancellationToken, Task<ResponseEnvelope>>? hostHandler = null, BridgeRouter? shared = null, string channel = BridgeRouter.User)
     {
+        this.channel = channel;
         this.core = core;
         this.ui = ui;
         this.contentRoot = Path.GetFullPath(contentRoot);
         this.blobs = blobs;
-        Router = new BridgeRouter(this, hostHandler);
+        if (shared is null) Router = new BridgeRouter(this, hostHandler);
+        else { Router = shared; shared.AddChannel(channel, this); }
 
         var s = core.Settings;
         s.AreDefaultContextMenusEnabled = false;
@@ -49,9 +54,9 @@ public sealed class WebViewHost : IFrontendTransport
         s.IsWebMessageEnabled = true;
         s.IsScriptEnabled = true;
 
-        core.WebMessageReceived += (_, e) => Router.OnMessage(e.Source, e.WebMessageAsJson, topLevel: true);
+        core.WebMessageReceived += (_, e) => Router.OnMessage(e.Source, e.WebMessageAsJson, topLevel: true, channel);
         // A frame that registers its own handler receives its messages instead of the top-level handler.
-        core.FrameCreated += (_, e) => e.Frame.WebMessageReceived += (_, a) => Router.OnMessage(a.Source, a.WebMessageAsJson, topLevel: false);
+        core.FrameCreated += (_, e) => e.Frame.WebMessageReceived += (_, a) => Router.OnMessage(a.Source, a.WebMessageAsJson, topLevel: false, channel);
         core.NavigationStarting += (_, e) =>
         {
             if (AppOrigin.IsAllowed(e.Uri)) return;
@@ -66,7 +71,7 @@ public sealed class WebViewHost : IFrontendTransport
         core.WebResourceRequested += OnResource;
     }
 
-    public void Navigate() => core.Navigate($"{AppOrigin.Uri}index.html");
+    public void Navigate(string query = "") => core.Navigate($"{AppOrigin.Uri}index.html{query}");
 
     bool stopped;
     /// <summary>Cancel outstanding calls before WPF disposes the control; queued reply callbacks must not touch a closed WebView.</summary>
@@ -87,7 +92,7 @@ public sealed class WebViewHost : IFrontendTransport
         if (e.ProcessFailedKind is not (CoreWebView2ProcessFailedKind.RenderProcessExited or CoreWebView2ProcessFailedKind.RenderProcessUnresponsive
             or CoreWebView2ProcessFailedKind.BrowserProcessExited)) return;
         Interlocked.Increment(ref rendererFailures);
-        Router.OnRendererFailed("the renderer failed");
+        Router.OnRendererFailed("the renderer failed", channel);
         if (e.ProcessFailedKind != CoreWebView2ProcessFailedKind.BrowserProcessExited) core.Reload(); // a fresh page starts a fresh session
     }
 

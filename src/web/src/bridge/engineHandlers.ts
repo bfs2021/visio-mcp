@@ -16,6 +16,23 @@ import { iconPreview } from '../icons/preview';
 const toResponse = <T>(requestId: string, r: Result<T>): ResponseEnvelope =>
   r.ok ? { protocolVersion: 1, kind: 'response', requestId, result: r.value } : { protocolVersion: 1, kind: 'response', requestId, error: r.error as AppError };
 
+/** A document living in the agent-only view, as the person's window shows it. */
+export interface AgentDocument { documentId: string; sessionId: string; title: string | null; revision: number; unsaved: boolean; pages: number }
+
+/** What the window-level `app.*` requests do. The person's page and the agent-only page each supply the ones that apply to them. */
+export interface AppHandlers {
+  /** Agent view: a new document in the background. */
+  createDocument?: (params: Record<string, unknown>) => Result<Scope & { revision: number; title: string; pageId: string }>;
+  /** Agent view: let go of a document (it was handed over, or the person closed its tab). */
+  dropDocument?: (documentId: string) => Result<{ dropped: string }>;
+  /** The person's page: take a document from the agent view as a new tab. */
+  adoptDocument?: (document: DiagramDocument, activate: boolean) => Promise<Result<Scope & { revision: number }>>;
+  /** The person's page: show an open tab. */
+  activateDocument?: (documentId: string) => Result<{ activated: string }>;
+  /** The person's page: the background documents changed. */
+  agentDocuments?: (documents: AgentDocument[]) => void;
+}
+
 /** Finds the engine of the document a request names; with no document named, the active one. */
 export type EngineResolver = (documentId: string | undefined) => CommandEngine | null;
 
@@ -28,6 +45,7 @@ export interface EngineHandlerOptions {
   rasterise?: (sha256: string, maxPixels: number) => Promise<Result<{ base64: string; widthPx: number; heightPx: number }>>;
   /** Text measurement and picture sizes for layout inspection, supplied by the page. */
   layoutContext?: (snapshot: Snapshot, options?: { includeAssets?: boolean }) => Promise<Pick<LayoutContext, 'measureWidth' | 'assetSize'>>;
+  app?: AppHandlers;
   /** The host is closing the window: say whether there are unsaved changes (and, if so, ask the person what to do). */
   beforeClose?: () => Promise<{ dirty: boolean }>;
 }
@@ -42,11 +60,26 @@ const approximateWidth: LayoutContext['measureWidth'] = (text, font) => text.len
 export function createEngineHandler(source: CommandEngine | EngineResolver, opts: EngineHandlerOptions = {}) {
   return async (env: RequestEnvelope): Promise<ResponseEnvelope> => {
     const id = env.requestId;
+    const p = env.params as Record<string, unknown>;
+    const respond = <T>(r: Result<T>) => toResponse(id, r);
+    const appHandler = opts.app;
+    switch (env.method) {
+      case 'app.createDocument': return respond(appHandler?.createDocument ? appHandler.createDocument(p) : fail('method_not_found', 'this page does not create documents'));
+      case 'app.dropDocument': return respond(appHandler?.dropDocument && typeof p.documentId === 'string' ? appHandler.dropDocument(p.documentId) : fail('method_not_found', 'this page does not drop documents'));
+      case 'app.adoptDocument': {
+        if (!appHandler?.adoptDocument) return respond(fail('method_not_found', 'this page does not take documents'));
+        const doc = validateDocument(p.document);
+        return respond(doc.ok ? await appHandler.adoptDocument(doc.value as DiagramDocument, p.activate !== false) : doc);
+      }
+      case 'app.activateDocument': return respond(appHandler?.activateDocument && typeof p.documentId === 'string' ? appHandler.activateDocument(p.documentId) : fail('method_not_found', 'this page does not switch documents'));
+      case 'app.agentDocuments':
+        appHandler?.agentDocuments?.(Array.isArray(p.documents) ? (p.documents as AgentDocument[]) : []);
+        return respond(ok({ received: true }));
+      default: break;
+    }
     const engine = typeof source === 'function' ? source(env.documentId) : source;
     if (!engine) return toResponse(id, fail('document_mismatch', 'the document is not the open one'));
     const scope = { documentId: env.documentId ?? '', sessionId: env.sessionId ?? '' };
-    const p = env.params as Record<string, unknown>;
-    const respond = <T>(r: Result<T>) => toResponse(id, r);
 
     switch (env.method) {
       case 'app.beforeClose':
@@ -197,7 +230,7 @@ export function createEngineHandler(source: CommandEngine | EngineResolver, opts
       }
       case 'doc.status': {
         const s = await engine.snapshot(scope);
-        return respond(s.ok ? ok({ ...engine.status(), ...engine.scope(), revision: engine.revision }) : s);
+        return respond(s.ok ? ok({ ...engine.status(), ...engine.scope(), revision: engine.revision, title: s.value.document.title, pageCount: s.value.document.pages.length }) : s);
       }
       default:
         return respond(fail('method_not_found', `unknown method ${env.method}`));

@@ -10,7 +10,7 @@ export async function openEditor(page: Page): Promise<string[]> {
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   await page.goto('/');
-  await page.waitForFunction(() => !!(window as any).__editor && (window as any).__editor.sheetRect().width > 0);
+  await page.waitForFunction(() => { try { return !!(window as any).__editor && (window as any).__editor.sheetRect().width > 0; } catch { return false; } }); // the editor object exists a moment before the canvas does
   return errors;
 }
 
