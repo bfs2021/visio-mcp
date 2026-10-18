@@ -1,0 +1,155 @@
+{
+  "VerifiedUtc": "2026-10-18T13:16:10.3215942Z",
+  "VisioVersion": "16.0",
+  "Method": "Native Visio read-only open, shape/text/UUID inspection; no edits or save, no manual UI or repair-prompt assertion",
+  "Files": [
+    {
+      "File": "repository-deployment-light.vsdx",
+      "Source": "C:\\Users\\claude\\Documents\\AgenticDiagram\\Exports\\repository-deployment-light.vsdx",
+      "SourceModifiedUtc": "2026-10-17T21:58:09.8768720Z",
+      "Sha256": "40450ED898D67525308B9AB037D9987CC6542E0ED473B227E39C1A4CDED06C88",
+      "Bytes": 12939,
+      "PageCount": 2,
+      "VerifiedPage": "Repository deployment · light",
+      "ShapeCount": 62,
+      "NonemptyTextCount": 39,
+      "StableIdCount": 62,
+      "UniqueIds": true,
+      "ExpectedText": [
+        {
+          "Text": "Infrastructure repository",
+          "Found": true
+        },
+        {
+          "Text": "Application repository",
+          "Found": true
+        },
+        {
+          "Text": "Client Azure tenancy",
+          "Found": true
+        }
+      ],
+      "Status": "PASS"
+    },
+    {
+      "File": "compatibility-decision-light.vsdx",
+      "Source": "C:\\Users\\claude\\Documents\\AgenticDiagram\\Exports\\compatibility-decision-light.vsdx",
+      "SourceModifiedUtc": "2026-10-18T00:04:21.1044962Z",
+      "Sha256": "C73B3CE9684390C5528DB9AF96770E26268F4A9A91BD799D78C7211A951310FD",
+      "Bytes": 7201,
+      "PageCount": 1,
+      "VerifiedPage": "Compatibility decision · light",
+      "ShapeCount": 27,
+      "NonemptyTextCount": 10,
+      "StableIdCount": 27,
+      "UniqueIds": true,
+      "ExpectedText": [
+        {
+          "Text": "Illustrative compatibility decision",
+          "Found": true
+        },
+        {
+          "Text": "Application deployment permitted",
+          "Found": true
+        }
+      ],
+      "Status": "PASS"
+    },
+    {
+      "File": "infrastructure-request-infra-042-light.vsdx",
+      "Source": "C:\\Users\\claude\\Documents\\AgenticDiagram\\Exports\\infrastructure-request-infra-042-light.vsdx",
+      "SourceModifiedUtc": "2026-10-18T00:09:06.4407844Z",
+      "Sha256": "2807017335C87FEEAD770D4DEEEF3C748B1ACDF1C0F658963EDB4FDD6582F2E6",
+      "Bytes": 10697,
+      "PageCount": 2,
+      "VerifiedPage": "Infrastructure request · light",
+      "ShapeCount": 29,
+      "NonemptyTextCount": 26,
+      "StableIdCount": 29,
+      "UniqueIds": true,
+      "ExpectedText": [
+        {
+          "Text": "Infrastructure Request",
+          "Found": true
+        },
+        {
+          "Text": "INFRA-042",
+          "Found": true
+        },
+        {
+          "Text": "Azure Service Bus queue",
+          "Found": true
+        },
+        {
+          "Text": "Dead-letter monitoring is enabled",
+          "Found": true
+        }
+      ],
+      "Status": "PASS"
+    },
+    {
+      "File": "infrastructure-release-flow-light.vsdx",
+      "Source": "C:\\Users\\claude\\Documents\\AgenticDiagram\\Exports\\infrastructure-release-flow-light.vsdx",
+      "SourceModifiedUtc": "2026-10-18T00:15:51.5497385Z",
+      "Sha256": "6AAE976CE9668D898CA825EDF7438692E35697ECFA5DF43A386A45A95D987B8A",
+      "Bytes": 15026,
+      "PageCount": 3,
+      "VerifiedPage": "Infrastructure release flow · light",
+      "ShapeCount": 37,
+      "NonemptyTextCount": 25,
+      "StableIdCount": 37,
+      "UniqueIds": true,
+      "ExpectedText": [
+        {
+          "Text": "Infrastructure release flow",
+          "Found": true
+        },
+        {
+          "Text": "Feature branch / Pull Request",
+          "Found": true
+        },
+        {
+          "Text": "infra-v1.4.0-rc.1",
+          "Found": true
+        },
+        {
+          "Text": "Deployment complete",
+          "Found": true
+        }
+      ],
+      "Status": "PASS"
+    },
+    {
+      "File": "application-release-flow-light.vsdx",
+      "Source": "C:\\Users\\claude\\Documents\\AgenticDiagram\\Exports\\application-release-flow-light.vsdx",
+      "SourceModifiedUtc": "2026-10-18T00:29:09.3008031Z",
+      "Sha256": "CB6333DB5BE1033E5BA6592F2679A39CA347D8011A3AEC51221F65FF7D6567E7",
+      "Bytes": 24708,
+      "PageCount": 4,
+      "VerifiedPage": "Application release flow · light",
+      "ShapeCount": 93,
+      "NonemptyTextCount": 17,
+      "StableIdCount": 93,
+      "UniqueIds": true,
+      "ExpectedText": [
+        {
+          "Text": "Application release flow",
+          "Found": true
+        },
+        {
+          "Text": "Application feature branch",
+          "Found": true
+        },
+        {
+          "Text": "Infrastructure compatibility check",
+          "Found": true
+        },
+        {
+          "Text": "Record application deployment",
+          "Found": true
+        }
+      ],
+      "Status": "PASS"
+    }
+  ]
+}

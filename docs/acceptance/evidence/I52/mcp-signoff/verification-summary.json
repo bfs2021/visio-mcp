@@ -1,0 +1,125 @@
+{
+  "VerifiedUtc": "2026-10-18T13:17:34.7848224Z",
+  "SourceCommit": "9ec82c322273789de5bad5ade8c1fc78a38a5668",
+  "Frontend": {
+    "GeneratedContractCheck": "PASS",
+    "Build": "PASS",
+    "BrowserTests": 47,
+    "BrowserPassed": 47,
+    "Passed": 301,
+    "Typecheck": "PASS",
+    "Tests": 301
+  },
+  "Dotnet": {
+    "Failed": 0,
+    "Passed": 331.0,
+    "Suites": [
+      {
+        "File": "i52-signoff_net10.0_20261018141124.trx",
+        "Classes": [
+          "SchemaParityTests"
+        ],
+        "Total": 24,
+        "Passed": 24,
+        "Failed": 0,
+        "Outcome": "Completed"
+      },
+      {
+        "File": "i52-signoff_net10.0_20261018141149.trx",
+        "Classes": [
+          "Diagram.Host.Tests.LifecycleTests",
+          "Diagram.Host.Tests.AssetInputTests",
+          "Diagram.Host.Tests.ExportPathTests",
+          "Diagram.Host.Tests.RouterTests",
+          "Diagram.Host.Tests.AssetLibraryTests",
+          "Diagram.Host.Tests.BoundaryGuardTests",
+          "Diagram.Host.Tests.RecoveryTests"
+        ],
+        "Total": 119,
+        "Passed": 119,
+        "Failed": 0,
+        "Outcome": "Completed"
+      },
+      {
+        "File": "i52-signoff_net10.0_20261018141328.trx",
+        "Classes": [
+          "ToolTests",
+          "ImageContentTests"
+        ],
+        "Total": 13,
+        "Passed": 13,
+        "Failed": 0,
+        "Outcome": "Completed"
+      },
+      {
+        "File": "i52-signoff_net10.0_20261018141341.trx",
+        "Classes": [
+          "PackageGuardTests",
+          "IdentityTests",
+          "StructuralTests",
+          "MappingTests",
+          "HostileFixtureTests",
+          "ImageTests",
+          "NativeLifecycleTests",
+          "IconGeometryTests",
+          "VisioAcceptanceTests",
+          "MasterInheritanceTests",
+          "CatalogRoundTripTests",
+          "SampleTests",
+          "ProbeTests"
+        ],
+        "Total": 124,
+        "Passed": 124,
+        "Failed": 0,
+        "Outcome": "Completed"
+      },
+      {
+        "File": "i52-signoff_net10.0_20261018141347.trx",
+        "Classes": [
+          "PeerTests",
+          "FrameTests"
+        ],
+        "Total": 17,
+        "Passed": 17,
+        "Failed": 0,
+        "Outcome": "Completed"
+      },
+      {
+        "File": "i52-signoff_net10.0_20261018141713.trx",
+        "Classes": [
+          "Diagram.Windows.Tests.LiveControlTests",
+          "Diagram.Windows.Tests.AssetLibraryLiveTests",
+          "Diagram.Windows.Tests.BridgeTests",
+          "Diagram.Windows.Tests.ReferenceComparisonTests",
+          "Diagram.Windows.Tests.LayoutComponentTests",
+          "Diagram.Windows.Tests.CrashRecoveryTests",
+          "Diagram.Windows.Tests.OfficeAcceptanceTests",
+          "Diagram.Windows.Tests.PerformanceTests",
+          "Diagram.Windows.Tests.VectorIconTests",
+          "Diagram.Windows.Tests.DemoTests",
+          "Diagram.Windows.Tests.ReferenceDiagramTextFitTests"
+        ],
+        "Total": 34,
+        "Passed": 34,
+        "Failed": 0,
+        "Outcome": "Completed"
+      }
+    ],
+    "Total": 331.0
+  },
+  "Demo": {
+    "Failed": 0,
+    "Checks": 49,
+    "EvidenceFrom": "2026-10-18T13:16:59.0616611Z",
+    "NotRunSteps": []
+  },
+  "ScreenshotFiles": {
+    "Count": 5,
+    "Status": "PASS",
+    "TextObjects": 117.0,
+    "Shapes": 248.0
+  },
+  "ManualCurrentBuildFullChecklist": "NOT SIGNED OFF",
+  "SecondWindowsUserPipeTest": "NOT RUN",
+  "ProductCodeChanged": false
+}

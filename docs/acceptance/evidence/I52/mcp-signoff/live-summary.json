@@ -1,0 +1,31 @@
+{
+  "observedUtc": "2026-10-18T13:13:17.661Z",
+  "scope": "Installed MCP read-only smoke check; not the newly built source. The user's document was not changed.",
+  "result": {
+    "documentId": "d1fd10a9-bf5a-4781-959a-7d6b84a7689c",
+    "sessionId": "5929a124-93ff-4219-b1f9-f6783c230c72",
+    "revision": 0,
+    "title": "Untitled",
+    "pages": [
+      {
+        "id": "6b8d9d3a-7e82-4300-8d82-940fb2be0056",
+        "name": "Page 1",
+        "widthPt": 841.8897637795277,
+        "heightPt": 595.2755905511812,
+        "layers": [
+          {
+            "id": "8bbae6a2-ffaa-47d2-bb2e-875f3f1dee50",
+            "name": "Layer 1",
+            "visible": true,
+            "locked": false,
+            "elementCount": 0
+          }
+        ],
+        "elementCount": 0,
+        "omittedHidden": 0,
+        "elements": []
+      }
+    ],
+    "assetIds": []
+  }
+}

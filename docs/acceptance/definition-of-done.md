@@ -4,7 +4,8 @@ Recorded 2026-10-18. Each criterion names the evidence that was actually produce
 "Evidenced" means a test or recorded run observed it on this machine (Windows 11, Visio 16.0 build 20430, Word, WebView2 155). It does not mean a person
 sat at the application: where a criterion says "manual" or "usable" in the spec, the caveat column says how far the evidence goes.
 
-Suites on the final tree: web unit 289, browser 43, Contracts 24, Host 119, Ipc 17, Mcp 13, Visio 124, Windows 33 (run one at a time). All pass.
+Original I52 suite record: web unit 289, browser 43, Contracts 24, Host 119, Ipc 17, Mcp 13, Visio 124, Windows 33 (run one at a time). All pass in that record.
+The later pull and fresh MCP sign-off run are recorded below and in [verification-summary.json](evidence/I52/mcp-signoff/verification-summary.json).
 The §23 demonstration is [evidence/DEMO](evidence/DEMO) (49 checks in `tools/demo/verify-demo.mjs`, all pass); timings are in [performance.md](performance.md).
 
 | # | Criterion | Status | Evidence | What it does not show |
@@ -26,8 +27,8 @@ The §23 demonstration is [evidence/DEMO](evidence/DEMO) (49 checks in `tools/de
 | 15 | Supported drawings save as editable `.vsdx` | Evidenced | `export_document`; I40 mapping and hostile-fixture suites (`HostileFixtureTests`, Visio.Tests 124); WA-02; demo step 10 (`architecture-demo.vsdx`) | Only the mapped subset is editable; `docs/vsdx-compatibility.md` lists what is lossy or unsupported |
 | 16 | Supported `.vsdx` drawings can be reopened into the application | Evidenced | I40 importer; WA-06, WA-11; demo step 14 (the app's own file, and the file Visio saved) | Hostile and unsupported content is reported (`compatibility_loss` needs consent), not reproduced |
 | 17 | Stable IDs survive app, to VSDX, to Visio save, to app | Evidenced | WA-06 and WA-07 (a Visio duplicate carries the same UUID; the importer repairs it); demo step 14: all 10 ids resolve after Visio saved the file, and the human's fill colour survives | |
-| 18 | Exported VSDX passes **manual** Visio editability tests | Evidenced by automation; not manual | WA-02 to WA-09 and demo steps 11 and 12 drive Visio 16.0 through its own object model (open, edit text, fill and position, duplicate, group resize, layers, glue) | Nobody clicked through Visio. Visio was opened with alerts suppressed, so "no repair prompt" is inferred from a clean open, not seen. Image replacement through Visio's UI is unavailable in this build (recorded in M0) |
-| 19 | Exported VSDX can be embedded and activated in Word | Evidenced by automation; not manual | WA-10 and demo step 13: embedded as `Visio.Drawing`, activated, a shape edited, Word saved, reopened, reactivated, the edit persisted | Nobody watched Word's in-place editing window. A person opening the document on another workstation is still a worthwhile spot check |
+| 18 | Exported VSDX passes **manual** Visio editability tests | Automated PASS; earlier G1 manual PASS; current full manual pass open | WA-02 to WA-09 and demo steps 11 and 12 drive Visio 16.0 through its own object model (open, edit text, fill and position, duplicate, group resize, layers, glue); M0 G1 records the user as manual checker | The current I52 run is automated. Visio was opened with alerts suppressed, so "no repair prompt" is inferred from a clean open, not seen in this run. Image replacement through Visio's UI is unavailable in this build (recorded in M0) |
+| 19 | Exported VSDX can be embedded and activated in Word | Automated PASS; earlier G1 manual PASS | WA-10 and demo step 13: embedded as `Visio.Drawing`, activated, a shape edited, Word saved, reopened, reactivated, the edit persisted; earlier M0 G1 records human embedding/activation/save checks | The current I52 run did not have a person watching Word's in-place editing window. A person opening the document on another workstation is still a worthwhile spot check |
 | 20 | A one-object agent correction leaves all unrelated objects unchanged | Evidenced | vitest `one_logo_patch_changes_one_object_and_leaves_19_byte_identical`; `VisualLoopInspectRenderOneObjectPatchLeavesTheRestExact`; demo verifier steps 5, 7 and 9 compare every unnamed object byte for byte between saved snapshots | |
 
 ## The fourteen steps of spec section 23
@@ -54,8 +55,10 @@ saved snapshots by `node tools/demo/verify-demo.mjs`. Step 11 to 13 ran on this 
 ## Open items and risks
 1. **The M0 second-Windows-user pipe check is still open (NOT RUN).** Nothing here tests that another Windows user cannot reach the pipe; only the
    same-user ACL and ownership checks from M0 and I30 were run.
-2. **No person has used the application.** Items 1, 5, 18 and 19 are the ones where that matters most; the WPF consent window, the recovery dialog and the
-   library import dialog were exercised through automation only.
+2. **A complete manual pass on the current build is not recorded.** The earlier [M0 G1 results](../m0/results.md) explicitly record the user as manual
+   checker for Visio editability, connector movement, and Word embedding/activation/save. The screenshot reproduction sessions also include real user review
+   of agent-created output. These are useful human evidence, but do not prove every current editor gesture or dialog: the WPF consent window, recovery dialog
+   and library import dialog in the I52 suite were exercised through automation only. See the supplementary sign-off below.
 3. **No misalignment detector** in `inspect_layout` (item 13).
 4. **Shim start-up freeze in the test setup** (see [performance.md](performance.md)): cause not found; not seen outside the test process.
 5. **One machine and one Office version.** Visio 16.0 build 20430 and the installed Word; no other builds.
@@ -64,7 +67,29 @@ saved snapshots by `node tools/demo/verify-demo.mjs`. Step 11 to 13 ran on this 
    agent reading stored connector bounds after moving a glued shape sees the old values.
 
 ## Verdict
-Every criterion has actual evidence. Fifteen are evidenced as written; items 1, 6, 13, 18 and 19 are evidenced with the stated limits (no human at the keyboard, some inspector
+Every criterion has actual evidence. Fifteen are evidenced as written; items 1, 6, 13, 18 and 19 are evidenced with the stated limits (no complete current-build manual checklist, some inspector
 controls untested in the browser, no misalignment check, Office driven by automation and not by hand). The proof-of-concept meets the specification as far as
 this evidence reaches; it does not claim the open M0 second-user pipe check, which is **not run**, and the "manual" tests in items 18 and 19 remain to be
-done by a person.
+done by a person on the current build; the earlier G1 manual results remain valid evidence for the version tested there.
+
+## Supplementary MCP and screenshot-reproduction sign-off (2026-10-18)
+
+Latest GitHub main was pulled cleanly to `9ec82c3`, including the rotated-outline connector fix and Claude's I52 manual-test artifacts.
+The [evidence index](evidence/I52/mcp-signoff/README.md) separates last night's agent-driven reproductions, fresh automated checks on this source,
+and earlier human Office checks. **The MCP acceptance portion is signed off for the supported subset**, subject to the existing layout and compatibility limits.
+Fresh verification passed: **301 frontend, 47 browser and 331 .NET tests**, with typecheck/build/contracts checks and **49/49 demo assertions**.
+The five archived screenshot drawings passed native Visio verification of **248 shapes, unique stable IDs and 117 text objects** across their target pages.
+
+| Criterion | Supplementary result | Evidence and limits |
+|---|---|---|
+| 1, 2, 6 | PASS for agent-driven creation, text and styling; partial human usability evidence | Five screenshot reproductions were created and reviewed in conversation; the user explicitly approved the compatibility-decision result. This is not a manual checklist of all editor controls. |
+| 8, 15 | PASS for the saved screenshot drawings' native object structure and stable IDs | Archived original VSDX files and fresh native-Visio inspection in [screenshot-file-verification.json](evidence/I52/mcp-signoff/screenshot-file-verification.json); expected labels and distinct `User.AgentId` values are checked. This is not a manual edit test or a pixel-equivalence claim. |
+| 10, 11, 12, 13, 20 | PASS within their stated scope | Original repository-diagram MCP requests/results show semantic read, atomic edits, PNG render, layout inspection and export; real MCP/editor regression tests and the 49-check demo verify scoped reads, revision conflict handling and preservation of unrelated objects. Existence of a VSDX alone is not used to claim transaction preservation. No misalignment detector is claimed. |
+| 9, 14, 16, 17, 19 | PASS by existing automated demonstration, supplemented by a fresh run | DrawScript, approved-asset swap, native reopening/ID retention, and Word embedding/activation/edit persistence are exercised by the real-stack tests. The screenshot drawings alone do not prove these behaviors. |
+| 18, 19 manual qualifier | Earlier G1 manual PASS; current I52 full manual pass remains open | [M0 G1](../m0/results.md) records human checks and native files. The newer screenshot files and automated Office runs strengthen native-format evidence but do not establish that a person repeated every current-build Office step. |
+
+The supplied [I52 editor screenshot](evidence/I52/Screenshot%202026-10-18%20135209.png) and [five-object drawing](evidence/I52/test1.diagram.json)
+record an additional manual editor scenario involving rotation, connectors, a picture and inspector styling. They are retained as scenario evidence;
+the screenshot alone does not certify all usability criteria or independently establish when the rotated-outline defect was fixed.
+
+No changes to I52 performance targets, the unrun second-user pipe test, or the remaining recovery/cleanup gaps are implied by this sign-off.

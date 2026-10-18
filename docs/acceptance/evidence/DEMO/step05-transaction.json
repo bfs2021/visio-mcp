@@ -1,20 +1,20 @@
 {
-  "transactionId": "4d4851f4-618d-4d00-abd6-030bbb782f7d",
+  "transactionId": "0e3ce9d3-5de5-4f64-9c50-6baec8fa0b4a",
   "previousRevision": 1,
   "revision": 2,
   "noChange": false,
   "created": [],
   "changed": [
-    "df9ea1f3-96ea-4037-ad87-dfe9c6b62ce3"
+    "0f84e9f1-53e4-4a77-ab35-59670128d425"
   ],
   "deleted": [],
   "changedPageIds": [],
   "changedLayerIds": [],
   "changedAssetIds": [],
   "visuallyAffectedIds": [
-    "df9ea1f3-96ea-4037-ad87-dfe9c6b62ce3",
-    "7873ec50-f465-4361-b7c9-2c6717f6b316",
-    "0d56d1ec-11d2-42d9-9c3a-af8a4ff16df0"
+    "0f84e9f1-53e4-4a77-ab35-59670128d425",
+    "d40a651b-84ce-4fce-826f-eb4d75833564",
+    "8a718ab5-2925-4766-bab2-290b0b744ffe"
   ],
   "warnings": [],
   "projectionStatus": "applied"
