@@ -549,9 +549,9 @@ public sealed class NativeVsdxImporter : IVsdxImporter
                 }
                 var sections = ReadSections(s, xf.Width, xf.Height, id, sid);
                 var rounding = D(Own(s, "Rounding"), 0) * PtPerInch;
-                var sig = GeometryMap.Signature(sections);
+                var sig = GeometryMap.Signature(sections, xf.Width, xf.Height);
                 var presetName = u.GetValueOrDefault("AgentPreset");
-                if (presetName is not null && presetName != "svgPath" && presetName != "text" && presetName != "rounded-rectangle" && sig == GeometryMap.Signature(GeometryMap.ForPreset(presetName)) && presetName != "rectangle")
+                if (presetName is not null && presetName != "svgPath" && presetName != "text" && presetName != "rounded-rectangle" && sig == GeometryMap.Signature(GeometryMap.ForPreset(presetName), xf.Width, xf.Height) && presetName != "rectangle")
                     return new GeoResult(new JsonObject { ["preset"] = presetName }, false, null);
                 if (sig == GeometryMap.Signature(GeometryMap.ForPreset("rectangle")))
                 {
@@ -567,7 +567,7 @@ public sealed class NativeVsdxImporter : IVsdxImporter
                 if (presetName == "svgPath" && u.TryGetValue("AgentGeomSig", out var stored) && stored == sig && u.TryGetValue("AgentSvgPath", out var original))
                     return new GeoResult(new JsonObject { ["svgPath"] = original }, false, null);
                 // anything else: keep the outline as a restricted path, and say it was converted
-                var path = GeometryMap.ToSvgPath(sections);
+                var path = GeometryMap.ToSvgPath(sections, xf.Width, xf.Height);
                 if (path.Length == 0 || path.Length > 65536) { Note("unsupported_shape", "The outline of this shape is too complex; it is shown as a marked placeholder.", id, sid, "placeholder rectangle"); return new GeoResult(new JsonObject { ["preset"] = "rectangle" }, true, "outline too complex"); }
                 Note("outline_converted", "The outline is not one of the editor's presets and was converted to a custom path.", id, sid, "custom path", "info");
                 return new GeoResult(new JsonObject { ["svgPath"] = path }, false, null);
@@ -603,8 +603,9 @@ public sealed class NativeVsdxImporter : IVsdxImporter
                             }
                             case "ArcTo":
                             {
+                                // kept as an arc (not flattened) so a native outline can still be recognised as one of the presets
                                 var x1 = Cv("X", lastX); var y1 = Cv("Y", lastY); var bulge = Cv("A", 0);
-                                foreach (var p in FlattenArc(lastX, lastY, x1, y1, bulge)) rows.Add(new LineRow(Fr(p.X, p.Y)));
+                                rows.Add(new ArcRow(Fr(x1, y1), BulgeM: Math.Min(w, h) > 0 ? bulge / (Math.Min(w, h) / 2) : 0));
                                 lastX = x1; lastY = y1;
                                 break;
                             }

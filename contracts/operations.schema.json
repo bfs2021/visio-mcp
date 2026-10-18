@@ -203,7 +203,11 @@
             "parallelogram",
             "cylinder",
             "cloud",
-            "callout"
+            "callout",
+            "terminator",
+            "stored-data",
+            "document",
+            "lined-document"
           ]
         },
         "svgPath": {

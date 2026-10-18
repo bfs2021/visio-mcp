@@ -3,7 +3,7 @@
     {
       "title": "export_document writes an editable .vsdx",
       "status": "PASS",
-      "detail": "7320 bytes, lossy=False"
+      "detail": "7324 bytes, lossy=False"
     },
     {
       "title": "Visio opens the file without a repair prompt; every object is a Visio shape carrying its UUID",
@@ -12,7 +12,7 @@
     }
   ],
   "status": "PASS",
-  "ran": "2026-10-18T20:41:15.4705553Z",
+  "ran": "2026-10-18T21:37:59.2688916Z",
   "facts": {
     "lossy": false,
     "diagnostics": []

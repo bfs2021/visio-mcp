@@ -101,7 +101,7 @@ export interface Port {
 }
 
 export interface ShapeGeometry {
-  preset?: "rectangle" | "rounded-rectangle" | "ellipse" | "diamond" | "triangle" | "hexagon" | "parallelogram" | "cylinder" | "cloud" | "callout";
+  preset?: "rectangle" | "rounded-rectangle" | "ellipse" | "diamond" | "triangle" | "hexagon" | "parallelogram" | "cylinder" | "cloud" | "callout" | "terminator" | "stored-data" | "document" | "lined-document";
   svgPath?: string;
   cornerRadiusPt?: number;
 }
@@ -278,7 +278,7 @@ export interface StylePatch {
 }
 
 export interface GeometryPatch {
-  preset?: "rectangle" | "rounded-rectangle" | "ellipse" | "diamond" | "triangle" | "hexagon" | "parallelogram" | "cylinder" | "cloud" | "callout";
+  preset?: "rectangle" | "rounded-rectangle" | "ellipse" | "diamond" | "triangle" | "hexagon" | "parallelogram" | "cylinder" | "cloud" | "callout" | "terminator" | "stored-data" | "document" | "lined-document";
   svgPath?: string;
   cornerRadiusPt?: number;
 }

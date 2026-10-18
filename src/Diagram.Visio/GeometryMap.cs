@@ -5,12 +5,29 @@ using Diagram.Host.Core;
 
 namespace Diagram.Visio;
 
-/// <summary>A point as fractions of a shape's width and height, with the origin at the top left and y running down (the editor's orientation).</summary>
-public readonly record struct Frac(double X, double Y);
+/// <summary>
+/// A point as fractions of a shape's width and height, with the origin at the top left and y running down (the editor's orientation).
+/// <c>Mx</c> and <c>My</c> add a multiple of half the shorter side (the radius of a terminator's rounded end), which stays the same
+/// however the shape is stretched.
+/// </summary>
+public readonly record struct Frac(double X, double Y, double Mx = 0, double My = 0)
+{
+    public bool UsesHalfMin => Mx != 0 || My != 0;
+    /// <summary>Where the point is on a shape of this width and height (any unit).</summary>
+    public (double X, double Y) At(double w, double h) { var m = Math.Min(w, h) / 2; return (X * w + Mx * m, Y * h + My * m); }
+}
 
 public abstract record GeoRow;
 public sealed record MoveRow(Frac At) : GeoRow;
 public sealed record LineRow(Frac To) : GeoRow;
+/// <summary>
+/// A circular arc from the previous point to <c>To</c>. The bulge is the distance from the middle of the chord to the arc, positive when it
+/// bulges to the right of the direction of travel as seen on screen; it is <c>BulgeW</c> widths + <c>BulgeH</c> heights + <c>BulgeM</c> half-shorter-sides.
+/// </summary>
+public sealed record ArcRow(Frac To, double BulgeW = 0, double BulgeH = 0, double BulgeM = 0) : GeoRow
+{
+    public double Bulge(double w, double h) => BulgeW * w + BulgeH * h + BulgeM * Math.Min(w, h) / 2;
+}
 /// <summary>A full ellipse inscribed in a box given as fractions.</summary>
 public sealed record EllipseRow(Frac Centre, double Rx, double Ry) : GeoRow;
 
@@ -38,12 +55,23 @@ public static class GeometryMap
         "parallelogram" => [Poly([new(0.2, 0), new(1, 0), new(0.8, 1), new(0, 1)])],
         "callout" => [Poly([new(0, 0), new(1, 0), new(1, 0.8), new(0.45, 0.8), new(0.2, 1), new(0.25, 0.8), new(0, 0.8)])],
         "cylinder" => Cylinder(),
+        "terminator" => [new([new MoveRow(new(0, 0, 1, 0)), new LineRow(new(1, 0, -1, 0)), new ArcRow(new(1, 1, -1, 0), BulgeM: -1), new LineRow(new(0, 1, 1, 0)), new ArcRow(new(0, 0, 1, 0), BulgeM: -1)])],
+        "stored-data" => [new([new MoveRow(new(0, 0)), new LineRow(new(0.9, 0)), new ArcRow(new(0.9, 1), BulgeW: -0.1), new LineRow(new(0, 1)), new ArcRow(new(0, 0), BulgeW: 0.1)])],
+        "document" => [new(DocumentRows())],
+        "lined-document" => [new(DocumentRows()), new([new MoveRow(new(0.12, 0)), new LineRow(new(0.12, 0.75))], NoFill: true)],
         "cloud" => [Poly(Cloud())],
         _ => [Poly(Unit)], // rectangle and rounded-rectangle (rounding is a separate cell)
     };
 
     /// <summary>Presets that are drawn as an approximation of the canvas shape, so a person can be told.</summary>
     public static bool IsApproximated(string preset) => preset is "cylinder" or "cloud";
+
+    /// <summary>A page with a wavy bottom edge: the wave dips below the edge on the right half and rises above it on the left.</summary>
+    static GeoRow[] DocumentRows() =>
+    [
+        new MoveRow(new(0, 0)), new LineRow(new(1, 0)), new LineRow(new(1, 0.86)),
+        new ArcRow(new(0.5, 0.86), BulgeH: -0.12), new ArcRow(new(0, 0.86), BulgeH: 0.12), new LineRow(new(0, 0)),
+    ];
 
     static GeoSection Poly(IReadOnlyList<Frac> pts)
     {
@@ -159,19 +187,27 @@ public static class GeometryMap
         Result<IReadOnlyList<GeoSection>> Bad(char c) => Result<IReadOnlyList<GeoSection>>.Fail("invalid_request", $"the path command '{c}' is missing a number");
     }
 
-    /// <summary>A polyline path in the 100 x 100 box for the given geometry (used when Visio geometry is not one of the presets).</summary>
-    public static string ToSvgPath(IReadOnlyList<GeoSection> sections)
+    /// <summary>A polyline path in the 100 x 100 box for the given geometry (used when Visio geometry is not one of the presets). Arcs are flattened; <paramref name="w"/> and <paramref name="h"/> are the shape's size in any one unit.</summary>
+    public static string ToSvgPath(IReadOnlyList<GeoSection> sections, double w = 1, double h = 1)
     {
         var sb = new StringBuilder();
         string N(double v) => Math.Round(v * PathBox, 3).ToString("0.###", CultureInfo.InvariantCulture);
         foreach (var s in sections.Where(s => !s.NoFill).DefaultIfEmpty(sections.FirstOrDefault() ?? new GeoSection([])))
         {
+            double px = 0, py = 0; // the last point, in the shape's own units
             foreach (var r in s.Rows)
             {
                 switch (r)
                 {
-                    case MoveRow m: sb.Append("M ").Append(N(m.At.X)).Append(' ').Append(N(m.At.Y)).Append(' '); break;
-                    case LineRow l: sb.Append("L ").Append(N(l.To.X)).Append(' ').Append(N(l.To.Y)).Append(' '); break;
+                    case MoveRow m: (px, py) = m.At.At(w, h); sb.Append("M ").Append(N(px / w)).Append(' ').Append(N(py / h)).Append(' '); break;
+                    case LineRow l: (px, py) = l.To.At(w, h); sb.Append("L ").Append(N(px / w)).Append(' ').Append(N(py / h)).Append(' '); break;
+                    case ArcRow a:
+                    {
+                        var (tx, ty) = a.To.At(w, h);
+                        foreach (var (qx, qy) in ArcPoints(px, py, tx, ty, a.Bulge(w, h))) sb.Append("L ").Append(N(qx / w)).Append(' ').Append(N(qy / h)).Append(' ');
+                        px = tx; py = ty;
+                        break;
+                    }
                     case EllipseRow e:
                         for (var k = 0; k <= 32; k++)
                         {
@@ -186,10 +222,28 @@ public static class GeometryMap
     }
 
     /// <summary>
+    /// Points along the circular arc from (x0, y0) to (x1, y1) whose middle is <paramref name="bulge"/> from the chord (positive: to the right of travel as seen on
+    /// screen, y running down). The end point is included. Used to flatten arcs where a path cannot hold them.
+    /// </summary>
+    public static IEnumerable<(double X, double Y)> ArcPoints(double x0, double y0, double x1, double y1, double bulge)
+    {
+        var chord = Math.Sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0)); var s = Math.Abs(bulge);
+        if (chord < 1e-9 || s < 1e-9) { yield return (x1, y1); yield break; }
+        var radius = (chord * chord / 4 + s * s) / (2 * s);
+        double nx = (y1 - y0) / chord, ny = -(x1 - x0) / chord, k = Math.Sign(bulge); // the left-hand normal; the centre is on the side away from the bulge
+        var cx = (x0 + x1) / 2 + nx * (radius - s) * k; var cy = (y0 + y1) / 2 + ny * (radius - s) * k;
+        var a0 = Math.Atan2(y0 - cy, x0 - cx); var sweep = Math.Atan2(y1 - cy, x1 - cx) - a0;
+        if (bulge < 0) { while (sweep <= 0) sweep += 2 * Math.PI; } else { while (sweep >= 0) sweep -= 2 * Math.PI; } // negative bulge turns clockwise on screen
+        var steps = Math.Max(6, (int)Math.Ceiling(Math.Abs(sweep) / (Math.PI / 16)));
+        for (var i = 1; i < steps; i++) { var a = a0 + sweep * i / steps; yield return (cx + radius * Math.Cos(a), cy + radius * Math.Sin(a)); }
+        yield return (x1, y1);
+    }
+
+    /// <summary>
     /// A fingerprint of an outline that survives resizing and Visio rewriting formulas: the row kinds and the fractional coordinates only.
     /// If it still matches what the exporter wrote, the preset is intact; if not, the shape was redrawn in Visio.
     /// </summary>
-    public static string Signature(IReadOnlyList<GeoSection> sections)
+    public static string Signature(IReadOnlyList<GeoSection> sections, double w = 1, double h = 1)
     {
         var sb = new StringBuilder();
         // Remove arithmetic round-off before quantising a half-way value (export scales to inches and back).
@@ -198,7 +252,7 @@ public static class GeometryMap
         {
             sb.Append(s.NoFill ? "[open" : "[fill");
             foreach (var r in s.Rows)
-                sb.Append(r switch { MoveRow m => $"|M{R(m.At.X)},{R(m.At.Y)}", LineRow l => $"|L{R(l.To.X)},{R(l.To.Y)}", EllipseRow e => $"|E{R(e.Centre.X)},{R(e.Centre.Y)},{R(e.Rx)},{R(e.Ry)}", _ => "|?" });
+                sb.Append(r switch { MoveRow m => $"|M{R(m.At.At(w, h).X / w)},{R(m.At.At(w, h).Y / h)}", LineRow l => $"|L{R(l.To.At(w, h).X / w)},{R(l.To.At(w, h).Y / h)}", ArcRow a => $"|A{R(a.To.At(w, h).X / w)},{R(a.To.At(w, h).Y / h)},{R(a.Bulge(w, h) / Math.Min(w, h))}", EllipseRow e => $"|E{R(e.Centre.X)},{R(e.Centre.Y)},{R(e.Rx)},{R(e.Ry)}", _ => "|?" });
             sb.Append(']');
         }
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(sb.ToString())))[..16].ToLowerInvariant();

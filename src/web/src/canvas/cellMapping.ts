@@ -3,6 +3,7 @@ import { HexagonShape, PerimeterRegistry, Point, ShapeRegistry, type AbstractCan
 // HexagonShape is the public path-shape base: its redrawPath is replaced below, keeping addPoints/rounding helpers.
 import type { ConnectorElement, Element, ImageElement, Layer, Paint, ShapeElement, TextBlock, TextElement } from '../contracts/generated';
 import { parsePath } from '../geometry/svgPath';
+import { arcParameters, outlineOf, outlinePolygon, OUTLINE_PRESETS, type OutlinePreset } from '../geometry/presetOutlines';
 
 class CustomPathShape extends HexagonShape {
   redrawPath(c: AbstractCanvas2D, _x: number, _y: number, w: number, h: number): void {
@@ -16,6 +17,31 @@ class CustomPathShape extends HexagonShape {
       else c.lineTo(step.x * w / 100, step.y * h / 100);
     }
   }
+}
+
+/**
+ * The flowchart presets with curved edges (terminator, stored data, document, lined document): drawn from their outline rows with true circular
+ * arcs, so they match the Visio geometry the exporter writes. A second, open section (the line in a lined document) is stroked on its own.
+ */
+function outlineShape(preset: OutlinePreset) {
+  return class extends HexagonShape {
+    redrawPath(c: AbstractCanvas2D, _x: number, _y: number, w: number, h: number): void {
+      const sections = outlineOf(preset, w, h);
+      sections.forEach((section, index) => {
+        if (index > 0) { c.fillAndStroke(); c.begin(); }
+        let x = 0, y = 0;
+        for (const r of section.rows) {
+          if (r.op === 'A') {
+            const a = arcParameters(x, y, r.x, r.y, r.bulge);
+            if (a) c.arcTo(a.radius, a.radius, 0, a.large, a.sweep, r.x, r.y); else c.lineTo(r.x, r.y);
+          } else if (r.op === 'M') c.moveTo(r.x, r.y);
+          else c.lineTo(r.x, r.y);
+          x = r.x; y = r.y;
+        }
+        if (!section.open) c.close();
+      });
+    }
+  };
 }
 
 /** A parallelogram preset (maxGraph has none built in). */
@@ -40,8 +66,9 @@ class CalloutShape extends HexagonShape {
  * Perimeter for a polygon given in unit (0..1) coordinates of the unrotated frame. maxGraph rotates the approach point into the
  * shape's frame before calling this, so the connector meets the drawn outline rather than the frame's bounding rectangle.
  */
-function polygonPerimeter(unit: ReadonlyArray<readonly [number, number]>): PerimeterFunction {
+function polygonPerimeter(shape: ReadonlyArray<readonly [number, number]> | ((w: number, h: number) => ReadonlyArray<readonly [number, number]>)): PerimeterFunction {
   return (bounds, _vertex, next) => {
+    const unit = typeof shape === 'function' ? shape(bounds.width, bounds.height) : shape;
     const cx = bounds.getCenterX(), cy = bounds.getCenterY();
     const dx = next.x - cx, dy = next.y - cy;
     let best = Infinity;
@@ -68,6 +95,7 @@ const POLYGONS: Record<string, ReadonlyArray<readonly [number, number]> | undefi
 const PERIMETER_FOR_PRESET: Record<string, string | undefined> = {
   ellipse: 'ellipsePerimeter', diamond: 'rhombusPerimeter', triangle: 'trianglePerimeter', hexagon: 'hexagonPerimeter',
   parallelogram: 'diagram-parallelogram', callout: 'diagram-callout',
+  terminator: 'diagram-outline-terminator', 'stored-data': 'diagram-outline-stored-data', document: 'diagram-outline-document', 'lined-document': 'diagram-outline-lined-document',
 };
 
 let registered = false;
@@ -79,11 +107,16 @@ export function registerCustomShapes(): void {
   ShapeRegistry.add('custom-path', CustomPathShape);
   PerimeterRegistry.add('diagram-parallelogram', polygonPerimeter(POLYGONS.parallelogram!));
   PerimeterRegistry.add('diagram-callout', polygonPerimeter(POLYGONS.callout!));
+  for (const p of OUTLINE_PRESETS) {
+    ShapeRegistry.add(`outline-${p}`, outlineShape(p));
+    PerimeterRegistry.add(`diagram-outline-${p}`, polygonPerimeter((w, h) => outlinePolygon(p, w, h)));
+  }
 }
 
 const SHAPE_FOR_PRESET: Record<string, string | undefined> = {
   rectangle: undefined, 'rounded-rectangle': undefined, ellipse: 'ellipse', diamond: 'rhombus', triangle: 'triangle', hexagon: 'hexagon',
   parallelogram: 'parallelogram', cylinder: 'cylinder', cloud: 'cloud', callout: 'callout',
+  terminator: 'outline-terminator', 'stored-data': 'outline-stored-data', document: 'outline-document', 'lined-document': 'outline-lined-document',
 };
 
 const DASH: Record<string, string | undefined> = { solid: undefined, dashed: '6 4', dotted: '1 3', 'dash-dot': '6 3 1 3' };

@@ -103,7 +103,7 @@ export const noHost: HostApi = {
 
 const DEFAULT_SIZE: Record<string, { w: number; h: number }> = {
   rectangle: { w: 120, h: 72 }, 'rounded-rectangle': { w: 120, h: 72 }, ellipse: { w: 96, h: 72 }, diamond: { w: 96, h: 72 }, triangle: { w: 90, h: 80 },
-  hexagon: { w: 108, h: 72 }, parallelogram: { w: 120, h: 60 }, cylinder: { w: 72, h: 96 }, cloud: { w: 120, h: 80 }, callout: { w: 120, h: 80 },
+  hexagon: { w: 108, h: 72 }, terminator: { w: 120, h: 48 }, 'stored-data': { w: 108, h: 60 }, document: { w: 108, h: 72 }, 'lined-document': { w: 108, h: 72 }, parallelogram: { w: 120, h: 60 }, cylinder: { w: 72, h: 96 }, cloud: { w: 120, h: 80 }, callout: { w: 120, h: 80 },
 };
 
 const sharedClipboard: { data: ClipboardData | null } = { data: null };

@@ -37,6 +37,9 @@ const PRESETS: Record<string, string> = {
   rect: 'rectangle', rectangle: 'rectangle', roundedrect: 'rounded-rectangle', 'rounded-rectangle': 'rounded-rectangle', rounded: 'rounded-rectangle',
   ellipse: 'ellipse', oval: 'ellipse', circle: 'ellipse', diamond: 'diamond', decision: 'diamond', triangle: 'triangle', hexagon: 'hexagon',
   parallelogram: 'parallelogram', cylinder: 'cylinder', database: 'cylinder', cloud: 'cloud', callout: 'callout',
+  // flowchart symbols: a process is a rectangle and a decision a diamond; the others have outlines of their own
+  process: 'rectangle', terminator: 'terminator', startend: 'terminator', storeddata: 'stored-data', 'stored-data': 'stored-data',
+  document: 'document', lineddocument: 'lined-document', 'lined-document': 'lined-document',
 };
 const ARROWS: Record<string, string> = { none: 'none', block: 'block', triangle: 'block', open: 'open', diamond: 'diamond', oval: 'oval' };
 
