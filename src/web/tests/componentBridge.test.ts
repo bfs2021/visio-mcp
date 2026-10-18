@@ -10,8 +10,8 @@ it('discovers component examples and returns isolated previews and revision-tagg
     preview = s; return ok({ documentId: s.documentId, sessionId: s.sessionId, revision: s.revision, base64: 'eA==', mimeType: 'image/png', byteLength: 1, widthPx: 100, heightPx: 100, pageId: t.ids.page, mode: 'clean', format: 'png', cropPt: { x: 0, y: 0, width: 100, height: 100 } });
   } });
   const call = (method: string, params: Record<string, unknown>) => handle({ protocolVersion: 1, kind: 'request', requestId: crypto.randomUUID(), ...t.scope(), method, params } as RequestEnvelope);
-  const list = await call('components.list', {}); expect(list.error).toBeUndefined(); expect((list.result as any).components).toHaveLength(4);
-  for (const templateId of ['repository-card', 'labelled-container', 'environment-columns', 'pipeline']) {
+  const list = await call('components.list', {}); expect(list.error).toBeUndefined(); expect((list.result as any).components).toHaveLength(5);
+  for (const templateId of ['repository-card', 'labelled-container', 'environment-columns', 'pipeline', 'swimlane']) {
     const revision = t.engine.revision; const current = t.store.snapshot();
     const proposal = await call('components.get', { pageId: t.ids.page, templateId });
     expect(proposal.error).toBeUndefined(); const value = proposal.result as any;

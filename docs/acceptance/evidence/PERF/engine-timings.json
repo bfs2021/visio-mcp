@@ -1,5 +1,5 @@
 {
-  "recorded": "2026-10-18T20:04:45.243Z",
+  "recorded": "2026-10-18T20:37:17.018Z",
   "machine": {
     "node": "v24.14.1",
     "platform": "win32",
@@ -8,30 +8,30 @@
   "runs": 15,
   "singleEdit": {
     "elements": 500,
-    "min": 0.28,
-    "median": 0.65,
-    "p95": 25.94,
-    "max": 25.94,
+    "min": 0.27,
+    "median": 0.49,
+    "p95": 6.17,
+    "max": 6.17,
     "preferredMs": 100,
     "acceptableMs": 250
   },
   "batch100": {
     "elements": 500,
     "operations": 100,
-    "min": 4,
-    "median": 15.57,
-    "p95": 31.85,
-    "max": 31.85,
+    "min": 3.3,
+    "median": 9.33,
+    "p95": 11.93,
+    "max": 11.93,
     "preferredMs": 500
   },
   "read": {
     "elements": 500,
     "pages": 5,
     "serialisedBytes": 356210,
-    "min": 1.81,
-    "median": 3.13,
-    "p95": 9.36,
-    "max": 9.36,
+    "min": 1.54,
+    "median": 2.07,
+    "p95": 10.62,
+    "max": 10.62,
     "preferredMs": 250
   }
 }

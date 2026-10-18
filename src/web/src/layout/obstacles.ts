@@ -1,6 +1,7 @@
 import type { Element, Layer } from '../contracts/generated';
 import { effectiveState } from '../canvas/cellMapping';
 import type { Rect } from './obstacleRoute';
+import { isLaneStructure } from './swimlane';
 
 /** The axis-aligned box around an element after its rotation. */
 export function visualRect(el: { bounds: Rect; rotationDeg: number }): Rect {
@@ -25,7 +26,7 @@ export function selectObstacles(elements: readonly Element[], layers: readonly L
   const candidates: Array<{ id: string; rect: Rect }> = [];
   for (const el of elements) {
     if (el.kind === 'connector' || el.kind === 'group' || el.kind === 'text' || endIds.has(el.id)) continue;
-    if (!effectiveState(el, layers).visible) continue;
+    if (!effectiveState(el, layers).visible || isLaneStructure(el)) continue; // lanes, frames and rules are what a route runs inside
     if (el.kind === 'shape' && el.style.fill.kind === 'none' && el.style.stroke.kind === 'none') continue;
     candidates.push({ id: el.id, rect: visualRect(el) });
   }

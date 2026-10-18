@@ -56,7 +56,7 @@ public sealed class DiagramTools(PipeClient app)
             ("colour", colour), ("strokeWidthPt", strokeWidthPt), ("catalogVersion", catalogVersion), ("elementId", elementId)), Render, ct));
     }
 
-    [McpServerTool(Name = "list_layout_components"), Description("Discover the four reusable editable diagram components: repository-card, labelled-container, environment-columns and pipeline. Returns versioned content/layout schemas, examples, limits and guidance. Read-only. " + Identity)]
+    [McpServerTool(Name = "list_layout_components"), Description("Discover the five reusable editable diagram components: repository-card, labelled-container, environment-columns, pipeline and swimlane (lanes and phase columns with a title bar; the document summary then reports which lane and phase each shape is in). Returns versioned content/layout schemas, examples, limits and guidance. Read-only. " + Identity)]
     public async Task<CallToolResult> ListLayoutComponents(string documentId, string sessionId, CancellationToken ct = default)
     {
         if (Check(("documentId", documentId), ("sessionId", sessionId)) is { } bad) return ToolErrors.Fail("invalid_request", bad);

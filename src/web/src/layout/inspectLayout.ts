@@ -5,6 +5,7 @@ import { effectiveState } from '../canvas/cellMapping';
 import { measureTextBox, TextMeasurementLimitError, type TextMeasurement } from './textMeasurement';
 import { parsePath } from '../geometry/svgPath';
 import { inspectNearAlignments, isVisibleThinRule } from './inspectAlignment';
+import { findSwimlanes, isLaneStructure, isPartOfSwimlane, lanesCrossed, membershipOf } from './swimlane';
 
 export type Severity = 'info' | 'warning' | 'error';
 
@@ -94,6 +95,7 @@ function inspectPage(page: Page, ctx: LayoutContext, issues: LayoutIssue[], note
   const add = (code: string, severity: Severity, ids: string[], bounds: Bounds, message: string, evidence: Record<string, unknown> = {}) =>
     issues.push({ code, severity, elementIds: ids, pageId: page.id, bounds, message, evidence });
   const pageBox: Bounds = { x: 0, y: 0, width: page.widthPt, height: page.heightPt };
+  const swimlanes = findSwimlanes(page);
 
   for (const el of shown) {
     if (el.kind === 'group') continue;
@@ -137,8 +139,19 @@ function inspectPage(page: Page, ctx: LayoutContext, issues: LayoutIssue[], note
     if (el.hidden && el.kind !== 'group') add('HIDDEN_OBJECT', 'info', [el.id], visualBounds(el), 'The object is hidden although its layers are visible.', {});
   }
 
-  // overlapping shapes and pictures: sweep along x
-  const boxes = shown.filter(e => (e.kind === 'shape' || e.kind === 'image')).map(e => ({ e, b: visualBounds(e) })).sort((a, b) => a.b.x - b.b.x);
+  // a shape that sits in one lane but spills into the next: reported, since its lane is decided by its middle
+  for (const el of shown) {
+    if (swimlanes.length === 0) break;
+    if (el.kind === 'group' || el.kind === 'connector' || isPartOfSwimlane(swimlanes, el.id)) continue;
+    const box = visualBounds(el), home = membershipOf(swimlanes, box);
+    if (!home) continue;
+    const sw = swimlanes.find(s => s.title === home.swimlane && s.bounds.x <= box.x + box.width / 2 && box.x + box.width / 2 < s.bounds.x + s.bounds.width);
+    const crossed = sw ? lanesCrossed(sw, box) : [];
+    if (crossed.length > 1) add('STRADDLES_LANES', 'info', [el.id], box, 'The element spills over a lane boundary; it counts as being in the lane that holds its middle.', { lane: home.lane, lanesTouched: crossed.map(l => l.title || `lane ${l.index + 1}`) });
+  }
+
+  // overlapping shapes and pictures: sweep along x. Swim-lane structure (frame, bands, header cells, rules) is containment by design.
+  const boxes = shown.filter(e => (e.kind === 'shape' || e.kind === 'image') && !isLaneStructure(e)).map(e => ({ e, b: visualBounds(e) })).sort((a, b) => a.b.x - b.b.x);
   for (let i = 0; i < boxes.length; i++) {
     for (let j = i + 1; j < boxes.length && boxes[j]!.b.x < boxes[i]!.b.x + boxes[i]!.b.width; j++) {
       const a = boxes[i]!, b = boxes[j]!;
@@ -204,6 +217,7 @@ function connectorChecks(
   const crossed: string[] = [];
   for (const other of shown) {
     if (other.id === el.from.elementId || other.id === el.to.elementId || other.kind !== 'shape' && other.kind !== 'image') continue;
+    if (isLaneStructure(other)) continue; // a lane is something a connector runs inside, not a shape in its way
     if (ancestorsOfEnds.has(other.id)) continue;
     const b = visualBounds(other);
     for (let i = 0; i + 1 < route.length; i++) if (segmentCrosses(route[i]!, route[i + 1]!, b)) { crossed.push(other.id); break; }

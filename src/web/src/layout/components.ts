@@ -19,7 +19,7 @@ const known = (o: Record<string, unknown>, keys: string[]) => { if (Object.keys(
 function contentValue(value: unknown, template: TemplateId): Content {
   if (value === undefined) return structuredClone(samples[template]);
   if (!record(value)) throw new Error('content must be an object');
-  known(value, ['title', 'subtitle', 'iconId', ...(template === 'environment-columns' ? ['columns'] : template === 'pipeline' ? ['steps'] : ['items', 'footer'])]);
+  known(value, template === 'swimlane' ? ['title', 'lanes', 'phases', 'laneHeaderWidthPt'] : ['title', 'subtitle', 'iconId', ...(template === 'environment-columns' ? ['columns'] : template === 'pipeline' ? ['steps'] : ['items', 'footer'])]);
   const str = (v: unknown): string => { if (typeof v !== 'string' || v.length > 512) throw new Error('Text fields must be strings of at most 512 characters'); return v; };
   const icon = (v: unknown): string => { const s = str(v); if (!iconCatalog.icons.some(i => i.id === s)) throw new Error('Unknown iconId; use search_icons'); return s; };
   const items = (v: unknown): string[] => { if (!Array.isArray(v) || v.length > 8) throw new Error('items must be at most 8 strings'); return v.map(str); };
@@ -35,6 +35,23 @@ function contentValue(value: unknown, template: TemplateId): Content {
   if (template === 'pipeline') {
     if (!Array.isArray(value.steps) || value.steps.length < 1 || value.steps.length > 10) throw new Error('pipeline needs 1–10 steps');
     c.steps = value.steps.map(v => { if (!record(v)) throw new Error('step must be an object'); known(v, ['title', 'detail']); return { title: str(v.title), ...(v.detail === undefined ? {} : { detail: str(v.detail) }) }; });
+  }
+  if (template === 'swimlane') {
+    if (!Array.isArray(value.lanes) || value.lanes.length < 1 || value.lanes.length > 10) throw new Error('swimlane needs 1–10 lanes');
+    c.lanes = value.lanes.map(v => {
+      if (!record(v)) throw new Error('lane must be an object'); known(v, ['title', 'heightPt', 'colour']);
+      const h = v.heightPt; if (h !== undefined && (typeof h !== 'number' || !Number.isFinite(h) || h < 30 || h > 600)) throw new Error('lane heightPt must be 30–600 points');
+      const colour = v.colour; if (colour !== undefined && (typeof colour !== 'string' || (colour !== '' && !/^#[0-9a-fA-F]{6}$/.test(colour)))) throw new Error('lane colour must be #rrggbb');
+      return { title: str(v.title), ...(h === undefined ? {} : { heightPt: h }), ...(colour === undefined || colour === '' ? {} : { colour }) };
+    });
+    if (value.phases !== undefined) {
+      if (!Array.isArray(value.phases) || value.phases.length > 8) throw new Error('phases must be at most 8 columns');
+      c.phases = value.phases.map(v => { if (!record(v)) throw new Error('phase must be an object'); known(v, ['title']); return { title: str(v.title) }; });
+    }
+    if (value.laneHeaderWidthPt !== undefined) {
+      const w = value.laneHeaderWidthPt; if (typeof w !== 'number' || !Number.isFinite(w) || w < 40 || w > 300) throw new Error('laneHeaderWidthPt must be 40–300 points');
+      c.laneHeaderWidthPt = w;
+    }
   }
   if (JSON.stringify(c).length > 16384) throw new Error('Component content exceeds 16384 characters');
   return c;
@@ -84,7 +101,7 @@ export function planComponent(snapshot: Snapshot, ctx: { measureWidth: TextWidth
     const options = (p.layout ?? {}) as Record<string, unknown>; known(options, ['widthPt', 'paddingPt', 'gapPt', 'align', 'target']);
     known(saved as Record<string, unknown>, ['widthPt', 'paddingPt', 'gapPt', 'align', 'target']);
     const frame = oldParts.get('frame');
-    const defaults: Settings = { widthPt: templateId === 'environment-columns' ? 600 : 400, paddingPt: 16, gapPt: 10, align: templateId === 'repository-card' || templateId === 'labelled-container' ? 'left' : 'center', target: 'visio' };
+    const defaults: Settings = { widthPt: templateId === 'swimlane' ? 760 : templateId === 'environment-columns' ? 600 : 400, paddingPt: 16, gapPt: 10, align: templateId === 'repository-card' || templateId === 'labelled-container' ? 'left' : 'center', target: 'visio' };
     const settings = { ...defaults, ...saved, ...(frame ? { widthPt: frame.bounds.width } : {}), ...options } as Settings;
     for (const [name, low, high] of [['widthPt', 120, 2000], ['paddingPt', 0, 100], ['gapPt', 0, 100]] as const) {
       const n = settings[name]; if (typeof n !== 'number' || !Number.isFinite(n) || n < low || n > high) throw new Error(`${name} must be ${low}–${high} points`);

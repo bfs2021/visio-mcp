@@ -4,7 +4,7 @@ import { planComponent, componentCatalog } from '../src/layout/components';
 import { createTestEngine, element } from './support/engine';
 const measureWidth = (s: string, f: { sizePt: number }) => s.length * f.sizePt * .5;
 
-for (const template of ['repository-card', 'labelled-container', 'environment-columns', 'pipeline']) it(`creates ${template} as an editable group in one undo step without mutating during planning`, async () => {
+for (const template of ['repository-card', 'labelled-container', 'environment-columns', 'pipeline', 'swimlane']) it(`creates ${template} as an editable group in one undo step without mutating during planning`, async () => {
   const t = createTestEngine(); const before = t.store.snapshot();
   const result = planComponent(before, { measureWidth }, { pageId: t.ids.page, templateId: template, x: 20, y: 20, layout: { widthPt: 500 } });
   expect(result.ok).toBe(true); if (!result.ok) return;
@@ -53,7 +53,7 @@ it('bounds inputs and rejects ambiguous or unsupported options', () => {
   const t = createTestEngine(); const base = { pageId: t.ids.page, templateId: 'pipeline' };
   for (const bad of [{ layout: { widthPt: NaN } }, { layout: { paddingPt: 9999 } }, { layout: { mystery: 1 } }, { content: { steps: Array.from({ length: 30 }, () => ({ title: 'Step' })) } }, { content: { title: 'x'.repeat(20000) } }, { templateId: 'unknown' }, { componentId: t.ids.shape }])
     expect(planComponent(t.store.snapshot(), { measureWidth }, { ...base, ...bad }).ok).toBe(false);
-  expect(componentCatalog.components).toHaveLength(4);
+  expect(componentCatalog.components).toHaveLength(5);
 });
 
 it('reflows duplicated components independently and preserves the original geometry', async () => {

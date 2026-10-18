@@ -1,6 +1,7 @@
 import type { Asset, Bounds, Element, Page, Snapshot } from '../contracts/generated';
 import { defaultScope, lookupTarget } from '../commands/resolveTarget';
 import { fail, ok, type Result } from '../model/result';
+import { findSwimlanes, isPartOfSwimlane, membershipOf, type Membership } from '../layout/swimlane';
 
 export interface SummaryOptions { pageId?: string; includeGeometry?: boolean; includeStyle?: boolean; includeHidden?: boolean }
 
@@ -25,6 +26,8 @@ export interface ElementSummary {
   assetId?: string;
   /** group */
   childIds?: string[];
+  /** Where the element sits in a swim-lane on the page (by its middle), when there is one. */
+  lane?: Membership;
 }
 
 const TEXT_LIMIT = 500;
@@ -62,12 +65,18 @@ export function readSummary(snapshot: Snapshot, options: SummaryOptions = {}): R
   const outPages = pages.map(page => {
     const shown = page.elements.filter(e => includeHidden || (!e.hidden && !hiddenByLayer(page, e)));
     for (const e of shown) if (e.kind === 'image') used.add(e.assetId);
+    const swimlanes = findSwimlanes(page);
     return {
       id: page.id, name: page.name, widthPt: page.widthPt, heightPt: page.heightPt,
       layers: page.layers.map(l => ({ id: l.id, name: l.name, visible: l.visible, locked: l.locked, elementCount: page.elements.filter(e => e.layerIds.includes(l.id)).length })),
       elementCount: page.elements.length,
       omittedHidden: page.elements.length - shown.length,
-      elements: shown.map(e => summariseElement(e, o)),
+      elements: shown.map(e => {
+        const s = summariseElement(e, o);
+        if (swimlanes.length && e.kind !== 'group' && e.kind !== 'connector' && !isPartOfSwimlane(swimlanes, e.id)) { const m = membershipOf(swimlanes, e.bounds); if (m) s.lane = m; }
+        return s;
+      }),
+      ...(swimlanes.length ? { swimlanes: swimlanes.map(s => ({ id: s.groupId, title: s.title, bounds: s.bounds, lanes: s.lanes.map(l => ({ title: l.title, bounds: l.bounds })), phases: s.phases.map(p => ({ title: p.title, bounds: p.bounds })) })) } : {}),
     };
   });
   return ok({
