@@ -1,3 +1,4 @@
+import { NewDocumentDialog } from './components/NewDocumentDialog';
 import { useEffect } from 'react';
 import type { EditorModel } from './editor/EditorModel';
 import { AssetsPanel } from './components/AssetsPanel';
@@ -21,7 +22,8 @@ const typing = (t: EventTarget | null) =>
 function useShortcuts(model: EditorModel) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (typing(e.target)) return;
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') { e.preventDefault(); model.newDocument.begin(); return; }
+      if (model.newDocument.prompt || model.closePrompt || typing(e.target)) return;
       const mod = e.ctrlKey || e.metaKey;
       const key = e.key.toLowerCase();
       if (mod && key === 'z' && !e.shiftKey) { e.preventDefault(); void model.undo(); }
@@ -68,8 +70,10 @@ export function App({ model }: { model: EditorModel }) {
       <CompatibilityDialog model={model} />
       <RecoveryDialog model={model} />
       <CloseDialog model={model} />
+      <NewDocumentDialog model={model} />
       <DocumentTitle model={model} />
       <StatusBar model={model} />
     </div>
   );
 }
+

@@ -1,3 +1,4 @@
+import { NewDocumentFlow } from './NewDocumentFlow';
 import { componentWarningText } from '../layout/componentTemplates';
 import type { ComponentProposal } from '../layout/components';
 import type { DiagramDocument, Element, Operation, PreparedAssetRef, Snapshot, TransactionResult } from '../contracts/generated';
@@ -96,6 +97,7 @@ export interface Status { text: string; kind: 'info' | 'warning' | 'error' }
  */
 export class EditorModel {
   readonly engine: CommandEngine;
+  readonly newDocument: NewDocumentFlow;
   readonly controller: GestureController;
   private adapter: MaxGraphAdapter | null = null;
   private readonly projector = createSnapshotProjector((snapshot, assetId) => this.assetUrlIn(snapshot, assetId));
@@ -151,6 +153,22 @@ export class EditorModel {
   constructor(engine: CommandEngine) {
     this.engine = engine;
     this.controller = new GestureController(engine);
+    this.newDocument = new NewDocumentFlow(engine, () => this.bump());
+    this.newDocument.canStart = () => !this.controller.isActive() && !this.closePrompt && !this.recoveryOffers.length;
+    this.newDocument.save = () => this.save();
+    this.newDocument.create = async (document, expected) => {
+      const r = await this.engine.replaceDocument(document, expected);
+      if (r.ok) this.afterRecoveryRestore();
+      return r;
+    };
+    this.newDocument.created = result => {
+      this.pageId = undefined; this.selection = []; this.tool = { kind: 'select' };
+      this.lastSavedAt = null; this.protectedRevision = null; this.protectionNote = null;
+      this.report = null; this.recoveryReport = null; this.scriptReport = null; this.scriptOutcome = null; this.scriptSources.clear();
+      this.sessionReplaced(); this.canvas?.setTool(this.tool); this.zoomToFit();
+      const warning = (result as { recoveryWarning?: string } | null)?.recoveryWarning;
+      this.say(warning ?? 'Created a new untitled drawing. Save it to keep it.', warning ? 'warning' : 'info');
+    };
     this.controller.onGestureState = a => this.onGestureState(a);
     this.controller.onDiscard = reason => {
       this.showCommitted(); // show committed state again
@@ -922,3 +940,5 @@ function diagnosticOf(details: Record<string, unknown> | undefined): { line?: nu
   if (typeof details?.hint === 'string') out.hint = details.hint;
   return out;
 }
+
+

@@ -42,6 +42,7 @@ const renderer = createSnapshotRenderer({ assetUrl: assetUrl as never });
 const { engine, host, router, sessionChanged } = startApp(window.chrome?.webview, null, { onSessionChanged: () => model?.sessionReplaced(), render: renderer.render, rasterise: renderer.rasterise, layoutContext: createBrowserLayoutContext(assetUrl as never), beforeClose: async () => model!.beginClose() });
 model = new EditorModel(engine);
 model.host = hostApi(host);
+if (host) model.newDocument.create = (document, expected, discard) => host.call('host.newDocument', { document, expected, discard });
 model.proposeComponent = async params => {
   if (!router) return { ok: false, error: { code: 'not_ready', message: 'The editor bridge is unavailable', retryable: false } };
   const r = await router.dispatch({ protocolVersion: 1, kind: 'request', requestId: crypto.randomUUID(), ...engine.scope(), method: 'components.get', params } as never);
@@ -94,3 +95,4 @@ if (import.meta.env.VITE_TEST_API === '1') {
 }
 
 createRoot(document.getElementById('root')!).render(<App model={model} />);
+
