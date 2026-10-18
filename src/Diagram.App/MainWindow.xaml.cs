@@ -54,6 +54,7 @@ public partial class MainWindow : Window
     public LiveControl? Live { get; private set; }
     public NativeFileCoordinator Native { get; private set; } = null!;
     public ExportService Exports { get; private set; } = null!;
+    public ReferenceComparisonService Comparisons { get; private set; } = null!;
 
     public async Task InitializeAsync()
     {
@@ -65,7 +66,8 @@ public partial class MainWindow : Window
         Services = services;
         Native = new NativeFileCoordinator(host.Router, host.Router, Blobs, Writer, new NativeVsdxImporter(), new NativeVsdxExporter(), host.Router);
         Exports = new ExportService(this, options.ExportRoot ?? Path.Combine(Path.GetTempPath(), "AgenticDiagramExports"));
-        if (options.PipeName is { } pipe) Live = new LiveControl(pipe, host.Router, Exports.HandleAsync, Library, Resolver); // fails on a name collision rather than attaching to another owner
+        Comparisons = new ReferenceComparisonService(this);
+        if (options.PipeName is { } pipe) Live = new LiveControl(pipe, host.Router, Exports.HandleAsync, Library, Resolver, Comparisons.HandleAsync); // fails on a name collision rather than attaching to another owner
         Closed += async (_, _) => { if (Live is not null) await Live.DisposeAsync(); };
     }
 

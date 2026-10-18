@@ -1,0 +1,18 @@
+{
+  "ShapeCount": 62,
+  "TextCount": 39,
+  "Arrows": [
+    {
+      "RequiredWidthPt": 24.080962132546876,
+      "AvailableWidthPt": 30.0,
+      "FontSizePt": 11.822,
+      "Fits": true
+    },
+    {
+      "RequiredWidthPt": 24.080962132546876,
+      "AvailableWidthPt": 30.0,
+      "FontSizePt": 11.822,
+      "Fits": true
+    }
+  ]
+}

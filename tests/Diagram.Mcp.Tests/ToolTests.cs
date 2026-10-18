@@ -14,7 +14,8 @@ public class ToolTests
     static readonly string[] SourceTools =
     [
         "get_document_summary", "get_objects", "apply_operations", "execute_script", "render_page", "render_region",
-        "inspect_layout", "list_assets", "get_changes", "export_document",
+        "inspect_layout", "list_assets", "get_changes", "export_document", "get_operation_schema", "get_text_layout",
+        "render_reference_region", "compare_reference", "search_icons", "get_icon",
     ];
 
     static string NewPipe() => $"mcp-test-{Guid.NewGuid():N}";
@@ -25,6 +26,31 @@ public class ToolTests
         var cfg = AppContext.BaseDirectory.Contains($"{Path.DirectorySeparatorChar}Release{Path.DirectorySeparatorChar}") ? "Release" : "Debug";
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "Diagram.Mcp", "bin", cfg, "net10.0"));
         return Path.Combine(root, "Diagram.Mcp.dll");
+    }
+
+    [Fact]
+    public async Task TextLayoutForwardsScopeAndReadOptionsWithoutInventingATransaction()
+    {
+        var pipe = NewPipe(); var app = new FakeApp();
+        await using var server = PipeServer.Start(pipe, app.Handle);
+        await using var client = await Connect(pipe);
+        var result = await client.CallToolAsync("get_text_layout", new Dictionary<string, object?>
+        {
+            ["documentId"] = Doc, ["sessionId"] = Session, ["ids"] = new[] { "label" },
+            ["strategy"] = "shrink_font", ["target"] = "visio", ["minFontSizePt"] = 9.5,
+        }, cancellationToken: Ct());
+        Assert.True(result.IsError != true, result.StructuredContent?.ToString());
+        var sent = app.Last("doc.textLayout");
+        Assert.Equal(Doc, sent.DocumentId); Assert.Equal(Session, sent.SessionId);
+        Assert.Equal("label", sent.Params["ids"]![0]!.GetValue<string>());
+        Assert.Equal("shrink_font", sent.Params["strategy"]!.GetValue<string>());
+        Assert.Equal("visio", sent.Params["target"]!.GetValue<string>());
+        Assert.Equal(9.5, sent.Params["minFontSizePt"]!.GetValue<double>());
+        Assert.False(sent.Params.ContainsKey("transactionId"));
+        var invalid = await client.CallToolAsync("get_text_layout", new Dictionary<string, object?>
+        { ["documentId"] = Doc, ["sessionId"] = Session, ["ids"] = Array.Empty<string>() }, cancellationToken: Ct());
+        Assert.True(invalid.IsError);
+        Assert.Equal(1, app.Count("doc.textLayout"));
     }
 
     static Task<McpClient> Connect(string pipe) => McpClient.CreateAsync(new StdioClientTransport(new StdioClientTransportOptions
@@ -83,7 +109,8 @@ public class ToolTests
         static string[] Required(McpClientTool t) => t.JsonSchema.TryGetProperty("required", out var r) ? r.EnumerateArray().Select(x => x.GetString()!).ToArray() : [];
 
         Assert.Empty(Required(tools["get_document_summary"])); // the first call: it hands out the identity
-        foreach (var name in SourceTools.Where(n => n != "get_document_summary"))
+        Assert.Empty(Required(tools["get_operation_schema"]));
+        foreach (var name in SourceTools.Where(n => n != "get_document_summary" && n != "get_operation_schema"))
         {
             Assert.Contains("documentId", Required(tools[name]));
             Assert.Contains("sessionId", Required(tools[name]));
@@ -96,6 +123,78 @@ public class ToolTests
         Assert.Contains("operations", Required(tools["apply_operations"]));
         Assert.Contains("script", Required(tools["execute_script"]));
         Assert.Contains("sinceRevision", Required(tools["get_changes"]));
+    }
+
+    [Fact]
+    public async Task OperationDiscoveryWorksOfflineAndMatchesCanonicalContracts()
+    {
+        await using var client = await Connect(NewPipe()); // No pipe server or open document.
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+        var canonical = JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(root, "contracts", "operations.schema.json")))!;
+        var document = JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(root, "contracts", "document.schema.json")))!;
+        var examples = JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(root, "contracts", "fixtures", "operation-examples.json")))!;
+        var protocol = JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(root, "contracts", "protocol.schema.json")))!;
+        var index = await client.CallToolAsync("get_operation_schema", cancellationToken: Ct());
+        Assert.False(index.IsError == true);
+        var body = Structured(index);
+        Assert.Contains("points", body.GetProperty("guidance").GetProperty("coordinates").GetString());
+        Assert.Contains("UUID", body.GetProperty("guidance").GetProperty("targets").GetString());
+        Assert.Equal(protocol["$defs"]!["MutationRequest"]!["properties"]!["operations"]!["maxItems"]!.GetValue<int>(), body.GetProperty("limits").GetProperty("maxItems").GetInt32());
+        var names = body.GetProperty("operations").EnumerateArray().Select(x => x.GetProperty("operation").GetString()!).ToArray();
+        var expected = canonical["$defs"]!["Operation"]!["oneOf"]!.AsArray().Select(r =>
+        {
+            var def = r!["$ref"]!.GetValue<string>().Split('/').Last();
+            return canonical["$defs"]![def]!["properties"]!["op"]!["const"]!.GetValue<string>();
+        }).ToArray();
+        Assert.Equal(expected.Order(), names.Order());
+        foreach (var name in names)
+        {
+            var result = await client.CallToolAsync("get_operation_schema", new Dictionary<string, object?> { ["operation"] = name }, cancellationToken: Ct());
+            Assert.False(result.IsError == true);
+            var detail = JsonNode.Parse(Structured(result).GetRawText())!;
+            var schema = detail["schema"]!;
+            Assert.Equal(name, schema["properties"]!["op"]!["const"]!.GetValue<string>());
+            Assert.Equal(name, detail["example"]!["op"]!.GetValue<string>());
+            Assert.True(JsonNode.DeepEquals(examples[name], detail["example"]), name + " example differs from validated fixture");
+            var def = canonical["$defs"]!.AsObject().First(x => x.Value?["properties"]?["op"]?["const"]?.ToString() == name).Value!;
+            var actual = schema.DeepClone().AsObject(); actual.Remove("$schema"); actual.Remove("$defs");
+            Assert.True(JsonNode.DeepEquals(Normalize(def), actual), name + " schema differs from canonical contract");
+            CheckReferences(schema, schema);
+            foreach (var entry in schema["$defs"]!.AsObject())
+                Assert.True(JsonNode.DeepEquals(Normalize(canonical["$defs"]![entry.Key] ?? document["$defs"]![entry.Key]!), entry.Value), entry.Key);
+        }
+        var unknown = await client.CallToolAsync("get_operation_schema", new Dictionary<string, object?> { ["operation"] = "notAnOperation" }, cancellationToken: Ct());
+        Assert.True(unknown.IsError);
+        Assert.Equal("invalid_request", Structured(unknown).GetProperty("error").GetProperty("code").GetString());
+        Assert.Contains("get_operation_schema", Structured(unknown).GetProperty("error").GetProperty("message").GetString());
+
+        static JsonNode Normalize(JsonNode source)
+        {
+            var n = source.DeepClone();
+            void Walk(JsonNode? value)
+            {
+                if (value is JsonObject o) foreach (var p in o.ToArray())
+                {
+                    if (p.Key == "$ref") o[p.Key] = "#/$defs/" + p.Value!.GetValue<string>().Split('/').Last();
+                    else Walk(p.Value);
+                }
+                else if (value is JsonArray a) foreach (var item in a) Walk(item);
+            }
+            Walk(n); return n;
+        }
+        static void CheckReferences(JsonNode? node, JsonNode root)
+        {
+            if (node is JsonObject o) foreach (var p in o)
+            {
+                if (p.Key == "$ref")
+                {
+                    Assert.StartsWith("#/$defs/", p.Value!.ToString());
+                    Assert.NotNull(root["$defs"]![p.Value.ToString().Split('/').Last()]);
+                }
+                else CheckReferences(p.Value, root);
+            }
+            else if (node is JsonArray a) foreach (var item in a) CheckReferences(item, root);
+        }
     }
 
     [Fact]

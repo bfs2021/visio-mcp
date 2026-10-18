@@ -17,5 +17,6 @@
   <!-- The packaged frontend: build it first (npm run build in src/web). It ships beside the executable under web/. -->
   <ItemGroup>
     <Content Include="..\web\dist\**\*" Link="web\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\vendor\lucide\LICENSE" Link="licences\Lucide.LICENSE" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

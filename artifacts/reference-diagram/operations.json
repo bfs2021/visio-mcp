@@ -1,0 +1,1486 @@
+[
+  {
+    "op": "addPage",
+    "id": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "name": "Repository deployment · light",
+    "widthPt": 1220,
+    "heightPt": 950
+  },
+  {
+    "op": "setPage",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "patch": {
+      "background": {
+        "kind": "solid",
+        "colour": "#FFFFFF",
+        "opacity": 1
+      },
+      "grid": {
+        "visible": false,
+        "snap": false
+      }
+    }
+  },
+  {
+    "op": "createShape",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "outer-frame",
+    "bounds": {
+      "x": 35,
+      "y": 10,
+      "width": 1150,
+      "height": 930
+    },
+    "geometry": {
+      "preset": "rounded-rectangle",
+      "cornerRadiusPt": 18
+    },
+    "style": {
+      "fill": {
+        "kind": "solid",
+        "colour": "#FFFFFF",
+        "opacity": 1
+      },
+      "stroke": {
+        "kind": "solid",
+        "colour": "#CBD5E1",
+        "opacity": 1
+      },
+      "strokeWidthPt": 1
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "infra-icon",
+    "bounds": {
+      "x": 72,
+      "y": 52,
+      "width": 30,
+      "height": 28
+    },
+    "text": {
+      "value": "⑂",
+      "fontFamily": "Arial",
+      "fontSizePt": 25,
+      "bold": false,
+      "colour": "#172033",
+      "horizontalAlign": "left",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "infra-title",
+    "bounds": {
+      "x": 108,
+      "y": 52,
+      "width": 480,
+      "height": 30
+    },
+    "text": {
+      "value": "Infrastructure repository",
+      "fontFamily": "Arial",
+      "fontSizePt": 24,
+      "bold": true,
+      "colour": "#172033",
+      "horizontalAlign": "left",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "infra-owner",
+    "bounds": {
+      "x": 72,
+      "y": 98,
+      "width": 512,
+      "height": 25
+    },
+    "text": {
+      "value": "Owned by Sensical",
+      "fontFamily": "Arial",
+      "fontSizePt": 18,
+      "bold": false,
+      "colour": "#172033",
+      "horizontalAlign": "left",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createShape",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "infra-rule",
+    "bounds": {
+      "x": 72,
+      "y": 145,
+      "width": 512,
+      "height": 0.8
+    },
+    "geometry": {
+      "preset": "rectangle",
+      "cornerRadiusPt": 0
+    },
+    "style": {
+      "fill": {
+        "kind": "solid",
+        "colour": "#E2E8F0",
+        "opacity": 1
+      },
+      "stroke": {
+        "kind": "none"
+      },
+      "strokeWidthPt": 1
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "infra-item-0",
+    "bounds": {
+      "x": 72,
+      "y": 170,
+      "width": 512,
+      "height": 26
+    },
+    "text": {
+      "value": "Bicep modules",
+      "fontFamily": "Arial",
+      "fontSizePt": 18,
+      "bold": false,
+      "colour": "#172033",
+      "horizontalAlign": "left",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "infra-item-1",
+    "bounds": {
+      "x": 72,
+      "y": 206,
+      "width": 512,
+      "height": 26
+    },
+    "text": {
+      "value": "Environment parameters",
+      "fontFamily": "Arial",
+      "fontSizePt": 18,
+      "bold": false,
+      "colour": "#172033",
+      "horizontalAlign": "left",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "infra-item-2",
+    "bounds": {
+      "x": 72,
+      "y": 242,
+      "width": 512,
+      "height": 26
+    },
+    "text": {
+      "value": "Network, security and identities",
+      "fontFamily": "Arial",
+      "fontSizePt": 18,
+      "bold": false,
+      "colour": "#172033",
+      "horizontalAlign": "left",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "infra-item-3",
+    "bounds": {
+      "x": 72,
+      "y": 278,
+      "width": 512,
+      "height": 26
+    },
+    "text": {
+      "value": "Infrastructure release manifests",
+      "fontFamily": "Arial",
+      "fontSizePt": 18,
+      "bold": false,
+      "colour": "#172033",
+      "horizontalAlign": "left",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createShape",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "infra-actions",
+    "bounds": {
+      "x": 72,
+      "y": 314,
+      "width": 512,
+      "height": 82
+    },
+    "geometry": {
+      "preset": "rounded-rectangle",
+      "cornerRadiusPt": 9
+    },
+    "style": {
+      "fill": {
+        "kind": "solid",
+        "colour": "#EEF2F6",
+        "opacity": 1
+      },
+      "stroke": {
+        "kind": "none"
+      },
+      "strokeWidthPt": 1
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "infra-action-title",
+    "bounds": {
+      "x": 72,
+      "y": 325,
+      "width": 512,
+      "height": 26
+    },
+    "text": {
+      "value": "Infrastructure GitHub Actions",
+      "fontFamily": "Arial",
+      "fontSizePt": 18,
+      "bold": true,
+      "colour": "#172033",
+      "horizontalAlign": "center",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "infra-pipeline",
+    "bounds": {
+      "x": 72,
+      "y": 358,
+      "width": 512,
+      "height": 29
+    },
+    "text": {
+      "value": "Validate → Plan → Deploy → Verify",
+      "fontFamily": "Arial",
+      "fontSizePt": 20,
+      "bold": false,
+      "colour": "#172033",
+      "horizontalAlign": "center",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "app-icon",
+    "bounds": {
+      "x": 638,
+      "y": 52,
+      "width": 30,
+      "height": 28
+    },
+    "text": {
+      "value": "‹/›",
+      "fontFamily": "Arial",
+      "fontSizePt": 25,
+      "bold": false,
+      "colour": "#172033",
+      "horizontalAlign": "left",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "app-title",
+    "bounds": {
+      "x": 674,
+      "y": 52,
+      "width": 480,
+      "height": 30
+    },
+    "text": {
+      "value": "Application repository",
+      "fontFamily": "Arial",
+      "fontSizePt": 24,
+      "bold": true,
+      "colour": "#172033",
+      "horizontalAlign": "left",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "app-owner",
+    "bounds": {
+      "x": 638,
+      "y": 98,
+      "width": 512,
+      "height": 25
+    },
+    "text": {
+      "value": "Owned by external developer",
+      "fontFamily": "Arial",
+      "fontSizePt": 18,
+      "bold": false,
+      "colour": "#172033",
+      "horizontalAlign": "left",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createShape",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "app-rule",
+    "bounds": {
+      "x": 638,
+      "y": 145,
+      "width": 512,
+      "height": 0.8
+    },
+    "geometry": {
+      "preset": "rectangle",
+      "cornerRadiusPt": 0
+    },
+    "style": {
+      "fill": {
+        "kind": "solid",
+        "colour": "#E2E8F0",
+        "opacity": 1
+      },
+      "stroke": {
+        "kind": "none"
+      },
+      "strokeWidthPt": 1
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "app-item-0",
+    "bounds": {
+      "x": 638,
+      "y": 170,
+      "width": 512,
+      "height": 26
+    },
+    "text": {
+      "value": "API and worker source code",
+      "fontFamily": "Arial",
+      "fontSizePt": 18,
+      "bold": false,
+      "colour": "#172033",
+      "horizontalAlign": "left",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "app-item-1",
+    "bounds": {
+      "x": 638,
+      "y": 206,
+      "width": 512,
+      "height": 26
+    },
+    "text": {
+      "value": "Tests and database migrations",
+      "fontFamily": "Arial",
+      "fontSizePt": 18,
+      "bold": false,
+      "colour": "#172033",
+      "horizontalAlign": "left",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "app-item-2",
+    "bounds": {
+      "x": 638,
+      "y": 242,
+      "width": 512,
+      "height": 26
+    },
+    "text": {
+      "value": "Infrastructure requirements",
+      "fontFamily": "Arial",
+      "fontSizePt": 18,
+      "bold": false,
+      "colour": "#172033",
+      "horizontalAlign": "left",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "app-item-3",
+    "bounds": {
+      "x": 638,
+      "y": 278,
+      "width": 512,
+      "height": 26
+    },
+    "text": {
+      "value": "Application release manifests",
+      "fontFamily": "Arial",
+      "fontSizePt": 18,
+      "bold": false,
+      "colour": "#172033",
+      "horizontalAlign": "left",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createShape",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "app-actions",
+    "bounds": {
+      "x": 638,
+      "y": 314,
+      "width": 512,
+      "height": 82
+    },
+    "geometry": {
+      "preset": "rounded-rectangle",
+      "cornerRadiusPt": 9
+    },
+    "style": {
+      "fill": {
+        "kind": "solid",
+        "colour": "#EEF2F6",
+        "opacity": 1
+      },
+      "stroke": {
+        "kind": "none"
+      },
+      "strokeWidthPt": 1
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "app-action-title",
+    "bounds": {
+      "x": 638,
+      "y": 325,
+      "width": 512,
+      "height": 26
+    },
+    "text": {
+      "value": "Application GitHub Actions",
+      "fontFamily": "Arial",
+      "fontSizePt": 18,
+      "bold": true,
+      "colour": "#172033",
+      "horizontalAlign": "center",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "app-pipeline",
+    "bounds": {
+      "x": 638,
+      "y": 358,
+      "width": 512,
+      "height": 29
+    },
+    "text": {
+      "value": "Build → Test → Verify → Deploy",
+      "fontFamily": "Arial",
+      "fontSizePt": 20,
+      "bold": false,
+      "colour": "#172033",
+      "horizontalAlign": "center",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createShape",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "release-record",
+    "bounds": {
+      "x": 90,
+      "y": 426,
+      "width": 1040,
+      "height": 84
+    },
+    "geometry": {
+      "preset": "rounded-rectangle",
+      "cornerRadiusPt": 9
+    },
+    "style": {
+      "fill": {
+        "kind": "solid",
+        "colour": "#F8FAFC",
+        "opacity": 1
+      },
+      "stroke": {
+        "kind": "solid",
+        "colour": "#CBD5E1",
+        "opacity": 1
+      },
+      "strokeWidthPt": 1
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "release-title",
+    "bounds": {
+      "x": 105,
+      "y": 440,
+      "width": 1010,
+      "height": 27
+    },
+    "text": {
+      "value": "Release compatibility and deployment record",
+      "fontFamily": "Arial",
+      "fontSizePt": 20,
+      "bold": true,
+      "colour": "#172033",
+      "horizontalAlign": "center",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "release-details",
+    "bounds": {
+      "x": 105,
+      "y": 473,
+      "width": 1010,
+      "height": 27
+    },
+    "text": {
+      "value": "Versioned contract · Approval gates · Deployment evidence",
+      "fontFamily": "Arial",
+      "fontSizePt": 20,
+      "bold": false,
+      "colour": "#172033",
+      "horizontalAlign": "center",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "release-left-arrows",
+    "bounds": {
+      "x": 50,
+      "y": 455,
+      "width": 30,
+      "height": 30
+    },
+    "text": {
+      "value": "↓↑",
+      "fontFamily": "Arial",
+      "fontSizePt": 24,
+      "bold": false,
+      "colour": "#475569",
+      "horizontalAlign": "center",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "release-right-arrows",
+    "bounds": {
+      "x": 1140,
+      "y": 455,
+      "width": 30,
+      "height": 30
+    },
+    "text": {
+      "value": "↓↑",
+      "fontFamily": "Arial",
+      "fontSizePt": 24,
+      "bold": false,
+      "colour": "#475569",
+      "horizontalAlign": "center",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createShape",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "tenancy-frame",
+    "bounds": {
+      "x": 54,
+      "y": 523,
+      "width": 1112,
+      "height": 396
+    },
+    "geometry": {
+      "preset": "rounded-rectangle",
+      "cornerRadiusPt": 12
+    },
+    "style": {
+      "fill": {
+        "kind": "solid",
+        "colour": "#FFFFFF",
+        "opacity": 1
+      },
+      "stroke": {
+        "kind": "solid",
+        "colour": "#CBD5E1",
+        "opacity": 1
+      },
+      "strokeWidthPt": 1
+    }
+  },
+  {
+    "op": "createShape",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "cloud-icon",
+    "bounds": {
+      "x": 481,
+      "y": 551,
+      "width": 23,
+      "height": 18
+    },
+    "geometry": {
+      "preset": "cloud",
+      "cornerRadiusPt": 0
+    },
+    "style": {
+      "fill": {
+        "kind": "none"
+      },
+      "stroke": {
+        "kind": "solid",
+        "colour": "#2563EB",
+        "opacity": 1
+      },
+      "strokeWidthPt": 1
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "tenancy-title",
+    "bounds": {
+      "x": 516,
+      "y": 547,
+      "width": 270,
+      "height": 32
+    },
+    "text": {
+      "value": "Client Azure tenancy",
+      "fontFamily": "Arial",
+      "fontSizePt": 24,
+      "bold": true,
+      "colour": "#172033",
+      "horizontalAlign": "left",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "DEV-heading",
+    "bounds": {
+      "x": 85,
+      "y": 615,
+      "width": 326,
+      "height": 30
+    },
+    "text": {
+      "value": "DEV",
+      "fontFamily": "Arial",
+      "fontSizePt": 20,
+      "bold": false,
+      "colour": "#2563EB",
+      "horizontalAlign": "center",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createShape",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "DEV-server-1",
+    "bounds": {
+      "x": 238,
+      "y": 656,
+      "width": 20,
+      "height": 8
+    },
+    "geometry": {
+      "preset": "rounded-rectangle",
+      "cornerRadiusPt": 2
+    },
+    "style": {
+      "fill": {
+        "kind": "none"
+      },
+      "stroke": {
+        "kind": "solid",
+        "colour": "#64748B",
+        "opacity": 1
+      },
+      "strokeWidthPt": 1
+    }
+  },
+  {
+    "op": "createShape",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "DEV-server-2",
+    "bounds": {
+      "x": 238,
+      "y": 669,
+      "width": 20,
+      "height": 8
+    },
+    "geometry": {
+      "preset": "rounded-rectangle",
+      "cornerRadiusPt": 2
+    },
+    "style": {
+      "fill": {
+        "kind": "none"
+      },
+      "stroke": {
+        "kind": "solid",
+        "colour": "#64748B",
+        "opacity": 1
+      },
+      "strokeWidthPt": 1
+    }
+  },
+  {
+    "op": "createShape",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "DEV-led-1",
+    "bounds": {
+      "x": 241,
+      "y": 659,
+      "width": 1.6,
+      "height": 1.6
+    },
+    "geometry": {
+      "preset": "ellipse",
+      "cornerRadiusPt": 0
+    },
+    "style": {
+      "fill": {
+        "kind": "solid",
+        "colour": "#64748B",
+        "opacity": 1
+      },
+      "stroke": {
+        "kind": "none"
+      },
+      "strokeWidthPt": 1
+    }
+  },
+  {
+    "op": "createShape",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "DEV-led-2",
+    "bounds": {
+      "x": 241,
+      "y": 672,
+      "width": 1.6,
+      "height": 1.6
+    },
+    "geometry": {
+      "preset": "ellipse",
+      "cornerRadiusPt": 0
+    },
+    "style": {
+      "fill": {
+        "kind": "solid",
+        "colour": "#64748B",
+        "opacity": 1
+      },
+      "stroke": {
+        "kind": "none"
+      },
+      "strokeWidthPt": 1
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "DEV-resources",
+    "bounds": {
+      "x": 85,
+      "y": 688,
+      "width": 326,
+      "height": 26
+    },
+    "text": {
+      "value": "Azure resource groups",
+      "fontFamily": "Arial",
+      "fontSizePt": 15,
+      "bold": false,
+      "colour": "#172033",
+      "horizontalAlign": "center",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createShape",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "DEV-rule",
+    "bounds": {
+      "x": 85,
+      "y": 731,
+      "width": 326,
+      "height": 0.8
+    },
+    "geometry": {
+      "preset": "rectangle",
+      "cornerRadiusPt": 0
+    },
+    "style": {
+      "fill": {
+        "kind": "solid",
+        "colour": "#E2E8F0",
+        "opacity": 1
+      },
+      "stroke": {
+        "kind": "none"
+      },
+      "strokeWidthPt": 1
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "DEV-infra-version",
+    "bounds": {
+      "x": 85,
+      "y": 752,
+      "width": 326,
+      "height": 26
+    },
+    "text": {
+      "value": "Infrastructure vX",
+      "fontFamily": "Arial",
+      "fontSizePt": 15,
+      "bold": false,
+      "colour": "#172033",
+      "horizontalAlign": "center",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "DEV-app-version",
+    "bounds": {
+      "x": 85,
+      "y": 784,
+      "width": 326,
+      "height": 26
+    },
+    "text": {
+      "value": "Application vY",
+      "fontFamily": "Arial",
+      "fontSizePt": 15,
+      "bold": false,
+      "colour": "#172033",
+      "horizontalAlign": "center",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "DEV-caption",
+    "bounds": {
+      "x": 85,
+      "y": 817,
+      "width": 326,
+      "height": 32
+    },
+    "text": {
+      "value": "Rapid iteration",
+      "fontFamily": "Arial",
+      "fontSizePt": 20,
+      "bold": false,
+      "colour": "#172033",
+      "horizontalAlign": "center",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "TEST-heading",
+    "bounds": {
+      "x": 447,
+      "y": 615,
+      "width": 326,
+      "height": 30
+    },
+    "text": {
+      "value": "TEST",
+      "fontFamily": "Arial",
+      "fontSizePt": 20,
+      "bold": false,
+      "colour": "#334155",
+      "horizontalAlign": "center",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createShape",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "TEST-server-1",
+    "bounds": {
+      "x": 600,
+      "y": 656,
+      "width": 20,
+      "height": 8
+    },
+    "geometry": {
+      "preset": "rounded-rectangle",
+      "cornerRadiusPt": 2
+    },
+    "style": {
+      "fill": {
+        "kind": "none"
+      },
+      "stroke": {
+        "kind": "solid",
+        "colour": "#64748B",
+        "opacity": 1
+      },
+      "strokeWidthPt": 1
+    }
+  },
+  {
+    "op": "createShape",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "TEST-server-2",
+    "bounds": {
+      "x": 600,
+      "y": 669,
+      "width": 20,
+      "height": 8
+    },
+    "geometry": {
+      "preset": "rounded-rectangle",
+      "cornerRadiusPt": 2
+    },
+    "style": {
+      "fill": {
+        "kind": "none"
+      },
+      "stroke": {
+        "kind": "solid",
+        "colour": "#64748B",
+        "opacity": 1
+      },
+      "strokeWidthPt": 1
+    }
+  },
+  {
+    "op": "createShape",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "TEST-led-1",
+    "bounds": {
+      "x": 603,
+      "y": 659,
+      "width": 1.6,
+      "height": 1.6
+    },
+    "geometry": {
+      "preset": "ellipse",
+      "cornerRadiusPt": 0
+    },
+    "style": {
+      "fill": {
+        "kind": "solid",
+        "colour": "#64748B",
+        "opacity": 1
+      },
+      "stroke": {
+        "kind": "none"
+      },
+      "strokeWidthPt": 1
+    }
+  },
+  {
+    "op": "createShape",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "TEST-led-2",
+    "bounds": {
+      "x": 603,
+      "y": 672,
+      "width": 1.6,
+      "height": 1.6
+    },
+    "geometry": {
+      "preset": "ellipse",
+      "cornerRadiusPt": 0
+    },
+    "style": {
+      "fill": {
+        "kind": "solid",
+        "colour": "#64748B",
+        "opacity": 1
+      },
+      "stroke": {
+        "kind": "none"
+      },
+      "strokeWidthPt": 1
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "TEST-resources",
+    "bounds": {
+      "x": 447,
+      "y": 688,
+      "width": 326,
+      "height": 26
+    },
+    "text": {
+      "value": "Azure resource groups",
+      "fontFamily": "Arial",
+      "fontSizePt": 15,
+      "bold": false,
+      "colour": "#172033",
+      "horizontalAlign": "center",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createShape",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "TEST-rule",
+    "bounds": {
+      "x": 447,
+      "y": 731,
+      "width": 326,
+      "height": 0.8
+    },
+    "geometry": {
+      "preset": "rectangle",
+      "cornerRadiusPt": 0
+    },
+    "style": {
+      "fill": {
+        "kind": "solid",
+        "colour": "#E2E8F0",
+        "opacity": 1
+      },
+      "stroke": {
+        "kind": "none"
+      },
+      "strokeWidthPt": 1
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "TEST-infra-version",
+    "bounds": {
+      "x": 447,
+      "y": 752,
+      "width": 326,
+      "height": 26
+    },
+    "text": {
+      "value": "Infrastructure vX",
+      "fontFamily": "Arial",
+      "fontSizePt": 15,
+      "bold": false,
+      "colour": "#172033",
+      "horizontalAlign": "center",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "TEST-app-version",
+    "bounds": {
+      "x": 447,
+      "y": 784,
+      "width": 326,
+      "height": 26
+    },
+    "text": {
+      "value": "Application vY",
+      "fontFamily": "Arial",
+      "fontSizePt": 15,
+      "bold": false,
+      "colour": "#172033",
+      "horizontalAlign": "center",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "TEST-caption",
+    "bounds": {
+      "x": 447,
+      "y": 817,
+      "width": 326,
+      "height": 32
+    },
+    "text": {
+      "value": "Integration / UAT",
+      "fontFamily": "Arial",
+      "fontSizePt": 20,
+      "bold": false,
+      "colour": "#172033",
+      "horizontalAlign": "center",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "PROD-heading",
+    "bounds": {
+      "x": 809,
+      "y": 615,
+      "width": 326,
+      "height": 30
+    },
+    "text": {
+      "value": "PROD",
+      "fontFamily": "Arial",
+      "fontSizePt": 20,
+      "bold": false,
+      "colour": "#15803D",
+      "horizontalAlign": "center",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createShape",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "PROD-server-1",
+    "bounds": {
+      "x": 962,
+      "y": 656,
+      "width": 20,
+      "height": 8
+    },
+    "geometry": {
+      "preset": "rounded-rectangle",
+      "cornerRadiusPt": 2
+    },
+    "style": {
+      "fill": {
+        "kind": "none"
+      },
+      "stroke": {
+        "kind": "solid",
+        "colour": "#64748B",
+        "opacity": 1
+      },
+      "strokeWidthPt": 1
+    }
+  },
+  {
+    "op": "createShape",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "PROD-server-2",
+    "bounds": {
+      "x": 962,
+      "y": 669,
+      "width": 20,
+      "height": 8
+    },
+    "geometry": {
+      "preset": "rounded-rectangle",
+      "cornerRadiusPt": 2
+    },
+    "style": {
+      "fill": {
+        "kind": "none"
+      },
+      "stroke": {
+        "kind": "solid",
+        "colour": "#64748B",
+        "opacity": 1
+      },
+      "strokeWidthPt": 1
+    }
+  },
+  {
+    "op": "createShape",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "PROD-led-1",
+    "bounds": {
+      "x": 965,
+      "y": 659,
+      "width": 1.6,
+      "height": 1.6
+    },
+    "geometry": {
+      "preset": "ellipse",
+      "cornerRadiusPt": 0
+    },
+    "style": {
+      "fill": {
+        "kind": "solid",
+        "colour": "#64748B",
+        "opacity": 1
+      },
+      "stroke": {
+        "kind": "none"
+      },
+      "strokeWidthPt": 1
+    }
+  },
+  {
+    "op": "createShape",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "PROD-led-2",
+    "bounds": {
+      "x": 965,
+      "y": 672,
+      "width": 1.6,
+      "height": 1.6
+    },
+    "geometry": {
+      "preset": "ellipse",
+      "cornerRadiusPt": 0
+    },
+    "style": {
+      "fill": {
+        "kind": "solid",
+        "colour": "#64748B",
+        "opacity": 1
+      },
+      "stroke": {
+        "kind": "none"
+      },
+      "strokeWidthPt": 1
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "PROD-resources",
+    "bounds": {
+      "x": 809,
+      "y": 688,
+      "width": 326,
+      "height": 26
+    },
+    "text": {
+      "value": "Azure resource groups",
+      "fontFamily": "Arial",
+      "fontSizePt": 15,
+      "bold": false,
+      "colour": "#172033",
+      "horizontalAlign": "center",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createShape",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "PROD-rule",
+    "bounds": {
+      "x": 809,
+      "y": 731,
+      "width": 326,
+      "height": 0.8
+    },
+    "geometry": {
+      "preset": "rectangle",
+      "cornerRadiusPt": 0
+    },
+    "style": {
+      "fill": {
+        "kind": "solid",
+        "colour": "#E2E8F0",
+        "opacity": 1
+      },
+      "stroke": {
+        "kind": "none"
+      },
+      "strokeWidthPt": 1
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "PROD-infra-version",
+    "bounds": {
+      "x": 809,
+      "y": 752,
+      "width": 326,
+      "height": 26
+    },
+    "text": {
+      "value": "Infrastructure vX",
+      "fontFamily": "Arial",
+      "fontSizePt": 15,
+      "bold": false,
+      "colour": "#172033",
+      "horizontalAlign": "center",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "PROD-app-version",
+    "bounds": {
+      "x": 809,
+      "y": 784,
+      "width": 326,
+      "height": 26
+    },
+    "text": {
+      "value": "Application vY",
+      "fontFamily": "Arial",
+      "fontSizePt": 15,
+      "bold": false,
+      "colour": "#172033",
+      "horizontalAlign": "center",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "PROD-caption",
+    "bounds": {
+      "x": 809,
+      "y": 817,
+      "width": 326,
+      "height": 32
+    },
+    "text": {
+      "value": "Approved releases",
+      "fontFamily": "Arial",
+      "fontSizePt": 20,
+      "bold": false,
+      "colour": "#172033",
+      "horizontalAlign": "center",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  },
+  {
+    "op": "createText",
+    "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+    "alias": "tenancy-footer",
+    "bounds": {
+      "x": 74,
+      "y": 874,
+      "width": 1072,
+      "height": 30
+    },
+    "text": {
+      "value": "Each environment has independent infrastructure, application deployments, identities and configuration.",
+      "fontFamily": "Arial",
+      "fontSizePt": 20,
+      "bold": false,
+      "colour": "#172033",
+      "horizontalAlign": "center",
+      "verticalAlign": "middle",
+      "wrap": false,
+      "paddingPt": 0
+    }
+  }
+]

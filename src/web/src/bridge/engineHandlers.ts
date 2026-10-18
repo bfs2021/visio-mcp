@@ -6,8 +6,11 @@ import { drawScriptCompiler } from '../script/compiler';
 import type { Operation } from '../contracts/generated';
 import { listAssets, readObjects, readSummary } from './readTools';
 import { inspectLayout, type LayoutContext } from '../layout/inspectLayout';
+import { getTextLayout } from '../layout/textLayout';
 import type { Projection, Snapshot } from '../contracts/generated';
 import type { RenderParams, RenderResult } from '../render/SnapshotRenderer';
+import { iconCatalog, iconInfo, iconOperations, searchIcons } from '../icons/catalog';
+import { iconPreview } from '../icons/preview';
 
 const toResponse = <T>(requestId: string, r: Result<T>): ResponseEnvelope =>
   r.ok ? { protocolVersion: 1, kind: 'response', requestId, result: r.value } : { protocolVersion: 1, kind: 'response', requestId, error: r.error as AppError };
@@ -20,7 +23,7 @@ export interface EngineHandlerOptions {
   /** Turns an approved asset (by hash) into a PNG, for formats that cannot hold the original (an SVG picture inside a Visio file). */
   rasterise?: (sha256: string, maxPixels: number) => Promise<Result<{ base64: string; widthPx: number; heightPx: number }>>;
   /** Text measurement and picture sizes for layout inspection, supplied by the page. */
-  layoutContext?: (snapshot: Snapshot) => Promise<Pick<LayoutContext, 'measureWidth' | 'assetSize'>>;
+  layoutContext?: (snapshot: Snapshot, options?: { includeAssets?: boolean }) => Promise<Pick<LayoutContext, 'measureWidth' | 'assetSize'>>;
 }
 
 /** Used when the page cannot measure text: a rough average advance, and the report says its sizes are estimates either way. */
@@ -38,6 +41,30 @@ export function createEngineHandler(engine: CommandEngine, opts: EngineHandlerOp
     const respond = <T>(r: Result<T>) => toResponse(id, r);
 
     switch (env.method) {
+      case 'icons.search':
+      case 'icons.get': {
+        const snap = await engine.snapshot(scope); if (!snap.ok) return respond(snap);
+        if (!opts.render) return respond(fail('not_ready', 'icon previews require the editor drawing surface'));
+        let icons: typeof iconCatalog.icons;
+        let metadata: Record<string, unknown>;
+        let colour = '#334155', strokeRatio = 1 / 12;
+        if (env.method === 'icons.search') {
+          const found = searchIcons(p.query ?? '', p.limit ?? 24); if (!found.ok) return respond(found);
+          icons = found.value.icons;
+          metadata = { icons: icons.map(iconInfo), total: found.value.total, hasMore: found.value.total > icons.length };
+        } else {
+          if (!snap.value.document.pages.some(page => page.id === p.pageId)) return respond(fail('not_found', 'pageId is not in the open document'));
+          const prepared = iconOperations(p); if (!prepared.ok) return respond(prepared);
+          const v = prepared.value; icons = [v.icon]; colour = v.colour; strokeRatio = v.strokeWidthPt / v.sizePt;
+          metadata = { icon: { ...iconInfo(v.icon), geometry: { svgPath: v.icon.path } }, elementId: v.elementId, operations: v.operations,
+            baseRevision: snap.value.revision, destinationPageId: p.pageId,
+            guidance: 'Apply these operations with the returned document/session identity and baseRevision, using a new transactionId. This preview changed nothing.' };
+        }
+        const scene = iconPreview(snap.value, icons, { colour, strokeRatio });
+        const image = await opts.render(scene, undefined, { scope: 'page', pageId: scene.document.pages[0]!.id, maxWidth: 1200, maxHeight: 1200, format: 'png' });
+        return respond(image.ok ? ok({ ...image.value, ...metadata, preview: true, previewOf: 'icon_catalog', catalogVersion: iconCatalog.version,
+          sourceVersion: iconCatalog.sourceVersion, sourceCommit: iconCatalog.sourceCommit, licence: iconCatalog.licence }) : image);
+      }
       case 'doc.snapshot':
         return respond(await engine.snapshot(scope));
       case 'doc.apply': {
@@ -97,6 +124,13 @@ export function createEngineHandler(engine: CommandEngine, opts: EngineHandlerOp
         const snap = await engine.exportSnapshot(scope);
         if (!snap.ok) return respond(snap);
         return respond(await opts.render(snap.value as Snapshot, snap.value.projection, p as unknown as RenderParams));
+      }
+      case 'doc.textLayout': {
+        const snap = await engine.snapshot(scope);
+        if (!snap.ok) return respond(snap);
+        if (!opts.layoutContext) return respond(fail('not_ready', 'The editor font measurement context is not available'));
+        const measured = await opts.layoutContext(snap.value, { includeAssets: false });
+        return respond(getTextLayout(snap.value, measured, p));
       }
       case 'doc.inspectLayout': {
         let snap: Result<Snapshot & { projection?: Projection }> = await engine.exportSnapshot(scope);

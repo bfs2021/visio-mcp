@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-18",
+  "mcpTestsPassed": 13,
+  "windowsTestsPassedExcludingOfficeAcceptance": 26,
+  "finalReleaseComparisonTestsPassed": 2,
+  "publishedOperationSchemasValidated": 29,
+  "publishedComparisonToolsDiscovered": ["render_reference_region", "compare_reference"],
+  "installedAppSha256": "859B1C67D3D6CCC6CAA4AABF9C07C70F36DCBC74994F6694D7F80D761F9E6C08",
+  "installedCompanionSha256": "EF31009ED382744F54A9D5B5C9AE0BECB9973D86645A467F85F02E591E16C252",
+  "installedVersion": "r07-reference-comparison",
+  "currentEditorLeftOpen": true,
+  "activationRequiresEditorAndMcpRestart": true,
+  "preservedDiagramPages": 4
+}

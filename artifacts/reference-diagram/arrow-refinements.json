@@ -1,0 +1,36 @@
+[
+  {
+    "op": "resize",
+    "bounds": {
+      "height": 36,
+      "width": 40
+    },
+    "target": "a5e7cbb1-75cd-444d-813d-f9e22ee14736"
+  },
+  {
+    "op": "set",
+    "target": "a5e7cbb1-75cd-444d-813d-f9e22ee14736",
+    "patch": {
+      "text": {
+        "fontSizePt": 20
+      }
+    }
+  },
+  {
+    "op": "resize",
+    "bounds": {
+      "height": 36,
+      "width": 40
+    },
+    "target": "b091e907-069a-4d28-abbd-f5cbd7dfbe98"
+  },
+  {
+    "op": "set",
+    "target": "b091e907-069a-4d28-abbd-f5cbd7dfbe98",
+    "patch": {
+      "text": {
+        "fontSizePt": 20
+      }
+    }
+  }
+]

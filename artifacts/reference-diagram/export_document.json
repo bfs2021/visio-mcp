@@ -1,0 +1,338 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"path\":\"C:\\\\Users\\\\claude\\\\Documents\\\\AgenticDiagram\\\\Exports\\\\repository-deployment-light.vsdx\",\"format\":\"vsdx\",\"revision\":3,\"bytes\":12939,\"lossy\":false,\"summary\":\"0 things could not be carried across exactly, and 40 notes.\",\"diagnostics\":[{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"8edca30a-2b2d-4976-8df4-33ae9efde46a\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"1c554f4d-8832-410c-8f7c-363ca72f731d\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"f4289c4d-bd83-4a9f-927e-3de222561f59\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"52ff5dd6-ade7-484d-aed1-cc0cbc50825e\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"4ed41a49-f38b-409c-bdfe-3e2dd6826dee\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"b28fee49-63f9-4de4-be11-4299d2eef255\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"9e334f99-9dc3-4eef-a7a0-2f79b6cbb1ad\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"0414037d-0a4a-407c-b769-40030d3ea725\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"61f5d264-c465-4153-bdae-9834970ee38d\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"77f6ea2f-0180-4afa-8496-6da2e13f657b\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"ea3816c9-49f3-4877-8702-4e84ed59c5cc\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"71d32e7d-4729-4ac5-b663-8305ad1ecb65\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"8971b33e-7350-4063-b147-08345ff74a1e\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"91a2beb7-e060-4e47-a15a-54703119404e\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"17104466-16f5-4b81-ae05-0b03e017d9b4\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"8aff971e-cdac-439d-baf2-a5f0ec952bfb\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"cc7173cc-00c9-4af1-ad92-6cb79138d70d\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"efb13ff8-4bcf-41d0-adf4-49d9d7f634df\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"5698e4cb-a863-4797-9438-adf75df27e2c\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"49e879c6-8dc5-49b0-a4b8-1bb53c2a4571\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"a5e7cbb1-75cd-444d-813d-f9e22ee14736\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"b091e907-069a-4d28-abbd-f5cbd7dfbe98\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"preset_approximated\",\"message\":\"The cloud outline is an approximation of the editor\\u0027s shape.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"dcc739d5-f2e4-4fcb-a3c5-635cd200617f\",\"action\":\"approximated\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"0530ff44-deb4-4695-a6d6-5b4071e67e33\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"865cc1f0-d796-4c84-84ea-e9abd3bf94ec\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"76b31e6f-77e5-42ab-9c40-c6155192002c\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"5c17979e-fad6-495b-bdf5-ad32e54125eb\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"e7734231-5738-482b-911b-6efa4bfa9c03\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"69a484a9-1117-4aa7-aedb-e98b77568096\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"1c8b45a6-f8b1-4d70-867b-0a8db00f7e44\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"d03c6110-02db-4643-a380-55f5c77b5f2d\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"b9cf9105-1f83-43cc-82e7-52440dd5268c\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"577949a6-c314-4b13-9bd5-42919f0faf09\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"48b6ba4c-9fbb-48f2-b44a-cb2a498ff650\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"76691776-7421-45dd-aa78-fc047085f2db\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"dc49a978-b395-44c9-8900-a0b00f1a79c2\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"e3ac7e24-1545-4517-9d25-ca6851dffaf4\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"84da2df8-a420-47fb-963c-69935cf44679\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"09c8fe6b-67f9-42ad-9c2a-6116caad3283\",\"action\":\"wrap setting kept only for the editor\"},{\"severity\":\"info\",\"code\":\"text_wrap_not_mapped\",\"message\":\"Visio has no per-shape setting to turn text wrapping off; the text wraps there.\",\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"elementId\":\"de948fe7-484f-4d29-a4d5-6e4333535cd0\",\"action\":\"wrap setting kept only for the editor\"}]}"
+    }
+  ],
+  "structuredContent": {
+    "path": "C:\\Users\\claude\\Documents\\AgenticDiagram\\Exports\\repository-deployment-light.vsdx",
+    "format": "vsdx",
+    "revision": 3,
+    "bytes": 12939,
+    "lossy": false,
+    "summary": "0 things could not be carried across exactly, and 40 notes.",
+    "diagnostics": [
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "8edca30a-2b2d-4976-8df4-33ae9efde46a",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "1c554f4d-8832-410c-8f7c-363ca72f731d",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "f4289c4d-bd83-4a9f-927e-3de222561f59",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "52ff5dd6-ade7-484d-aed1-cc0cbc50825e",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "4ed41a49-f38b-409c-bdfe-3e2dd6826dee",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "b28fee49-63f9-4de4-be11-4299d2eef255",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "9e334f99-9dc3-4eef-a7a0-2f79b6cbb1ad",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "0414037d-0a4a-407c-b769-40030d3ea725",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "61f5d264-c465-4153-bdae-9834970ee38d",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "77f6ea2f-0180-4afa-8496-6da2e13f657b",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "ea3816c9-49f3-4877-8702-4e84ed59c5cc",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "71d32e7d-4729-4ac5-b663-8305ad1ecb65",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "8971b33e-7350-4063-b147-08345ff74a1e",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "91a2beb7-e060-4e47-a15a-54703119404e",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "17104466-16f5-4b81-ae05-0b03e017d9b4",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "8aff971e-cdac-439d-baf2-a5f0ec952bfb",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "cc7173cc-00c9-4af1-ad92-6cb79138d70d",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "efb13ff8-4bcf-41d0-adf4-49d9d7f634df",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "5698e4cb-a863-4797-9438-adf75df27e2c",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "49e879c6-8dc5-49b0-a4b8-1bb53c2a4571",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "a5e7cbb1-75cd-444d-813d-f9e22ee14736",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "b091e907-069a-4d28-abbd-f5cbd7dfbe98",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "preset_approximated",
+        "message": "The cloud outline is an approximation of the editor's shape.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "dcc739d5-f2e4-4fcb-a3c5-635cd200617f",
+        "action": "approximated"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "0530ff44-deb4-4695-a6d6-5b4071e67e33",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "865cc1f0-d796-4c84-84ea-e9abd3bf94ec",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "76b31e6f-77e5-42ab-9c40-c6155192002c",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "5c17979e-fad6-495b-bdf5-ad32e54125eb",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "e7734231-5738-482b-911b-6efa4bfa9c03",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "69a484a9-1117-4aa7-aedb-e98b77568096",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "1c8b45a6-f8b1-4d70-867b-0a8db00f7e44",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "d03c6110-02db-4643-a380-55f5c77b5f2d",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "b9cf9105-1f83-43cc-82e7-52440dd5268c",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "577949a6-c314-4b13-9bd5-42919f0faf09",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "48b6ba4c-9fbb-48f2-b44a-cb2a498ff650",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "76691776-7421-45dd-aa78-fc047085f2db",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "dc49a978-b395-44c9-8900-a0b00f1a79c2",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "e3ac7e24-1545-4517-9d25-ca6851dffaf4",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "84da2df8-a420-47fb-963c-69935cf44679",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "09c8fe6b-67f9-42ad-9c2a-6116caad3283",
+        "action": "wrap setting kept only for the editor"
+      },
+      {
+        "severity": "info",
+        "code": "text_wrap_not_mapped",
+        "message": "Visio has no per-shape setting to turn text wrapping off; the text wraps there.",
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "elementId": "de948fe7-484f-4d29-a4d5-6e4333535cd0",
+        "action": "wrap setting kept only for the editor"
+      }
+    ]
+  }
+}

@@ -1,0 +1,837 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"documentId\":\"10a5b48b-e712-40ad-ac28-d158313421c9\",\"sessionId\":\"c9acb512-76f7-48e5-8604-b03bf0b36d35\",\"revision\":3,\"title\":\"Untitled\",\"pages\":[{\"id\":\"6dced8bc-17ce-435f-9033-eda86423cefe\",\"name\":\"Page 1\",\"widthPt\":841.8897637795277,\"heightPt\":595.2755905511812,\"layers\":[{\"id\":\"41516b85-dae0-4679-8814-a07fe2aea342\",\"name\":\"Layer 1\",\"visible\":true,\"locked\":false,\"elementCount\":0}],\"elementCount\":0,\"omittedHidden\":0,\"elements\":[]},{\"id\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"name\":\"Repository deployment \\u00B7 light\",\"widthPt\":1220,\"heightPt\":950,\"layers\":[{\"id\":\"53e5b507-7881-4601-aa5d-88b05b15de51\",\"name\":\"Layer 1\",\"visible\":true,\"locked\":false,\"elementCount\":0}],\"elementCount\":62,\"omittedHidden\":0,\"elements\":[{\"id\":\"216ca939-ccc6-4aa4-ba84-6dfe4b9c1084\",\"kind\":\"shape\",\"alias\":\"outer-frame\",\"bounds\":{\"height\":930,\"width\":1150,\"x\":35,\"y\":10},\"zIndex\":1},{\"id\":\"8edca30a-2b2d-4976-8df4-33ae9efde46a\",\"kind\":\"text\",\"alias\":\"infra-icon\",\"bounds\":{\"height\":32,\"width\":30,\"x\":72,\"y\":52},\"text\":\"\\u2442\",\"zIndex\":2},{\"id\":\"1c554f4d-8832-410c-8f7c-363ca72f731d\",\"kind\":\"text\",\"alias\":\"infra-title\",\"bounds\":{\"height\":30,\"width\":480,\"x\":108,\"y\":52},\"text\":\"Infrastructure repository\",\"zIndex\":3},{\"id\":\"f4289c4d-bd83-4a9f-927e-3de222561f59\",\"kind\":\"text\",\"alias\":\"infra-owner\",\"bounds\":{\"height\":25,\"width\":512,\"x\":72,\"y\":98},\"text\":\"Owned by Sensical\",\"zIndex\":4},{\"id\":\"1cae72a3-ea4d-4f01-96c8-0fa6de70e615\",\"kind\":\"shape\",\"alias\":\"infra-rule\",\"bounds\":{\"height\":0.8,\"width\":512,\"x\":72,\"y\":145},\"zIndex\":5},{\"id\":\"52ff5dd6-ade7-484d-aed1-cc0cbc50825e\",\"kind\":\"text\",\"alias\":\"infra-item-0\",\"bounds\":{\"height\":26,\"width\":512,\"x\":72,\"y\":170},\"text\":\"Bicep modules\",\"zIndex\":6},{\"id\":\"4ed41a49-f38b-409c-bdfe-3e2dd6826dee\",\"kind\":\"text\",\"alias\":\"infra-item-1\",\"bounds\":{\"height\":26,\"width\":512,\"x\":72,\"y\":206},\"text\":\"Environment parameters\",\"zIndex\":7},{\"id\":\"b28fee49-63f9-4de4-be11-4299d2eef255\",\"kind\":\"text\",\"alias\":\"infra-item-2\",\"bounds\":{\"height\":26,\"width\":512,\"x\":72,\"y\":242},\"text\":\"Network, security and identities\",\"zIndex\":8},{\"id\":\"9e334f99-9dc3-4eef-a7a0-2f79b6cbb1ad\",\"kind\":\"text\",\"alias\":\"infra-item-3\",\"bounds\":{\"height\":26,\"width\":512,\"x\":72,\"y\":278},\"text\":\"Infrastructure release manifests\",\"zIndex\":9},{\"id\":\"076b7332-785a-4723-ac46-1cecbc55437d\",\"kind\":\"shape\",\"alias\":\"infra-actions\",\"bounds\":{\"height\":82,\"width\":512,\"x\":72,\"y\":314},\"zIndex\":10},{\"id\":\"0414037d-0a4a-407c-b769-40030d3ea725\",\"kind\":\"text\",\"alias\":\"infra-action-title\",\"bounds\":{\"height\":26,\"width\":512,\"x\":72,\"y\":325},\"text\":\"Infrastructure GitHub Actions\",\"zIndex\":11},{\"id\":\"61f5d264-c465-4153-bdae-9834970ee38d\",\"kind\":\"text\",\"alias\":\"infra-pipeline\",\"bounds\":{\"height\":29,\"width\":512,\"x\":72,\"y\":358},\"text\":\"Validate \\u2192 Plan \\u2192 Deploy \\u2192 Verify\",\"zIndex\":12},{\"id\":\"77f6ea2f-0180-4afa-8496-6da2e13f657b\",\"kind\":\"text\",\"alias\":\"app-icon\",\"bounds\":{\"height\":32,\"width\":30,\"x\":638,\"y\":52},\"text\":\"\\u2039/\\u203A\",\"zIndex\":13},{\"id\":\"ea3816c9-49f3-4877-8702-4e84ed59c5cc\",\"kind\":\"text\",\"alias\":\"app-title\",\"bounds\":{\"height\":30,\"width\":480,\"x\":674,\"y\":52},\"text\":\"Application repository\",\"zIndex\":14},{\"id\":\"71d32e7d-4729-4ac5-b663-8305ad1ecb65\",\"kind\":\"text\",\"alias\":\"app-owner\",\"bounds\":{\"height\":25,\"width\":512,\"x\":638,\"y\":98},\"text\":\"Owned by external developer\",\"zIndex\":15},{\"id\":\"fc5750ee-0633-45aa-b04e-b6d0330ddb09\",\"kind\":\"shape\",\"alias\":\"app-rule\",\"bounds\":{\"height\":0.8,\"width\":512,\"x\":638,\"y\":145},\"zIndex\":16},{\"id\":\"8971b33e-7350-4063-b147-08345ff74a1e\",\"kind\":\"text\",\"alias\":\"app-item-0\",\"bounds\":{\"height\":26,\"width\":512,\"x\":638,\"y\":170},\"text\":\"API and worker source code\",\"zIndex\":17},{\"id\":\"91a2beb7-e060-4e47-a15a-54703119404e\",\"kind\":\"text\",\"alias\":\"app-item-1\",\"bounds\":{\"height\":26,\"width\":512,\"x\":638,\"y\":206},\"text\":\"Tests and database migrations\",\"zIndex\":18},{\"id\":\"17104466-16f5-4b81-ae05-0b03e017d9b4\",\"kind\":\"text\",\"alias\":\"app-item-2\",\"bounds\":{\"height\":26,\"width\":512,\"x\":638,\"y\":242},\"text\":\"Infrastructure requirements\",\"zIndex\":19},{\"id\":\"8aff971e-cdac-439d-baf2-a5f0ec952bfb\",\"kind\":\"text\",\"alias\":\"app-item-3\",\"bounds\":{\"height\":26,\"width\":512,\"x\":638,\"y\":278},\"text\":\"Application release manifests\",\"zIndex\":20},{\"id\":\"0585e82e-7e1c-4410-bbc2-126c4e8420e9\",\"kind\":\"shape\",\"alias\":\"app-actions\",\"bounds\":{\"height\":82,\"width\":512,\"x\":638,\"y\":314},\"zIndex\":21},{\"id\":\"cc7173cc-00c9-4af1-ad92-6cb79138d70d\",\"kind\":\"text\",\"alias\":\"app-action-title\",\"bounds\":{\"height\":26,\"width\":512,\"x\":638,\"y\":325},\"text\":\"Application GitHub Actions\",\"zIndex\":22},{\"id\":\"efb13ff8-4bcf-41d0-adf4-49d9d7f634df\",\"kind\":\"text\",\"alias\":\"app-pipeline\",\"bounds\":{\"height\":29,\"width\":512,\"x\":638,\"y\":358},\"text\":\"Build \\u2192 Test \\u2192 Verify \\u2192 Deploy\",\"zIndex\":23},{\"id\":\"7441b325-1d78-4224-80b7-a7f7a447699a\",\"kind\":\"shape\",\"alias\":\"release-record\",\"bounds\":{\"height\":84,\"width\":1040,\"x\":90,\"y\":426},\"zIndex\":24},{\"id\":\"5698e4cb-a863-4797-9438-adf75df27e2c\",\"kind\":\"text\",\"alias\":\"release-title\",\"bounds\":{\"height\":27,\"width\":1010,\"x\":105,\"y\":440},\"text\":\"Release compatibility and deployment record\",\"zIndex\":25},{\"id\":\"49e879c6-8dc5-49b0-a4b8-1bb53c2a4571\",\"kind\":\"text\",\"alias\":\"release-details\",\"bounds\":{\"height\":27,\"width\":1010,\"x\":105,\"y\":473},\"text\":\"Versioned contract \\u00B7 Approval gates \\u00B7 Deployment evidence\",\"zIndex\":26},{\"id\":\"a5e7cbb1-75cd-444d-813d-f9e22ee14736\",\"kind\":\"text\",\"alias\":\"release-left-arrows\",\"bounds\":{\"height\":36,\"width\":40,\"x\":50,\"y\":455},\"text\":\"\\u2193\\u2191\",\"zIndex\":27},{\"id\":\"b091e907-069a-4d28-abbd-f5cbd7dfbe98\",\"kind\":\"text\",\"alias\":\"release-right-arrows\",\"bounds\":{\"height\":36,\"width\":40,\"x\":1140,\"y\":455},\"text\":\"\\u2193\\u2191\",\"zIndex\":28},{\"id\":\"4a60c0bf-6890-4ed7-8971-904c007c3448\",\"kind\":\"shape\",\"alias\":\"tenancy-frame\",\"bounds\":{\"height\":396,\"width\":1112,\"x\":54,\"y\":523},\"zIndex\":29},{\"id\":\"dcc739d5-f2e4-4fcb-a3c5-635cd200617f\",\"kind\":\"shape\",\"alias\":\"cloud-icon\",\"bounds\":{\"height\":18,\"width\":23,\"x\":481,\"y\":551},\"zIndex\":30},{\"id\":\"0530ff44-deb4-4695-a6d6-5b4071e67e33\",\"kind\":\"text\",\"alias\":\"tenancy-title\",\"bounds\":{\"height\":32,\"width\":270,\"x\":516,\"y\":547},\"text\":\"Client Azure tenancy\",\"zIndex\":31},{\"id\":\"865cc1f0-d796-4c84-84ea-e9abd3bf94ec\",\"kind\":\"text\",\"alias\":\"DEV-heading\",\"bounds\":{\"height\":30,\"width\":326,\"x\":85,\"y\":615},\"text\":\"DEV\",\"zIndex\":32},{\"id\":\"5bedb43d-a7f1-4382-ae1a-972dee5b9116\",\"kind\":\"shape\",\"alias\":\"DEV-server-1\",\"bounds\":{\"height\":8,\"width\":20,\"x\":238,\"y\":656},\"zIndex\":33},{\"id\":\"6f6a4950-898b-4868-8e3f-4a1f553c53bf\",\"kind\":\"shape\",\"alias\":\"DEV-server-2\",\"bounds\":{\"height\":8,\"width\":20,\"x\":238,\"y\":669},\"zIndex\":34},{\"id\":\"02efbd7e-1b1c-47ea-9a00-56ed3c594fec\",\"kind\":\"shape\",\"alias\":\"DEV-led-1\",\"bounds\":{\"height\":1.6,\"width\":1.6,\"x\":241,\"y\":659},\"zIndex\":35},{\"id\":\"d5ab61de-e51b-4499-9cde-a38d114b3b7f\",\"kind\":\"shape\",\"alias\":\"DEV-led-2\",\"bounds\":{\"height\":1.6,\"width\":1.6,\"x\":241,\"y\":672},\"zIndex\":36},{\"id\":\"76b31e6f-77e5-42ab-9c40-c6155192002c\",\"kind\":\"text\",\"alias\":\"DEV-resources\",\"bounds\":{\"height\":26,\"width\":326,\"x\":85,\"y\":688},\"text\":\"Azure resource groups\",\"zIndex\":37},{\"id\":\"c6c712db-7cbb-44e9-827a-4a60ca4639f0\",\"kind\":\"shape\",\"alias\":\"DEV-rule\",\"bounds\":{\"height\":0.8,\"width\":326,\"x\":85,\"y\":731},\"zIndex\":38},{\"id\":\"5c17979e-fad6-495b-bdf5-ad32e54125eb\",\"kind\":\"text\",\"alias\":\"DEV-infra-version\",\"bounds\":{\"height\":26,\"width\":326,\"x\":85,\"y\":752},\"text\":\"Infrastructure vX\",\"zIndex\":39},{\"id\":\"e7734231-5738-482b-911b-6efa4bfa9c03\",\"kind\":\"text\",\"alias\":\"DEV-app-version\",\"bounds\":{\"height\":26,\"width\":326,\"x\":85,\"y\":784},\"text\":\"Application vY\",\"zIndex\":40},{\"id\":\"69a484a9-1117-4aa7-aedb-e98b77568096\",\"kind\":\"text\",\"alias\":\"DEV-caption\",\"bounds\":{\"height\":32,\"width\":326,\"x\":85,\"y\":817},\"text\":\"Rapid iteration\",\"zIndex\":41},{\"id\":\"1c8b45a6-f8b1-4d70-867b-0a8db00f7e44\",\"kind\":\"text\",\"alias\":\"TEST-heading\",\"bounds\":{\"height\":30,\"width\":326,\"x\":447,\"y\":615},\"text\":\"TEST\",\"zIndex\":42},{\"id\":\"937cce02-44f7-4c30-9be7-ca7a3c57d623\",\"kind\":\"shape\",\"alias\":\"TEST-server-1\",\"bounds\":{\"height\":8,\"width\":20,\"x\":600,\"y\":656},\"zIndex\":43},{\"id\":\"ff28fbd5-7698-4f7a-99c7-7debcb0f2941\",\"kind\":\"shape\",\"alias\":\"TEST-server-2\",\"bounds\":{\"height\":8,\"width\":20,\"x\":600,\"y\":669},\"zIndex\":44},{\"id\":\"b547d7d9-5610-4c4b-b57b-815652b1c30d\",\"kind\":\"shape\",\"alias\":\"TEST-led-1\",\"bounds\":{\"height\":1.6,\"width\":1.6,\"x\":603,\"y\":659},\"zIndex\":45},{\"id\":\"c817e7f3-48a1-4226-9a98-708c3345d98c\",\"kind\":\"shape\",\"alias\":\"TEST-led-2\",\"bounds\":{\"height\":1.6,\"width\":1.6,\"x\":603,\"y\":672},\"zIndex\":46},{\"id\":\"d03c6110-02db-4643-a380-55f5c77b5f2d\",\"kind\":\"text\",\"alias\":\"TEST-resources\",\"bounds\":{\"height\":26,\"width\":326,\"x\":447,\"y\":688},\"text\":\"Azure resource groups\",\"zIndex\":47},{\"id\":\"c4b0d596-c54f-4f39-a56f-2268b3c8534e\",\"kind\":\"shape\",\"alias\":\"TEST-rule\",\"bounds\":{\"height\":0.8,\"width\":326,\"x\":447,\"y\":731},\"zIndex\":48},{\"id\":\"b9cf9105-1f83-43cc-82e7-52440dd5268c\",\"kind\":\"text\",\"alias\":\"TEST-infra-version\",\"bounds\":{\"height\":26,\"width\":326,\"x\":447,\"y\":752},\"text\":\"Infrastructure vX\",\"zIndex\":49},{\"id\":\"577949a6-c314-4b13-9bd5-42919f0faf09\",\"kind\":\"text\",\"alias\":\"TEST-app-version\",\"bounds\":{\"height\":26,\"width\":326,\"x\":447,\"y\":784},\"text\":\"Application vY\",\"zIndex\":50},{\"id\":\"48b6ba4c-9fbb-48f2-b44a-cb2a498ff650\",\"kind\":\"text\",\"alias\":\"TEST-caption\",\"bounds\":{\"height\":32,\"width\":326,\"x\":447,\"y\":817},\"text\":\"Integration / UAT\",\"zIndex\":51},{\"id\":\"76691776-7421-45dd-aa78-fc047085f2db\",\"kind\":\"text\",\"alias\":\"PROD-heading\",\"bounds\":{\"height\":30,\"width\":326,\"x\":809,\"y\":615},\"text\":\"PROD\",\"zIndex\":52},{\"id\":\"6600abdb-1701-428e-b074-c2fa0213894a\",\"kind\":\"shape\",\"alias\":\"PROD-server-1\",\"bounds\":{\"height\":8,\"width\":20,\"x\":962,\"y\":656},\"zIndex\":53},{\"id\":\"4c708610-fa81-4f88-b22c-787a418aeae9\",\"kind\":\"shape\",\"alias\":\"PROD-server-2\",\"bounds\":{\"height\":8,\"width\":20,\"x\":962,\"y\":669},\"zIndex\":54},{\"id\":\"ccff845f-da09-472d-bc21-f8f1c19fce8a\",\"kind\":\"shape\",\"alias\":\"PROD-led-1\",\"bounds\":{\"height\":1.6,\"width\":1.6,\"x\":965,\"y\":659},\"zIndex\":55},{\"id\":\"4070159e-6c20-44d0-aacd-13cb68ecf62a\",\"kind\":\"shape\",\"alias\":\"PROD-led-2\",\"bounds\":{\"height\":1.6,\"width\":1.6,\"x\":965,\"y\":672},\"zIndex\":56},{\"id\":\"dc49a978-b395-44c9-8900-a0b00f1a79c2\",\"kind\":\"text\",\"alias\":\"PROD-resources\",\"bounds\":{\"height\":26,\"width\":326,\"x\":809,\"y\":688},\"text\":\"Azure resource groups\",\"zIndex\":57},{\"id\":\"4fc126c5-52b6-4e36-9216-2cb0328f46a9\",\"kind\":\"shape\",\"alias\":\"PROD-rule\",\"bounds\":{\"height\":0.8,\"width\":326,\"x\":809,\"y\":731},\"zIndex\":58},{\"id\":\"e3ac7e24-1545-4517-9d25-ca6851dffaf4\",\"kind\":\"text\",\"alias\":\"PROD-infra-version\",\"bounds\":{\"height\":26,\"width\":326,\"x\":809,\"y\":752},\"text\":\"Infrastructure vX\",\"zIndex\":59},{\"id\":\"84da2df8-a420-47fb-963c-69935cf44679\",\"kind\":\"text\",\"alias\":\"PROD-app-version\",\"bounds\":{\"height\":26,\"width\":326,\"x\":809,\"y\":784},\"text\":\"Application vY\",\"zIndex\":60},{\"id\":\"09c8fe6b-67f9-42ad-9c2a-6116caad3283\",\"kind\":\"text\",\"alias\":\"PROD-caption\",\"bounds\":{\"height\":32,\"width\":326,\"x\":809,\"y\":817},\"text\":\"Approved releases\",\"zIndex\":61},{\"id\":\"de948fe7-484f-4d29-a4d5-6e4333535cd0\",\"kind\":\"text\",\"alias\":\"tenancy-footer\",\"bounds\":{\"height\":30,\"width\":1072,\"x\":74,\"y\":874},\"text\":\"Each environment has independent infrastructure, application deployments, identities and configuration.\",\"zIndex\":62}]}],\"assetIds\":[]}"
+    }
+  ],
+  "structuredContent": {
+    "documentId": "10a5b48b-e712-40ad-ac28-d158313421c9",
+    "sessionId": "c9acb512-76f7-48e5-8604-b03bf0b36d35",
+    "revision": 3,
+    "title": "Untitled",
+    "pages": [
+      {
+        "id": "6dced8bc-17ce-435f-9033-eda86423cefe",
+        "name": "Page 1",
+        "widthPt": 841.8897637795277,
+        "heightPt": 595.2755905511812,
+        "layers": [
+          {
+            "id": "41516b85-dae0-4679-8814-a07fe2aea342",
+            "name": "Layer 1",
+            "visible": true,
+            "locked": false,
+            "elementCount": 0
+          }
+        ],
+        "elementCount": 0,
+        "omittedHidden": 0,
+        "elements": []
+      },
+      {
+        "id": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "name": "Repository deployment · light",
+        "widthPt": 1220,
+        "heightPt": 950,
+        "layers": [
+          {
+            "id": "53e5b507-7881-4601-aa5d-88b05b15de51",
+            "name": "Layer 1",
+            "visible": true,
+            "locked": false,
+            "elementCount": 0
+          }
+        ],
+        "elementCount": 62,
+        "omittedHidden": 0,
+        "elements": [
+          {
+            "id": "216ca939-ccc6-4aa4-ba84-6dfe4b9c1084",
+            "kind": "shape",
+            "alias": "outer-frame",
+            "bounds": {
+              "height": 930,
+              "width": 1150,
+              "x": 35,
+              "y": 10
+            },
+            "zIndex": 1
+          },
+          {
+            "id": "8edca30a-2b2d-4976-8df4-33ae9efde46a",
+            "kind": "text",
+            "alias": "infra-icon",
+            "bounds": {
+              "height": 32,
+              "width": 30,
+              "x": 72,
+              "y": 52
+            },
+            "text": "⑂",
+            "zIndex": 2
+          },
+          {
+            "id": "1c554f4d-8832-410c-8f7c-363ca72f731d",
+            "kind": "text",
+            "alias": "infra-title",
+            "bounds": {
+              "height": 30,
+              "width": 480,
+              "x": 108,
+              "y": 52
+            },
+            "text": "Infrastructure repository",
+            "zIndex": 3
+          },
+          {
+            "id": "f4289c4d-bd83-4a9f-927e-3de222561f59",
+            "kind": "text",
+            "alias": "infra-owner",
+            "bounds": {
+              "height": 25,
+              "width": 512,
+              "x": 72,
+              "y": 98
+            },
+            "text": "Owned by Sensical",
+            "zIndex": 4
+          },
+          {
+            "id": "1cae72a3-ea4d-4f01-96c8-0fa6de70e615",
+            "kind": "shape",
+            "alias": "infra-rule",
+            "bounds": {
+              "height": 0.8,
+              "width": 512,
+              "x": 72,
+              "y": 145
+            },
+            "zIndex": 5
+          },
+          {
+            "id": "52ff5dd6-ade7-484d-aed1-cc0cbc50825e",
+            "kind": "text",
+            "alias": "infra-item-0",
+            "bounds": {
+              "height": 26,
+              "width": 512,
+              "x": 72,
+              "y": 170
+            },
+            "text": "Bicep modules",
+            "zIndex": 6
+          },
+          {
+            "id": "4ed41a49-f38b-409c-bdfe-3e2dd6826dee",
+            "kind": "text",
+            "alias": "infra-item-1",
+            "bounds": {
+              "height": 26,
+              "width": 512,
+              "x": 72,
+              "y": 206
+            },
+            "text": "Environment parameters",
+            "zIndex": 7
+          },
+          {
+            "id": "b28fee49-63f9-4de4-be11-4299d2eef255",
+            "kind": "text",
+            "alias": "infra-item-2",
+            "bounds": {
+              "height": 26,
+              "width": 512,
+              "x": 72,
+              "y": 242
+            },
+            "text": "Network, security and identities",
+            "zIndex": 8
+          },
+          {
+            "id": "9e334f99-9dc3-4eef-a7a0-2f79b6cbb1ad",
+            "kind": "text",
+            "alias": "infra-item-3",
+            "bounds": {
+              "height": 26,
+              "width": 512,
+              "x": 72,
+              "y": 278
+            },
+            "text": "Infrastructure release manifests",
+            "zIndex": 9
+          },
+          {
+            "id": "076b7332-785a-4723-ac46-1cecbc55437d",
+            "kind": "shape",
+            "alias": "infra-actions",
+            "bounds": {
+              "height": 82,
+              "width": 512,
+              "x": 72,
+              "y": 314
+            },
+            "zIndex": 10
+          },
+          {
+            "id": "0414037d-0a4a-407c-b769-40030d3ea725",
+            "kind": "text",
+            "alias": "infra-action-title",
+            "bounds": {
+              "height": 26,
+              "width": 512,
+              "x": 72,
+              "y": 325
+            },
+            "text": "Infrastructure GitHub Actions",
+            "zIndex": 11
+          },
+          {
+            "id": "61f5d264-c465-4153-bdae-9834970ee38d",
+            "kind": "text",
+            "alias": "infra-pipeline",
+            "bounds": {
+              "height": 29,
+              "width": 512,
+              "x": 72,
+              "y": 358
+            },
+            "text": "Validate → Plan → Deploy → Verify",
+            "zIndex": 12
+          },
+          {
+            "id": "77f6ea2f-0180-4afa-8496-6da2e13f657b",
+            "kind": "text",
+            "alias": "app-icon",
+            "bounds": {
+              "height": 32,
+              "width": 30,
+              "x": 638,
+              "y": 52
+            },
+            "text": "‹/›",
+            "zIndex": 13
+          },
+          {
+            "id": "ea3816c9-49f3-4877-8702-4e84ed59c5cc",
+            "kind": "text",
+            "alias": "app-title",
+            "bounds": {
+              "height": 30,
+              "width": 480,
+              "x": 674,
+              "y": 52
+            },
+            "text": "Application repository",
+            "zIndex": 14
+          },
+          {
+            "id": "71d32e7d-4729-4ac5-b663-8305ad1ecb65",
+            "kind": "text",
+            "alias": "app-owner",
+            "bounds": {
+              "height": 25,
+              "width": 512,
+              "x": 638,
+              "y": 98
+            },
+            "text": "Owned by external developer",
+            "zIndex": 15
+          },
+          {
+            "id": "fc5750ee-0633-45aa-b04e-b6d0330ddb09",
+            "kind": "shape",
+            "alias": "app-rule",
+            "bounds": {
+              "height": 0.8,
+              "width": 512,
+              "x": 638,
+              "y": 145
+            },
+            "zIndex": 16
+          },
+          {
+            "id": "8971b33e-7350-4063-b147-08345ff74a1e",
+            "kind": "text",
+            "alias": "app-item-0",
+            "bounds": {
+              "height": 26,
+              "width": 512,
+              "x": 638,
+              "y": 170
+            },
+            "text": "API and worker source code",
+            "zIndex": 17
+          },
+          {
+            "id": "91a2beb7-e060-4e47-a15a-54703119404e",
+            "kind": "text",
+            "alias": "app-item-1",
+            "bounds": {
+              "height": 26,
+              "width": 512,
+              "x": 638,
+              "y": 206
+            },
+            "text": "Tests and database migrations",
+            "zIndex": 18
+          },
+          {
+            "id": "17104466-16f5-4b81-ae05-0b03e017d9b4",
+            "kind": "text",
+            "alias": "app-item-2",
+            "bounds": {
+              "height": 26,
+              "width": 512,
+              "x": 638,
+              "y": 242
+            },
+            "text": "Infrastructure requirements",
+            "zIndex": 19
+          },
+          {
+            "id": "8aff971e-cdac-439d-baf2-a5f0ec952bfb",
+            "kind": "text",
+            "alias": "app-item-3",
+            "bounds": {
+              "height": 26,
+              "width": 512,
+              "x": 638,
+              "y": 278
+            },
+            "text": "Application release manifests",
+            "zIndex": 20
+          },
+          {
+            "id": "0585e82e-7e1c-4410-bbc2-126c4e8420e9",
+            "kind": "shape",
+            "alias": "app-actions",
+            "bounds": {
+              "height": 82,
+              "width": 512,
+              "x": 638,
+              "y": 314
+            },
+            "zIndex": 21
+          },
+          {
+            "id": "cc7173cc-00c9-4af1-ad92-6cb79138d70d",
+            "kind": "text",
+            "alias": "app-action-title",
+            "bounds": {
+              "height": 26,
+              "width": 512,
+              "x": 638,
+              "y": 325
+            },
+            "text": "Application GitHub Actions",
+            "zIndex": 22
+          },
+          {
+            "id": "efb13ff8-4bcf-41d0-adf4-49d9d7f634df",
+            "kind": "text",
+            "alias": "app-pipeline",
+            "bounds": {
+              "height": 29,
+              "width": 512,
+              "x": 638,
+              "y": 358
+            },
+            "text": "Build → Test → Verify → Deploy",
+            "zIndex": 23
+          },
+          {
+            "id": "7441b325-1d78-4224-80b7-a7f7a447699a",
+            "kind": "shape",
+            "alias": "release-record",
+            "bounds": {
+              "height": 84,
+              "width": 1040,
+              "x": 90,
+              "y": 426
+            },
+            "zIndex": 24
+          },
+          {
+            "id": "5698e4cb-a863-4797-9438-adf75df27e2c",
+            "kind": "text",
+            "alias": "release-title",
+            "bounds": {
+              "height": 27,
+              "width": 1010,
+              "x": 105,
+              "y": 440
+            },
+            "text": "Release compatibility and deployment record",
+            "zIndex": 25
+          },
+          {
+            "id": "49e879c6-8dc5-49b0-a4b8-1bb53c2a4571",
+            "kind": "text",
+            "alias": "release-details",
+            "bounds": {
+              "height": 27,
+              "width": 1010,
+              "x": 105,
+              "y": 473
+            },
+            "text": "Versioned contract · Approval gates · Deployment evidence",
+            "zIndex": 26
+          },
+          {
+            "id": "a5e7cbb1-75cd-444d-813d-f9e22ee14736",
+            "kind": "text",
+            "alias": "release-left-arrows",
+            "bounds": {
+              "height": 36,
+              "width": 40,
+              "x": 50,
+              "y": 455
+            },
+            "text": "↓↑",
+            "zIndex": 27
+          },
+          {
+            "id": "b091e907-069a-4d28-abbd-f5cbd7dfbe98",
+            "kind": "text",
+            "alias": "release-right-arrows",
+            "bounds": {
+              "height": 36,
+              "width": 40,
+              "x": 1140,
+              "y": 455
+            },
+            "text": "↓↑",
+            "zIndex": 28
+          },
+          {
+            "id": "4a60c0bf-6890-4ed7-8971-904c007c3448",
+            "kind": "shape",
+            "alias": "tenancy-frame",
+            "bounds": {
+              "height": 396,
+              "width": 1112,
+              "x": 54,
+              "y": 523
+            },
+            "zIndex": 29
+          },
+          {
+            "id": "dcc739d5-f2e4-4fcb-a3c5-635cd200617f",
+            "kind": "shape",
+            "alias": "cloud-icon",
+            "bounds": {
+              "height": 18,
+              "width": 23,
+              "x": 481,
+              "y": 551
+            },
+            "zIndex": 30
+          },
+          {
+            "id": "0530ff44-deb4-4695-a6d6-5b4071e67e33",
+            "kind": "text",
+            "alias": "tenancy-title",
+            "bounds": {
+              "height": 32,
+              "width": 270,
+              "x": 516,
+              "y": 547
+            },
+            "text": "Client Azure tenancy",
+            "zIndex": 31
+          },
+          {
+            "id": "865cc1f0-d796-4c84-84ea-e9abd3bf94ec",
+            "kind": "text",
+            "alias": "DEV-heading",
+            "bounds": {
+              "height": 30,
+              "width": 326,
+              "x": 85,
+              "y": 615
+            },
+            "text": "DEV",
+            "zIndex": 32
+          },
+          {
+            "id": "5bedb43d-a7f1-4382-ae1a-972dee5b9116",
+            "kind": "shape",
+            "alias": "DEV-server-1",
+            "bounds": {
+              "height": 8,
+              "width": 20,
+              "x": 238,
+              "y": 656
+            },
+            "zIndex": 33
+          },
+          {
+            "id": "6f6a4950-898b-4868-8e3f-4a1f553c53bf",
+            "kind": "shape",
+            "alias": "DEV-server-2",
+            "bounds": {
+              "height": 8,
+              "width": 20,
+              "x": 238,
+              "y": 669
+            },
+            "zIndex": 34
+          },
+          {
+            "id": "02efbd7e-1b1c-47ea-9a00-56ed3c594fec",
+            "kind": "shape",
+            "alias": "DEV-led-1",
+            "bounds": {
+              "height": 1.6,
+              "width": 1.6,
+              "x": 241,
+              "y": 659
+            },
+            "zIndex": 35
+          },
+          {
+            "id": "d5ab61de-e51b-4499-9cde-a38d114b3b7f",
+            "kind": "shape",
+            "alias": "DEV-led-2",
+            "bounds": {
+              "height": 1.6,
+              "width": 1.6,
+              "x": 241,
+              "y": 672
+            },
+            "zIndex": 36
+          },
+          {
+            "id": "76b31e6f-77e5-42ab-9c40-c6155192002c",
+            "kind": "text",
+            "alias": "DEV-resources",
+            "bounds": {
+              "height": 26,
+              "width": 326,
+              "x": 85,
+              "y": 688
+            },
+            "text": "Azure resource groups",
+            "zIndex": 37
+          },
+          {
+            "id": "c6c712db-7cbb-44e9-827a-4a60ca4639f0",
+            "kind": "shape",
+            "alias": "DEV-rule",
+            "bounds": {
+              "height": 0.8,
+              "width": 326,
+              "x": 85,
+              "y": 731
+            },
+            "zIndex": 38
+          },
+          {
+            "id": "5c17979e-fad6-495b-bdf5-ad32e54125eb",
+            "kind": "text",
+            "alias": "DEV-infra-version",
+            "bounds": {
+              "height": 26,
+              "width": 326,
+              "x": 85,
+              "y": 752
+            },
+            "text": "Infrastructure vX",
+            "zIndex": 39
+          },
+          {
+            "id": "e7734231-5738-482b-911b-6efa4bfa9c03",
+            "kind": "text",
+            "alias": "DEV-app-version",
+            "bounds": {
+              "height": 26,
+              "width": 326,
+              "x": 85,
+              "y": 784
+            },
+            "text": "Application vY",
+            "zIndex": 40
+          },
+          {
+            "id": "69a484a9-1117-4aa7-aedb-e98b77568096",
+            "kind": "text",
+            "alias": "DEV-caption",
+            "bounds": {
+              "height": 32,
+              "width": 326,
+              "x": 85,
+              "y": 817
+            },
+            "text": "Rapid iteration",
+            "zIndex": 41
+          },
+          {
+            "id": "1c8b45a6-f8b1-4d70-867b-0a8db00f7e44",
+            "kind": "text",
+            "alias": "TEST-heading",
+            "bounds": {
+              "height": 30,
+              "width": 326,
+              "x": 447,
+              "y": 615
+            },
+            "text": "TEST",
+            "zIndex": 42
+          },
+          {
+            "id": "937cce02-44f7-4c30-9be7-ca7a3c57d623",
+            "kind": "shape",
+            "alias": "TEST-server-1",
+            "bounds": {
+              "height": 8,
+              "width": 20,
+              "x": 600,
+              "y": 656
+            },
+            "zIndex": 43
+          },
+          {
+            "id": "ff28fbd5-7698-4f7a-99c7-7debcb0f2941",
+            "kind": "shape",
+            "alias": "TEST-server-2",
+            "bounds": {
+              "height": 8,
+              "width": 20,
+              "x": 600,
+              "y": 669
+            },
+            "zIndex": 44
+          },
+          {
+            "id": "b547d7d9-5610-4c4b-b57b-815652b1c30d",
+            "kind": "shape",
+            "alias": "TEST-led-1",
+            "bounds": {
+              "height": 1.6,
+              "width": 1.6,
+              "x": 603,
+              "y": 659
+            },
+            "zIndex": 45
+          },
+          {
+            "id": "c817e7f3-48a1-4226-9a98-708c3345d98c",
+            "kind": "shape",
+            "alias": "TEST-led-2",
+            "bounds": {
+              "height": 1.6,
+              "width": 1.6,
+              "x": 603,
+              "y": 672
+            },
+            "zIndex": 46
+          },
+          {
+            "id": "d03c6110-02db-4643-a380-55f5c77b5f2d",
+            "kind": "text",
+            "alias": "TEST-resources",
+            "bounds": {
+              "height": 26,
+              "width": 326,
+              "x": 447,
+              "y": 688
+            },
+            "text": "Azure resource groups",
+            "zIndex": 47
+          },
+          {
+            "id": "c4b0d596-c54f-4f39-a56f-2268b3c8534e",
+            "kind": "shape",
+            "alias": "TEST-rule",
+            "bounds": {
+              "height": 0.8,
+              "width": 326,
+              "x": 447,
+              "y": 731
+            },
+            "zIndex": 48
+          },
+          {
+            "id": "b9cf9105-1f83-43cc-82e7-52440dd5268c",
+            "kind": "text",
+            "alias": "TEST-infra-version",
+            "bounds": {
+              "height": 26,
+              "width": 326,
+              "x": 447,
+              "y": 752
+            },
+            "text": "Infrastructure vX",
+            "zIndex": 49
+          },
+          {
+            "id": "577949a6-c314-4b13-9bd5-42919f0faf09",
+            "kind": "text",
+            "alias": "TEST-app-version",
+            "bounds": {
+              "height": 26,
+              "width": 326,
+              "x": 447,
+              "y": 784
+            },
+            "text": "Application vY",
+            "zIndex": 50
+          },
+          {
+            "id": "48b6ba4c-9fbb-48f2-b44a-cb2a498ff650",
+            "kind": "text",
+            "alias": "TEST-caption",
+            "bounds": {
+              "height": 32,
+              "width": 326,
+              "x": 447,
+              "y": 817
+            },
+            "text": "Integration / UAT",
+            "zIndex": 51
+          },
+          {
+            "id": "76691776-7421-45dd-aa78-fc047085f2db",
+            "kind": "text",
+            "alias": "PROD-heading",
+            "bounds": {
+              "height": 30,
+              "width": 326,
+              "x": 809,
+              "y": 615
+            },
+            "text": "PROD",
+            "zIndex": 52
+          },
+          {
+            "id": "6600abdb-1701-428e-b074-c2fa0213894a",
+            "kind": "shape",
+            "alias": "PROD-server-1",
+            "bounds": {
+              "height": 8,
+              "width": 20,
+              "x": 962,
+              "y": 656
+            },
+            "zIndex": 53
+          },
+          {
+            "id": "4c708610-fa81-4f88-b22c-787a418aeae9",
+            "kind": "shape",
+            "alias": "PROD-server-2",
+            "bounds": {
+              "height": 8,
+              "width": 20,
+              "x": 962,
+              "y": 669
+            },
+            "zIndex": 54
+          },
+          {
+            "id": "ccff845f-da09-472d-bc21-f8f1c19fce8a",
+            "kind": "shape",
+            "alias": "PROD-led-1",
+            "bounds": {
+              "height": 1.6,
+              "width": 1.6,
+              "x": 965,
+              "y": 659
+            },
+            "zIndex": 55
+          },
+          {
+            "id": "4070159e-6c20-44d0-aacd-13cb68ecf62a",
+            "kind": "shape",
+            "alias": "PROD-led-2",
+            "bounds": {
+              "height": 1.6,
+              "width": 1.6,
+              "x": 965,
+              "y": 672
+            },
+            "zIndex": 56
+          },
+          {
+            "id": "dc49a978-b395-44c9-8900-a0b00f1a79c2",
+            "kind": "text",
+            "alias": "PROD-resources",
+            "bounds": {
+              "height": 26,
+              "width": 326,
+              "x": 809,
+              "y": 688
+            },
+            "text": "Azure resource groups",
+            "zIndex": 57
+          },
+          {
+            "id": "4fc126c5-52b6-4e36-9216-2cb0328f46a9",
+            "kind": "shape",
+            "alias": "PROD-rule",
+            "bounds": {
+              "height": 0.8,
+              "width": 326,
+              "x": 809,
+              "y": 731
+            },
+            "zIndex": 58
+          },
+          {
+            "id": "e3ac7e24-1545-4517-9d25-ca6851dffaf4",
+            "kind": "text",
+            "alias": "PROD-infra-version",
+            "bounds": {
+              "height": 26,
+              "width": 326,
+              "x": 809,
+              "y": 752
+            },
+            "text": "Infrastructure vX",
+            "zIndex": 59
+          },
+          {
+            "id": "84da2df8-a420-47fb-963c-69935cf44679",
+            "kind": "text",
+            "alias": "PROD-app-version",
+            "bounds": {
+              "height": 26,
+              "width": 326,
+              "x": 809,
+              "y": 784
+            },
+            "text": "Application vY",
+            "zIndex": 60
+          },
+          {
+            "id": "09c8fe6b-67f9-42ad-9c2a-6116caad3283",
+            "kind": "text",
+            "alias": "PROD-caption",
+            "bounds": {
+              "height": 32,
+              "width": 326,
+              "x": 809,
+              "y": 817
+            },
+            "text": "Approved releases",
+            "zIndex": 61
+          },
+          {
+            "id": "de948fe7-484f-4d29-a4d5-6e4333535cd0",
+            "kind": "text",
+            "alias": "tenancy-footer",
+            "bounds": {
+              "height": 30,
+              "width": 1072,
+              "x": 74,
+              "y": 874
+            },
+            "text": "Each environment has independent infrastructure, application deployments, identities and configuration.",
+            "zIndex": 62
+          }
+        ]
+      }
+    ],
+    "assetIds": []
+  }
+}

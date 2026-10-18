@@ -1,0 +1,113 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"documentId\":\"10a5b48b-e712-40ad-ac28-d158313421c9\",\"sessionId\":\"c9acb512-76f7-48e5-8604-b03bf0b36d35\",\"revision\":3,\"issues\":[{\"code\":\"ZERO_SIZE\",\"severity\":\"warning\",\"elementIds\":[\"1cae72a3-ea4d-4f01-96c8-0fa6de70e615\"],\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"bounds\":{\"height\":0.8,\"width\":512,\"x\":72,\"y\":145},\"message\":\"The element is zero or almost zero in size and will not be seen.\",\"evidence\":{\"widthPt\":512,\"heightPt\":0.8}},{\"code\":\"ZERO_SIZE\",\"severity\":\"warning\",\"elementIds\":[\"4fc126c5-52b6-4e36-9216-2cb0328f46a9\"],\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"bounds\":{\"height\":0.8,\"width\":326,\"x\":809,\"y\":731},\"message\":\"The element is zero or almost zero in size and will not be seen.\",\"evidence\":{\"widthPt\":326,\"heightPt\":0.8}},{\"code\":\"ZERO_SIZE\",\"severity\":\"warning\",\"elementIds\":[\"c4b0d596-c54f-4f39-a56f-2268b3c8534e\"],\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"bounds\":{\"height\":0.8,\"width\":326,\"x\":447,\"y\":731},\"message\":\"The element is zero or almost zero in size and will not be seen.\",\"evidence\":{\"widthPt\":326,\"heightPt\":0.8}},{\"code\":\"ZERO_SIZE\",\"severity\":\"warning\",\"elementIds\":[\"c6c712db-7cbb-44e9-827a-4a60ca4639f0\"],\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"bounds\":{\"height\":0.8,\"width\":326,\"x\":85,\"y\":731},\"message\":\"The element is zero or almost zero in size and will not be seen.\",\"evidence\":{\"widthPt\":326,\"heightPt\":0.8}},{\"code\":\"ZERO_SIZE\",\"severity\":\"warning\",\"elementIds\":[\"fc5750ee-0633-45aa-b04e-b6d0330ddb09\"],\"pageId\":\"f4b7a1a3-9ee7-4a90-8d19-562e711793af\",\"bounds\":{\"height\":0.8,\"width\":512,\"x\":638,\"y\":145},\"message\":\"The element is zero or almost zero in size and will not be seen.\",\"evidence\":{\"widthPt\":512,\"heightPt\":0.8}}],\"notes\":[\"Text size is estimated from font metrics measured in the editor; a borderline overflow may render differently.\"]}"
+    }
+  ],
+  "structuredContent": {
+    "documentId": "10a5b48b-e712-40ad-ac28-d158313421c9",
+    "sessionId": "c9acb512-76f7-48e5-8604-b03bf0b36d35",
+    "revision": 3,
+    "issues": [
+      {
+        "code": "ZERO_SIZE",
+        "severity": "warning",
+        "elementIds": [
+          "1cae72a3-ea4d-4f01-96c8-0fa6de70e615"
+        ],
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "bounds": {
+          "height": 0.8,
+          "width": 512,
+          "x": 72,
+          "y": 145
+        },
+        "message": "The element is zero or almost zero in size and will not be seen.",
+        "evidence": {
+          "widthPt": 512,
+          "heightPt": 0.8
+        }
+      },
+      {
+        "code": "ZERO_SIZE",
+        "severity": "warning",
+        "elementIds": [
+          "4fc126c5-52b6-4e36-9216-2cb0328f46a9"
+        ],
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "bounds": {
+          "height": 0.8,
+          "width": 326,
+          "x": 809,
+          "y": 731
+        },
+        "message": "The element is zero or almost zero in size and will not be seen.",
+        "evidence": {
+          "widthPt": 326,
+          "heightPt": 0.8
+        }
+      },
+      {
+        "code": "ZERO_SIZE",
+        "severity": "warning",
+        "elementIds": [
+          "c4b0d596-c54f-4f39-a56f-2268b3c8534e"
+        ],
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "bounds": {
+          "height": 0.8,
+          "width": 326,
+          "x": 447,
+          "y": 731
+        },
+        "message": "The element is zero or almost zero in size and will not be seen.",
+        "evidence": {
+          "widthPt": 326,
+          "heightPt": 0.8
+        }
+      },
+      {
+        "code": "ZERO_SIZE",
+        "severity": "warning",
+        "elementIds": [
+          "c6c712db-7cbb-44e9-827a-4a60ca4639f0"
+        ],
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "bounds": {
+          "height": 0.8,
+          "width": 326,
+          "x": 85,
+          "y": 731
+        },
+        "message": "The element is zero or almost zero in size and will not be seen.",
+        "evidence": {
+          "widthPt": 326,
+          "heightPt": 0.8
+        }
+      },
+      {
+        "code": "ZERO_SIZE",
+        "severity": "warning",
+        "elementIds": [
+          "fc5750ee-0633-45aa-b04e-b6d0330ddb09"
+        ],
+        "pageId": "f4b7a1a3-9ee7-4a90-8d19-562e711793af",
+        "bounds": {
+          "height": 0.8,
+          "width": 512,
+          "x": 638,
+          "y": 145
+        },
+        "message": "The element is zero or almost zero in size and will not be seen.",
+        "evidence": {
+          "widthPt": 512,
+          "heightPt": 0.8
+        }
+      }
+    ],
+    "notes": [
+      "Text size is estimated from font metrics measured in the editor; a borderline overflow may render differently."
+    ]
+  }
+}

@@ -15,4 +15,8 @@
   <ItemGroup>
     <ProjectReference Include="..\Diagram.Ipc\Diagram.Ipc.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\contracts\*.schema.json" LogicalName="Diagram.Mcp.Contracts.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\..\contracts\fixtures\operation-examples.json" LogicalName="Diagram.Mcp.Contracts.operation-examples.json" />
+  </ItemGroup>
 </Project>

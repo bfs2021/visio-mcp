@@ -43,6 +43,56 @@ npm ci
 npm test
 ```
 
+## MCP operation discovery
+
+Before constructing an `apply_operations` batch, call `get_operation_schema` with
+no arguments to list the supported operation names. Call it again with, for example,
+`{"operation":"resize"}` to get a self-contained JSON Schema, an example operation,
+coordinate units, batch limits and targeting guidance. Discovery works even when the
+desktop editor is closed. Schemas are embedded from `contracts/` at build time.
+
+Read `get_document_summary` before editing to obtain the document/session identity,
+current revision and object UUIDs. Example UUIDs and asset references are placeholders;
+replace them with actual identities and approved assets. Use `resize` for bounds,
+`move` for position and `set` for text/style patches. Prefer UUID targets on multipage
+documents. See `contracts/fixtures/operation-examples.json` for the validated examples.
+
+For existing labels, call `get_text_layout` with `documentId`, `sessionId` and `ids`.
+It returns measurements and suggested operations without changing the document.
+Choose `strategy: "grow_box"` to preserve font size or `"shrink_font"` to preserve
+the box (`minFontSizePt` defaults to 8). Apply the returned `operations` through
+`apply_operations` using the returned `revision` as `baseRevision` and a new
+transaction UUID. A conflicting edit requires measuring again.
+
+`target: "visio"` adds conservative font/symbol allowances and reports export risks.
+These are estimates, not native Visio measurements: render and inspect the export
+before relying on its appearance. Requests support at most 50 text objects or
+text-bearing shapes and 131,072 characters; groups, connectors and pictures are not
+supported by this first text-fitting tool.
+
+## Reference and canvas comparison
+
+Add a reference screenshot with **Pictures → Add to library…**, then call
+`list_assets` to obtain its ID, scope and SHA-256 version. The MCP never reads an
+agent-supplied file path. These tools support approved PNG, JPEG and BMP references.
+
+- `render_reference_region`: pass document/session identity, `referenceAssetId`,
+  `referenceSha256`, `referenceScope` (library or document), and
+  `cropPx: {x,y,width,height}` in **integer original-image pixels**. `scale` defaults
+  to 8 (range 1–16). The tool returns an enlarged PNG with nearest-pixel sampling.
+- `compare_reference`: pass the same source crop plus `pageId` and exactly one of
+  canvas `bounds: {x,y,width,height}` in **document points**, or `elementIds`.
+  `mode` is `side_by_side` (default) or `overlay`; `panelSizePx` defaults to 512.
+  Canvas `paddingPt` defaults to 6 to protect edge strokes. Alias/name lookup is scoped to the page.
+
+Both tools are read-only. Results include the source hash, document revision,
+original dimensions, crop and output rectangles, and coordinate mappings. Each
+comparison crop is fitted and centred without stretching; different aspect ratios
+are reported. The overlay draws the reference first, then the canvas at 50% opacity.
+Use side-by-side views for dark-source/light-canvas comparisons. There is no
+automatic accuracy score, alignment or reconstruction of missing source detail.
+See [R06/R07](docs/m5/R06-R07-reference-comparison.md) for examples and limits.
+
 ## Licence
 
 [MIT](LICENSE)

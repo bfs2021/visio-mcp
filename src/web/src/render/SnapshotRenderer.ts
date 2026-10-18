@@ -4,6 +4,7 @@ import { defaultScope, lookupTarget } from '../commands/resolveTarget';
 import { MaxGraphAdapter } from '../canvas/MaxGraphAdapter';
 import { effectiveState } from '../canvas/cellMapping';
 import { fail, ok, type Result } from '../model/result';
+import { parsePath } from '../geometry/svgPath';
 
 export const MAX_PIXELS = 16_000_000;
 export const MAX_BYTES = 16 * 1024 * 1024;
@@ -55,6 +56,10 @@ export function planRender(snapshot: Snapshot, projection: Projection | undefine
   const pageId = p.pageId ?? defaultScope(doc);
   const page = doc.pages.find(x => x.id === pageId);
   if (!page) return fail(pageId ? 'not_found' : 'invalid_request', pageId ? `page ${pageId} does not exist` : 'the document has more than one page: say which with pageId');
+  for (const el of page.elements) if (el.kind === 'shape' && el.geometry.svgPath !== undefined && effectiveState(el, page.layers).visible) {
+    const parsed = parsePath(el.geometry.svgPath);
+    if (!parsed.ok) return fail('invalid_request', parsed.error.message, { details: { elementId: el.id } });
+  }
 
   let crop: Bounds;
   if (p.scope === 'page') {

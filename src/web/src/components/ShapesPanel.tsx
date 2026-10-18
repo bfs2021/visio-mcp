@@ -1,5 +1,6 @@
 import type { EditorModel } from '../editor/EditorModel';
 import { useModel } from './useModel';
+import { IconsPanel } from './IconsPanel';
 
 type Item = { what: string; label: string; icon: React.ReactNode };
 
@@ -50,6 +51,7 @@ export function ShapesPanel({ model }: { model: EditorModel }) {
           </div>
         </details>
       ))}
+      <IconsPanel model={model} />
       <details open>
         <summary>Pictures</summary>
         <button type="button" className="wide" data-testid="insert-picture" onClick={() => void model.insertPicture()}>Insert picture…</button>

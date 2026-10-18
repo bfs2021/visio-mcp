@@ -1,0 +1,16 @@
+[
+  {
+    "bounds": {
+      "height": 32
+    },
+    "op": "resize",
+    "target": "8edca30a-2b2d-4976-8df4-33ae9efde46a"
+  },
+  {
+    "bounds": {
+      "height": 32
+    },
+    "op": "resize",
+    "target": "77f6ea2f-0180-4afa-8496-6da2e13f657b"
+  }
+]

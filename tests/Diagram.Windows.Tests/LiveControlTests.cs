@@ -50,6 +50,48 @@ public class LiveControlTests
         new { op = "createShape", alias, bounds = new { x, y, width = 50, height = 30 }, text = new { value = alias } };
 
     [Fact]
+    public async Task MeasuredTextFitIsReadOnlyAndItsProposalFixesOnlyTheRequestedLabel()
+    {
+        var pipe = NewPipe();
+        await using var h = await Harness.StartAsync(pipe: pipe);
+        await using var client = await Connect(pipe);
+        var id = await Summary(client);
+        var made = await client.CallToolAsync("apply_operations", Apply(id, Guid.NewGuid().ToString(), 0,
+            new { op = "createText", alias = "tight", bounds = new { x = 40, y = 40, width = 60, height = 20 }, text = new { value = "Release compatibility and deployment record", fontSizePt = 20, wrap = false, paddingPt = 2 } },
+            Shape("untouched", 100, 200)), cancellationToken: Ct());
+        Assert.True(made.IsError != true, made.StructuredContent?.ToString());
+        async Task<string> Object(string alias) => Body(await client.CallToolAsync("get_objects", new Dictionary<string, object?>
+        { ["documentId"] = id.Doc, ["sessionId"] = id.Session, ["ids"] = new[] { alias } }, cancellationToken: Ct())).GetProperty("objects")[0].GetRawText();
+        var tightBefore = await Object("tight"); var otherBefore = await Object("untouched");
+        var measured = await client.CallToolAsync("get_text_layout", new Dictionary<string, object?>
+        { ["documentId"] = id.Doc, ["sessionId"] = id.Session, ["ids"] = new[] { "tight" }, ["target"] = "visio" }, cancellationToken: Ct());
+        Assert.True(measured.IsError != true, measured.StructuredContent?.ToString());
+        var report = Body(measured);
+        Assert.Equal(1, report.GetProperty("revision").GetInt32());
+        Assert.False(report.GetProperty("items")[0].GetProperty("current").GetProperty("fits").GetBoolean());
+        Assert.True(report.GetProperty("items")[0].GetProperty("recommended").GetProperty("fits").GetBoolean());
+        Assert.Equal(tightBefore, await Object("tight")); Assert.Equal(otherBefore, await Object("untouched"));
+        var applied = await client.CallToolAsync("apply_operations", new Dictionary<string, object?>
+        {
+            ["documentId"] = id.Doc, ["sessionId"] = id.Session, ["transactionId"] = Guid.NewGuid().ToString(),
+            ["baseRevision"] = report.GetProperty("revision").GetInt32(), ["operations"] = report.GetProperty("operations"),
+        }, cancellationToken: Ct());
+        Assert.True(applied.IsError != true, applied.StructuredContent?.ToString());
+        Assert.Equal(otherBefore, await Object("untouched"));
+        var again = await client.CallToolAsync("get_text_layout", new Dictionary<string, object?>
+        { ["documentId"] = id.Doc, ["sessionId"] = id.Session, ["ids"] = new[] { "tight" }, ["target"] = "visio" }, cancellationToken: Ct());
+        Assert.True(Body(again).GetProperty("items")[0].GetProperty("current").GetProperty("fits").GetBoolean());
+        Assert.Empty(Body(again).GetProperty("operations").EnumerateArray());
+        // A proposal cannot silently overwrite a subsequent human edit.
+        var stale = await client.CallToolAsync("apply_operations", new Dictionary<string, object?>
+        {
+            ["documentId"] = id.Doc, ["sessionId"] = id.Session, ["transactionId"] = Guid.NewGuid().ToString(),
+            ["baseRevision"] = 1, ["operations"] = report.GetProperty("operations"),
+        }, cancellationToken: Ct());
+        Assert.Equal("revision_conflict", ErrorCode(stale));
+    }
+
+    [Fact]
     public async Task ReadsShowTheCurrentCanonicalStore()
     {
         var pipe = NewPipe();

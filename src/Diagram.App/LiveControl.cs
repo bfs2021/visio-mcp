@@ -14,7 +14,7 @@ public sealed class LiveControl : IAsyncDisposable
 {
     static readonly HashSet<string> Offered = new()
     {
-        "doc.summary", "doc.getObjects", "doc.apply", "doc.executeScript", "doc.changes", "doc.inspectLayout", "doc.render", "doc.export", "assets.list",
+        "doc.summary", "doc.getObjects", "doc.apply", "doc.executeScript", "doc.changes", "doc.inspectLayout", "doc.textLayout", "doc.render", "doc.export", "assets.list", "reference.render", "reference.compare", "icons.search", "icons.get",
     };
 
     /// <summary>Calls that may omit the scope because they are how a client first learns it.</summary>
@@ -25,13 +25,16 @@ public sealed class LiveControl : IAsyncDisposable
     readonly Func<RequestEnvelope, CancellationToken, Task<ResponseEnvelope>> export;
     readonly AssetLibrary library;
     readonly AssetResolver resolver;
+    readonly Func<RequestEnvelope, CancellationToken, Task<ResponseEnvelope>>? reference;
 
-    public LiveControl(string pipeName, BridgeRouter router, Func<RequestEnvelope, CancellationToken, Task<ResponseEnvelope>> export, AssetLibrary library, AssetResolver resolver)
+    public LiveControl(string pipeName, BridgeRouter router, Func<RequestEnvelope, CancellationToken, Task<ResponseEnvelope>> export, AssetLibrary library, AssetResolver resolver,
+        Func<RequestEnvelope, CancellationToken, Task<ResponseEnvelope>>? reference = null)
     {
         this.router = router;
         this.export = export;
         this.library = library;
         this.resolver = resolver;
+        this.reference = reference;
         server = PipeServer.Start(pipeName, HandleAsync);
     }
 
@@ -43,6 +46,8 @@ public sealed class LiveControl : IAsyncDisposable
         if (ScopeOptional.Contains(request.Method) && request.DocumentId is null && request.SessionId is null && router.CurrentScope is { } scope)
             request = request with { DocumentId = scope.DocumentId, SessionId = scope.SessionId };
         if (request.Method == "doc.export") return await export(request, ct); // the host writes the file itself, inside the approved folders
+        if (request.Method is "reference.render" or "reference.compare") return reference is null
+            ? Wire.Error(request.RequestId, "not_ready", "reference rendering is unavailable") : await reference(request, ct);
         if (request.Method == "assets.list") return await ListAssetsAsync(request, ct);
         if (request.Method == "doc.executeScript") return await ExecuteScriptAsync(request, ct);
         return await router.SendAsync(request, ct);

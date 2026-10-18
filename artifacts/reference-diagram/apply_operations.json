@@ -1,0 +1,57 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"transaction\":{\"transactionId\":\"d931e033-b3b3-4212-aaf7-6e0001f063d0\",\"previousRevision\":2,\"revision\":3,\"noChange\":false,\"created\":[],\"changed\":[\"a5e7cbb1-75cd-444d-813d-f9e22ee14736\",\"b091e907-069a-4d28-abbd-f5cbd7dfbe98\"],\"deleted\":[],\"changedPageIds\":[],\"changedLayerIds\":[],\"changedAssetIds\":[],\"visuallyAffectedIds\":[\"a5e7cbb1-75cd-444d-813d-f9e22ee14736\",\"b091e907-069a-4d28-abbd-f5cbd7dfbe98\"],\"warnings\":[],\"projectionStatus\":\"applied\"},\"objects\":[{\"id\":\"a5e7cbb1-75cd-444d-813d-f9e22ee14736\",\"kind\":\"text\",\"alias\":\"release-left-arrows\",\"bounds\":{\"height\":36,\"width\":40,\"x\":50,\"y\":455},\"text\":\"\\u2193\\u2191\"},{\"id\":\"b091e907-069a-4d28-abbd-f5cbd7dfbe98\",\"kind\":\"text\",\"alias\":\"release-right-arrows\",\"bounds\":{\"height\":36,\"width\":40,\"x\":1140,\"y\":455},\"text\":\"\\u2193\\u2191\"}]}"
+    }
+  ],
+  "structuredContent": {
+    "transaction": {
+      "transactionId": "d931e033-b3b3-4212-aaf7-6e0001f063d0",
+      "previousRevision": 2,
+      "revision": 3,
+      "noChange": false,
+      "created": [],
+      "changed": [
+        "a5e7cbb1-75cd-444d-813d-f9e22ee14736",
+        "b091e907-069a-4d28-abbd-f5cbd7dfbe98"
+      ],
+      "deleted": [],
+      "changedPageIds": [],
+      "changedLayerIds": [],
+      "changedAssetIds": [],
+      "visuallyAffectedIds": [
+        "a5e7cbb1-75cd-444d-813d-f9e22ee14736",
+        "b091e907-069a-4d28-abbd-f5cbd7dfbe98"
+      ],
+      "warnings": [],
+      "projectionStatus": "applied"
+    },
+    "objects": [
+      {
+        "id": "a5e7cbb1-75cd-444d-813d-f9e22ee14736",
+        "kind": "text",
+        "alias": "release-left-arrows",
+        "bounds": {
+          "height": 36,
+          "width": 40,
+          "x": 50,
+          "y": 455
+        },
+        "text": "↓↑"
+      },
+      {
+        "id": "b091e907-069a-4d28-abbd-f5cbd7dfbe98",
+        "kind": "text",
+        "alias": "release-right-arrows",
+        "bounds": {
+          "height": 36,
+          "width": 40,
+          "x": 1140,
+          "y": 455
+        },
+        "text": "↓↑"
+      }
+    ]
+  }
+}

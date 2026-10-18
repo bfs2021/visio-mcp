@@ -12,6 +12,7 @@ import { canDeleteAsset, prepareDocumentAsset, imagesUsing, replaceEverywhere, r
 import { effectiveState } from '../canvas/cellMapping';
 import { drawScriptCompiler, validateScript, type ValidationReport } from '../script/compiler';
 import { toPoints, type Unit } from '../model/validate';
+import { iconOperations } from '../icons/catalog';
 
 /** What the page needs from the host. In a plain browser (tests, dev) a stub stands in. */
 export interface HostApi {
@@ -93,6 +94,7 @@ export class EditorModel {
   report: CompatibilityView | null = null;
   selection: string[] = [];
   tool: Tool = { kind: 'select' };
+  iconSettings = { sizePt: 24, colour: '#334155', strokeWidthPt: 2 };
   unit: Unit = 'mm';
   status: Status = { text: 'Ready', kind: 'info' };
   viewport: ViewportInfo | null = null;
@@ -209,6 +211,15 @@ export class EditorModel {
 
   async place(what: string, at: { x: number; y: number }): Promise<void> {
     const page = this.currentPage;
+    if (what.startsWith('icon:')) {
+      const prepared = iconOperations({ ...this.iconSettings, iconId: what.slice(5), pageId: page.id,
+        x: at.x - this.iconSettings.sizePt / 2, y: at.y - this.iconSettings.sizePt / 2 });
+      if (!prepared.ok) { this.say(prepared.error.message, 'error'); return; }
+      const r = await this.apply('create', prepared.value.operations);
+      this.setTool({ kind: 'select' });
+      if (r.ok) { this.selection = [prepared.value.elementId]; this.canvas?.setSelection(this.selection); this.bump(); }
+      return;
+    }
     let op: Operation;
     if (what === 'text') {
       op = { op: 'createText', bounds: { x: at.x - 60, y: at.y - 15, width: 120, height: 30 }, text: { value: 'Text', horizontalAlign: 'left' } };

@@ -16,7 +16,45 @@ namespace Diagram.Mcp;
 [McpServerToolType]
 public sealed class DiagramTools(PipeClient app)
 {
+    [McpServerTool(Name = "get_operation_schema"), Description("Discover the canonical operation contracts before calling apply_operations. Omit operation for an index; supply an exact operation name for its self-contained JSON Schema, referenced definitions, example, units, limits and targeting guidance. Works without an open document or running editor.")]
+    public CallToolResult GetOperationSchema(
+        [Description("Exact operation name, such as createShape, resize or set. Omit to list all operations.")] string? operation = null)
+    {
+        var result = OperationCatalog.Describe(operation);
+        return result is null
+            ? ToolErrors.Fail("invalid_request", "Unknown operation. Call get_operation_schema without operation to list supported names (case-sensitive).")
+            : ToolErrors.Ok(result);
+    }
+
     const string Identity = "Pass the documentId and sessionId returned by get_document_summary. A different session means the document was reopened: read the summary again.";
+
+    [McpServerTool(Name = "search_icons"), Description("Search the bundled, versioned vector icon catalogue by name or tags, such as branch, repository, docker, cloud or security. Returns stable IDs, catalogue version and a PNG preview sheet. Read-only: no shapes are placed. Call get_icon for an editable placement proposal. " + Identity)]
+    public async Task<CallToolResult> SearchIcons(string documentId, string sessionId,
+        [Description("Name/tag words; empty lists the catalogue.")] string query = "",
+        [Description("Maximum results from 1 to 50; default 24. total/hasMore report truncation.")] int limit = 24,
+        CancellationToken ct = default)
+    {
+        if (Check(("documentId", documentId), ("sessionId", sessionId)) is { } bad) return ToolErrors.Fail("invalid_request", bad);
+        return FinishImage(await Send("icons.search", documentId, sessionId, Obj(("query", query), ("limit", limit)), Render, ct));
+    }
+
+    [McpServerTool(Name = "get_icon"), Description("Preview a catalogue icon and propose editable vector-shape operations. Returns stable icon/version/hash metadata, PNG preview, and operations to apply separately with apply_operations at baseRevision. Size and stroke width are in points; x/y locate the top-left. The preview does not mutate the document. " + Identity)]
+    public async Task<CallToolResult> GetIcon(string documentId, string sessionId, string pageId,
+        [Description("Stable ID returned by search_icons, e.g. lucide:git-branch.")] string iconId,
+        [Description("Top-left x in points.")] double x = 0,
+        [Description("Top-left y in points.")] double y = 0,
+        [Description("Square size, 1–1000 points. Default 24.")] double sizePt = 24,
+        [Description("Stroke colour as #RRGGBB.")] string colour = "#334155",
+        [Description("Stroke in points; omitted uses sizePt/12.")] double? strokeWidthPt = null,
+        [Description("Optional catalogue version from search_icons, to reject a changed catalogue.")] string? catalogVersion = null,
+        [Description("Optional object UUID; omitted returns a new UUID in the proposal.")] string? elementId = null,
+        CancellationToken ct = default)
+    {
+        if (Check(("documentId", documentId), ("sessionId", sessionId), ("pageId", pageId)) is { } bad) return ToolErrors.Fail("invalid_request", bad);
+        if (!double.IsFinite(x) || !double.IsFinite(y) || !double.IsFinite(sizePt) || strokeWidthPt is { } sw && !double.IsFinite(sw)) return ToolErrors.Fail("invalid_request", "icon dimensions must be finite");
+        return FinishImage(await Send("icons.get", documentId, sessionId, Obj(("pageId", pageId), ("iconId", iconId), ("x", x), ("y", y), ("sizePt", sizePt),
+            ("colour", colour), ("strokeWidthPt", strokeWidthPt), ("catalogVersion", catalogVersion), ("elementId", elementId)), Render, ct));
+    }
 
     // Deadlines: reads 10 s, mutations 15 s, renders 30 s, export 120 s; the shim adds 5 s of transport time.
     static readonly TimeSpan Read = TimeSpan.FromSeconds(15), Mutate = TimeSpan.FromSeconds(20), Render = TimeSpan.FromSeconds(35), Export = TimeSpan.FromSeconds(125);
@@ -112,7 +150,7 @@ public sealed class DiagramTools(PipeClient app)
         return Finish(await Send("doc.getObjects", documentId, sessionId, Obj(("ids", new JsonArray(ids.Select(i => (JsonNode)JsonValue.Create(i)!).ToArray())), ("pageId", pageId)), Read, ct));
     }
 
-    [McpServerTool(Name = "apply_operations"), Description("Applies a batch of typed operations as one atomic transaction at baseRevision. If the document changed since baseRevision the call fails with revision_conflict and changes nothing. You supply the transactionId: retrying with the same id and payload returns the original result instead of applying twice. " + Identity)]
+    [McpServerTool(Name = "apply_operations"), Description("Applies a batch of typed operations as one atomic transaction at baseRevision. Call get_operation_schema first for operation schemas and examples, including text/style fields, units and targeting rules. If the document changed since baseRevision the call fails with revision_conflict and changes nothing. You supply the transactionId: retrying with the same id and payload returns the original result instead of applying twice. " + Identity)]
     public async Task<CallToolResult> ApplyOperations(
         [Description("The document id from get_document_summary.")] string documentId,
         [Description("The session id from get_document_summary.")] string sessionId,
@@ -190,7 +228,66 @@ public sealed class DiagramTools(PipeClient app)
             ("elementIds", elementIds is null ? null : new JsonArray(elementIds.Select(i => (JsonNode)JsonValue.Create(i)!).ToArray())), ("paddingPt", paddingPt), ("format", format), ("mode", mode)), Render, ct));
     }
 
-    [McpServerTool(Name = "inspect_layout"), Description("Machine-readable layout warnings (outside the page, overlaps, clipped text, unattached connectors, connectors through shapes, stretched pictures, low contrast). Each issue has element ids, page and bounds. " + Identity)]
+    [McpServerTool(Name = "render_reference_region"), Description("Read-only magnified crop of an approved PNG/JPEG/BMP image asset. Call list_assets for its ID, scope and SHA-256 hash; import references through the app's asset library first. cropPx is in original image pixels, not document points. Returns a PNG image block, source dimensions, pinned hash and source-to-output coordinate mapping. No file paths or document changes. " + Identity)]
+    public async Task<CallToolResult> RenderReferenceRegion(
+        string documentId, string sessionId,
+        [Description("Approved image ID from list_assets.")] string referenceAssetId,
+        [Description("Exact lowercase SHA-256 version from list_assets; prevents silent source changes.")] string referenceSha256,
+        [Description("{x,y,width,height} in integer source pixels; must be fully inside the original image.")] JsonElement cropPx,
+        [Description("library or document; matches the approved source's scope.")] string referenceScope = "library",
+        [Description("Magnification 1–16, default 8; output is limited to 4096 pixels per side and 16 megapixels.")] double scale = 8,
+        CancellationToken ct = default)
+    {
+        if (Check(("documentId", documentId), ("sessionId", sessionId)) is { } bad) return ToolErrors.Fail("invalid_request", bad);
+        if (!double.IsFinite(scale)) return ToolErrors.Fail("invalid_request", "scale must be finite");
+        return FinishImage(await Send("reference.render", documentId, sessionId,
+            Obj(("referenceAssetId", referenceAssetId), ("referenceSha256", referenceSha256), ("referenceScope", referenceScope),
+                ("cropPx", JsonNode.Parse(cropPx.GetRawText())), ("scale", scale)), Render, ct));
+    }
+
+    [McpServerTool(Name = "compare_reference"), Description("Read-only comparison of an approved reference-image crop with a committed canvas region. Returns an enlarged side-by-side PNG or a 50% canvas overlay, pinned source hash, document revision and coordinate mappings. Each crop is fitted without stretching and centred in equally sized panels; this is visual inspection, not an automatic accuracy score. Use side_by_side when source and canvas themes differ. Call list_assets to obtain approved reference IDs and hashes. " + Identity)]
+    public async Task<CallToolResult> CompareReference(
+        string documentId, string sessionId, string pageId,
+        [Description("Approved PNG/JPEG/BMP image ID from list_assets.")] string referenceAssetId,
+        [Description("Exact lowercase SHA-256 source version from list_assets.")] string referenceSha256,
+        [Description("{x,y,width,height} in integer source image pixels.")] JsonElement cropPx,
+        [Description("Canvas region {x,y,width,height} in document points. Give this or elementIds, not both.")] JsonElement? bounds = null,
+        [Description("Canvas element UUIDs, or page-scoped aliases/names. Give this or bounds, not both.")] string[]? elementIds = null,
+        [Description("library or document, matching list_assets.")] string referenceScope = "library",
+        [Description("side_by_side (default) or overlay (reference then canvas at 50% opacity).")] string mode = "side_by_side",
+        [Description("Square panel size in output pixels, 64–2048; default 512.")] int panelSizePx = 512,
+        [Description("Extra canvas margin in document points, 0–2000. Default 6 protects icon strokes at the crop edges; source crop is unchanged.")] double paddingPt = 6,
+        CancellationToken ct = default)
+    {
+        if (Check(("documentId", documentId), ("sessionId", sessionId), ("pageId", pageId)) is { } bad) return ToolErrors.Fail("invalid_request", bad);
+        if (!double.IsFinite(paddingPt)) return ToolErrors.Fail("invalid_request", "paddingPt must be finite");
+        return FinishImage(await Send("reference.compare", documentId, sessionId,
+            Obj(("referenceAssetId", referenceAssetId), ("referenceSha256", referenceSha256), ("referenceScope", referenceScope),
+                ("cropPx", JsonNode.Parse(cropPx.GetRawText())), ("pageId", pageId), ("bounds", bounds is { } b ? JsonNode.Parse(b.GetRawText()) : null),
+                ("elementIds", elementIds is null ? null : JsonSerializer.SerializeToNode(elementIds)), ("mode", mode), ("panelSizePx", panelSizePx), ("paddingPt", paddingPt)), Render, ct));
+    }
+
+    [McpServerTool(Name = "get_text_layout"), Description("Read-only text measurements and fitting proposals for existing text objects or shapes with text. Returns the committed revision, line counts, required dimensions, overflow, and suggested resize or font-size operations; apply those separately with apply_operations at the returned revision. Uses editor font advances and estimated line heights. Visio mode adds conservative margins, not a guarantee of native wrapping. " + Identity)]
+    public async Task<CallToolResult> GetTextLayout(
+        [Description("The document id from get_document_summary.")] string documentId,
+        [Description("The session id from get_document_summary.")] string sessionId,
+        [Description("1 to 50 text-object or text-bearing-shape UUIDs; aliases/names need page scope. Prefer UUIDs.")] string[] ids,
+        [Description("grow_box (preserve font and grow dimensions) or shrink_font (preserve bounds; never grow font).")] string strategy = "grow_box",
+        [Description("editor, or visio for a one-em minimum advance per symbol, 10% extra advance/line height and 2pt extra inset per side. Verify Visio export independently.")] string target = "editor",
+        [Description("Minimum allowed font size for shrink_font, in points. Default 8; greater than 0 and at most 1000.")] double minFontSizePt = 8,
+        [Description("Page UUID for alias/name lookup; omitted only when the document has one page or ids are UUIDs.")] string? pageId = null,
+        CancellationToken ct = default)
+    {
+        if (Check(("documentId", documentId), ("sessionId", sessionId)) is { } bad) return ToolErrors.Fail("invalid_request", bad);
+        if (pageId is not null && Check(("pageId", pageId)) is { } badPage) return ToolErrors.Fail("invalid_request", badPage);
+        if (ids.Length is < 1 or > 50 || ids.Any(i => string.IsNullOrEmpty(i) || i.Length > 256)) return ToolErrors.Fail("invalid_request", "ids must contain 1 to 50 nonempty UUIDs, aliases or names");
+        if (strategy is not ("grow_box" or "shrink_font") || target is not ("editor" or "visio")) return ToolErrors.Fail("invalid_request", "strategy must be grow_box or shrink_font; target must be editor or visio");
+        if (!double.IsFinite(minFontSizePt) || minFontSizePt <= 0 || minFontSizePt > 1000) return ToolErrors.Fail("invalid_request", "minFontSizePt must be greater than 0 and at most 1000");
+        return Finish(await Send("doc.textLayout", documentId, sessionId,
+            Obj(("ids", new JsonArray(ids.Select(i => (JsonNode)JsonValue.Create(i)!).ToArray())), ("strategy", strategy), ("target", target), ("minFontSizePt", minFontSizePt), ("pageId", pageId)), Read, ct));
+    }
+
+    [McpServerTool(Name = "inspect_layout"), Description("Machine-readable layout warnings (outside the page, overlaps, clipped text, unattached connectors, connectors through shapes, stretched pictures, low contrast). Each issue has element ids, page and bounds. For text measurements and fitting proposals, call get_text_layout. " + Identity)]
     public async Task<CallToolResult> InspectLayout(
         [Description("The document id from get_document_summary.")] string documentId,
         [Description("The session id from get_document_summary.")] string sessionId,

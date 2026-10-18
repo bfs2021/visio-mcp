@@ -2,6 +2,21 @@ import { HexagonShape, Point, ShapeRegistry, type AbstractCanvas2D, type CellSty
 
 // HexagonShape is the public path-shape base: its redrawPath is replaced below, keeping addPoints/rounding helpers.
 import type { ConnectorElement, Element, ImageElement, Layer, Paint, ShapeElement, TextBlock, TextElement } from '../contracts/generated';
+import { parsePath } from '../geometry/svgPath';
+
+class CustomPathShape extends HexagonShape {
+  redrawPath(c: AbstractCanvas2D, _x: number, _y: number, w: number, h: number): void {
+    const style = this.style as Record<string, unknown> | undefined;
+    const parsed = parsePath(String(style?.svgPath ?? ''));
+    c.setLineCap(String(style?.lineCap ?? 'butt')); c.setLineJoin(String(style?.lineJoin ?? 'miter'));
+    if (!parsed.ok) { c.setStrokeColor('#EF4444'); c.moveTo(0, 0); c.lineTo(w, h); c.moveTo(w, 0); c.lineTo(0, h); return; }
+    for (const step of parsed.value) {
+      if (step.op === 'Z') c.close();
+      else if (step.op === 'M') c.moveTo(step.x * w / 100, step.y * h / 100);
+      else c.lineTo(step.x * w / 100, step.y * h / 100);
+    }
+  }
+}
 
 /** A parallelogram preset (maxGraph has none built in). */
 class ParallelogramShape extends HexagonShape {
@@ -27,6 +42,7 @@ export function registerCustomShapes(): void {
   registered = true;
   ShapeRegistry.add('parallelogram', ParallelogramShape);
   ShapeRegistry.add('callout', CalloutShape);
+  ShapeRegistry.add('custom-path', CustomPathShape);
 }
 
 const SHAPE_FOR_PRESET: Record<string, string | undefined> = {
@@ -78,6 +94,10 @@ export function vertexStyle(el: ShapeElement | TextElement | ImageElement, locke
   } else {
     const shape = SHAPE_FOR_PRESET[el.geometry.preset ?? 'rectangle'];
     if (shape) style.shape = shape;
+    if (el.geometry.svgPath !== undefined) {
+      style.shape = 'custom-path';
+      Object.assign(style, { svgPath: el.geometry.svgPath, lineCap: el.style.lineCap, lineJoin: el.style.lineJoin });
+    }
     if (el.geometry.preset === 'rounded-rectangle') {
       style.rounded = true;
       style.absoluteArcSize = true;

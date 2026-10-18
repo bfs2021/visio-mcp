@@ -2,6 +2,8 @@ import type { Bounds, Element, Page, Point, Projection, Snapshot, TextBlock } fr
 import { visualBounds } from '../commands/geometry';
 import { parentMap } from '../commands/groups';
 import { effectiveState } from '../canvas/cellMapping';
+import { measureTextBox, TextMeasurementLimitError, type TextMeasurement } from './textMeasurement';
+import { parsePath } from '../geometry/svgPath';
 
 export type Severity = 'info' | 'warning' | 'error';
 
@@ -27,7 +29,6 @@ export interface LayoutContext {
 export interface LayoutReport { issues: LayoutIssue[]; notes: string[] }
 
 const EPS = 0.01;
-const LINE_HEIGHT = 1.2;
 const isBox = (e: Element): e is Exclude<Element, { kind: 'connector' } | { kind: 'group' }> => e.kind !== 'connector' && e.kind !== 'group';
 
 const intersect = (a: Bounds, b: Bounds): Bounds | null => {
@@ -57,25 +58,6 @@ function segmentCrosses(a: Point, b: Point, r: Bounds): boolean {
 }
 
 // ---- text
-
-function wrap(text: string, avail: number | null, font: { family: string; sizePt: number; bold: boolean; italic: boolean }, ctx: LayoutContext): { width: number; lines: number; longestWord: number } {
-  let width = 0, lines = 0, longestWord = 0;
-  for (const paragraph of text.split('\n')) {
-    if (avail === null) { const w = ctx.measureWidth(paragraph, font); width = Math.max(width, w); lines++; continue; }
-    let line = '';
-    let any = false;
-    for (const word of paragraph.split(/\s+/).filter(Boolean)) {
-      const ww = ctx.measureWidth(word, font);
-      longestWord = Math.max(longestWord, ww);
-      const candidate = line ? `${line} ${word}` : word;
-      if (line && ctx.measureWidth(candidate, font) > avail) { width = Math.max(width, ctx.measureWidth(line, font)); lines++; line = word; } else line = candidate;
-      any = true;
-    }
-    width = Math.max(width, line ? ctx.measureWidth(line, font) : 0);
-    lines += any || paragraph === '' ? 1 : 0;
-  }
-  return { width, lines: Math.max(lines, 1), longestWord };
-}
 
 const luminance = (hex: string): number => {
   const c = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
@@ -115,6 +97,10 @@ function inspectPage(page: Page, ctx: LayoutContext, issues: LayoutIssue[]): voi
   for (const el of shown) {
     if (el.kind === 'group') continue;
     const box = visualBounds(el);
+    if (el.kind === 'shape' && el.geometry.svgPath !== undefined) {
+      const parsed = parsePath(el.geometry.svgPath);
+      if (!parsed.ok) add('UNSUPPORTED_PATH', 'error', [el.id], box, parsed.error.message);
+    }
 
     // outside the page
     const over = { left: Math.max(0, -box.x), top: Math.max(0, -box.y), right: Math.max(0, box.x + box.width - page.widthPt), bottom: Math.max(0, box.y + box.height - page.heightPt) };
@@ -167,15 +153,19 @@ function sharesGroup(a: string, b: string, parents: ReadonlyMap<string, string>)
 }
 
 function textChecks(el: Exclude<Element, { kind: 'connector' } | { kind: 'group' }>, text: TextBlock, box: Bounds, add: (c: string, s: Severity, ids: string[], b: Bounds, m: string, e?: Record<string, unknown>) => void, ctx: LayoutContext, page: Page): void {
-  const font = { family: text.fontFamily, sizePt: text.fontSizePt, bold: text.bold, italic: text.italic };
-  const availW = Math.max(0, el.bounds.width - 2 * text.paddingPt), availH = Math.max(0, el.bounds.height - 2 * text.paddingPt);
-  const m = wrap(text.value, text.wrap ? availW : null, font, ctx);
-  const needH = m.lines * text.fontSizePt * LINE_HEIGHT;
-  const tooWide = text.wrap ? m.longestWord > availW + 0.5 : m.width > availW + 0.5;
+  let m: TextMeasurement;
+  try { m = measureTextBox(text, el.bounds.width, el.bounds.height, ctx.measureWidth); }
+  catch (error) {
+    if (!(error instanceof TextMeasurementLimitError)) throw error;
+    add('TEXT_MEASUREMENT_LIMIT', 'warning', [el.id], box, error.message);
+    return;
+  }
+  const availW = m.availableWidthPt, availH = m.availableHeightPt, needH = m.contentHeightPt;
+  const tooWide = m.contentWidthPt > availW + 0.5;
   const tooTall = needH > availH + 0.5;
   if (tooWide || tooTall) {
     add('TEXT_OVERFLOW', 'warning', [el.id], box, tooTall ? 'The text needs more height than the element has and will be clipped.' : 'The text is wider than the element.', {
-      neededWidthPt: Math.round((text.wrap ? m.longestWord : m.width) * 10) / 10, availableWidthPt: Math.round(availW * 10) / 10,
+      neededWidthPt: Math.round(m.contentWidthPt * 10) / 10, availableWidthPt: Math.round(availW * 10) / 10,
       neededHeightPt: Math.round(needH * 10) / 10, availableHeightPt: Math.round(availH * 10) / 10, lines: m.lines, measured: 'estimated',
     });
   }

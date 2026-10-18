@@ -13,6 +13,7 @@ import {
 } from './geometry';
 import { ancestorsOf, groupBoundsFrom, leavesUnder } from './groups';
 import { lookupTarget } from './resolveTarget';
+import { parsePath } from '../geometry/svgPath';
 
 export interface PlanContext {
   newId(): string;
@@ -413,6 +414,7 @@ class Planner {
         if (op.ports) el.ports = op.ports.map(p => ({ ...p }));
         this.assertPositive(el.bounds, id);
         this.assertFinite(el.rotationDeg, 'rotationDeg');
+        if (el.geometry.svgPath !== undefined) { const parsed = parsePath(el.geometry.svgPath); if (!parsed.ok) stop('invalid_request', parsed.error.message); }
         this.addElement(pageIdx, el);
         return;
       }
@@ -875,7 +877,12 @@ class Planner {
           next.text = merge(base, value as PatchObj);
           break;
         }
-        case 'geometry': need(element.kind === 'shape', key); next.geometry = merge((element as ShapeElement).geometry, value as PatchObj); break;
+        case 'geometry': {
+          need(element.kind === 'shape', key); next.geometry = merge((element as ShapeElement).geometry, value as PatchObj);
+          const path = (next.geometry as ShapeElement['geometry']).svgPath;
+          if (path !== undefined) { const parsed = parsePath(path); if (!parsed.ok) stop('invalid_request', parsed.error.message); }
+          break;
+        }
         case 'ports': need(element.kind === 'shape', key); next.ports = (value as ShapeElement['ports'])!.map(p => ({ ...p })); break;
         case 'assetId': need(element.kind === 'image', key); this.assertAsset(value as string); next.assetId = value; break;
         case 'fit': case 'opacity': case 'preserveAspectRatio': need(element.kind === 'image', key); next[key] = value; break;

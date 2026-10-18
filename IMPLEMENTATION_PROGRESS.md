@@ -1,16 +1,15 @@
 # Implementation progress
 
-Updated: 2026-10-17 (Europe/London).
+Updated: 2026-10-18 (Europe/London).
 
 Status: **M0 (I00 to I05) and M1 (I10, I11, I12) done, see [docs/m1/results.md](docs/m1/results.md); I20, I21, I30 and I31 done, see [docs/m2/results.md](docs/m2/results.md); I40 done, see [docs/m4/results.md](docs/m4/results.md); I41 done, see [docs/acceptance/WA-results-2026-10-17.md](docs/acceptance/WA-results-2026-10-17.md); I50 done, see [docs/m5/results.md](docs/m5/results.md)**; I51 onwards not started. This file splits future implementation into bounded work
 packages. It is a progress and dependency register, not a claim that feasibility
 spikes, builds, tests or Windows acceptance have run.
 
-The current request is to create an implementation design and have Claude review it.
-The [implementation plan](docs/superpowers/plans/2026-10-02-agentic-diagram-implementation.md)
-has been reviewed by Claude; Codex incorporated the requested corrections. Product
-implementation is still not started.
-No product scaffolding or dependencies are needed for this request.
+The original [implementation plan](docs/superpowers/plans/2026-10-02-agentic-diagram-implementation.md)
+was reviewed by Claude; Codex incorporated the requested corrections. The package table
+below records implementation status. Older planning and milestone narratives describe
+the state at the time they were written, rather than the current product state.
 Package ownership below is proposed: Claude currently
 has read-only broker access, so a future implementation session must either enable
 write-capable delegation or have Claude return reviewable patches for Codex to apply.
@@ -40,6 +39,34 @@ Input validation and safe IO are introduced in the first package that accepts
 input, then tested and hardened in I51. They are not postponed until M5.
 M1 includes a minimal command engine because its GUI and undo must already use
 canonical transactions; M2 expands it instead of introducing a competing engine.
+
+## Diagram reproduction improvements
+
+Added 2026-10-18 following the light-mode reference-diagram functionality test.
+These supplement I51/I52; they are not prerequisites already delivered by earlier packages.
+Evidence: [reference-diagram test report](artifacts/reference-diagram/TEST-REPORT.md).
+The probe reproduced 62 editable objects and all 39 text blocks, with icon approximations,
+Visio wrapping differences that required correction, and five false thin-rule warnings.
+
+| ID | Improvement | Depends on | Status | Exit evidence |
+|---|---|---|---|---|
+| R01 | Discoverable MCP operation schemas, examples, units, limits and targeting guidance | I30, canonical contracts | done (2026-10-18); installed companion updated | 29 self-contained schemas and validated examples; offline real-MCP canonical parity test; 12 MCP tests and 258 frontend tests pass; typecheck passes; published companion verified outside repo. See [R01 results](docs/m5/R01-operation-discovery.md) |
+| R02 | Text measurement and fitting, including Visio export-aware checks | I31, I40 | done (2026-10-18); update installed alongside open app | get_text_layout with revision-tagged grow-box/shrink-font proposals and shared layout metrics; 267 frontend tests, 13 MCP tests, 24 Windows tests; typecheck/build pass; native Visio arrow widths fit. See [R02 results](docs/m5/R02-text-layout.md) |
+| R03 | Consistent, searchable vector icons and custom geometry across editor, render and Visio | I12, I31, I40 | design in progress (2026-10-18) | Stable icon IDs and discoverable previews for branch, container, repository/code/server/cloud, shield and lock icons; size/colour/stroke controls; editable placement through existing shape transactions; custom-path rendering; explicit supported-subset diagnostics and cross-renderer tests. Initial inspection confirms canvas shape mapping currently ignores svgPath, while native Visio supports a restricted path subset. |
+| R04 | Reusable layout components with padding and alignment rules | I20, R02; R03 for icon-bearing components | not started | Editable repository cards, labelled containers, environment columns and pipelines; predictable resizing and spacing; fewer manually planned coordinates |
+| R05 | Reference-diagram regression fixture and improved layout diagnostics | I31, I40; incremental coverage of R01–R04 | partial coverage from R02; not complete | R02 adds the 62-object fixture, reference fitting/preservation/export test and native Visio width verifier. Remaining: broader semantic/geometry and tolerant image comparisons; valid thin rules no longer receive ZERO_SIZE warnings; preserve explicit approximation reports |
+| R06 | Enlarged source-reference crops through MCP | I31, I50 | done (2026-10-18); installed update requires app/MCP restart | render_reference_region resolves approved raster IDs and pinned hashes, crops integer source pixels and magnifies with exact nearest-pixel sampling; dimensions/mapping and invalid/oversized crop checks. See [R06/R07 results](docs/m5/R06-R07-reference-comparison.md) |
+| R07 | Paired reference/canvas comparison through MCP | I31, R06 | done (2026-10-18); installed update requires app/MCP restart | compare_reference returns side-by-side or 50% overlay PNGs, one committed revision and source/canvas mappings including raster margins; real branch/container fixtures; source-version/document-pin/read-only/pixel/limit checks; no automatic alignment or accuracy score. See [R06/R07 results](docs/m5/R06-R07-reference-comparison.md) |
+
+R06/R07 are delivered. Prioritise R03 next, then R04, while retaining I51 recovery as reliability work.
+Use R05 incrementally and include the reproduction workflow in I52 final acceptance.
+
+R06/R07 were requested after the split application-release-flow reproduction. Existing
+`render_region` already enlarges canvas details by up to 8×, but cannot show a source
+screenshot crop beside the result. Manual enlargement exposed gaps between the first
+branch-icon segments; correcting them demonstrated the value of a paired inspection loop.
+Small raster references still limit the detail that can be recovered; magnification
+must not imply that an exact original vector or icon identity has been inferred.
 
 ## Evidence register
 
