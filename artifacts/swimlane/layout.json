@@ -1,0 +1,814 @@
+{
+ "documentId": "3c1e58df-ceb6-42f7-945d-c2500d2d7145",
+ "sessionId": "0e456e8f-8ce4-435b-874a-1772c3a6b8a8",
+ "revision": 2,
+ "issues": [
+  {
+   "code": "CONNECTOR_CROSSES_SHAPE",
+   "severity": "warning",
+   "elementIds": [
+    "385bdea3-a7da-48bb-82d5-7356bf1c1fa6",
+    "062b2644-2eff-4eb4-8611-4c7ad035c006",
+    "09eb795a-2026-4e69-a9a6-cc07b3d157df",
+    "3b8f0b61-abdc-4808-a0c3-6ae87f03ed7b",
+    "7a15be48-b580-4829-bff3-bb0f0184d249",
+    "cc55d198-526d-4503-83c1-4c5d3feeda31",
+    "dff22977-2592-46ab-bed7-791e43718633"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "x": 29.59,
+    "y": 29.61,
+    "width": 842.04,
+    "height": 467.71
+   },
+   "message": "The connector passes through shapes it is not attached to.",
+   "evidence": {
+    "crossedElementIds": [
+     "062b2644-2eff-4eb4-8611-4c7ad035c006",
+     "09eb795a-2026-4e69-a9a6-cc07b3d157df",
+     "3b8f0b61-abdc-4808-a0c3-6ae87f03ed7b",
+     "7a15be48-b580-4829-bff3-bb0f0184d249",
+     "cc55d198-526d-4503-83c1-4c5d3feeda31",
+     "dff22977-2592-46ab-bed7-791e43718633"
+    ],
+    "routeFrom": "resolved route"
+   }
+  },
+  {
+   "code": "CONNECTOR_CROSSES_SHAPE",
+   "severity": "warning",
+   "elementIds": [
+    "4a5b4985-fa0c-41d2-9a8a-d7bd38f0f9d8",
+    "cc55d198-526d-4503-83c1-4c5d3feeda31",
+    "dff22977-2592-46ab-bed7-791e43718633"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "x": 29.59,
+    "y": 29.61,
+    "width": 842.04,
+    "height": 467.71
+   },
+   "message": "The connector passes through shapes it is not attached to.",
+   "evidence": {
+    "crossedElementIds": [
+     "cc55d198-526d-4503-83c1-4c5d3feeda31",
+     "dff22977-2592-46ab-bed7-791e43718633"
+    ],
+    "routeFrom": "resolved route"
+   }
+  },
+  {
+   "code": "CONNECTOR_CROSSES_SHAPE",
+   "severity": "warning",
+   "elementIds": [
+    "6088f8ad-4d1b-474b-9617-d01f77af96ae",
+    "7a15be48-b580-4829-bff3-bb0f0184d249",
+    "cc55d198-526d-4503-83c1-4c5d3feeda31"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "x": 29.59,
+    "y": 29.61,
+    "width": 842.04,
+    "height": 467.71
+   },
+   "message": "The connector passes through shapes it is not attached to.",
+   "evidence": {
+    "crossedElementIds": [
+     "7a15be48-b580-4829-bff3-bb0f0184d249",
+     "cc55d198-526d-4503-83c1-4c5d3feeda31"
+    ],
+    "routeFrom": "resolved route"
+   }
+  },
+  {
+   "code": "CONNECTOR_CROSSES_SHAPE",
+   "severity": "warning",
+   "elementIds": [
+    "63300eae-29ba-4084-9c35-6e88d1dff956",
+    "062b2644-2eff-4eb4-8611-4c7ad035c006",
+    "cc55d198-526d-4503-83c1-4c5d3feeda31",
+    "dff22977-2592-46ab-bed7-791e43718633"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "x": 29.59,
+    "y": 29.61,
+    "width": 842.04,
+    "height": 467.71
+   },
+   "message": "The connector passes through shapes it is not attached to.",
+   "evidence": {
+    "crossedElementIds": [
+     "062b2644-2eff-4eb4-8611-4c7ad035c006",
+     "cc55d198-526d-4503-83c1-4c5d3feeda31",
+     "dff22977-2592-46ab-bed7-791e43718633"
+    ],
+    "routeFrom": "resolved route"
+   }
+  },
+  {
+   "code": "CONNECTOR_CROSSES_SHAPE",
+   "severity": "warning",
+   "elementIds": [
+    "71d1b67c-ee78-4c63-83b7-4bdb46672695",
+    "062b2644-2eff-4eb4-8611-4c7ad035c006",
+    "7a15be48-b580-4829-bff3-bb0f0184d249",
+    "cc55d198-526d-4503-83c1-4c5d3feeda31",
+    "dff22977-2592-46ab-bed7-791e43718633"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "x": 29.59,
+    "y": 29.61,
+    "width": 842.04,
+    "height": 467.71
+   },
+   "message": "The connector passes through shapes it is not attached to.",
+   "evidence": {
+    "crossedElementIds": [
+     "062b2644-2eff-4eb4-8611-4c7ad035c006",
+     "7a15be48-b580-4829-bff3-bb0f0184d249",
+     "cc55d198-526d-4503-83c1-4c5d3feeda31",
+     "dff22977-2592-46ab-bed7-791e43718633"
+    ],
+    "routeFrom": "resolved route"
+   }
+  },
+  {
+   "code": "CONNECTOR_CROSSES_SHAPE",
+   "severity": "warning",
+   "elementIds": [
+    "76573691-6c88-401f-bdb9-824584d78116",
+    "044e4c48-4aa5-4e92-a313-98b192e460b6",
+    "062b2644-2eff-4eb4-8611-4c7ad035c006",
+    "09eb795a-2026-4e69-a9a6-cc07b3d157df",
+    "3b8f0b61-abdc-4808-a0c3-6ae87f03ed7b",
+    "3f0e64b0-4e11-4763-b912-e0e59cbd8e98",
+    "7a15be48-b580-4829-bff3-bb0f0184d249",
+    "cc55d198-526d-4503-83c1-4c5d3feeda31",
+    "dff22977-2592-46ab-bed7-791e43718633",
+    "e19cfec0-c62b-4bf0-b316-8103267c34ea"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "x": 29.59,
+    "y": 29.61,
+    "width": 842.04,
+    "height": 467.71
+   },
+   "message": "The connector passes through shapes it is not attached to.",
+   "evidence": {
+    "crossedElementIds": [
+     "044e4c48-4aa5-4e92-a313-98b192e460b6",
+     "062b2644-2eff-4eb4-8611-4c7ad035c006",
+     "09eb795a-2026-4e69-a9a6-cc07b3d157df",
+     "3b8f0b61-abdc-4808-a0c3-6ae87f03ed7b",
+     "3f0e64b0-4e11-4763-b912-e0e59cbd8e98",
+     "7a15be48-b580-4829-bff3-bb0f0184d249",
+     "cc55d198-526d-4503-83c1-4c5d3feeda31",
+     "dff22977-2592-46ab-bed7-791e43718633",
+     "e19cfec0-c62b-4bf0-b316-8103267c34ea"
+    ],
+    "routeFrom": "resolved route"
+   }
+  },
+  {
+   "code": "CONNECTOR_CROSSES_SHAPE",
+   "severity": "warning",
+   "elementIds": [
+    "767b115c-aef8-49e5-937c-d5ec741e0857",
+    "7a15be48-b580-4829-bff3-bb0f0184d249",
+    "cc55d198-526d-4503-83c1-4c5d3feeda31"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "x": 29.59,
+    "y": 29.61,
+    "width": 842.04,
+    "height": 467.71
+   },
+   "message": "The connector passes through shapes it is not attached to.",
+   "evidence": {
+    "crossedElementIds": [
+     "7a15be48-b580-4829-bff3-bb0f0184d249",
+     "cc55d198-526d-4503-83c1-4c5d3feeda31"
+    ],
+    "routeFrom": "resolved route"
+   }
+  },
+  {
+   "code": "CONNECTOR_CROSSES_SHAPE",
+   "severity": "warning",
+   "elementIds": [
+    "8d8ecff5-9d04-4a34-b8ee-c5bf5f6ec21e",
+    "cc55d198-526d-4503-83c1-4c5d3feeda31",
+    "dff22977-2592-46ab-bed7-791e43718633"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "x": 29.59,
+    "y": 29.61,
+    "width": 842.04,
+    "height": 467.71
+   },
+   "message": "The connector passes through shapes it is not attached to.",
+   "evidence": {
+    "crossedElementIds": [
+     "cc55d198-526d-4503-83c1-4c5d3feeda31",
+     "dff22977-2592-46ab-bed7-791e43718633"
+    ],
+    "routeFrom": "resolved route"
+   }
+  },
+  {
+   "code": "CONNECTOR_CROSSES_SHAPE",
+   "severity": "warning",
+   "elementIds": [
+    "9584dcec-49ae-4c4e-90f6-52dd1965144f",
+    "062b2644-2eff-4eb4-8611-4c7ad035c006",
+    "09eb795a-2026-4e69-a9a6-cc07b3d157df",
+    "7a15be48-b580-4829-bff3-bb0f0184d249",
+    "cc55d198-526d-4503-83c1-4c5d3feeda31",
+    "dff22977-2592-46ab-bed7-791e43718633"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "x": 29.59,
+    "y": 29.61,
+    "width": 842.04,
+    "height": 467.71
+   },
+   "message": "The connector passes through shapes it is not attached to.",
+   "evidence": {
+    "crossedElementIds": [
+     "062b2644-2eff-4eb4-8611-4c7ad035c006",
+     "09eb795a-2026-4e69-a9a6-cc07b3d157df",
+     "7a15be48-b580-4829-bff3-bb0f0184d249",
+     "cc55d198-526d-4503-83c1-4c5d3feeda31",
+     "dff22977-2592-46ab-bed7-791e43718633"
+    ],
+    "routeFrom": "resolved route"
+   }
+  },
+  {
+   "code": "CONNECTOR_CROSSES_SHAPE",
+   "severity": "warning",
+   "elementIds": [
+    "a3762186-e93a-423c-ba71-356a3f7182b6",
+    "062b2644-2eff-4eb4-8611-4c7ad035c006",
+    "09eb795a-2026-4e69-a9a6-cc07b3d157df",
+    "3b8f0b61-abdc-4808-a0c3-6ae87f03ed7b",
+    "7a15be48-b580-4829-bff3-bb0f0184d249",
+    "cc55d198-526d-4503-83c1-4c5d3feeda31",
+    "dff22977-2592-46ab-bed7-791e43718633"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "x": 29.59,
+    "y": 29.61,
+    "width": 842.04,
+    "height": 467.71
+   },
+   "message": "The connector passes through shapes it is not attached to.",
+   "evidence": {
+    "crossedElementIds": [
+     "062b2644-2eff-4eb4-8611-4c7ad035c006",
+     "09eb795a-2026-4e69-a9a6-cc07b3d157df",
+     "3b8f0b61-abdc-4808-a0c3-6ae87f03ed7b",
+     "7a15be48-b580-4829-bff3-bb0f0184d249",
+     "cc55d198-526d-4503-83c1-4c5d3feeda31",
+     "dff22977-2592-46ab-bed7-791e43718633"
+    ],
+    "routeFrom": "resolved route"
+   }
+  },
+  {
+   "code": "CONNECTOR_CROSSES_SHAPE",
+   "severity": "warning",
+   "elementIds": [
+    "b63ae39f-de62-40b4-ae6b-b916e65a58ef",
+    "3b8f0b61-abdc-4808-a0c3-6ae87f03ed7b",
+    "cc55d198-526d-4503-83c1-4c5d3feeda31",
+    "dff22977-2592-46ab-bed7-791e43718633"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "x": 29.59,
+    "y": 29.61,
+    "width": 842.04,
+    "height": 467.71
+   },
+   "message": "The connector passes through shapes it is not attached to.",
+   "evidence": {
+    "crossedElementIds": [
+     "3b8f0b61-abdc-4808-a0c3-6ae87f03ed7b",
+     "cc55d198-526d-4503-83c1-4c5d3feeda31",
+     "dff22977-2592-46ab-bed7-791e43718633"
+    ],
+    "routeFrom": "resolved route"
+   }
+  },
+  {
+   "code": "CONNECTOR_CROSSES_SHAPE",
+   "severity": "warning",
+   "elementIds": [
+    "b843f33a-3c48-4f62-bb13-2e47422d9b58",
+    "062b2644-2eff-4eb4-8611-4c7ad035c006",
+    "09eb795a-2026-4e69-a9a6-cc07b3d157df",
+    "3b8f0b61-abdc-4808-a0c3-6ae87f03ed7b",
+    "7a15be48-b580-4829-bff3-bb0f0184d249",
+    "cc55d198-526d-4503-83c1-4c5d3feeda31",
+    "dff22977-2592-46ab-bed7-791e43718633"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "x": 29.59,
+    "y": 29.61,
+    "width": 842.04,
+    "height": 467.71
+   },
+   "message": "The connector passes through shapes it is not attached to.",
+   "evidence": {
+    "crossedElementIds": [
+     "062b2644-2eff-4eb4-8611-4c7ad035c006",
+     "09eb795a-2026-4e69-a9a6-cc07b3d157df",
+     "3b8f0b61-abdc-4808-a0c3-6ae87f03ed7b",
+     "7a15be48-b580-4829-bff3-bb0f0184d249",
+     "cc55d198-526d-4503-83c1-4c5d3feeda31",
+     "dff22977-2592-46ab-bed7-791e43718633"
+    ],
+    "routeFrom": "resolved route"
+   }
+  },
+  {
+   "code": "CONNECTOR_CROSSES_SHAPE",
+   "severity": "warning",
+   "elementIds": [
+    "bd5eca78-d7a7-4db9-ae38-8b1210db1bc9",
+    "7a15be48-b580-4829-bff3-bb0f0184d249",
+    "cc55d198-526d-4503-83c1-4c5d3feeda31"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "x": 29.59,
+    "y": 29.61,
+    "width": 842.04,
+    "height": 467.71
+   },
+   "message": "The connector passes through shapes it is not attached to.",
+   "evidence": {
+    "crossedElementIds": [
+     "7a15be48-b580-4829-bff3-bb0f0184d249",
+     "cc55d198-526d-4503-83c1-4c5d3feeda31"
+    ],
+    "routeFrom": "resolved route"
+   }
+  },
+  {
+   "code": "CONNECTOR_CROSSES_SHAPE",
+   "severity": "warning",
+   "elementIds": [
+    "cf75b4f5-8527-42a1-a758-b379f359a4e4",
+    "7a15be48-b580-4829-bff3-bb0f0184d249",
+    "cc55d198-526d-4503-83c1-4c5d3feeda31"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "x": 29.59,
+    "y": 29.61,
+    "width": 842.04,
+    "height": 467.71
+   },
+   "message": "The connector passes through shapes it is not attached to.",
+   "evidence": {
+    "crossedElementIds": [
+     "7a15be48-b580-4829-bff3-bb0f0184d249",
+     "cc55d198-526d-4503-83c1-4c5d3feeda31"
+    ],
+    "routeFrom": "resolved route"
+   }
+  },
+  {
+   "code": "CONNECTOR_CROSSES_SHAPE",
+   "severity": "warning",
+   "elementIds": [
+    "e8d9bb8c-d8c3-481e-909d-27e71fdda036",
+    "062b2644-2eff-4eb4-8611-4c7ad035c006",
+    "7a15be48-b580-4829-bff3-bb0f0184d249",
+    "cc55d198-526d-4503-83c1-4c5d3feeda31"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "x": 29.59,
+    "y": 29.61,
+    "width": 842.04,
+    "height": 467.71
+   },
+   "message": "The connector passes through shapes it is not attached to.",
+   "evidence": {
+    "crossedElementIds": [
+     "062b2644-2eff-4eb4-8611-4c7ad035c006",
+     "7a15be48-b580-4829-bff3-bb0f0184d249",
+     "cc55d198-526d-4503-83c1-4c5d3feeda31"
+    ],
+    "routeFrom": "resolved route"
+   }
+  },
+  {
+   "code": "LOW_CONTRAST",
+   "severity": "warning",
+   "elementIds": [
+    "29cb3a7b-933c-4a93-a6fd-6b78d06f4cbf"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "height": 28.08,
+    "width": 842.04,
+    "x": 29.59,
+    "y": 29.61
+   },
+   "message": "The text colour is hard to read against its background.",
+   "evidence": {
+    "textColour": "#FFFFFF",
+    "backgroundColour": "#5b9ad4",
+    "contrastRatio": 2.99,
+    "minimum": 3
+   }
+  },
+  {
+   "code": "LOW_CONTRAST",
+   "severity": "warning",
+   "elementIds": [
+    "976dc98b-15bf-4d55-ab05-1d520b1e72dd"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "x": 29.59500000000002,
+    "y": 415.62499999999994,
+    "width": 36.79000000000003,
+    "height": 77.84000000000003
+   },
+   "message": "The text colour is hard to read against its background.",
+   "evidence": {
+    "textColour": "#FFFFFF",
+    "backgroundColour": "#FFFFFF",
+    "contrastRatio": 1,
+    "minimum": 3
+   }
+  },
+  {
+   "code": "OVERLAP",
+   "severity": "warning",
+   "elementIds": [
+    "062b2644-2eff-4eb4-8611-4c7ad035c006",
+    "5a8f434e-0d3a-4e4f-afd6-27c38213cdc5"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "x": 197.72,
+    "y": 241.95,
+    "width": 18.419999999999987,
+    "height": 8.580000000000041
+   },
+   "message": "Two shapes overlap without one containing the other.",
+   "evidence": {
+    "overlapAreaPt2": 158,
+    "fractionOfSmaller": 0.47
+   }
+  },
+  {
+   "code": "OVERLAP",
+   "severity": "warning",
+   "elementIds": [
+    "062b2644-2eff-4eb4-8611-4c7ad035c006",
+    "34fefbf1-fca7-4b4d-bb30-4ff0822f7e43"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "x": 197.72,
+    "y": 317.15,
+    "width": 18.419999999999987,
+    "height": 9.840000000000032
+   },
+   "message": "Two shapes overlap without one containing the other.",
+   "evidence": {
+    "overlapAreaPt2": 181,
+    "fractionOfSmaller": 0.53
+   }
+  },
+  {
+   "code": "OVERLAP",
+   "severity": "warning",
+   "elementIds": [
+    "34fefbf1-fca7-4b4d-bb30-4ff0822f7e43",
+    "7a15be48-b580-4829-bff3-bb0f0184d249"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "x": 197.72,
+    "y": 326.99,
+    "width": 18.419999999999987,
+    "height": 8.579999999999984
+   },
+   "message": "Two shapes overlap without one containing the other.",
+   "evidence": {
+    "overlapAreaPt2": 158,
+    "fractionOfSmaller": 0.47
+   }
+  },
+  {
+   "code": "OVERLAP",
+   "severity": "warning",
+   "elementIds": [
+    "5a8f434e-0d3a-4e4f-afd6-27c38213cdc5",
+    "dff22977-2592-46ab-bed7-791e43718633"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "x": 197.72,
+    "y": 232.11,
+    "width": 18.419999999999987,
+    "height": 9.839999999999975
+   },
+   "message": "Two shapes overlap without one containing the other.",
+   "evidence": {
+    "overlapAreaPt2": 181,
+    "fractionOfSmaller": 0.53
+   }
+  },
+  {
+   "code": "TEXT_OVERFLOW",
+   "severity": "warning",
+   "elementIds": [
+    "044e4c48-4aa5-4e92-a313-98b192e460b6"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "height": 14.18,
+    "width": 453.53,
+    "x": 418.1,
+    "y": 57.69
+   },
+   "message": "The text needs more height than the element has and will be clipped.",
+   "evidence": {
+    "neededWidthPt": 22.6,
+    "availableWidthPt": 441.5,
+    "neededHeightPt": 12,
+    "availableHeightPt": 2.2,
+    "lines": 1,
+    "measured": "estimated"
+   }
+  },
+  {
+   "code": "TEXT_OVERFLOW",
+   "severity": "warning",
+   "elementIds": [
+    "08e9364a-643a-4967-9d40-acbf90cea02b"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "height": 14.18,
+    "width": 129.02,
+    "x": 66.38,
+    "y": 57.69
+   },
+   "message": "The text needs more height than the element has and will be clipped.",
+   "evidence": {
+    "neededWidthPt": 22.6,
+    "availableWidthPt": 117,
+    "neededHeightPt": 12,
+    "availableHeightPt": 2.2,
+    "lines": 1,
+    "measured": "estimated"
+   }
+  },
+  {
+   "code": "TEXT_OVERFLOW",
+   "severity": "warning",
+   "elementIds": [
+    "29cb3a7b-933c-4a93-a6fd-6b78d06f4cbf"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "height": 28.08,
+    "width": 842.04,
+    "x": 29.59,
+    "y": 29.61
+   },
+   "message": "The text needs more height than the element has and will be clipped.",
+   "evidence": {
+    "neededWidthPt": 84.9,
+    "availableWidthPt": 830,
+    "neededHeightPt": 16.8,
+    "availableHeightPt": 16.1,
+    "lines": 1,
+    "measured": "estimated"
+   }
+  },
+  {
+   "code": "TEXT_OVERFLOW",
+   "severity": "warning",
+   "elementIds": [
+    "4f1fbb4f-7601-4382-8908-cb50e06fee9d"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "height": 14.18,
+    "width": 222.7,
+    "x": 195.41,
+    "y": 57.69
+   },
+   "message": "The text needs more height than the element has and will be clipped.",
+   "evidence": {
+    "neededWidthPt": 22.6,
+    "availableWidthPt": 210.7,
+    "neededHeightPt": 12,
+    "availableHeightPt": 2.2,
+    "lines": 1,
+    "measured": "estimated"
+   }
+  },
+  {
+   "code": "UNGLUED_CONNECTOR_END",
+   "severity": "warning",
+   "elementIds": [
+    "385bdea3-a7da-48bb-82d5-7356bf1c1fa6"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "x": 418.1,
+    "y": 57.69,
+    "width": 0,
+    "height": 439.63
+   },
+   "message": "The connector's from end is not attached to a shape.",
+   "evidence": {
+    "end": "from",
+    "point": {
+     "x": 418.1,
+     "y": 57.69
+    }
+   }
+  },
+  {
+   "code": "UNGLUED_CONNECTOR_END",
+   "severity": "warning",
+   "elementIds": [
+    "385bdea3-a7da-48bb-82d5-7356bf1c1fa6"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "x": 418.1,
+    "y": 57.69,
+    "width": 0,
+    "height": 439.63
+   },
+   "message": "The connector's to end is not attached to a shape.",
+   "evidence": {
+    "end": "to",
+    "point": {
+     "x": 418.1,
+     "y": 497.32
+    }
+   }
+  },
+  {
+   "code": "UNGLUED_CONNECTOR_END",
+   "severity": "warning",
+   "elementIds": [
+    "76573691-6c88-401f-bdb9-824584d78116"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "x": 812.88,
+    "y": 57.69,
+    "width": 0,
+    "height": 439.63
+   },
+   "message": "The connector's from end is not attached to a shape.",
+   "evidence": {
+    "end": "from",
+    "point": {
+     "x": 812.88,
+     "y": 57.69
+    }
+   }
+  },
+  {
+   "code": "UNGLUED_CONNECTOR_END",
+   "severity": "warning",
+   "elementIds": [
+    "76573691-6c88-401f-bdb9-824584d78116"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "x": 812.88,
+    "y": 57.69,
+    "width": 0,
+    "height": 439.63
+   },
+   "message": "The connector's to end is not attached to a shape.",
+   "evidence": {
+    "end": "to",
+    "point": {
+     "x": 812.88,
+     "y": 497.32
+    }
+   }
+  },
+  {
+   "code": "UNGLUED_CONNECTOR_END",
+   "severity": "warning",
+   "elementIds": [
+    "a3762186-e93a-423c-ba71-356a3f7182b6"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "x": 195.41,
+    "y": 57.69,
+    "width": 0,
+    "height": 439.63
+   },
+   "message": "The connector's from end is not attached to a shape.",
+   "evidence": {
+    "end": "from",
+    "point": {
+     "x": 195.41,
+     "y": 57.69
+    }
+   }
+  },
+  {
+   "code": "UNGLUED_CONNECTOR_END",
+   "severity": "warning",
+   "elementIds": [
+    "a3762186-e93a-423c-ba71-356a3f7182b6"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "x": 195.41,
+    "y": 57.69,
+    "width": 0,
+    "height": 439.63
+   },
+   "message": "The connector's to end is not attached to a shape.",
+   "evidence": {
+    "end": "to",
+    "point": {
+     "x": 195.41,
+     "y": 497.32
+    }
+   }
+  },
+  {
+   "code": "UNGLUED_CONNECTOR_END",
+   "severity": "warning",
+   "elementIds": [
+    "b843f33a-3c48-4f62-bb13-2e47422d9b58"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "x": 66.38,
+    "y": 57.69,
+    "width": 0,
+    "height": 439.63
+   },
+   "message": "The connector's from end is not attached to a shape.",
+   "evidence": {
+    "end": "from",
+    "point": {
+     "x": 66.38,
+     "y": 57.69
+    }
+   }
+  },
+  {
+   "code": "UNGLUED_CONNECTOR_END",
+   "severity": "warning",
+   "elementIds": [
+    "b843f33a-3c48-4f62-bb13-2e47422d9b58"
+   ],
+   "pageId": "15859487-bd9a-4dbb-9268-6ba93e8d5ada",
+   "bounds": {
+    "x": 66.38,
+    "y": 57.69,
+    "width": 0,
+    "height": 439.63
+   },
+   "message": "The connector's to end is not attached to a shape.",
+   "evidence": {
+    "end": "to",
+    "point": {
+     "x": 66.38,
+     "y": 497.32
+    }
+   }
+  }
+ ],
+ "notes": [
+  "Text size is estimated from font metrics measured in the editor; a borderline overflow may render differently."
+ ]
+}
