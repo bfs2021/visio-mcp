@@ -664,6 +664,12 @@ export class EditorModel {
   // ------------------------------------------------------------------ closing the window
   /** The host wants to close. Nothing unsaved: it may. Otherwise the prompt is shown and the host waits for the person's answer. */
   beginClose(): { dirty: boolean } {
+    if (this.newDocument.prompt?.saving) {
+      void this.host.appCloseCancelled();
+      this.say('Finish creating the new drawing before closing the window.', 'warning');
+      return { dirty: true };
+    }
+    this.newDocument.cancel();
     const s = this.engine.status();
     if (!s.unsaved) return { dirty: false };
     this.closePrompt = { fileName: s.savedPath ?? null, saving: false, error: null };
@@ -940,5 +946,3 @@ function diagnosticOf(details: Record<string, unknown> | undefined): { line?: nu
   if (typeof details?.hint === 'string') out.hint = details.hint;
   return out;
 }
-
-

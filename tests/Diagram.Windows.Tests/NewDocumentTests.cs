@@ -38,6 +38,30 @@ public class NewDocumentTests
         await File.WriteAllTextAsync(Path.Combine(evidence, "ui-created.json"), state.GetRawText());
         await File.WriteAllTextAsync(Path.Combine(evidence, "verification.json"), JsonSerializer.Serialize(new { verifiedUtc = DateTime.UtcNow, realPageAndHost = true, newIdentity = old.SessionId != h.Router.CurrentScope.SessionId, savedPathCleared = h.Window.Services.CurrentPath is null, explicitBlankUnsaved = true, page = "A4 landscape" }, new JsonSerializerOptions { WriteIndented = true }));
     }
+    [Fact]
+    public async Task APreviousSaveCannotGiveTheNewDrawingItsOldPath()
+    {
+        await using var h = await Harness.StartAsync(); await h.Window.RecoveryMgr.WhenSessionReadyAsync();
+        Assert.Null((await h.Apply(0, null, Harness.Shape("old", 20, 20))).Error);
+        var old = h.Router.CurrentScope!; var snapshot = (await h.Send("doc.snapshot")).Result!.Value;
+        var file = Path.Combine(h.Root, "old-save.diagram.json"); h.Window.Services.DialogOverride = _ => file;
+        var writing = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var release = new ManualResetEventSlim();
+        h.Window.Writer.BeforeReplace = () => { writing.TrySetResult(); if (!release.Wait(TimeSpan.FromSeconds(15))) throw new TimeoutException("save gate"); };
+        var save = h.Window.Services.HandleAsync(Request("host.saveJson"), default);
+        try
+        {
+            await writing.Task.WaitAsync(TimeSpan.FromSeconds(15));
+            var args = new JsonObject { ["document"] = Candidate(snapshot), ["discard"] = true, ["expected"] = new JsonObject { ["documentId"] = old.DocumentId, ["sessionId"] = old.SessionId, ["baseRevision"] = 1 } };
+            var create = h.Window.Services.HandleAsync(Request("host.newDocument", args), default);
+            await Task.WhenAny(create, Task.Delay(1500));
+            release.Set();
+            Assert.Null((await save).Error); Assert.Null((await create).Error);
+            Assert.NotEqual(old.SessionId, h.Router.CurrentScope!.SessionId);
+            Assert.Null(h.Window.Services.CurrentPath);
+        }
+        finally { release.Set(); h.Window.Writer.BeforeReplace = null; }
+    }
     static RequestEnvelope Request(string method, JsonObject? args = null) => new() { RequestId = Guid.NewGuid().ToString(), Method = method, Params = args ?? new() };
     static JsonObject Candidate(JsonElement snapshot)
     {
@@ -69,6 +93,9 @@ public class NewDocumentTests
                 Assert.Equal("invalid_request", denied.Error?.Code);
                 var stale = await h.Window.Services.HandleAsync(Request("host.newDocument", Args(true, 1)), default);
                 Assert.Equal("revision_conflict", stale.Error?.Code);
+                var invalid = Args(true); invalid["document"]!["pages"]![0]!["widthPt"] = 0;
+                Assert.NotNull((await h.Window.Services.HandleAsync(Request("host.newDocument", invalid), default)).Error);
+                Assert.Equal(savedPath, h.Window.Services.CurrentPath);
                 Assert.Equal(snapshot.GetRawText(), (await h.Send("doc.snapshot")).Result!.Value.GetRawText());
                 var created = await h.Window.Services.HandleAsync(Request("host.newDocument", Args(true)), default);
                 Assert.Null(created.Error); Assert.False(created.Result!.Value.TryGetProperty("recoveryWarning", out _));
@@ -88,10 +115,22 @@ public class NewDocumentTests
                 var candidate = Assert.Single(await h.Window.RecoveryMgr.CandidatesAsync(default), c => c.SessionId == explicitId);
                 Assert.Equal(612, candidate.Document["pages"]![0]!["widthPt"]!.GetValue<double>());
                 Assert.Equal(792, candidate.Document["pages"]![0]!["heightPt"]!.GetValue<double>());
+                await WaitFor(h, "document.querySelector('[data-testid=recovery-restore]') !== null");
+                await h.Eval("document.querySelector('[data-testid=recovery-restore]').click(); true");
+                await WaitFor(h, "document.querySelector('[data-testid=recovery-report]') !== null");
+                await h.Window.RecoveryMgr.DrainAsync();
+                var until = DateTime.UtcNow.AddSeconds(10);
+                while ((await h.Window.Recovery.ReadRecoveryAsync(null, default)).Any(c => c.SessionId == explicitId))
+                { if (DateTime.UtcNow > until) throw new TimeoutException("old recovery session was not finished"); await Task.Delay(50); }
+                explicitId = h.Router.CurrentScope!.SessionId;
+            }
+            await using (var h = await Harness.StartAsync(existingRoot: root))
+            {
+                var again = Assert.Single(await h.Window.RecoveryMgr.CandidatesAsync(default), c => c.SessionId == explicitId);
+                Assert.True(again.KeepUnsaved);
+                Assert.Equal(612, again.Document["pages"]![0]!["widthPt"]!.GetValue<double>());
             }
         }
         finally { try { Directory.Delete(root, true); } catch { } }
     }
 }
-
-

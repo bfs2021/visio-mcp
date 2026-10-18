@@ -315,4 +315,3 @@ public sealed class RecoveryManager : IAsyncDisposable
         stop.Cancel();
     }
 }
-

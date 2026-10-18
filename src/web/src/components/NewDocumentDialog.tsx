@@ -19,16 +19,20 @@ function Picker({ model }: { model: EditorModel }) {
     box.current?.querySelector<HTMLElement>('select,button')?.focus();
     return () => { if (previous?.isConnected) previous.focus(); };
   }, []);
-  useEffect(() => { box.current?.querySelector<HTMLElement>('select,button')?.focus(); }, [p.stage]);
+  useEffect(() => {
+    if (p.saving) box.current?.focus();
+    else box.current?.querySelector<HTMLElement>('select:not(:disabled),button:not(:disabled)')?.focus();
+  }, [p.stage, p.saving]);
   const chosen = PAGE_PRESETS.find(s => s.id === preset);
   const size = chosen ?? { widthPt: model.fromUnit(Number(width)), heightPt: model.fromUnit(Number(height)) };
   const name = model.engine.status().savedPath?.split(/[\\/]/).pop() ?? 'This diagram';
   return <div className="dialog-backdrop" role="presentation">
-    <div ref={box} className="dialog" role={p.stage === 'confirm' ? 'alertdialog' : 'dialog'} aria-modal="true" aria-labelledby="new-title" aria-describedby="new-description" data-testid="new-document"
+    <div ref={box} tabIndex={-1} className="dialog" role={p.stage === 'confirm' ? 'alertdialog' : 'dialog'} aria-modal="true" aria-labelledby="new-title" aria-describedby="new-description" data-testid="new-document"
       onKeyDown={e => {
         if (e.key === 'Escape') { e.preventDefault(); flow.cancel(); }
         if (e.key === 'Tab') {
           const items = Array.from(box.current!.querySelectorAll<HTMLElement>('button:not(:disabled),select:not(:disabled),input:not(:disabled)'));
+          if (!items.length) { e.preventDefault(); box.current?.focus(); return; }
           const first = items[0], last = items[items.length - 1];
           if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus(); }
           else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
@@ -37,7 +41,11 @@ function Picker({ model }: { model: EditorModel }) {
       <h2 id="new-title">{p.stage === 'confirm' ? 'Save changes before creating a new drawing?' : 'New document'}</h2>
       <p id="new-description">{p.stage === 'confirm' ? `${name} has changes that were not saved. If you don't save, they are discarded.` : 'Choose the starting page size for your new drawing.'}</p>
       {p.stage === 'size' && <>
-        <label>Starting page <select aria-label="Starting page" value={preset} onChange={e => setPreset(e.target.value)} disabled={p.saving}>
+        <label>Starting page <select aria-label="Starting page" value={preset} onChange={e => {
+          setPreset(e.target.value);
+          const next = PAGE_PRESETS.find(s => s.id === e.target.value);
+          if (next) { setWidth(String(Number(model.toUnit(next.widthPt).toFixed(4)))); setHeight(String(Number(model.toUnit(next.heightPt).toFixed(4)))); }
+        }} disabled={p.saving}>
           {PAGE_PRESETS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}<option value="custom">Custom</option>
         </select></label>
         {preset === 'custom' ? <div className="row">
@@ -56,4 +64,3 @@ function Picker({ model }: { model: EditorModel }) {
     </div>
   </div>;
 }
-

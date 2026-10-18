@@ -28,3 +28,25 @@ test('custom validation and Escape are safe; a cancelled Save as retains work', 
   await expect(page.getByTestId('new-error')).toContainText('not saved'); expect(await snapshot(page)).toEqual(before);
   await page.keyboard.press('Escape'); await expect(page.getByRole('alertdialog')).toHaveCount(0); expect(await snapshot(page)).toEqual(before);
 });
+
+test('closing while the New save is pending keeps one workflow and leaves the drawing safe', async ({ page }) => {
+  await openEditor(page); await placeShape(page, 'shape-rectangle', { x: 200, y: 150 }, 'keep'); const before = await snapshot(page);
+  await page.evaluate(() => {
+    (window as any).__closeCancelled = false;
+    (window as any).__editor.setHost({
+      saveJson: () => new Promise(resolve => { (window as any).__finishSave = () => resolve({ ok: true, value: { cancelled: true } }); }),
+      appCloseCancelled: async () => { (window as any).__closeCancelled = true; return { ok: true, value: { cancelled: true } }; },
+    });
+  });
+  await page.keyboard.press('Control+n'); await page.getByRole('button', { name: 'Create', exact: true }).click();
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await page.keyboard.press('Tab');
+  await expect(page.getByTestId('new-document')).toBeFocused();
+  await page.evaluate(() => (window as any).__editor.beginClose());
+  await expect(page.getByTestId('close-prompt')).toHaveCount(0);
+  await expect(page.getByTestId('new-document')).toBeVisible();
+  expect(await page.evaluate(() => (window as any).__closeCancelled)).toBe(true);
+  await page.evaluate(() => (window as any).__finishSave());
+  await expect(page.getByTestId('new-error')).toContainText('not saved');
+  expect(await snapshot(page)).toEqual(before);
+});
