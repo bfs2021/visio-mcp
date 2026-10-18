@@ -1,0 +1,29 @@
+# R05 — reference regression and layout diagnostics
+
+[Approved design](R05-design.md) · [Issue #1](https://github.com/rp2839/visio-mcp/issues/1)
+
+The existing repository/deployment reference drawing now has a regression scenario driven through the real MCP process, WebView2 editor, native VSDX export/import and installed Visio. It checks all **62 objects, 39 nonempty text blocks and 62 stable IDs**. It asserts exact editor geometry and text, byte-exact preservation of every unrelated object during targeted edits, read-only inspection, and native save/reopen geometry within 0.05pt. Native Office execution is automated evidence, not a human sign-off. On a machine without Visio, editor/export/import checks still run and the report explicitly records native checks **NOT RUN**.
+
+## Diagnostics
+
+`inspect_layout` now reports informational `NEAR_ALIGNMENT` hints with IDs, measured coordinates, axis, anchor and offset. It never edits a document. Candidates are visible, painted, top-level unrotated shape/image boxes, minimum dimension 8pt and aspect ratio no greater than 8. Hidden/transparent/unpainted objects, custom vectors, grouped children and standalone text are excluded. A pair must share kind/preset and have width and height within a factor of 1.25. Row/column peers must overlap at least half their smaller cross dimension and be separated by 4pt to four times their larger dimension. Any edge/centre already aligned within 0.5pt suppresses the hint; a near miss must be within the smaller of 12pt or a quarter of the smaller dimension. Work stops at 50,000 pairs or 100 hints per page, with an explicit truncation note.
+
+These are observations, not proof of an error. Intended offsets may produce hints; containment and distant arrangements do not. The agent must check the intended layout before applying an ordinary transaction. The browser test checks inspect/correct/inspect and preservation; the MCP fixture plants a 5pt panel offset; the existing demo now asserts its 11.3pt CRM/ERP offset.
+
+Painted rectangle rules with thickness 0.25–<1pt, length at least 16pt and aspect ratio at least 20 no longer receive `ZERO_SIZE`. Genuinely tiny or unpainted objects still do. R12 free-line handling is preserved.
+
+## Image policy and provenance
+
+[Editor](../../tests/fixtures/diagrams/r05-baselines/editor.png) and [native Visio](../../tests/fixtures/diagrams/r05-baselines/visio.png) have separate baselines captured from pre-R05 renderer source `b332aec`. The test verifies fixture and PNG SHA-256 values against [provenance.json](../../tests/fixtures/diagrams/r05-baselines/provenance.json). It never updates baselines. This is same-renderer regression coverage, not a source-screenshot fidelity score or a cross-renderer equivalence claim.
+
+Images must have identical dimensions. Alpha is composited over white; matching allows RGB channel differences up to 24 and a symmetric one-pixel neighbourhood. Global mismatch must be at most 0.5%, each 32px tile at most 20%, and mismatch among foreground pixels at most 35% in tiles containing at least eight foreground pixels. Foreground means a channel differs from white by more than 24. The foreground gate catches thin missing content that page-wide averages hide. Very pale/subpixel features below that threshold are outside this raster guarantee; semantic and geometry assertions remain independent.
+
+Deliberate controls reject an eight-pixel displacement, removed square, dimensions change, a pale one-pixel divider at fixture resolution, a 24pt title move and hiding the fixture's actual divider. A one-pixel rounding shift and small colour noise pass. Restoring the edited title/divider restores the clean render and exact object set.
+
+To rebaseline deliberately: run the unchanged source fixture through `ReferenceDiagramTextFitTests`, run `tools/verify-reference-text-fit.ps1` for native output, inspect both images at full size, then copy them separately and update the manifest with source commit, environment and hashes. Review the image changes with the code change. Do not copy a failing render automatically. Office, WebView2 or installed-font changes may require this review.
+
+## Verification and evidence
+
+Fresh command results and known limits are recorded below once the final combined-tree run completes. Machine-readable fixture evidence is in [artifacts/r05-regression](../../artifacts/r05-regression/verification.json), with editor/native/control images, exact objects, layout findings, export diagnostics and native editable files. Raw test results remain under that directory's `test-results` folder.
+
+The original fixture intentionally retains legacy Unicode icon approximations. Two icon text boxes still receive `TEXT_OVERFLOW`; no rule is labelled `ZERO_SIZE`. Native export/import approximation and text-wrap notes remain explicit in `export.json` and `verification.json`. R03's searchable vector icon coverage remains separate. This work does not claim complete font, icon, arbitrary-layout or screenshot equivalence.
