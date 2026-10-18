@@ -1,0 +1,54 @@
+{
+  "verifiedOn": "2026-10-18",
+  "baseCommit": "ebc332b",
+  "implementationCommit": "243b1f7",
+  "frontendTests": 297,
+  "browserTests": 46,
+  "dotnetTests": [
+    {
+      "project": "Diagram.Contracts.Tests",
+      "total": 24,
+      "passed": 24,
+      "failed": 0
+    },
+    {
+      "project": "Diagram.Host.Tests",
+      "total": 119,
+      "passed": 119,
+      "failed": 0
+    },
+    {
+      "project": "Diagram.Ipc.Tests",
+      "total": 17,
+      "passed": 17,
+      "failed": 0
+    },
+    {
+      "project": "Diagram.Mcp.Tests",
+      "total": 13,
+      "passed": 13,
+      "failed": 0
+    },
+    {
+      "project": "Diagram.Visio.Tests",
+      "total": 124,
+      "passed": 124,
+      "failed": 0
+    },
+    {
+      "project": "Diagram.Windows.Tests",
+      "total": 32,
+      "passed": 32,
+      "failed": 0
+    }
+  ],
+  "typecheck": "pass",
+  "build": "pass",
+  "generatedContracts": "unchanged",
+  "nativeGroups": 4,
+  "nativeTextBoxes": 32,
+  "allNativeTextFits": true,
+  "nativeRoundtripReflowable": true,
+  "review": "No remaining actionable findings after fixes",
+  "installedVersionChanged": false
+}

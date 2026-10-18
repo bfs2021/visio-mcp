@@ -104,3 +104,12 @@ MCP clients can use `search_icons` and `get_icon` to inspect previews and obtain
 normal shape operations, then apply those through `apply_operations`.
 See [R03 usage and verification](docs/m5/R03-vector-icons.md) for units, supported
 custom paths, native Visio behavior and catalogue licensing.
+
+## Reusable layout components
+
+Use **Shapes → Layout components** to preview and insert measured repository
+cards, labelled containers, environment columns and vertical pipelines. Select
+an existing component to preview reflow after changing its text or width.
+MCP clients can discover schemas/examples with `list_layout_components` and get
+read-only create/reflow proposals with `get_layout_component`.
+See [R04 usage and verification](docs/m5/R04-layout-components.md).

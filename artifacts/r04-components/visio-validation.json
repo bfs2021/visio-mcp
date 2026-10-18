@@ -1,0 +1,232 @@
+{
+  "VisioVersion": "16.0",
+  "GroupCount": 4,
+  "MeasuredTextCount": 32,
+  "AllTextFits": true,
+  "Text": [
+    {
+      "Template": "repository-card",
+      "Role": "title",
+      "RequiredHeightPt": 18.003490136718753,
+      "AvailableHeightPt": 23.8,
+      "Fits": true
+    },
+    {
+      "Template": "repository-card",
+      "Role": "subtitle",
+      "RequiredHeightPt": 14.403709863281248,
+      "AvailableHeightPt": 19.84,
+      "Fits": true
+    },
+    {
+      "Template": "repository-card",
+      "Role": "item.0",
+      "RequiredHeightPt": 14.403709863281248,
+      "AvailableHeightPt": 19.84,
+      "Fits": true
+    },
+    {
+      "Template": "repository-card",
+      "Role": "item.1",
+      "RequiredHeightPt": 14.403709863281248,
+      "AvailableHeightPt": 19.84,
+      "Fits": true
+    },
+    {
+      "Template": "repository-card",
+      "Role": "item.2",
+      "RequiredHeightPt": 14.403709863281248,
+      "AvailableHeightPt": 19.84,
+      "Fits": true
+    },
+    {
+      "Template": "repository-card",
+      "Role": "item.3",
+      "RequiredHeightPt": 14.403709863281248,
+      "AvailableHeightPt": 19.84,
+      "Fits": true
+    },
+    {
+      "Template": "repository-card",
+      "Role": "footer",
+      "RequiredHeightPt": 14.403709863281248,
+      "AvailableHeightPt": 19.84,
+      "Fits": true
+    },
+    {
+      "Template": "labelled-container",
+      "Role": "title",
+      "RequiredHeightPt": 18.003490136718753,
+      "AvailableHeightPt": 23.8,
+      "Fits": true
+    },
+    {
+      "Template": "labelled-container",
+      "Role": "item.0",
+      "RequiredHeightPt": 14.403709863281248,
+      "AvailableHeightPt": 19.84,
+      "Fits": true
+    },
+    {
+      "Template": "labelled-container",
+      "Role": "item.1",
+      "RequiredHeightPt": 14.403709863281248,
+      "AvailableHeightPt": 19.84,
+      "Fits": true
+    },
+    {
+      "Template": "environment-columns",
+      "Role": "title",
+      "RequiredHeightPt": 18.003490136718753,
+      "AvailableHeightPt": 23.8,
+      "Fits": true
+    },
+    {
+      "Template": "environment-columns",
+      "Role": "column.0.title",
+      "RequiredHeightPt": 18.003490136718753,
+      "AvailableHeightPt": 23.8,
+      "Fits": true
+    },
+    {
+      "Template": "environment-columns",
+      "Role": "column.0.item.0",
+      "RequiredHeightPt": 14.403709863281248,
+      "AvailableHeightPt": 19.84,
+      "Fits": true
+    },
+    {
+      "Template": "environment-columns",
+      "Role": "column.0.item.1",
+      "RequiredHeightPt": 14.403709863281248,
+      "AvailableHeightPt": 19.84,
+      "Fits": true
+    },
+    {
+      "Template": "environment-columns",
+      "Role": "column.0.item.2",
+      "RequiredHeightPt": 14.403709863281248,
+      "AvailableHeightPt": 19.84,
+      "Fits": true
+    },
+    {
+      "Template": "environment-columns",
+      "Role": "column.1.title",
+      "RequiredHeightPt": 18.003490136718753,
+      "AvailableHeightPt": 23.8,
+      "Fits": true
+    },
+    {
+      "Template": "environment-columns",
+      "Role": "column.1.item.0",
+      "RequiredHeightPt": 14.403709863281248,
+      "AvailableHeightPt": 19.84,
+      "Fits": true
+    },
+    {
+      "Template": "environment-columns",
+      "Role": "column.1.item.1",
+      "RequiredHeightPt": 14.403709863281248,
+      "AvailableHeightPt": 19.84,
+      "Fits": true
+    },
+    {
+      "Template": "environment-columns",
+      "Role": "column.1.item.2",
+      "RequiredHeightPt": 14.403709863281248,
+      "AvailableHeightPt": 19.84,
+      "Fits": true
+    },
+    {
+      "Template": "environment-columns",
+      "Role": "column.2.title",
+      "RequiredHeightPt": 18.003490136718753,
+      "AvailableHeightPt": 23.8,
+      "Fits": true
+    },
+    {
+      "Template": "environment-columns",
+      "Role": "column.2.item.0",
+      "RequiredHeightPt": 14.403709863281248,
+      "AvailableHeightPt": 19.84,
+      "Fits": true
+    },
+    {
+      "Template": "environment-columns",
+      "Role": "column.2.item.1",
+      "RequiredHeightPt": 14.403709863281248,
+      "AvailableHeightPt": 19.84,
+      "Fits": true
+    },
+    {
+      "Template": "environment-columns",
+      "Role": "column.2.item.2",
+      "RequiredHeightPt": 14.403709863281248,
+      "AvailableHeightPt": 19.84,
+      "Fits": true
+    },
+    {
+      "Template": "pipeline",
+      "Role": "title",
+      "RequiredHeightPt": 18.003490136718753,
+      "AvailableHeightPt": 23.8,
+      "Fits": true
+    },
+    {
+      "Template": "pipeline",
+      "Role": "step.0.title",
+      "RequiredHeightPt": 18.003490136718753,
+      "AvailableHeightPt": 23.8,
+      "Fits": true
+    },
+    {
+      "Template": "pipeline",
+      "Role": "step.0.detail",
+      "RequiredHeightPt": 14.403709863281248,
+      "AvailableHeightPt": 19.84,
+      "Fits": true
+    },
+    {
+      "Template": "pipeline",
+      "Role": "step.1.title",
+      "RequiredHeightPt": 18.003490136718753,
+      "AvailableHeightPt": 23.8,
+      "Fits": true
+    },
+    {
+      "Template": "pipeline",
+      "Role": "step.1.detail",
+      "RequiredHeightPt": 14.403709863281248,
+      "AvailableHeightPt": 19.84,
+      "Fits": true
+    },
+    {
+      "Template": "pipeline",
+      "Role": "step.2.title",
+      "RequiredHeightPt": 18.003490136718753,
+      "AvailableHeightPt": 23.8,
+      "Fits": true
+    },
+    {
+      "Template": "pipeline",
+      "Role": "step.2.detail",
+      "RequiredHeightPt": 14.403709863281248,
+      "AvailableHeightPt": 19.84,
+      "Fits": true
+    },
+    {
+      "Template": "pipeline",
+      "Role": "step.3.title",
+      "RequiredHeightPt": 18.003490136718753,
+      "AvailableHeightPt": 23.8,
+      "Fits": true
+    },
+    {
+      "Template": "pipeline",
+      "Role": "step.3.detail",
+      "RequiredHeightPt": 14.403709863281248,
+      "AvailableHeightPt": 19.84,
+      "Fits": true
+    }
+  ]
+}
