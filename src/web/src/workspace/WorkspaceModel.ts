@@ -1,4 +1,7 @@
 import { EditorModel, noHost, type HostApi } from '../editor/EditorModel';
+import type { AgentDocument } from '../bridge/engineHandlers';
+import type { DiagramDocument, Scope } from '../contracts/generated';
+import { fail, ok, type Result } from '../model/result';
 import type { DocumentState } from './Workspace';
 import type { startApp } from '../bridge/bootstrap';
 
@@ -24,6 +27,12 @@ export class WorkspaceModel {
   /** Said once after a start that brought documents back; stays until dismissed. */
   banner: { text: string; lines: string[] } | null = null;
   dismissBanner(): void { this.banner = null; this.bump(); }
+  /** Documents agents have open in the background; each shows as a tab that is brought here when clicked. */
+  agentDocs: AgentDocument[] = [];
+  /** The agent tab whose close button was pressed once; a second press confirms throwing its work away. */
+  armedDiscard: string | null = null;
+  /** True while the person is mid-gesture: documents are not moved or switched under their hands. Set by the page. */
+  isBusy: () => boolean = () => false;
   private persisting = false;
   private persistTimer: ReturnType<typeof setTimeout> | null = null;
   private lastPersisted = '';
@@ -118,6 +127,59 @@ export class WorkspaceModel {
     this.unsubscribe.get(model)?.(); this.unsubscribe.delete(model);
     model.dispose();
     this.bump();
+  }
+
+  // ------------------------------------------------------------------ documents agents work on in the background
+  setAgentDocs(list: AgentDocument[]): void {
+    this.agentDocs = list;
+    if (this.armedDiscard && !list.some(d => d.documentId === this.armedDiscard)) this.armedDiscard = null;
+    this.bump();
+  }
+
+  async refreshAgentDocs(): Promise<void> {
+    const r = await this.hostApi.agentDocuments();
+    if (r.ok) this.setAgentDocs(r.value.documents);
+  }
+
+  /** The host moves a background document here: it becomes a tab (unsaved, with a fresh history) and, normally, the one showing. */
+  async adoptDocument(document: DiagramDocument, activate: boolean): Promise<Result<Scope & { revision: number }>> {
+    if (this.isBusy()) return fail('busy_user_editing', 'the person is editing; try again in a moment', { retryable: true, outcome: 'none' });
+    const target = this.newTab({ activate: false });
+    if (!target) return fail('limit_exceeded', this.notice ?? 'too many documents are open', { outcome: 'none' });
+    const replaced = await target.engine.replaceDocument(document, { ...target.engine.scope(), baseRevision: target.engine.revision });
+    if (!replaced.ok) { await this.closeNow(target, true); return replaced; }
+    target.pageId = undefined;
+    target.afterRecoveryRestore(); // the host learns the document's new session here
+    target.showCommittedNow();
+    if (activate) this.activate(target);
+    target.say('Opened from the background. It has not been saved.', 'info');
+    return ok({ ...target.engine.scope(), revision: target.engine.revision });
+  }
+
+  /** An agent asked to show a tab that is already here. */
+  activateById(documentId: string): Result<{ activated: string }> {
+    const tab = this.tabs.find(t => t.engine.scope().documentId === documentId);
+    if (!tab) return fail('document_mismatch', 'that document is not open in the window', { outcome: 'none' });
+    if (this.isBusy()) return fail('busy_user_editing', 'the person is editing; try again in a moment', { retryable: true, outcome: 'none' });
+    this.activate(tab);
+    return ok({ activated: documentId });
+  }
+
+  /** The person clicked a background document's tab. */
+  async showAgentDocument(documentId: string): Promise<void> {
+    const r = await this.hostApi.documentShow(documentId);
+    this.notice = r.ok ? null : r.error.message;
+    await this.refreshAgentDocs();
+  }
+
+  /** Closing a background tab throws its work away: the first press asks, the second does it. */
+  async discardAgentDocument(documentId: string): Promise<void> {
+    const doc = this.agentDocs.find(d => d.documentId === documentId);
+    if (doc && doc.unsaved && this.armedDiscard !== documentId) { this.armedDiscard = documentId; this.bump(); return; }
+    this.armedDiscard = null;
+    const r = await this.hostApi.documentDiscard(documentId);
+    if (!r.ok) this.notice = r.error.message;
+    await this.refreshAgentDocs();
   }
 
   // ------------------------------------------------------------------ remembering the tabs between runs

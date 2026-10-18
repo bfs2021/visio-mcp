@@ -33,6 +33,9 @@ function hostApi(host: HostServices | null): HostApi {
     librarySetMetadata: (id, patch) => host.call('host.library.setMetadata', { id, ...patch }),
     libraryDelete: id => host.call('host.library.delete', { id }),
     openVsdx: () => host.call('host.openVsdx'),
+    documentShow: documentId => host.call('host.documents.show', { documentId }),
+    documentDiscard: documentId => host.call('host.documents.discard', { documentId }),
+    agentDocuments: () => host.call('host.documents.agent'),
     exportVsdx: opts => host.call('host.exportVsdx', opts),
   };
 }
@@ -47,6 +50,11 @@ const app = startApp(window.chrome?.webview, null, {
   onSessionChanged: state => (state.ui as EditorModel | null)?.sessionReplaced(),
   render: renderer.render, rasterise: renderer.rasterise, layoutContext: createBrowserLayoutContext(assetUrl as never),
   beforeClose: async () => ws!.beginClose(),
+  app: {
+    adoptDocument: (document, activate) => ws!.adoptDocument(document, activate),
+    activateDocument: documentId => ws!.activateById(documentId),
+    agentDocuments: list => ws!.setAgentDocs(list),
+  },
 });
 const { engine, host, router, sessionChanged, workspace } = app;
 
@@ -68,10 +76,11 @@ function configure(model: EditorModel, state: DocumentState): void {
 const firstModel = new EditorModel(engine);
 ws = new WorkspaceModel(app, firstModel);
 ws.configure = configure;
+ws.isBusy = () => !!router?.isGestureActive();
 ws.host = hostApi(host);
 configure(firstModel, workspace.active!);
 const model = firstModel;
-void ws.restoreWorkspace(model); // the last run's tabs come back; unfinished work no tab owns is offered
+void ws.restoreWorkspace(model).then(() => ws!.refreshAgentDocs()); // the last run's tabs come back; unfinished work no tab owns is offered
 
 // A read-only window onto the editor for automated tests. It is compiled out of production builds, and nothing here edits the document.
 // It always points at the active tab, so a test sees what the person sees.
@@ -87,6 +96,7 @@ if (import.meta.env.VITE_TEST_API === '1') {
     checkRecovery: () => cur().checkRecovery(),
     beginClose: () => shell.beginClose(),
     restoreWorkspace: () => shell.restoreWorkspace(cur()),
+    callApp: (method: string, params: Record<string, unknown>) => router!.dispatch({ protocolVersion: 1, kind: 'request', requestId: crypto.randomUUID(), method, params } as never),
     persist: () => shell.persist(),
     markSaved: async (path: string) => { const m = cur(); await m.engine.markSaved(m.engine.scope(), m.engine.revision, path); m.say(`Saved ${path}.`, 'info'); },
     snapshot: () => JSON.parse(JSON.stringify(cur().snapshot)),

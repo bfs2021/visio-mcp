@@ -26,7 +26,7 @@ public sealed class DiagramTools(PipeClient app)
             : ToolErrors.Ok(result);
     }
 
-    const string Identity = "Pass the documentId and sessionId returned by get_document_summary. A different session means the document was reopened: read the summary again.";
+    const string Identity = "Pass the documentId and sessionId returned by get_document_summary, list_documents or create_document. A different session means the document was reopened or moved to the editor window: read the summary again.";
 
     [McpServerTool(Name = "search_icons"), Description("Search the bundled, versioned vector icon catalogue by name or tags, such as branch, repository, docker, cloud or security. Returns stable IDs, catalogue version and a PNG preview sheet. Read-only: no shapes are placed. Call get_icon for an editable placement proposal. " + Identity)]
     public async Task<CallToolResult> SearchIcons(string documentId, string sessionId,
@@ -159,6 +159,32 @@ public sealed class DiagramTools(PipeClient app)
     {
         if (pageId is not null && Check(("pageId", pageId)) is { } bad) return ToolErrors.Fail("invalid_request", bad);
         return Finish(await Send("doc.summary", null, null, Obj(("pageId", pageId), ("includeGeometry", includeGeometry), ("includeStyle", includeStyle), ("includeHidden", includeHidden)), Read, ct));
+    }
+
+    [McpServerTool(Name = "list_documents"), Description("Lists every open document: documentId, sessionId, title, revision, page count, whether it has unsaved changes, its saved file if any, and where it lives (view \"editor\" is a tab the person works in; \"background\" was made by an agent and is not shown yet). Read-only. Use it before addressing a document when more than one may be open.")]
+    public async Task<CallToolResult> ListDocuments(CancellationToken ct = default) =>
+        Finish(await Send("docs.list", null, null, new JsonObject(), Read, ct));
+
+    [McpServerTool(Name = "create_document"), Description("Creates a new empty document in the background and returns its documentId and sessionId. It does not appear in front of the person or interrupt what they are doing; they see a tab marked as made in the background. Edit it with the other tools using the returned identity, and call show_document when the person should see it. The page is A4 landscape unless widthPt and heightPt are given.")]
+    public async Task<CallToolResult> CreateDocument(
+        [Description("Document title, 1 to 200 characters.")] string? title = null,
+        [Description("Page width in points, 36 to 14400. Give both widthPt and heightPt or neither.")] double? widthPt = null,
+        [Description("Page height in points, 36 to 14400.")] double? heightPt = null,
+        CancellationToken ct = default)
+    {
+        if (title is { Length: 0 or > 200 }) return ToolErrors.Fail("invalid_request", "title must be 1 to 200 characters");
+        if ((widthPt is null) != (heightPt is null)) return ToolErrors.Fail("invalid_request", "give both widthPt and heightPt, or neither");
+        if (widthPt is { } w && !(w >= 36 && w <= 14400) || heightPt is { } h && !(h >= 36 && h <= 14400)) return ToolErrors.Fail("invalid_request", "widthPt and heightPt must be from 36 to 14400");
+        return Finish(await Send("docs.create", null, null, Obj(("title", title), ("widthPt", widthPt), ("heightPt", heightPt)), Render, ct));
+    }
+
+    [McpServerTool(Name = "show_document"), Description("Puts an open document in front of the person: a document in an editor tab is switched to; one made in the background is moved into the editor window as a new tab and gets a new sessionId (read it from the result). Refused with busy_user_editing while the person is in the middle of dragging or typing: wait a moment and try again. Nothing is saved or exported by this.")]
+    public async Task<CallToolResult> ShowDocument(
+        [Description("The documentId from list_documents or create_document.")] string documentId,
+        CancellationToken ct = default)
+    {
+        if (Check(("documentId", documentId)) is { } bad) return ToolErrors.Fail("invalid_request", bad);
+        return Finish(await Send("docs.show", null, null, Obj(("documentId", documentId)), Render, ct));
     }
 
     [McpServerTool(Name = "get_objects"), Description("Complete canonical objects for the given ids (UUIDs, or aliases when the document has one page). " + Identity)]

@@ -16,6 +16,7 @@ import { restoreRecovery, type RecoveryPayload } from '../commands/recovery';
 import { drawScriptCompiler, validateScript, type ValidationReport } from '../script/compiler';
 import { toPoints, type Unit } from '../model/validate';
 import { iconOperations } from '../icons/catalog';
+import type { AgentDocument } from '../bridge/engineHandlers';
 
 /** What the page needs from the host. In a plain browser (tests, dev) a stub stands in. */
 export interface HostApi {
@@ -47,6 +48,12 @@ export interface HostApi {
   openVsdx(): Promise<Result<NativeOutcome>>;
   /** `path` repeats a choice the person already made when they agree to a lossy export. */
   exportVsdx(opts: { acceptLoss?: boolean; path?: string }): Promise<Result<NativeOutcome>>;
+  /** Brings a document an agent made in the background into this window as a tab. */
+  documentShow(documentId: string): Promise<Result<{ documentId: string; shown: boolean }>>;
+  /** Throws a background document away. */
+  documentDiscard(documentId: string): Promise<Result<{ discarded: string }>>;
+  /** The documents agents have open in the background. */
+  agentDocuments(): Promise<Result<{ documents: AgentDocument[] }>>;
 }
 
 export interface LibraryEntry { id: string; name: string; tags: string[]; mimeType: string; sha256: string; width: number; height: number; version: number; scope: 'library' }
@@ -80,6 +87,9 @@ export const noHost: HostApi = {
   pickImage: async () => fail('not_running', 'there is no host to choose a picture'),
   openJson: async () => fail('not_running', 'there is no host to open files'),
   workspaceSave: async () => fail('not_running', 'there is no host'),
+  documentShow: async () => fail('not_running', 'there is no host'),
+  documentDiscard: async () => fail('not_running', 'there is no host'),
+  agentDocuments: async () => ok({ documents: [] }),
   workspaceLoad: async () => ok({ found: false }),
   saveJson: async () => fail('not_running', 'there is no host to save files'),
 };

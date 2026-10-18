@@ -18,6 +18,7 @@ export function createRequestRouter(source: CommandEngine | EngineResolver, opts
   });
   return {
     gate,
+    isGestureActive: () => gate.isGestureActive,
     dispatch: (env: RequestEnvelope): Promise<ResponseEnvelope> => (env.origin ? gate.accept(env.origin.connectionId, env) : handler(env)),
     setGestureActive: (active: boolean) => gate.setGestureActive(active),
     cancelGesture: () => gate.cancelGesture(),

@@ -14,7 +14,7 @@ public sealed class LiveControl : IAsyncDisposable
 {
     static readonly HashSet<string> Offered = new()
     {
-        "doc.summary", "doc.getObjects", "doc.apply", "doc.executeScript", "doc.changes", "doc.inspectLayout", "doc.textLayout", "doc.render", "doc.export", "assets.list", "reference.render", "reference.compare", "icons.search", "icons.get", "components.list", "components.get",
+        "docs.list", "docs.create", "docs.show", "doc.summary", "doc.getObjects", "doc.apply", "doc.executeScript", "doc.changes", "doc.inspectLayout", "doc.textLayout", "doc.render", "doc.export", "assets.list", "reference.render", "reference.compare", "icons.search", "icons.get", "components.list", "components.get",
     };
 
     /// <summary>Calls that may omit the scope because they are how a client first learns it.</summary>
@@ -26,10 +26,12 @@ public sealed class LiveControl : IAsyncDisposable
     readonly AssetLibrary library;
     readonly AssetResolver resolver;
     readonly Func<RequestEnvelope, CancellationToken, Task<ResponseEnvelope>>? reference;
+    readonly DocumentService? documents;
 
     public LiveControl(string pipeName, BridgeRouter router, Func<RequestEnvelope, CancellationToken, Task<ResponseEnvelope>> export, AssetLibrary library, AssetResolver resolver,
-        Func<RequestEnvelope, CancellationToken, Task<ResponseEnvelope>>? reference = null)
+        Func<RequestEnvelope, CancellationToken, Task<ResponseEnvelope>>? reference = null, DocumentService? documents = null)
     {
+        this.documents = documents;
         this.router = router;
         this.export = export;
         this.library = library;
@@ -43,14 +45,30 @@ public sealed class LiveControl : IAsyncDisposable
     async Task<ResponseEnvelope> HandleAsync(ConnectionInfo connection, RequestEnvelope request, CancellationToken ct)
     {
         if (!Offered.Contains(request.Method)) return Wire.Error(request.RequestId, "method_not_found", $"{request.Method} is not available to clients");
+        var askedForCurrent = request.DocumentId is null && request.SessionId is null;
         if (ScopeOptional.Contains(request.Method) && request.DocumentId is null && request.SessionId is null && router.CurrentScope is { } scope)
             request = request with { DocumentId = scope.DocumentId, SessionId = scope.SessionId };
+        if (request.Method.StartsWith("docs.", StringComparison.Ordinal)) return documents is null ? Wire.Error(request.RequestId, "not_ready", "document tools are unavailable") : await documents.HandleAsync(request, ct);
         if (request.Method == "doc.export") return await export(request, ct); // the host writes the file itself, inside the approved folders
         if (request.Method is "reference.render" or "reference.compare") return reference is null
             ? Wire.Error(request.RequestId, "not_ready", "reference rendering is unavailable") : await reference(request, ct);
         if (request.Method == "assets.list") return await ListAssetsAsync(request, ct);
         if (request.Method == "doc.executeScript") return await ExecuteScriptAsync(request, ct);
+        if (request.Method == "doc.summary" && documents is not null && askedForCurrent) return await WithOtherDocumentsAsync(request, ct);
         return await router.SendAsync(request, ct);
+    }
+
+    /// <summary>The summary of the active document, plus the other open documents, so an agent that asked for "the document" learns there are more.</summary>
+    async Task<ResponseEnvelope> WithOtherDocumentsAsync(RequestEnvelope request, CancellationToken ct)
+    {
+        var r = await router.SendAsync(request, ct);
+        if (r.Error is not null || r.Result is not { } res || res.ValueKind != System.Text.Json.JsonValueKind.Object) return r;
+        var all = await documents!.ListAsync(ct);
+        if (all.Count < 2) return r;
+        var o = JsonNode.Parse(res.GetRawText())!.AsObject();
+        o["openDocuments"] = all;
+        o["openDocumentsNote"] = "More than one document is open. Other tools address a document by the documentId and sessionId you pass; use list_documents for the current list.";
+        return new ResponseEnvelope { RequestId = r.RequestId, Result = System.Text.Json.JsonSerializer.SerializeToElement(o) };
     }
 
     /// <summary>The document's pinned pictures and the library's, side by side. A document entry wins an exact id match and says if the library has moved on.</summary>

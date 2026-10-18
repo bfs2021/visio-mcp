@@ -16,6 +16,7 @@ public class ToolTests
         "get_document_summary", "get_objects", "apply_operations", "execute_script", "render_page", "render_region",
         "inspect_layout", "list_assets", "get_changes", "export_document", "get_operation_schema", "get_text_layout",
         "render_reference_region", "compare_reference", "search_icons", "get_icon", "list_layout_components", "get_layout_component",
+        "list_documents", "create_document", "show_document",
     ];
 
     static string NewPipe() => $"mcp-test-{Guid.NewGuid():N}";
@@ -51,6 +52,37 @@ public class ToolTests
         { ["documentId"] = Doc, ["sessionId"] = Session, ["ids"] = Array.Empty<string>() }, cancellationToken: Ct());
         Assert.True(invalid.IsError);
         Assert.Equal(1, app.Count("doc.textLayout"));
+    }
+
+    [Fact]
+    public async Task DocumentToolsForwardToTheApplicationAndCheckTheirArguments()
+    {
+        var pipe = NewPipe();
+        var app = new FakeApp();
+        await using var server = PipeServer.Start(pipe, app.Handle);
+        await using var client = await Connect(pipe);
+
+        var listed = await client.CallToolAsync("list_documents", new Dictionary<string, object?>(), cancellationToken: Ct());
+        Assert.True(listed.IsError != true);
+        Assert.Equal(1, app.Count("docs.list"));
+
+        var created = await client.CallToolAsync("create_document", new Dictionary<string, object?> { ["title"] = "Pipeline", ["widthPt"] = 600.0, ["heightPt"] = 400.0 }, cancellationToken: Ct());
+        Assert.True(created.IsError != true);
+        var sent = app.Last("docs.create");
+        Assert.Null(sent.DocumentId);
+        Assert.Equal("Pipeline", sent.Params["title"]!.GetValue<string>());
+        Assert.Equal(600.0, sent.Params["widthPt"]!.GetValue<double>());
+
+        Assert.True((await client.CallToolAsync("create_document", new Dictionary<string, object?> { ["title"] = "" }, cancellationToken: Ct())).IsError);
+        Assert.True((await client.CallToolAsync("create_document", new Dictionary<string, object?> { ["widthPt"] = 600.0 }, cancellationToken: Ct())).IsError); // both or neither
+        Assert.True((await client.CallToolAsync("create_document", new Dictionary<string, object?> { ["widthPt"] = 10.0, ["heightPt"] = 400.0 }, cancellationToken: Ct())).IsError);
+        Assert.Equal(1, app.Count("docs.create")); // refused before it reached the application
+
+        var shown = await client.CallToolAsync("show_document", new Dictionary<string, object?> { ["documentId"] = Doc }, cancellationToken: Ct());
+        Assert.True(shown.IsError != true);
+        Assert.Equal(Doc, app.Last("docs.show").Params["documentId"]!.GetValue<string>());
+        Assert.True((await client.CallToolAsync("show_document", new Dictionary<string, object?> { ["documentId"] = "not-a-uuid" }, cancellationToken: Ct())).IsError);
+        Assert.Equal(1, app.Count("docs.show"));
     }
 
     static Task<McpClient> Connect(string pipe) => McpClient.CreateAsync(new StdioClientTransport(new StdioClientTransportOptions
@@ -110,7 +142,10 @@ public class ToolTests
 
         Assert.Empty(Required(tools["get_document_summary"])); // the first call: it hands out the identity
         Assert.Empty(Required(tools["get_operation_schema"]));
-        foreach (var name in SourceTools.Where(n => n != "get_document_summary" && n != "get_operation_schema"))
+        Assert.Empty(Required(tools["list_documents"]));   // they hand out identities too
+        Assert.Empty(Required(tools["create_document"]));
+        Assert.Equal(new[] { "documentId" }, Required(tools["show_document"])); // it names a document, and the session changes when it moves
+        foreach (var name in SourceTools.Where(n => n is not ("get_document_summary" or "get_operation_schema" or "list_documents" or "create_document" or "show_document")))
         {
             Assert.Contains("documentId", Required(tools[name]));
             Assert.Contains("sessionId", Required(tools[name]));

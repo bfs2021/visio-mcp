@@ -64,6 +64,9 @@ public sealed partial class HostServices(MainWindow window)
                 "host.app.closeCancelled" => Ok(request, new JsonObject { ["cancelled"] = window.CancelClose() }),
                 var m when m.StartsWith("host.recovery.", StringComparison.Ordinal) => await RecoveryAsync(request, ct),
                 var m when m.StartsWith("host.workspace.", StringComparison.Ordinal) => await WorkspaceAsync(request, ct),
+                "host.documents.show" => await window.Documents.ShowAsync(request, ct),
+                "host.documents.discard" => await window.Documents.DiscardAsync(request, ct),
+                "host.documents.agent" => Ok(request, new JsonObject { ["documents"] = await window.Documents.ListAsync(ct, agentOnly: true) }),
                 _ => Err(request, "method_not_found", $"unknown host method {request.Method}"),
             };
         }
