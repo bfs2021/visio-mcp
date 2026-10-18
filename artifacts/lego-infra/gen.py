@@ -131,7 +131,7 @@ def polyline(s, layer=None):
     o = {"op": "createConnector", "pageId": P, "name": s['id'],
          "from": {"point": {"x": X(out[0][0]), "y": Y(out[0][1])}, "glue": "none"},
          "to": {"point": {"x": X(out[-1][0]), "y": Y(out[-1][1])}, "glue": "none"},
-         "route": "straight", "waypoints": [{"x": X(x), "y": Y(y)} for x, y in out[1:-1]],
+         "route": "orthogonal", "waypoints": [{"x": X(x), "y": Y(y)} for x, y in out[1:-1]],
          "style": {"colour": col, "widthPt": wt, "dash": "solid", "startArrow": "block" if ba != '0' else "none", "endArrow": "block" if ea != '0' else "none"}}
     lids = layer_of(s, layer)
     if lids:

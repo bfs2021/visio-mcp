@@ -8,6 +8,7 @@ import { canonicalSerialize } from '../model/canonical';
 import { ok, type Result } from '../model/result';
 import type { AdapterCallbacks, CanvasAdapter, Tool, ViewportInfo } from './CanvasAdapter';
 import { edgeStyle, effectiveState, labelOf, registerCustomShapes, vertexStyle } from './cellMapping';
+import { centreOfTerminal, endFor, routeOrthogonal, type Terminal } from '../layout/orthogonalRoute';
 import { installGestureHooks } from './gestureHooks';
 import { pageOf } from './intents';
 
@@ -184,6 +185,7 @@ export class MaxGraphAdapter implements CanvasAdapter {
 
       const wanted = new Map<string, Element>();
       for (const e of page.elements) if (e.kind !== 'group') wanted.set(e.id, e);
+      this.pageElements = wanted;
       const parent = this.graph.getDefaultParent();
 
       for (const child of [...parent.getChildren()]) {
@@ -241,6 +243,26 @@ export class MaxGraphAdapter implements CanvasAdapter {
     this.shown.set(el.id, key);
   }
 
+  private pageElements = new Map<string, Element>();
+
+  /** R08: an orthogonal connector's route, computed here so it leaves and enters along the end axes and passes through its waypoints. */
+  private orthogonalRoute(el: Extract<Element, { kind: 'connector' }>): { interior: Point[]; fixed: { from?: { x: number; y: number; perimeter: boolean }; to?: { x: number; y: number; perimeter: boolean } } } {
+    const terminal = (ep: typeof el.from): Terminal | undefined => {
+      const t = ep.glue !== 'none' && ep.elementId ? this.pageElements.get(ep.elementId) : undefined;
+      if (!t || t.kind === 'connector' || t.kind === 'group') return undefined;
+      return { box: t.bounds, rotationDeg: t.rotationDeg, ports: t.kind === 'shape' ? t.ports : undefined };
+    };
+    const ta = terminal(el.from), tb = terminal(el.to);
+    const pointOf = (t: Terminal | undefined, ep: typeof el.from) => (t ? centreOfTerminal(t) : ep.point ?? { x: 0, y: 0 });
+    const wp = el.waypoints.map(p => ({ x: p.x, y: p.y }));
+    const a = endFor(el.from, ta, wp[0] ?? pointOf(tb, el.to));
+    const b = endFor(el.to, tb, wp[wp.length - 1] ?? pointOf(ta, el.from));
+    const route = routeOrthogonal(a, b, wp);
+    const SIDE = new Set(['0.5,0', '0.5,1', '0,0.5', '1,0.5']);
+    const pin = (e: typeof a) => (e.fraction ? { x: e.fraction.x, y: e.fraction.y, perimeter: SIDE.has(`${e.fraction.x},${e.fraction.y}`) } : undefined);
+    return { interior: route.slice(1, -1).map(p => new Point(p.x, p.y)), fixed: { from: pin(a), to: pin(b) } };
+  }
+
   private upsertEdge(el: Extract<Element, { kind: 'connector' }>, layers: readonly import('../contracts/generated').Layer[]): void {
     const model = this.graph.getDataModel();
     const state = effectiveState(el, layers);
@@ -253,6 +275,15 @@ export class MaxGraphAdapter implements CanvasAdapter {
     if (el.from.glue === 'none' && el.from.point) geo.setTerminalPoint(new Point(el.from.point.x, el.from.point.y), true);
     if (el.to.glue === 'none' && el.to.point) geo.setTerminalPoint(new Point(el.to.point.x, el.to.point.y), false);
     const style = edgeStyle(el, state.locked);
+    if (el.route === 'orthogonal') {
+      const r = this.orthogonalRoute(el);
+      geo.points = r.interior;
+      delete style.edgeStyle; // the route is explicit, so maxGraph draws the polyline as given
+      for (const [fix, x, y, per] of [[r.fixed.from, 'exitX', 'exitY', 'exitPerimeter'], [r.fixed.to, 'entryX', 'entryY', 'entryPerimeter']] as const) {
+        delete style[x]; delete style[y];
+        if (fix) { style[x] = fix.x; style[y] = fix.y; style[per] = fix.perimeter; }
+      }
+    }
     if (!cell) {
       cell = new Cell(labelOf(el), geo, style);
       cell.setEdge(true);

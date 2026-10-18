@@ -259,3 +259,24 @@ test('a connector to a rotated non-rectangular shape ends on its outline, not on
   }));
   expect(dist).toBeLessThan(1);
 });
+
+test('an orthogonal connector leaves and enters along its ports and passes through its waypoints', async ({ page }) => {
+  await openEditor(page);
+  await apply(page, [
+    { op: 'createShape', id: U(21), bounds: box(100, 100), style: { fill: RED, stroke: { kind: 'none' } } },
+    { op: 'createShape', id: U(22), bounds: box(400, 300), style: { fill: BLUE, stroke: { kind: 'none' } } },
+    { op: 'createShape', id: U(24), bounds: box(100, 500), style: { fill: BLUE, stroke: { kind: 'none' } } },
+    { op: 'createConnector', id: U(23), from: { elementId: U(21), port: 'east', glue: 'static' }, to: { elementId: U(22), port: 'north', glue: 'static' }, route: 'orthogonal' },
+    { op: 'createConnector', id: U(25), from: { elementId: U(21), port: 'west', glue: 'static' }, to: { elementId: U(24), port: 'west', glue: 'static' }, route: 'orthogonal', waypoints: [{ x: 40, y: 130 }, { x: 40, y: 530 }] },
+  ]);
+  const routes = (await call(page, 'doc.exportSnapshot', {})).result.projection.connectors;
+  const l = routes[U(23)].routePoints;
+  expect(l).toHaveLength(3); // east port, one elbow, north port
+  expect(l[1].y).toBeCloseTo(l[0].y, 3);
+  expect(l[1].x).toBeCloseTo(l[2].x, 3);
+  expect(l[2].y).toBeGreaterThan(l[1].y); // arrives going down into the north port
+  const w = routes[U(25)].routePoints;
+  expect(w.some((p: { x: number; y: number }) => Math.abs(p.x - 40) < 0.01 && Math.abs(p.y - 130) < 0.01)).toBe(true);
+  expect(w.some((p: { x: number; y: number }) => Math.abs(p.x - 40) < 0.01 && Math.abs(p.y - 530) < 0.01)).toBe(true);
+  expect(w.every((p: { x: number; y: number }, i: number) => i === 0 || Math.abs(p.x - w[i - 1].x) < 0.01 || Math.abs(p.y - w[i - 1].y) < 0.01)).toBe(true);
+});

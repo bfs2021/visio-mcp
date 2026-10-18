@@ -27,7 +27,7 @@ def label(alias,bounds,text,rot=0):
     ops.append(o)
 def line(alias,pts,colour,w,dash="solid"):
     ops.append({"op":"createConnector","alias":alias,"pageId":P,"from":{"point":{"x":X(pts[0][0]),"y":Y(pts[0][1])},"glue":"none"},"to":{"point":{"x":X(pts[1][0]),"y":Y(pts[1][1])},"glue":"none"},"route":"straight","waypoints":[],"style":{"colour":colour,"widthPt":w,"dash":dash,"startArrow":"none","endArrow":"none"}})
-def conn(alias,a,pa,b,pb,route="straight",wp=None,start="none"):
+def conn(alias,a,pa,b,pb,route="orthogonal",wp=None,start="none"):
     o={"op":"createConnector","alias":alias,"pageId":P,"from":{"elementId":ids[a],"port":pa,"glue":"static"},"to":{"elementId":ids[b],"port":pb,"glue":"static"},"route":route,"waypoints":[{"x":X(x),"y":Y(y)} for x,y in (wp or [])],"style":{"colour":"#7f7f7f","widthPt":2.25,"dash":"solid","startArrow":start,"endArrow":"block"}}
     ops.append(o)
 
