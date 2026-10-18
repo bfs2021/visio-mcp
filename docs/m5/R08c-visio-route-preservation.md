@@ -13,7 +13,7 @@ connector's Geometry1 vertices before and after. On `artifacts/swimlane/swimlane
 | Unrelated connector | 7 vertices | unchanged |
 
 So Visio does throw the exported route away when an attached shape moves, and a nonzero `ConFixedCode`
-(Shape Layout) stops it. Evidence: `artifacts/swimlane/r08c-baseline-reroute-and-fixedcode.txt`.
+(Shape Layout) stops it. Evidence: `artifacts/swimlane/r08c-baseline-default-reroute.txt` (default cells) and `artifacts/swimlane/r08c-fixedcode-1-2-3.txt`.
 
 ## Policy
 The exporter writes `ConFixedCode = 1` on an **orthogonal connector that has author waypoints**. Automatic routes (no waypoints)
