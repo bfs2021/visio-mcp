@@ -80,6 +80,7 @@ public class CloseTests
         finally { await first.DisposeAsync(); }
         try
         {
+            File.Delete(Path.Combine(root, "workspace.json")); // no remembered tabs: these sessions belong to no tab
             await using var second = await Harness.StartAsync(existingRoot: root);
             await WaitFor(() => second.Window.RecoveryMgr.SessionId == second.Router.CurrentScope?.SessionId);
             var list = await second.Window.Services.HandleAsync(new RequestEnvelope { RequestId = "l", Method = "host.recovery.list", Params = new JsonObject() }, default);
@@ -116,6 +117,7 @@ public class CloseTests
         finally { await h.DisposeAsync(); }
         try
         {
+            File.Delete(Path.Combine(root, "workspace.json")); // no remembered tabs: these sessions belong to no tab
             await using var second = await Harness.StartAsync(existingRoot: root);
             await WaitFor(() => second.Window.RecoveryMgr.SessionId == second.Router.CurrentScope?.SessionId);
             var offer = await second.Window.Services.HandleAsync(new RequestEnvelope { RequestId = "c", Method = "host.recovery.candidate", Params = new JsonObject() }, default);

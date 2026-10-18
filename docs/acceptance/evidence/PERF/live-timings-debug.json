@@ -1,5 +1,5 @@
 {
-  "recorded": "2026-10-18T18:56:54.4095693Z",
+  "recorded": "2026-10-18T19:21:44.1723416Z",
   "machine": {
     "os": "Microsoft Windows NT 10.0.26300.0",
     "cpus": 4,
@@ -9,7 +9,7 @@
   },
   "warmup": {
     "seconds": 10,
-    "longestCallMs": 4426.2,
+    "longestCallMs": 67.5,
     "note": "the shim start-up freeze of the test process, kept out of the measurements"
   },
   "fixture": {
@@ -17,30 +17,30 @@
     "shapes": 460,
     "connectors": 40,
     "pages": 1,
-    "buildMs": 135.8,
+    "buildMs": 130,
     "canvasGroups": 1425,
     "summaryBytes": 82732,
     "previewBytes": 196786,
-    "vsdxBytes": 43388
+    "vsdxBytes": 42897
   },
   "singleEditAgent": {
     "runs": 10,
     "samplesMs": [
-      17.3,
-      10.3,
-      10.5,
-      9.7,
-      16.4,
+      13.7,
+      10.2,
       9.2,
-      9.8,
-      9.6,
-      11.2,
-      10
+      8,
+      8.5,
+      9.2,
+      7.9,
+      7.3,
+      7.1,
+      8.9
     ],
-    "minMs": 9.2,
-    "medianMs": 10.3,
-    "p95Ms": 17.3,
-    "maxMs": 17.3,
+    "minMs": 7.1,
+    "medianMs": 8.9,
+    "p95Ms": 13.7,
+    "maxMs": 13.7,
     "preferredMs": 100,
     "acceptableMs": 250,
     "meetsPreferred": true
@@ -48,21 +48,21 @@
   "singleEditPainted": {
     "runs": 10,
     "samplesMs": [
-      42.5,
-      30.6,
-      31.3,
-      32.1,
-      46.8,
-      30.3,
-      32.5,
-      29.8,
-      31.3,
-      34.1
+      36.6,
+      30.9,
+      33,
+      30.2,
+      30.4,
+      31.8,
+      31.7,
+      29.6,
+      31.9,
+      31.6
     ],
-    "minMs": 29.8,
-    "medianMs": 32.1,
-    "p95Ms": 46.8,
-    "maxMs": 46.8,
+    "minMs": 29.6,
+    "medianMs": 31.7,
+    "p95Ms": 36.6,
+    "maxMs": 36.6,
     "preferredMs": 100,
     "acceptableMs": 250,
     "meetsPreferred": true
@@ -70,16 +70,16 @@
   "batch100": {
     "runs": 5,
     "samplesMs": [
-      44.2,
-      37.8,
-      39.8,
-      37.1,
-      37.4
+      37.3,
+      33.1,
+      33.4,
+      4516.7,
+      35.4
     ],
-    "minMs": 37.1,
-    "medianMs": 37.8,
-    "p95Ms": 44.2,
-    "maxMs": 44.2,
+    "minMs": 33.1,
+    "medianMs": 35.4,
+    "p95Ms": 4516.7,
+    "maxMs": 4516.7,
     "preferredMs": 500,
     "acceptableMs": null,
     "meetsPreferred": true
@@ -87,21 +87,21 @@
   "summaryOverMcp": {
     "runs": 10,
     "samplesMs": [
-      11.8,
-      8,
-      10.1,
-      17,
-      8,
-      8.1,
-      13,
-      7.2,
-      9,
-      7.2
+      8.2,
+      8.5,
+      7.4,
+      7.6,
+      7.1,
+      6.1,
+      8.3,
+      5.9,
+      5.9,
+      6.5
     ],
-    "minMs": 7.2,
-    "medianMs": 9,
-    "p95Ms": 17,
-    "maxMs": 17,
+    "minMs": 5.9,
+    "medianMs": 7.4,
+    "p95Ms": 8.5,
+    "maxMs": 8.5,
     "preferredMs": 250,
     "acceptableMs": null,
     "meetsPreferred": true
@@ -110,20 +110,20 @@
     "runs": 10,
     "samplesMs": [
       1.5,
-      2.3,
-      1.4,
-      3.5,
-      1.6,
-      1.2,
       1.3,
+      1.4,
+      1.2,
+      1.4,
+      1.5,
+      1.5,
       1.2,
       1.2,
-      1.3
+      1.2
     ],
     "minMs": 1.2,
     "medianMs": 1.4,
-    "p95Ms": 3.5,
-    "maxMs": 3.5,
+    "p95Ms": 1.5,
+    "maxMs": 1.5,
     "preferredMs": 250,
     "acceptableMs": null,
     "meetsPreferred": true
@@ -132,13 +132,13 @@
     "runs": 5,
     "samplesMs": [
       192,
-      54.4,
-      74.4,
-      48,
-      49
+      46.1,
+      46,
+      45,
+      42.1
     ],
-    "minMs": 48,
-    "medianMs": 54.4,
+    "minMs": 42.1,
+    "medianMs": 46,
     "p95Ms": 192,
     "maxMs": 192,
     "preferredMs": 1000,
@@ -148,16 +148,16 @@
   "vsdxSave": {
     "runs": 5,
     "samplesMs": [
-      72.6,
-      81.4,
-      71.4,
-      88.2,
-      90
+      132.9,
+      120.8,
+      102.2,
+      127.4,
+      105.2
     ],
-    "minMs": 71.4,
-    "medianMs": 81.4,
-    "p95Ms": 90,
-    "maxMs": 90,
+    "minMs": 102.2,
+    "medianMs": 120.8,
+    "p95Ms": 132.9,
+    "maxMs": 132.9,
     "preferredMs": 3000,
     "acceptableMs": null,
     "meetsPreferred": true

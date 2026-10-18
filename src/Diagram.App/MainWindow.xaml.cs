@@ -18,7 +18,7 @@ public sealed record AppOptions(string ContentRoot, string UserDataDir, string B
     public static AppOptions Default()
     {
         var data = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AgenticDiagram");
-        return new AppOptions(Path.Combine(AppContext.BaseDirectory, "web"), Path.Combine(data, "webview"), Path.Combine(data, "blobs"), PipeName: Diagram.Ipc.PipeNames.For(), PromptOnClose: true, ExportRoot: Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AgenticDiagram", "Exports"));
+        return new AppOptions(Path.Combine(AppContext.BaseDirectory, "web"), Path.Combine(data, "webview"), Path.Combine(data, "blobs"), PipeName: Diagram.Ipc.PipeNames.For(), PromptOnClose: false, ExportRoot: Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AgenticDiagram", "Exports"));
     }
 }
 
@@ -42,6 +42,7 @@ public partial class MainWindow : Window
         Preparer = new AssetPreparer(Blobs);
         Library = new AssetLibrary(options.LibraryDir ?? Path.GetFullPath(Path.Combine(options.BlobDir, "..", "library")), Blobs);
         Resolver = new AssetResolver(Library, Preparer);
+        Workspace = new WorkspaceStore(Path.GetFullPath(Path.Combine(options.RecoveryDir ?? Path.Combine(options.BlobDir, "..", "recovery"), "..", "workspace.json")), Writer);
         Recovery = new RecoveryStore(options.RecoveryDir ?? Path.GetFullPath(Path.Combine(options.BlobDir, "..", "recovery")), Blobs);
     }
 
@@ -51,6 +52,7 @@ public partial class MainWindow : Window
     public AssetLibrary Library { get; }
     public AssetResolver Resolver { get; }
     public RecoveryStore Recovery { get; }
+    public WorkspaceStore Workspace { get; }
     public RecoveryManager RecoveryMgr { get; private set; } = null!;
     public WebViewHost Host => host ?? throw new InvalidOperationException("call InitializeAsync first");
     public BridgeRouter Router => Host.Router;
@@ -80,7 +82,7 @@ public partial class MainWindow : Window
         Closed += async (_, _) =>
         {
             if (Live is not null) await Live.DisposeAsync();
-            try { await RecoveryMgr.CloseCleanlyAsync(); } catch (Exception e) when (e is IOException or UnauthorizedAccessException) { } // leaving recovery files behind is the safe failure
+            try { await RecoveryMgr.CloseCleanlyAsync(); await Workspace.MarkCleanExitAsync(); } catch (Exception e) when (e is IOException or UnauthorizedAccessException) { } // leaving recovery files behind is the safe failure
             await RecoveryMgr.DisposeAsync();
         };
     }

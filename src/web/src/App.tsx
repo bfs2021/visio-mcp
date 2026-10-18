@@ -63,6 +63,7 @@ export function App({ ws }: { ws: WorkspaceModel }) {
   useShortcuts(ws);
   const model = ws.active;
   const asking = ws.tabs.find(t => t.closePrompt);
+  const holder = ws.tabs.find(t => t.recoveryOffers.length > 0 || t.recoveryReport) ?? model; // the tab that holds the recovery question
   return (
     <div className="app">
       <Toolbar key={`t${model.tabId}`} model={model} ws={ws} />
@@ -77,7 +78,7 @@ export function App({ ws }: { ws: WorkspaceModel }) {
       <PageTabs model={model} />
       <Drawer model={model} />
       <CompatibilityDialog model={model} />
-      <RecoveryDialog model={model} />
+      <RecoveryDialog model={holder} onRecover={id => void ws.restoreOrphan(holder, id)} />
       {asking && <CloseDialog model={asking} />}
       <DocumentTitle model={model} />
       <StatusBar model={model} />

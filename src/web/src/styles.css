@@ -136,3 +136,5 @@ textarea { width: 100%; resize: vertical; }
 .tab-close:hover, .tab-new:hover { background: rgba(15, 23, 42, .12); }
 .tab-new { align-self: center; font-size: 16px; }
 .tab-notice { align-self: center; margin-left: 8px; color: #b45309; }
+.tab-banner { align-self: center; margin-left: auto; display: flex; gap: 6px; align-items: center; padding: 2px 8px; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 4px; max-width: 60%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.tab-banner button { border: 0; background: transparent; padding: 0 4px; }

@@ -103,6 +103,7 @@ public class CrashRecoveryTests
             var left = Directory.GetDirectories(Path.Combine(root, "recovery"));
             Assert.Single(left);
 
+            File.Delete(Path.Combine(root, "workspace.json")); // no remembered tabs: these sessions belong to no tab
             await using var second = await Harness.StartAsync(existingRoot: root);
             await WaitFor(() => second.Window.RecoveryMgr.SessionId == second.Router.CurrentScope?.SessionId);
             // the page asks at start and shows a question; nothing has been restored without an answer
@@ -130,6 +131,7 @@ public class CrashRecoveryTests
         try
         {
             await using (var first = await Harness.StartAsync(existingRoot: root)) { await Edit(first); }
+            File.Delete(Path.Combine(root, "workspace.json")); // no remembered tabs: these sessions belong to no tab
             await using (var second = await Harness.StartAsync(existingRoot: root))
             {
                 await WaitFor(async () => (await second.Eval("document.querySelector('[data-testid=recovery-offer]') !== null")) == "true", 30);

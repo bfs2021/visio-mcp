@@ -15,7 +15,9 @@ function hostApi(host: HostServices | null): HostApi {
   if (!host) return noHost;
   return {
     pickImage: () => host.call('host.pickImage'),
-    openJson: () => host.call('host.openJson'),
+    openJson: path => host.call('host.openJson', path ? { path } : {}),
+    workspaceSave: (tabs, activeDocumentId) => host.call('host.workspace.save', { tabs, activeDocumentId }),
+    workspaceLoad: () => host.call('host.workspace.load'),
     saveJson: saveAs => host.call('host.saveJson', { saveAs }),
     recoveryStatus: () => host.call('host.recovery.status'),
     recoveryList: () => host.call('host.recovery.list'),
@@ -69,7 +71,7 @@ ws.configure = configure;
 ws.host = hostApi(host);
 configure(firstModel, workspace.active!);
 const model = firstModel;
-void model.checkRecovery(); // unfinished work from an earlier run is offered (or, after a renderer crash, restored at once)
+void ws.restoreWorkspace(model); // the last run's tabs come back; unfinished work no tab owns is offered
 
 // A read-only window onto the editor for automated tests. It is compiled out of production builds, and nothing here edits the document.
 // It always points at the active tab, so a test sees what the person sees.
@@ -84,6 +86,8 @@ if (import.meta.env.VITE_TEST_API === '1') {
     committedEvents: () => JSON.parse(JSON.stringify(recorded.get(cur().engine) ?? [])),
     checkRecovery: () => cur().checkRecovery(),
     beginClose: () => shell.beginClose(),
+    restoreWorkspace: () => shell.restoreWorkspace(cur()),
+    persist: () => shell.persist(),
     markSaved: async (path: string) => { const m = cur(); await m.engine.markSaved(m.engine.scope(), m.engine.revision, path); m.say(`Saved ${path}.`, 'info'); },
     snapshot: () => JSON.parse(JSON.stringify(cur().snapshot)),
     selection: () => [...cur().selection],

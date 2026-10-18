@@ -21,6 +21,12 @@ export class WorkspaceModel {
   configure: (model: EditorModel, state: DocumentState) => void = () => {};
   /** A short message the strip shows (for example, the tab limit). */
   notice: string | null = null;
+  /** Said once after a start that brought documents back; stays until dismissed. */
+  banner: { text: string; lines: string[] } | null = null;
+  dismissBanner(): void { this.banner = null; this.bump(); }
+  private persisting = false;
+  private persistTimer: ReturnType<typeof setTimeout> | null = null;
+  private lastPersisted = '';
 
   constructor(private readonly app: App, first: EditorModel) {
     this.adopt(first, app.workspace.active!);
@@ -37,7 +43,7 @@ export class WorkspaceModel {
 
   subscribe = (l: () => void) => { this.listeners.add(l); return () => { this.listeners.delete(l); }; };
   getVersion = () => this.version;
-  bump(): void { this.version++; for (const l of this.listeners) l(); }
+  bump(): void { this.version++; for (const l of this.listeners) l(); this.schedulePersist(); }
 
   get host(): HostApi { return this.hostApi; }
   set host(h: HostApi) { this.hostApi = h; for (const m of this.tabs) m.host = h; }
@@ -112,6 +118,83 @@ export class WorkspaceModel {
     this.unsubscribe.get(model)?.(); this.unsubscribe.delete(model);
     model.dispose();
     this.bump();
+  }
+
+  // ------------------------------------------------------------------ remembering the tabs between runs
+  private schedulePersist(): void {
+    if (!this.persisting || this.persistTimer) return;
+    this.persistTimer = setTimeout(() => { this.persistTimer = null; void this.persist(); }, 150);
+  }
+
+  /** Tells the host which documents are open, in order, and which is showing. Unchanged lists are not sent again. */
+  async persist(): Promise<void> {
+    const tabs = this.tabs.map(t => ({ documentId: t.engine.scope().documentId, sessionId: t.engine.scope().sessionId, title: t.tabLabel, unsaved: t.engine.status().unsaved }));
+    const active = this.active.engine.scope().documentId;
+    const body = JSON.stringify([tabs, active]);
+    if (body === this.lastPersisted) return;
+    this.lastPersisted = body;
+    await this.hostApi.workspaceSave(tabs, active);
+  }
+
+  /**
+   * At start: bring back what the last run had open, in order. Saved tabs reopen from their files; tabs with unsaved work come back from
+   * their recovery sessions, still unsaved. Sessions that no tab owns are offered in the recovery dialog. Nothing is asked about what is restored.
+   */
+  async restoreWorkspace(holder: EditorModel): Promise<void> {
+    try {
+      const mem = await this.hostApi.workspaceLoad();
+      if (!mem.ok || !mem.value.found || mem.value.tabs.length === 0) { await holder.checkRecovery(); return; }
+      const listed = await this.hostApi.recoveryList();
+      const sessions = listed.ok ? listed.value.sessions : [];
+      const claimed = new Set<string>();
+      const byDocument = new Map<string, EditorModel>();
+      const lines: string[] = [];
+      let restored = 0, withWork = 0;
+      for (const tab of mem.value.tabs) {
+        const session = sessions.find(s => s.sessionId === tab.sessionId);
+        if (!session && !tab.path) continue; // an untitled tab nobody touched
+        const reuse = restored === 0 && this.tabs.length === 1 && this.active.isBlank;
+        const target = reuse ? this.active : this.newTab();
+        if (!target) break;
+        this.activate(target);
+        const name = tab.title ?? tab.path ?? 'A document';
+        let ok = false;
+        if (session) {
+          claimed.add(session.sessionId);
+          const r = await holder.restoreSession(session, target, target.engine.revision);
+          ok = r.ok;
+          if (r.ok) { withWork++; lines.push(...session.loss.messages); } else lines.push(`${name}: the unsaved changes could not be restored (${r.message}).`);
+        }
+        if (!ok && tab.path) {
+          ok = (await target.open(tab.path)).opened;
+          if (!ok) lines.push(`${tab.path} could not be reopened.`);
+          else if (session) lines.push(`${name} was reopened from its file; its unsaved changes were lost.`);
+        }
+        if (ok) { restored++; byDocument.set(tab.documentId, target); }
+        else if (!reuse) await this.closeNow(target, false);
+      }
+      const orphans = sessions.filter(s => !claimed.has(s.sessionId));
+      if (orphans.length) holder.offerSessions(orphans);
+      const wanted = mem.value.activeDocumentId ? byDocument.get(mem.value.activeDocumentId) : undefined;
+      if (wanted) this.activate(wanted);
+      if (restored > 0 && (!mem.value.cleanExit || withWork > 0)) {
+        const text = !mem.value.cleanExit
+          ? `Restored ${restored} document${restored === 1 ? '' : 's'} after an unexpected exit. Unsaved changes are kept.`
+          : `Reopened ${restored} document${restored === 1 ? '' : 's'}, ${withWork} with unsaved changes.`;
+        this.banner = { text, lines };
+      } else if (lines.length) this.banner = { text: 'Some documents could not be brought back.', lines };
+    } finally {
+      this.persisting = true;
+      this.bump();
+    }
+  }
+
+  /** The person chose Recover in the dialog: the session opens as its own tab (an untouched blank one is used up first). */
+  async restoreOrphan(holder: EditorModel, sessionId: string): Promise<void> {
+    const target = this.active.isBlank ? this.active : this.newTab();
+    if (!target) return;
+    this.activate(target);
+    await holder.restoreOffered(sessionId, target);
   }
 
   // ------------------------------------------------------------------ closing the window
