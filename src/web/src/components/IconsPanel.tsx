@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { EditorModel } from '../editor/EditorModel';
 import { searchIcons } from '../icons/catalog';
 import { useModel } from './useModel';
@@ -8,6 +8,10 @@ export function IconsPanel({ model }: { model: EditorModel }) {
   const [query, setQuery] = useState(''), [size, setSize] = useState(24), [colour, setColour] = useState('#334155'), [stroke, setStroke] = useState(2);
   const found = searchIcons(query, 50);
   const valid = Number.isFinite(size) && size >= 1 && size <= 1000 && Number.isFinite(stroke) && stroke > 0 && stroke <= size / 2;
+  useEffect(() => {
+    if (valid) model.iconSettings = { sizePt: size, colour, strokeWidthPt: stroke };
+    else if (model.tool.kind === 'place' && model.tool.what.startsWith('icon:')) model.setTool({ kind: 'select' });
+  }, [model, valid, size, colour, stroke]);
   return <details open data-testid="icons-panel">
     <summary>Icons</summary>
     <label>Search <input aria-label="Icon search" placeholder="branch, cloud, security…" value={query} maxLength={256} onChange={e => setQuery(e.target.value)} /></label>
@@ -19,7 +23,7 @@ export function IconsPanel({ model }: { model: EditorModel }) {
       {found.ok && found.value.icons.map(icon => <button key={icon.id} type="button" title={icon.name} aria-label={`Icon: ${icon.name}`} data-testid="icon-choice"
         className={`shape-item${model.tool.kind === 'place' && model.tool.what === `icon:${icon.id}` ? ' armed' : ''}`} disabled={!valid}
         onClick={() => { model.iconSettings = { sizePt: size, colour, strokeWidthPt: stroke }; model.setTool({ kind: 'place', what: `icon:${icon.id}` }); }}>
-        <svg viewBox="0 0 100 100" width="28" height="28" aria-hidden="true"><path d={icon.path} fill="none" stroke={colour} strokeWidth={stroke / size * 100} strokeLinecap="round" strokeLinejoin="round" /></svg>
+        <svg viewBox="0 0 100 100" width="28" height="28" aria-hidden="true"><path d={icon.path} fill="none" stroke={colour} strokeWidth={valid ? stroke / size * 100 : 100 / 12} strokeLinecap="round" strokeLinejoin="round" /></svg>
         <span>{icon.name}</span>
       </button>)}
     </div>

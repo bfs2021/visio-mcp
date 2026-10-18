@@ -6,17 +6,20 @@ import { fileURLToPath } from 'node:url';
 test('searches the palette and inserts one editable icon with the requested size, then undoes it', async ({ page }) => {
   const errors = await openEditor(page);
   await page.getByLabel('Icon search', { exact: true }).fill('git branch');
-  await page.getByLabel('Icon size (pt)', { exact: true }).fill('36');
   await page.getByRole('button', { name: 'Icon: git branch', exact: true }).click();
+  await page.getByLabel('Icon size (pt)', { exact: true }).fill('36');
+  await page.getByLabel('Icon stroke (pt)', { exact: true }).fill('3');
   const point = await ptToClient(page, { x: 160, y: 150 });
   await page.mouse.click(point.x, point.y);
   await expect.poll(async () => (await elements(page)).length).toBe(1);
   const icon = (await elements(page))[0]!;
   expect(icon.kind).toBe('shape'); expect(icon.bounds.width).toBe(36);
+  if (icon.kind !== 'shape') throw new Error('Expected a vector shape');
+  expect(icon.style.strokeWidthPt).toBe(3);
   expect(icon.metadata['icon.id']).toBe('lucide:git-branch');
   const folder = fileURLToPath(new URL('../../../../artifacts/r03-icons/', import.meta.url)); mkdirSync(folder, { recursive: true });
   await page.screenshot({ path: folder + '/icons-panel.png' });
-  await page.keyboard.press('Control+z');
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
   await expect.poll(async () => (await elements(page)).length).toBe(0);
   expect(errors).toEqual([]);
 });
@@ -34,5 +37,17 @@ test('preview and placed custom geometry draw a hollow branch node rather than a
     return [g.getImageData(96, 288, 1, 1).data[0], g.getImageData(144, 288, 1, 1).data[0]];
   }, rendered.result.base64);
   expect(pixels[0]).toBeGreaterThan(240); expect(pixels[1]).toBeLessThan(100);
+  expect(errors).toEqual([]);
+});
+
+test('invalid settings cancel an armed icon without placing a stale or invalid shape', async ({ page }) => {
+  const errors = await openEditor(page);
+  await page.getByLabel('Icon search', { exact: true }).fill('container');
+  await page.getByRole('button', { name: 'Icon: container', exact: true }).click();
+  await page.getByLabel('Icon size (pt)', { exact: true }).fill('0');
+  await expect(page.getByRole('button', { name: 'Icon: container', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Select', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  const point = await ptToClient(page, { x: 160, y: 150 }); await page.mouse.click(point.x, point.y);
+  expect(await elements(page)).toHaveLength(0);
   expect(errors).toEqual([]);
 });
