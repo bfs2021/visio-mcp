@@ -1,0 +1,21 @@
+{
+  "transactionId": "39d1cb7d-c821-4b56-995b-7638e52ce348",
+  "previousRevision": 5,
+  "revision": 6,
+  "noChange": false,
+  "created": [],
+  "changed": [
+    "e8aa60ce-9f49-40dc-b93f-92e4d0c81ebe"
+  ],
+  "deleted": [],
+  "changedPageIds": [],
+  "changedLayerIds": [],
+  "changedAssetIds": [
+    "asset:esg-global-primary"
+  ],
+  "visuallyAffectedIds": [
+    "e8aa60ce-9f49-40dc-b93f-92e4d0c81ebe"
+  ],
+  "warnings": [],
+  "projectionStatus": "applied"
+}

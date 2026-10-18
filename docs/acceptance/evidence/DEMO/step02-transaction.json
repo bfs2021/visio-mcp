@@ -1,0 +1,39 @@
+{
+  "transactionId": "977549ef-d53b-4b16-aebf-c6c92a7bb2b4",
+  "previousRevision": 0,
+  "revision": 1,
+  "noChange": false,
+  "created": [
+    "c8421e51-bdb1-4875-8aea-0387441d0b1a",
+    "df9ea1f3-96ea-4037-ad87-dfe9c6b62ce3",
+    "9875d55a-1414-4a36-a83a-e159f3faf5cc",
+    "cbe11687-46ec-4a6d-a70c-0bf63a36173b",
+    "7873ec50-f465-4361-b7c9-2c6717f6b316",
+    "0d56d1ec-11d2-42d9-9c3a-af8a4ff16df0",
+    "ff58db7b-0dec-4460-b89a-7363d806ced8",
+    "65c835a2-1945-49cf-81c6-640de45cf0fc",
+    "0a424c52-b161-439c-b2ec-38e533c74a09",
+    "e8aa60ce-9f49-40dc-b93f-92e4d0c81ebe"
+  ],
+  "changed": [],
+  "deleted": [],
+  "changedPageIds": [],
+  "changedLayerIds": [],
+  "changedAssetIds": [
+    "asset:esg-old"
+  ],
+  "visuallyAffectedIds": [
+    "c8421e51-bdb1-4875-8aea-0387441d0b1a",
+    "df9ea1f3-96ea-4037-ad87-dfe9c6b62ce3",
+    "9875d55a-1414-4a36-a83a-e159f3faf5cc",
+    "cbe11687-46ec-4a6d-a70c-0bf63a36173b",
+    "7873ec50-f465-4361-b7c9-2c6717f6b316",
+    "0d56d1ec-11d2-42d9-9c3a-af8a4ff16df0",
+    "ff58db7b-0dec-4460-b89a-7363d806ced8",
+    "65c835a2-1945-49cf-81c6-640de45cf0fc",
+    "0a424c52-b161-439c-b2ec-38e533c74a09",
+    "e8aa60ce-9f49-40dc-b93f-92e4d0c81ebe"
+  ],
+  "warnings": [],
+  "projectionStatus": "applied"
+}

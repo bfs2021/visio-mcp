@@ -1,0 +1,436 @@
+{
+  "documentId": "4e8276f6-0827-46c8-be6a-e0d014afefdc",
+  "sessionId": "6101b879-69b9-4faa-beb2-3c32096cb1f4",
+  "revision": 5,
+  "document": {
+    "schemaVersion": 1,
+    "id": "4e8276f6-0827-46c8-be6a-e0d014afefdc",
+    "title": "Untitled",
+    "revision": 5,
+    "assets": [
+      {
+        "id": "asset:esg-old",
+        "mimeType": "image/png",
+        "name": "ESG Legacy Logo",
+        "provenance": "library-import",
+        "sha256": "a6b1332818e884c8434ed7bb8b3e303db9d52bf80b01234810b4bbc010daacfb",
+        "tags": [
+          "logo",
+          "esg"
+        ]
+      }
+    ],
+    "metadata": {},
+    "pages": [
+      {
+        "id": "1fe70edf-0578-4cb9-869c-a86c7935a9d3",
+        "name": "Page 1",
+        "widthPt": 841.8897637795277,
+        "heightPt": 595.2755905511812,
+        "background": {
+          "kind": "solid",
+          "colour": "#ffffff",
+          "opacity": 1
+        },
+        "grid": {
+          "visible": true,
+          "spacingPt": 14.173228346456694,
+          "snap": true
+        },
+        "guides": [],
+        "layers": [
+          {
+            "id": "867bf230-f7e8-4eb6-b14c-8a3a2681cef3",
+            "name": "Layer 1",
+            "visible": true,
+            "locked": false,
+            "printable": true,
+            "snap": true,
+            "glue": true
+          }
+        ],
+        "elements": [
+          {
+            "id": "c8421e51-bdb1-4875-8aea-0387441d0b1a",
+            "kind": "shape",
+            "layerIds": [],
+            "zIndex": 1,
+            "locked": false,
+            "hidden": false,
+            "bounds": {
+              "x": 56.69291338582678,
+              "y": 113.38582677165356,
+              "width": 155.90551181102364,
+              "height": 62.36220472440945
+            },
+            "rotationDeg": 0,
+            "metadata": {},
+            "geometry": {
+              "preset": "rectangle"
+            },
+            "style": {
+              "fill": {
+                "kind": "solid",
+                "colour": "#dbeafe",
+                "opacity": 1
+              },
+              "stroke": {
+                "kind": "solid",
+                "colour": "#333333",
+                "opacity": 1
+              },
+              "strokeWidthPt": 1,
+              "dash": "solid",
+              "lineCap": "butt",
+              "lineJoin": "miter"
+            },
+            "alias": "crm",
+            "text": {
+              "value": "CRM",
+              "fontFamily": "Segoe UI",
+              "fontSizePt": 12,
+              "bold": false,
+              "italic": false,
+              "underline": false,
+              "colour": "#000000",
+              "horizontalAlign": "center",
+              "verticalAlign": "middle",
+              "wrap": true,
+              "paddingPt": 4
+            }
+          },
+          {
+            "id": "df9ea1f3-96ea-4037-ad87-dfe9c6b62ce3",
+            "kind": "shape",
+            "layerIds": [],
+            "zIndex": 2,
+            "locked": false,
+            "hidden": false,
+            "bounds": {
+              "x": 354.33070866141736,
+              "y": 113.38582677165356,
+              "width": 155.90551181102364,
+              "height": 62.36220472440945
+            },
+            "rotationDeg": 0,
+            "metadata": {},
+            "geometry": {
+              "preset": "rectangle"
+            },
+            "style": {
+              "fill": {
+                "kind": "solid",
+                "colour": "#dbeafe",
+                "opacity": 1
+              },
+              "stroke": {
+                "kind": "solid",
+                "colour": "#333333",
+                "opacity": 1
+              },
+              "strokeWidthPt": 1,
+              "dash": "solid",
+              "lineCap": "butt",
+              "lineJoin": "miter"
+            },
+            "alias": "erp",
+            "text": {
+              "value": "ERP",
+              "fontFamily": "Segoe UI",
+              "fontSizePt": 12,
+              "bold": false,
+              "italic": false,
+              "underline": false,
+              "colour": "#000000",
+              "horizontalAlign": "center",
+              "verticalAlign": "middle",
+              "wrap": true,
+              "paddingPt": 4
+            }
+          },
+          {
+            "id": "9875d55a-1414-4a36-a83a-e159f3faf5cc",
+            "kind": "shape",
+            "layerIds": [],
+            "zIndex": 3,
+            "locked": false,
+            "hidden": false,
+            "bounds": {
+              "x": 354.33070866141736,
+              "y": 297.6377952755906,
+              "width": 155.90551181102364,
+              "height": 62.36220472440945
+            },
+            "rotationDeg": 0,
+            "metadata": {},
+            "geometry": {
+              "preset": "rectangle"
+            },
+            "style": {
+              "fill": {
+                "kind": "solid",
+                "colour": "#fde68a",
+                "opacity": 1
+              },
+              "stroke": {
+                "kind": "solid",
+                "colour": "#333333",
+                "opacity": 1
+              },
+              "strokeWidthPt": 1,
+              "dash": "solid",
+              "lineCap": "butt",
+              "lineJoin": "miter"
+            },
+            "alias": "billing",
+            "text": {
+              "value": "Billing",
+              "fontFamily": "Segoe UI",
+              "fontSizePt": 12,
+              "bold": false,
+              "italic": false,
+              "underline": false,
+              "colour": "#000000",
+              "horizontalAlign": "center",
+              "verticalAlign": "middle",
+              "wrap": true,
+              "paddingPt": 4
+            }
+          },
+          {
+            "id": "cbe11687-46ec-4a6d-a70c-0bf63a36173b",
+            "kind": "shape",
+            "layerIds": [],
+            "zIndex": 4,
+            "locked": false,
+            "hidden": false,
+            "bounds": {
+              "x": 113.38582677182677,
+              "y": 311.81102362159055,
+              "width": 155.90551181102364,
+              "height": 62.36220472440945
+            },
+            "rotationDeg": 0,
+            "metadata": {},
+            "geometry": {
+              "preset": "rectangle"
+            },
+            "style": {
+              "fill": {
+                "kind": "solid",
+                "colour": "#dcfce7",
+                "opacity": 1
+              },
+              "stroke": {
+                "kind": "solid",
+                "colour": "#333333",
+                "opacity": 1
+              },
+              "strokeWidthPt": 1,
+              "dash": "solid",
+              "lineCap": "butt",
+              "lineJoin": "miter"
+            },
+            "alias": "data",
+            "text": {
+              "value": "Data warehouse",
+              "fontFamily": "Segoe UI",
+              "fontSizePt": 12,
+              "bold": false,
+              "italic": false,
+              "underline": false,
+              "colour": "#000000",
+              "horizontalAlign": "center",
+              "verticalAlign": "middle",
+              "wrap": true,
+              "paddingPt": 4
+            }
+          },
+          {
+            "id": "7873ec50-f465-4361-b7c9-2c6717f6b316",
+            "kind": "connector",
+            "layerIds": [],
+            "zIndex": 5,
+            "locked": false,
+            "hidden": false,
+            "bounds": {
+              "x": 134.6456692913386,
+              "y": 144.56692913385828,
+              "width": 297.6377952755906,
+              "height": 11.338582677165363
+            },
+            "rotationDeg": 0,
+            "metadata": {},
+            "from": {
+              "elementId": "c8421e51-bdb1-4875-8aea-0387441d0b1a",
+              "glue": "dynamic"
+            },
+            "to": {
+              "elementId": "df9ea1f3-96ea-4037-ad87-dfe9c6b62ce3",
+              "glue": "dynamic"
+            },
+            "route": "straight",
+            "waypoints": [],
+            "style": {
+              "colour": "#334155",
+              "widthPt": 1,
+              "dash": "solid",
+              "startArrow": "none",
+              "endArrow": "block"
+            },
+            "alias": "c1"
+          },
+          {
+            "id": "0d56d1ec-11d2-42d9-9c3a-af8a4ff16df0",
+            "kind": "connector",
+            "layerIds": [],
+            "zIndex": 6,
+            "locked": false,
+            "hidden": false,
+            "bounds": {
+              "x": 432.2834645669292,
+              "y": 155.90551181102364,
+              "width": 0,
+              "height": 172.91338582677167
+            },
+            "rotationDeg": 0,
+            "metadata": {},
+            "from": {
+              "elementId": "df9ea1f3-96ea-4037-ad87-dfe9c6b62ce3",
+              "glue": "dynamic"
+            },
+            "to": {
+              "elementId": "9875d55a-1414-4a36-a83a-e159f3faf5cc",
+              "glue": "dynamic"
+            },
+            "route": "straight",
+            "waypoints": [],
+            "style": {
+              "colour": "#334155",
+              "widthPt": 1,
+              "dash": "solid",
+              "startArrow": "none",
+              "endArrow": "block"
+            },
+            "alias": "c2"
+          },
+          {
+            "id": "ff58db7b-0dec-4460-b89a-7363d806ced8",
+            "kind": "connector",
+            "layerIds": [],
+            "zIndex": 7,
+            "locked": false,
+            "hidden": false,
+            "bounds": {
+              "x": 134.6456692913386,
+              "y": 328.8188976377953,
+              "width": 297.6377952755906,
+              "height": 0
+            },
+            "rotationDeg": 0,
+            "metadata": {},
+            "from": {
+              "elementId": "9875d55a-1414-4a36-a83a-e159f3faf5cc",
+              "glue": "dynamic"
+            },
+            "to": {
+              "elementId": "cbe11687-46ec-4a6d-a70c-0bf63a36173b",
+              "glue": "dynamic"
+            },
+            "route": "straight",
+            "waypoints": [],
+            "style": {
+              "colour": "#334155",
+              "widthPt": 1,
+              "dash": "solid",
+              "startArrow": "none",
+              "endArrow": "block"
+            },
+            "alias": "c3"
+          },
+          {
+            "id": "65c835a2-1945-49cf-81c6-640de45cf0fc",
+            "kind": "text",
+            "layerIds": [],
+            "zIndex": 8,
+            "locked": false,
+            "hidden": false,
+            "bounds": {
+              "x": 56.69291338582678,
+              "y": 212.59842519685043,
+              "width": 198.42519685039372,
+              "height": 22.67716535433071
+            },
+            "rotationDeg": 0,
+            "metadata": {},
+            "text": {
+              "value": "Customer records, synced nightly",
+              "fontFamily": "Segoe UI",
+              "fontSizePt": 12,
+              "bold": false,
+              "italic": false,
+              "underline": false,
+              "colour": "#000000",
+              "horizontalAlign": "center",
+              "verticalAlign": "middle",
+              "wrap": true,
+              "paddingPt": 4
+            },
+            "alias": "note1"
+          },
+          {
+            "id": "0a424c52-b161-439c-b2ec-38e533c74a09",
+            "kind": "text",
+            "layerIds": [],
+            "zIndex": 9,
+            "locked": false,
+            "hidden": false,
+            "bounds": {
+              "x": 354.33070866141736,
+              "y": 425.19685039370086,
+              "width": 198.42519685039372,
+              "height": 22.67716535433071
+            },
+            "rotationDeg": 0,
+            "metadata": {},
+            "text": {
+              "value": "Invoices post to the ledger",
+              "fontFamily": "Segoe UI",
+              "fontSizePt": 12,
+              "bold": false,
+              "italic": false,
+              "underline": false,
+              "colour": "#000000",
+              "horizontalAlign": "center",
+              "verticalAlign": "middle",
+              "wrap": true,
+              "paddingPt": 4
+            },
+            "alias": "note2"
+          },
+          {
+            "id": "e8aa60ce-9f49-40dc-b93f-92e4d0c81ebe",
+            "kind": "image",
+            "layerIds": [],
+            "zIndex": 10,
+            "locked": false,
+            "hidden": false,
+            "bounds": {
+              "x": 637.7952755905512,
+              "y": 42.51968503937008,
+              "width": 136.06299212598427,
+              "height": 68.03149606299213
+            },
+            "rotationDeg": 0,
+            "metadata": {},
+            "assetId": "asset:esg-old",
+            "fit": "contain",
+            "opacity": 1,
+            "preserveAspectRatio": true,
+            "alias": "esg_logo"
+          }
+        ]
+      }
+    ]
+  }
+}

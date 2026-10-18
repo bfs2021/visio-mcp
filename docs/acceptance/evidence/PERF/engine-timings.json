@@ -1,0 +1,37 @@
+{
+  "recorded": "2026-10-18T10:53:05.691Z",
+  "machine": {
+    "node": "v24.14.1",
+    "platform": "win32",
+    "arch": "x64"
+  },
+  "runs": 15,
+  "singleEdit": {
+    "elements": 500,
+    "min": 0.29,
+    "median": 0.56,
+    "p95": 6.51,
+    "max": 6.51,
+    "preferredMs": 100,
+    "acceptableMs": 250
+  },
+  "batch100": {
+    "elements": 500,
+    "operations": 100,
+    "min": 3.9,
+    "median": 5.02,
+    "p95": 40.52,
+    "max": 40.52,
+    "preferredMs": 500
+  },
+  "read": {
+    "elements": 500,
+    "pages": 5,
+    "serialisedBytes": 356210,
+    "min": 1.66,
+    "median": 3.05,
+    "p95": 12.58,
+    "max": 12.58,
+    "preferredMs": 250
+  }
+}

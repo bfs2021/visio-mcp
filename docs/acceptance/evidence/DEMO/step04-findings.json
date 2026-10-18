@@ -1,0 +1,22 @@
+{
+  "revision": 1,
+  "preview": "step04-preview.png",
+  "misaligned": {
+    "elements": [
+      "crm",
+      "erp"
+    ],
+    "rowDeltaPt": 11.34,
+    "expected": 0
+  },
+  "layoutInspector": {
+    "documentId": "4e8276f6-0827-46c8-be6a-e0d014afefdc",
+    "sessionId": "6101b879-69b9-4faa-beb2-3c32096cb1f4",
+    "revision": 1,
+    "issues": [],
+    "notes": [
+      "Text size is estimated from font metrics measured in the editor; a borderline overflow may render differently."
+    ]
+  },
+  "note": "inspect_layout has no alignment check; the agent compares the bounds returned with the preview."
+}

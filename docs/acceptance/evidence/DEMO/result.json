@@ -1,0 +1,115 @@
+{
+  "ran": "2026-10-18T10:56:10.5889002Z",
+  "environment": {
+    "os": "Microsoft Windows NT 10.0.26300.0",
+    "dotnet": "10.0.13",
+    "webview2": "155.0.4283.62"
+  },
+  "steps": [
+    {
+      "step": 1,
+      "title": "Human opens a blank A4 landscape page",
+      "actor": "human",
+      "status": "PASS",
+      "detail": "841.9 x 595.3 pt, no elements, revision 0"
+    },
+    {
+      "step": 2,
+      "title": "LLM creates four labelled blocks, connectors, annotations and a logo through MCP",
+      "actor": "agent",
+      "status": "PASS",
+      "detail": "10 objects in one atomic transaction, revision 1"
+    },
+    {
+      "step": 3,
+      "title": "The editor visibly shows the result",
+      "actor": "app",
+      "status": "PASS",
+      "detail": "every label is drawn on the canvas; editor screenshot saved"
+    },
+    {
+      "step": 4,
+      "title": "LLM requests a PNG preview and notices one alignment problem",
+      "actor": "agent",
+      "status": "PASS",
+      "detail": "preview 64203 bytes; ERP sits 11.3 pt below CRM (inspect_layout reports 0 issues)"
+    },
+    {
+      "step": 5,
+      "title": "LLM aligns only the affected elements",
+      "actor": "agent",
+      "status": "PASS",
+      "detail": "changed 1 object(s); the verifier checks the rest are byte-identical"
+    },
+    {
+      "step": 6,
+      "title": "Human drags one element and changes one fill colour",
+      "actor": "human",
+      "status": "PASS",
+      "detail": "\u0027data\u0027 moved 56.7 pt right; \u0027billing\u0027 fill is #fde68a; revision 4"
+    },
+    {
+      "step": 7,
+      "title": "LLM reads changes since its previous revision and preserves the human edits",
+      "actor": "agent",
+      "status": "PASS",
+      "detail": "stale write refused (revision_conflict); get_changes named the human\u0027s 2 objects; the follow-up edit left both human edits intact"
+    },
+    {
+      "step": 8,
+      "title": "Human asks for a logo replacement; the LLM finds the approved asset by id",
+      "actor": "agent",
+      "status": "PASS",
+      "detail": "list_assets returned asset:esg-global-primary (library scope)"
+    },
+    {
+      "step": 9,
+      "title": "Only that image object changes",
+      "actor": "agent",
+      "status": "PASS",
+      "detail": "exactly one object changed: the image now points at asset:esg-global-primary"
+    },
+    {
+      "step": 10,
+      "title": "Document saves as .vsdx",
+      "actor": "agent",
+      "status": "PASS",
+      "detail": "7172 bytes, lossy=False"
+    },
+    {
+      "step": 11,
+      "title": "File opens in Visio with editable objects",
+      "actor": "visio",
+      "status": "PASS",
+      "detail": "Visio 16.0: all 10 objects are Visio shapes carrying their UUID; text edited through Visio\u0027s object model"
+    },
+    {
+      "step": 12,
+      "title": "Moving a connected shape in Visio keeps its connector attached",
+      "actor": "visio",
+      "status": "PASS",
+      "detail": "all 3 connectors still have 2 connections; one ends at y=3.63 in beside Billing\u0027s centre y=3.20"
+    },
+    {
+      "step": 13,
+      "title": "VSDX embedded in Word activates and stays editable as a Visio object",
+      "actor": "word",
+      "status": "PASS",
+      "detail": "embedded as Visio.Drawing, activated, edited, saved, reopened and reactivated: the edit persisted"
+    },
+    {
+      "step": 14,
+      "title": "VSDX is reopened in the POC and agent ids still resolve (the app\u0027s own export)",
+      "actor": "app",
+      "status": "PASS",
+      "detail": "10 ids resolve; identity preserved=12, generated=0, repaired=0"
+    },
+    {
+      "step": 14,
+      "title": "The Visio-saved file reopens in the POC; agent ids still resolve and Visio\u0027s edits arrive",
+      "actor": "app",
+      "status": "PASS",
+      "detail": "10 ids resolve; Visio\u0027s text edit and 0.5 in move arrived; the human\u0027s fill colour survived"
+    }
+  ]
+}

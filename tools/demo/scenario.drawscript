@@ -1,0 +1,14 @@
+# Spec section 23, step 2: the agent draws the architecture diagram in one atomic transaction.
+# Run by tests/Diagram.Windows.Tests/DemoTests.cs through execute_script with libraryAssets ["asset:esg-old"].
+# ERP is deliberately 4 mm lower than CRM: the alignment defect the agent finds in step 4.
+asset import prepared="asset:esg-old"
+add shape id=crm x=20mm y=40mm w=55mm h=22mm text="CRM" fill="#DBEAFE"
+add shape id=erp x=125mm y=44mm w=55mm h=22mm text="ERP" fill="#DBEAFE"
+add shape id=billing x=125mm y=105mm w=55mm h=22mm text="Billing" fill="#DCFCE7"
+add shape id=data x=20mm y=105mm w=55mm h=22mm text="Data warehouse" fill="#DCFCE7"
+connect id=c1 from=crm to=erp
+connect id=c2 from=erp to=billing
+connect id=c3 from=billing to=data
+add text id=note1 x=20mm y=75mm w=70mm h=8mm text="Customer records, nightly"
+add text id=note2 x=125mm y=150mm w=70mm h=8mm text="Invoices post to the ledger"
+add image id=esg_logo asset="asset:esg-old" x=225mm y=15mm w=48mm h=24mm

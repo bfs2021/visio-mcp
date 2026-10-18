@@ -1,0 +1,19 @@
+{
+  "transactionId": "e96f5cd4-5d56-4ad5-9807-7d294fd975f6",
+  "previousRevision": 4,
+  "revision": 5,
+  "noChange": false,
+  "created": [],
+  "changed": [
+    "65c835a2-1945-49cf-81c6-640de45cf0fc"
+  ],
+  "deleted": [],
+  "changedPageIds": [],
+  "changedLayerIds": [],
+  "changedAssetIds": [],
+  "visuallyAffectedIds": [
+    "65c835a2-1945-49cf-81c6-640de45cf0fc"
+  ],
+  "warnings": [],
+  "projectionStatus": "applied"
+}

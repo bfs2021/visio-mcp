@@ -1,0 +1,21 @@
+{
+  "revision": 5,
+  "assets": [
+    {
+      "id": "asset:esg-global-primary",
+      "name": "ESG Global \u2014 Primary Logo",
+      "mimeType": "image/png",
+      "sha256": "60b790fef9860f056f3edb45653f8c72a03bec120f4477f30d9dadf94b9635ad",
+      "tags": [
+        "logo",
+        "esg",
+        "primary"
+      ],
+      "scope": "library",
+      "libraryVersion": 1,
+      "width": 48,
+      "height": 24,
+      "usedBy": 0
+    }
+  ]
+}

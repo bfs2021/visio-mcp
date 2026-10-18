@@ -43,7 +43,7 @@ public class OfficeAcceptanceTests
     }
 
     // ---- Visio helpers
-    static dynamic? StartVisio()
+    internal static dynamic? StartVisio()
     {
         var type = Type.GetTypeFromProgID("Visio.Application");
         if (type is null) return null;
@@ -51,7 +51,7 @@ public class OfficeAcceptanceTests
         catch (COMException) { return null; }
     }
 
-    static IEnumerable<dynamic> AllShapes(dynamic shapes)
+    internal static IEnumerable<dynamic> AllShapes(dynamic shapes)
     {
         foreach (dynamic s in shapes)
         {
@@ -60,8 +60,8 @@ public class OfficeAcceptanceTests
         }
     }
 
-    static string? AgentId(dynamic s) => (int)s.CellExistsU["User.AgentId", 0] != 0 ? (string)s.CellsU["User.AgentId"].ResultStr[0] : null;
-    static double In(dynamic s, string cell) => (double)s.CellsU[cell].ResultIU;
+    internal static string? AgentId(dynamic s) => (int)s.CellExistsU["User.AgentId", 0] != 0 ? (string)s.CellsU["User.AgentId"].ResultStr[0] : null;
+    internal static double In(dynamic s, string cell) => (double)s.CellsU[cell].ResultIU;
 
     static byte[] Png()
     {
@@ -470,7 +470,7 @@ public class OfficeAcceptanceTests
         finally { try { word.Quit(0); } catch { } }
     }
 
-    static async Task<object> Poll(Func<object?> get)
+    internal static async Task<object> Poll(Func<object?> get)
     {
         for (var i = 0; i < 60; i++) { try { if (get() is { } o) return o; } catch (COMException) { } await Task.Delay(500); }
         throw new TimeoutException("the embedded drawing never became available");

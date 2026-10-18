@@ -1,0 +1,98 @@
+[
+  {
+    "step": 1,
+    "actor": "human",
+    "what": "blank A4 landscape page",
+    "snapshot": "step01-snapshot.json",
+    "transaction": null,
+    "revision": 0
+  },
+  {
+    "step": 2,
+    "actor": "agent",
+    "what": "execute_script: four blocks, three connectors, two annotations, one logo",
+    "snapshot": "step02-snapshot.json",
+    "transaction": "step02-transaction.json",
+    "revision": 1
+  },
+  {
+    "step": 3,
+    "actor": "app",
+    "what": "the editor canvas shows the labels of the new objects",
+    "snapshot": null,
+    "transaction": null,
+    "revision": null
+  },
+  {
+    "step": 4,
+    "actor": "agent",
+    "what": "render_page and bounds comparison: ERP is 11.3 pt below CRM",
+    "snapshot": null,
+    "transaction": null,
+    "revision": null
+  },
+  {
+    "step": 5,
+    "actor": "agent",
+    "what": "apply_operations: align top of crm and erp",
+    "snapshot": "step05-snapshot.json",
+    "transaction": "step05-transaction.json",
+    "revision": 2
+  },
+  {
+    "step": 6,
+    "actor": "human",
+    "what": "dragged \u0027data\u0027 with the mouse; changed the fill of \u0027billing\u0027 in the inspector",
+    "snapshot": "step06-snapshot.json",
+    "transaction": null,
+    "revision": 4
+  },
+  {
+    "step": 7,
+    "actor": "agent",
+    "what": "get_changes then a follow-up edit to note1 at the current revision",
+    "snapshot": "step07-snapshot.json",
+    "transaction": "step07-transaction.json",
+    "revision": 5
+  },
+  {
+    "step": 8,
+    "actor": "agent",
+    "what": "list_assets query \u0027ESG Global\u0027 -\u003E asset:esg-global-primary",
+    "snapshot": null,
+    "transaction": null,
+    "revision": null
+  },
+  {
+    "step": 9,
+    "actor": "agent",
+    "what": "execute_script: set esg_logo asset=asset:esg-global-primary",
+    "snapshot": "step09-snapshot.json",
+    "transaction": "step09-transaction.json",
+    "revision": 6
+  },
+  {
+    "step": 10,
+    "actor": "agent",
+    "what": "export_document format=vsdx",
+    "snapshot": "step09-snapshot.json",
+    "transaction": null,
+    "revision": null
+  },
+  {
+    "step": 14,
+    "actor": "app",
+    "what": "native open of the app\u0027s own export",
+    "snapshot": "step14-snapshot.json",
+    "transaction": null,
+    "revision": 0
+  },
+  {
+    "step": 14,
+    "actor": "app",
+    "what": "native open of the file Visio saved",
+    "snapshot": "step14-visio-snapshot.json",
+    "transaction": null,
+    "revision": 0
+  }
+]

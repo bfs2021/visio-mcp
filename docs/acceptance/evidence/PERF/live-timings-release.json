@@ -1,0 +1,166 @@
+{
+  "recorded": "2026-10-18T11:15:29.9014618Z",
+  "machine": {
+    "os": "Microsoft Windows NT 10.0.26300.0",
+    "cpus": 4,
+    "dotnet": "10.0.13",
+    "configuration": "Release",
+    "webview2": "155.0.4283.62"
+  },
+  "warmup": {
+    "seconds": 10,
+    "longestCallMs": 4018,
+    "note": "the shim start-up freeze of the test process, kept out of the measurements"
+  },
+  "fixture": {
+    "visibleElements": 500,
+    "shapes": 460,
+    "connectors": 40,
+    "pages": 1,
+    "buildMs": 129.3,
+    "canvasGroups": 1425,
+    "summaryBytes": 82732,
+    "previewBytes": 196786,
+    "vsdxBytes": 43147
+  },
+  "singleEditAgent": {
+    "runs": 10,
+    "samplesMs": [
+      12,
+      6.9,
+      8.1,
+      6.9,
+      6.9,
+      7.3,
+      8.1,
+      7.5,
+      6.6,
+      6.9
+    ],
+    "minMs": 6.6,
+    "medianMs": 7.3,
+    "p95Ms": 12,
+    "maxMs": 12,
+    "preferredMs": 100,
+    "acceptableMs": 250,
+    "meetsPreferred": true
+  },
+  "singleEditPainted": {
+    "runs": 10,
+    "samplesMs": [
+      77.5,
+      29.4,
+      31.4,
+      31.5,
+      30.4,
+      31.9,
+      31.2,
+      30.6,
+      30.9,
+      32
+    ],
+    "minMs": 29.4,
+    "medianMs": 31.4,
+    "p95Ms": 77.5,
+    "maxMs": 77.5,
+    "preferredMs": 100,
+    "acceptableMs": 250,
+    "meetsPreferred": true
+  },
+  "batch100": {
+    "runs": 5,
+    "samplesMs": [
+      34.3,
+      32.6,
+      34.6,
+      36.1,
+      30.5
+    ],
+    "minMs": 30.5,
+    "medianMs": 34.3,
+    "p95Ms": 36.1,
+    "maxMs": 36.1,
+    "preferredMs": 500,
+    "acceptableMs": null,
+    "meetsPreferred": true
+  },
+  "summaryOverMcp": {
+    "runs": 10,
+    "samplesMs": [
+      10.8,
+      10,
+      10.8,
+      6,
+      5.9,
+      6.3,
+      6.1,
+      7,
+      6.5,
+      7.6
+    ],
+    "minMs": 5.9,
+    "medianMs": 7,
+    "p95Ms": 10.8,
+    "maxMs": 10.8,
+    "preferredMs": 250,
+    "acceptableMs": null,
+    "meetsPreferred": true
+  },
+  "summaryHostOnly": {
+    "runs": 10,
+    "samplesMs": [
+      20.3,
+      1.5,
+      1.2,
+      1.6,
+      1.1,
+      1.2,
+      1.2,
+      1.1,
+      1.1,
+      1
+    ],
+    "minMs": 1,
+    "medianMs": 1.2,
+    "p95Ms": 20.3,
+    "maxMs": 20.3,
+    "preferredMs": 250,
+    "acceptableMs": null,
+    "meetsPreferred": true
+  },
+  "previewPage1600x1200": {
+    "runs": 5,
+    "samplesMs": [
+      173.4,
+      45.6,
+      46.8,
+      97.3,
+      44.6
+    ],
+    "minMs": 44.6,
+    "medianMs": 46.8,
+    "p95Ms": 173.4,
+    "maxMs": 173.4,
+    "preferredMs": 1000,
+    "acceptableMs": null,
+    "meetsPreferred": true
+  },
+  "vsdxSave": {
+    "runs": 5,
+    "samplesMs": [
+      197.2,
+      142.7,
+      109.9,
+      102.9,
+      130
+    ],
+    "minMs": 102.9,
+    "medianMs": 130,
+    "p95Ms": 197.2,
+    "maxMs": 197.2,
+    "preferredMs": 3000,
+    "acceptableMs": null,
+    "meetsPreferred": true
+  },
+  "note": "Each figure is the median of repeated runs on one machine; preferred targets are spec section 18. summaryOverMcp includes the stdio transport, summaryHostOnly does not."
+}
