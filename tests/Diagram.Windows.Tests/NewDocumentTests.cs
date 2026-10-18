@@ -13,6 +13,12 @@ public class NewDocumentTests
         var until = DateTime.UtcNow.AddSeconds(20);
         while (await h.Eval(expression) != "true") { if (DateTime.UtcNow > until) throw new TimeoutException(expression); await Task.Delay(50); }
     }
+    static async Task WaitForPersisted(Harness h)
+    {
+        var until = DateTime.UtcNow.AddSeconds(10);
+        while ((await h.Window.Workspace.ReadAsync())?.Tabs.Any(t => t.SessionId == h.Router.CurrentScope!.SessionId) != true)
+        { if (DateTime.UtcNow > until) throw new TimeoutException("workspace session not persisted"); await Task.Delay(50); }
+    }
     [Fact]
     public async Task FileNewRunsThroughTheRealPageAndHostAndClearsSavedPath()
     {
@@ -112,25 +118,79 @@ public class NewDocumentTests
             }
             await using (var h = await Harness.StartAsync(existingRoot: root))
             {
-                var candidate = Assert.Single(await h.Window.RecoveryMgr.CandidatesAsync(default), c => c.SessionId == explicitId);
-                Assert.Equal(612, candidate.Document["pages"]![0]!["widthPt"]!.GetValue<double>());
-                Assert.Equal(792, candidate.Document["pages"]![0]!["heightPt"]!.GetValue<double>());
-                await WaitFor(h, "document.querySelector('[data-testid=recovery-restore]') !== null");
-                await h.Eval("document.querySelector('[data-testid=recovery-restore]').click(); true");
-                await WaitFor(h, "document.querySelector('[data-testid=recovery-report]') !== null");
+                // W02c restores remembered tabs automatically rather than offering an orphan dialog.
+                await WaitFor(h, "document.querySelector('[data-testid=restore-banner]') !== null");
                 await h.Window.RecoveryMgr.DrainAsync();
                 var until = DateTime.UtcNow.AddSeconds(10);
                 while ((await h.Window.Recovery.ReadRecoveryAsync(null, default)).Any(c => c.SessionId == explicitId))
                 { if (DateTime.UtcNow > until) throw new TimeoutException("old recovery session was not finished"); await Task.Delay(50); }
                 explicitId = h.Router.CurrentScope!.SessionId;
+                await WaitForPersisted(h);
             }
             await using (var h = await Harness.StartAsync(existingRoot: root))
             {
-                var again = Assert.Single(await h.Window.RecoveryMgr.CandidatesAsync(default), c => c.SessionId == explicitId);
+                await WaitFor(h, "document.querySelector('[data-testid=restore-banner]') !== null");
+                await h.Window.RecoveryMgr.DrainAsync();
+                var again = Assert.Single(await h.Window.Recovery.ReadRecoveryAsync(null, default), c => c.SessionId == h.Router.CurrentScope!.SessionId);
                 Assert.True(again.KeepUnsaved);
                 Assert.Equal(612, again.Document["pages"]![0]!["widthPt"]!.GetValue<double>());
             }
         }
         finally { try { Directory.Delete(root, true); } catch { } }
     }
+    [Fact]
+    public async Task SizedNewTabPreservesOldDrawingAndReturnsAcrossTwoRestarts()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "diagram-new-tabs-" + Guid.NewGuid().ToString("N"));
+        string? createdId = null;
+        try
+        {
+            await using (var h = await Harness.StartAsync(existingRoot: root))
+            {
+                await h.Window.RecoveryMgr.WhenSessionReadyAsync();
+                Assert.Null((await h.Apply(0, null, Harness.Shape("old-tab", 20, 20))).Error);
+                var file = Path.Combine(root, "old.diagram.json"); h.Window.Services.DialogOverride = _ => file;
+                Assert.Null((await h.Window.Services.HandleAsync(Request("host.saveJson"), default)).Error);
+                var old = h.Router.CurrentScope!;
+                var before = (await h.Send("doc.snapshot", scope: old)).Result!.Value.GetRawText();
+                await h.Eval("document.querySelector('[data-testid=menu-file]').click(); true");
+                await WaitFor(h, "document.querySelector('[data-testid=menu-new]') !== null");
+                await h.Eval("document.querySelector('[data-testid=menu-new]').click(); true");
+                await WaitFor(h, "document.querySelector('[data-testid=new-document]') !== null");
+                await h.Eval("(() => { const s=document.querySelector('[data-testid=new-document] select'); s.value='letter-portrait'; s.dispatchEvent(new Event('change', {bubbles:true})); return true; })()");
+                await h.Eval("document.querySelector('[data-testid=new-document] button').click(); true");
+                await WaitFor(h, "document.querySelector('[data-testid=new-document]') === null");
+                Assert.Equal(2, h.Router.Documents.Count);
+                createdId = h.Router.CurrentScope!.DocumentId;
+                Assert.NotEqual(old.DocumentId, createdId);
+                Assert.Equal(before, (await h.Send("doc.snapshot", scope: old)).Result!.Value.GetRawText());
+                Assert.Equal(file, h.Window.Services.PathOf(old.DocumentId));
+                Assert.Null(h.Window.Services.PathOf(createdId));
+                Assert.True((await h.Send("doc.status")).Result!.Value.GetProperty("unsaved").GetBoolean());
+                await h.Window.RecoveryMgr.DrainAsync();
+                var candidate = Assert.Single(await h.Window.Recovery.ReadRecoveryAsync(null, default), c => c.DocumentId == createdId);
+                Assert.True(candidate.KeepUnsaved);
+                Assert.Equal(612, candidate.Document["pages"]![0]!["widthPt"]!.GetValue<double>());
+                Assert.Equal(792, candidate.Document["pages"]![0]!["heightPt"]!.GetValue<double>());
+                var until = DateTime.UtcNow.AddSeconds(10);
+                while ((await h.Window.Workspace.ReadAsync())?.Tabs.Count != 2)
+                { if (DateTime.UtcNow > until) throw new TimeoutException("tabs not persisted"); await Task.Delay(50); }
+            }
+            for (var restart = 0; restart < 2; restart++)
+            {
+                await using var h = await Harness.StartAsync(existingRoot: root);
+                await WaitFor(h, "document.querySelector('[data-testid=restore-banner]') !== null");
+                await WaitFor(h, "document.querySelectorAll('[data-testid=tab]').length === 2");
+                Assert.Equal(createdId, h.Router.CurrentScope!.DocumentId);
+                Assert.True((await h.Send("doc.status")).Result!.Value.GetProperty("unsaved").GetBoolean());
+                var page = (await h.Send("doc.snapshot")).Result!.Value.GetProperty("document").GetProperty("pages")[0];
+                Assert.Equal(612, page.GetProperty("widthPt").GetDouble()); Assert.Equal(792, page.GetProperty("heightPt").GetDouble());
+                await h.Window.RecoveryMgr.DrainAsync();
+                Assert.True(Assert.Single(await h.Window.Recovery.ReadRecoveryAsync(null, default), c => c.SessionId == h.Router.CurrentScope.SessionId).KeepUnsaved);
+                await WaitForPersisted(h);
+            }
+        }
+        finally { try { Directory.Delete(root, true); } catch { } }
+    }
+
 }

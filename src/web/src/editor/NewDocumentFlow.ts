@@ -10,6 +10,7 @@ export interface NewPrompt { stage: 'size' | 'confirm'; size: PageSize; expected
 export class NewDocumentFlow {
   prompt: NewPrompt | null = null;
   canStart = () => true;
+  replacesCurrent = true;
   save = async () => {};
   created: (result: unknown) => void = () => {};
   create: (document: DiagramDocument, expected: ExpectedDocument, discard: boolean) => Promise<Result<unknown>>;
@@ -33,7 +34,7 @@ export class NewDocumentFlow {
     try { newDocument(undefined, size); } catch { p.error = 'Enter page dimensions greater than zero and no larger than 14,400 pt.'; this.changed(); return; }
     if (!this.current(p)) return;
     p.size = size; p.error = null;
-    if (this.engine.status().unsaved) { p.stage = 'confirm'; this.changed(); } else await this.finish(p, false);
+    if (this.replacesCurrent && this.engine.status().unsaved) { p.stage = 'confirm'; this.changed(); } else await this.finish(p, false);
   }
   async discard(): Promise<void> { const p = this.prompt; if (p?.stage === 'confirm' && !p.saving) await this.finish(p, true); }
   async saveAndCreate(): Promise<void> {

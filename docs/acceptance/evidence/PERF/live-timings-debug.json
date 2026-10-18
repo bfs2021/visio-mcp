@@ -1,5 +1,5 @@
 {
-  "recorded": "2026-10-18T18:21:55.2629984Z",
+  "recorded": "2026-10-18T19:21:44.1723416Z",
   "machine": {
     "os": "Microsoft Windows NT 10.0.26300.0",
     "cpus": 4,
@@ -9,7 +9,7 @@
   },
   "warmup": {
     "seconds": 10,
-    "longestCallMs": 60.9,
+    "longestCallMs": 67.5,
     "note": "the shim start-up freeze of the test process, kept out of the measurements"
   },
   "fixture": {
@@ -17,30 +17,30 @@
     "shapes": 460,
     "connectors": 40,
     "pages": 1,
-    "buildMs": 128.5,
+    "buildMs": 130,
     "canvasGroups": 1425,
     "summaryBytes": 82732,
     "previewBytes": 196786,
-    "vsdxBytes": 42936
+    "vsdxBytes": 42897
   },
   "singleEditAgent": {
     "runs": 10,
     "samplesMs": [
-      10.7,
-      8,
+      13.7,
+      10.2,
       9.2,
-      7.8,
+      8,
       8.5,
       9.2,
-      8.8,
-      9.8,
-      8.8,
-      7.5
+      7.9,
+      7.3,
+      7.1,
+      8.9
     ],
-    "minMs": 7.5,
-    "medianMs": 8.8,
-    "p95Ms": 10.7,
-    "maxMs": 10.7,
+    "minMs": 7.1,
+    "medianMs": 8.9,
+    "p95Ms": 13.7,
+    "maxMs": 13.7,
     "preferredMs": 100,
     "acceptableMs": 250,
     "meetsPreferred": true
@@ -48,21 +48,21 @@
   "singleEditPainted": {
     "runs": 10,
     "samplesMs": [
-      40.8,
-      30.5,
-      32.4,
+      36.6,
+      30.9,
+      33,
+      30.2,
+      30.4,
       31.8,
-      30.3,
-      31,
       31.7,
-      31,
-      31.2,
-      32
+      29.6,
+      31.9,
+      31.6
     ],
-    "minMs": 30.3,
+    "minMs": 29.6,
     "medianMs": 31.7,
-    "p95Ms": 40.8,
-    "maxMs": 40.8,
+    "p95Ms": 36.6,
+    "maxMs": 36.6,
     "preferredMs": 100,
     "acceptableMs": 250,
     "meetsPreferred": true
@@ -70,16 +70,16 @@
   "batch100": {
     "runs": 5,
     "samplesMs": [
-      38.1,
-      35.5,
-      34.7,
-      36.1,
-      34.6
+      37.3,
+      33.1,
+      33.4,
+      4516.7,
+      35.4
     ],
-    "minMs": 34.6,
-    "medianMs": 35.5,
-    "p95Ms": 38.1,
-    "maxMs": 38.1,
+    "minMs": 33.1,
+    "medianMs": 35.4,
+    "p95Ms": 4516.7,
+    "maxMs": 4516.7,
     "preferredMs": 500,
     "acceptableMs": null,
     "meetsPreferred": true
@@ -87,21 +87,21 @@
   "summaryOverMcp": {
     "runs": 10,
     "samplesMs": [
-      8.9,
-      6.4,
-      6.3,
-      7.1,
-      6.4,
-      6.8,
-      6.8,
-      6.3,
       8.2,
-      8.5
+      8.5,
+      7.4,
+      7.6,
+      7.1,
+      6.1,
+      8.3,
+      5.9,
+      5.9,
+      6.5
     ],
-    "minMs": 6.3,
-    "medianMs": 6.8,
-    "p95Ms": 8.9,
-    "maxMs": 8.9,
+    "minMs": 5.9,
+    "medianMs": 7.4,
+    "p95Ms": 8.5,
+    "maxMs": 8.5,
     "preferredMs": 250,
     "acceptableMs": null,
     "meetsPreferred": true
@@ -109,21 +109,21 @@
   "summaryHostOnly": {
     "runs": 10,
     "samplesMs": [
-      1.7,
       1.5,
-      2.4,
-      1.9,
-      1.9,
+      1.3,
+      1.4,
       1.2,
-      1.3,
-      1.3,
-      3.4,
-      1.3
+      1.4,
+      1.5,
+      1.5,
+      1.2,
+      1.2,
+      1.2
     ],
     "minMs": 1.2,
-    "medianMs": 1.7,
-    "p95Ms": 3.4,
-    "maxMs": 3.4,
+    "medianMs": 1.4,
+    "p95Ms": 1.5,
+    "maxMs": 1.5,
     "preferredMs": 250,
     "acceptableMs": null,
     "meetsPreferred": true
@@ -131,16 +131,16 @@
   "previewPage1600x1200": {
     "runs": 5,
     "samplesMs": [
-      187.4,
-      55.9,
-      80.3,
-      55.3,
-      52
+      192,
+      46.1,
+      46,
+      45,
+      42.1
     ],
-    "minMs": 52,
-    "medianMs": 55.9,
-    "p95Ms": 187.4,
-    "maxMs": 187.4,
+    "minMs": 42.1,
+    "medianMs": 46,
+    "p95Ms": 192,
+    "maxMs": 192,
     "preferredMs": 1000,
     "acceptableMs": null,
     "meetsPreferred": true
@@ -148,16 +148,16 @@
   "vsdxSave": {
     "runs": 5,
     "samplesMs": [
-      4297.3,
-      91,
-      101.5,
-      86.5,
-      92.3
+      132.9,
+      120.8,
+      102.2,
+      127.4,
+      105.2
     ],
-    "minMs": 86.5,
-    "medianMs": 92.3,
-    "p95Ms": 4297.3,
-    "maxMs": 4297.3,
+    "minMs": 102.2,
+    "medianMs": 120.8,
+    "p95Ms": 132.9,
+    "maxMs": 132.9,
     "preferredMs": 3000,
     "acceptableMs": null,
     "meetsPreferred": true

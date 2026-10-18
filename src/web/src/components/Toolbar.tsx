@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Unit } from '../model/validate';
 import type { EditorModel } from '../editor/EditorModel';
 import { arrangeActions } from '../editor/arrangeActions';
+import type { WorkspaceModel } from '../workspace/WorkspaceModel';
 import { useModel } from './useModel';
 
 type MenuItem = { label: string; shortcut?: string; run: () => void; disabled?: boolean; checked?: boolean; id: string };
@@ -18,7 +19,7 @@ function arrangeMenu(model: EditorModel): Array<MenuItem | 'sep'> {
   return items;
 }
 
-export function Toolbar({ model }: { model: EditorModel }) {
+export function Toolbar({ model, ws }: { model: EditorModel; ws: WorkspaceModel }) {
   useModel(model);
   const [open, setOpen] = useState<string | null>(null);
   const hasSelection = model.selection.length > 0;
@@ -28,11 +29,12 @@ export function Toolbar({ model }: { model: EditorModel }) {
   const menus: Array<{ name: string; items: Array<MenuItem | 'sep'> }> = [
     { name: 'File', items: [
       { id: 'new', label: 'New…', shortcut: 'Ctrl+N', run: () => model.newDocument.begin() },
-      { id: 'open', label: 'Open…', shortcut: 'Ctrl+O', run: () => void model.open() },
+      { id: 'open', label: 'Open…', shortcut: 'Ctrl+O', run: () => void ws.openFile() },
       { id: 'save', label: 'Save', shortcut: 'Ctrl+S', run: () => void model.save(false) },
       { id: 'save-as', label: 'Save as…', shortcut: 'Ctrl+Shift+S', run: () => void model.save(true) },
       'sep',
-      { id: 'open-visio', label: 'Open Visio drawing…', run: () => void model.openVsdx() },
+      { id: 'open-visio', label: 'Open Visio drawing…', run: () => void ws.openFile('vsdx') },
+      { id: 'close-tab', label: 'Close tab', shortcut: 'Ctrl+W', run: () => void ws.closeTab(model) },
       { id: 'export-visio', label: 'Export to Visio (.vsdx)…', run: () => void model.exportVsdx() },
     ] },
     { name: 'Edit', items: [

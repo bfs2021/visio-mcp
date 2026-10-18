@@ -21,7 +21,12 @@ import { iconOperations } from '../icons/catalog';
 /** What the page needs from the host. In a plain browser (tests, dev) a stub stands in. */
 export interface HostApi {
   pickImage(): Promise<Result<{ cancelled: true } | { ref: PreparedAssetRef; notes: string[]; width: number; height: number }>>;
-  openJson(): Promise<Result<{ cancelled?: true; path?: string; notes?: string[] }>>;
+  /** Without a path the person chooses a file; with one (from the last session's tabs) it is reopened without asking. */
+  openJson(path?: string): Promise<Result<{ cancelled?: true; path?: string; notes?: string[] }>>;
+  /** Records the open tabs so the next start can reopen them. */
+  workspaceSave(tabs: Array<{ documentId: string; sessionId: string; title: string; unsaved: boolean }>, activeDocumentId: string | null): Promise<Result<{ saved: number }>>;
+  /** What the last run left open. */
+  workspaceLoad(): Promise<Result<WorkspaceMemory>>;
   saveJson(saveAs: boolean): Promise<Result<{ cancelled?: true; path?: string; revision?: number }>>;
   libraryList(query?: string, tags?: string[]): Promise<Result<{ assets: LibraryEntry[] }>>;
   libraryImport(): Promise<Result<{ cancelled?: true; asset?: LibraryEntry; created?: boolean; idWasTaken?: boolean; notes?: string[] }>>;
@@ -46,6 +51,7 @@ export interface HostApi {
 }
 
 export interface LibraryEntry { id: string; name: string; tags: string[]; mimeType: string; sha256: string; width: number; height: number; version: number; scope: 'library' }
+export type WorkspaceMemory = { found: false } | { found: true; cleanExit: boolean; activeDocumentId: string | null; tabs: Array<{ documentId: string; sessionId: string; path: string | null; title: string | null; unsaved: boolean }> };
 export interface RecoveryLossInfo { tornTailDiscarded: boolean; corruptionAfterRevision: number | null; messages: string[] }
 /** Unfinished work from an earlier run (or before a renderer crash), as the host describes it. */
 /** One unfinished session as the host describes it. Sizes are as of the session's last checkpoint. */
@@ -74,6 +80,8 @@ export const noHost: HostApi = {
   exportVsdx: async () => fail('not_running', 'there is no host to save files'),
   pickImage: async () => fail('not_running', 'there is no host to choose a picture'),
   openJson: async () => fail('not_running', 'there is no host to open files'),
+  workspaceSave: async () => fail('not_running', 'there is no host'),
+  workspaceLoad: async () => ok({ found: false }),
   saveJson: async () => fail('not_running', 'there is no host to save files'),
 };
 
@@ -81,6 +89,8 @@ const DEFAULT_SIZE: Record<string, { w: number; h: number }> = {
   rectangle: { w: 120, h: 72 }, 'rounded-rectangle': { w: 120, h: 72 }, ellipse: { w: 96, h: 72 }, diamond: { w: 96, h: 72 }, triangle: { w: 90, h: 80 },
   hexagon: { w: 108, h: 72 }, parallelogram: { w: 120, h: 60 }, cylinder: { w: 72, h: 96 }, cloud: { w: 120, h: 80 }, callout: { w: 120, h: 80 },
 };
+
+const sharedClipboard: { data: ClipboardData | null } = { data: null };
 
 export type ScriptReport =
   | ({ ok: true; source: string } & ValidationReport)
@@ -103,7 +113,14 @@ export class EditorModel {
   private readonly projector = createSnapshotProjector((snapshot, assetId) => this.assetUrlIn(snapshot, assetId));
   private listeners = new Set<() => void>();
   private version = 0;
-  private clipboard: ClipboardData | null = null;
+  /** Copy in one tab, paste in another: the clipboard belongs to the window, not the document. */
+  private get clipboard(): ClipboardData | null { return sharedClipboard.data; }
+  private set clipboard(v: ClipboardData | null) { sharedClipboard.data = v; }
+  /** Stable for the life of the tab (the document id changes when a file is opened into it). */
+  readonly tabId = crypto.randomUUID();
+  /** The number in "Untitled N", given when the tab is made. */
+  untitledNo = 1;
+  private savedView: { scale: number; scrollLeft: number; scrollTop: number } | null = null;
   private pastes = 0;
 
   /** The script and transaction drawer. */
@@ -130,7 +147,7 @@ export class EditorModel {
   /** When this window last saved or opened a file (for the status bar). */
   lastSavedAt: Date | null = null;
   /** Set while the host's close request waits for the person: Save, Don't save or Cancel. */
-  closePrompt: { fileName: string | null; saving: boolean; error: string | null } | null = null;
+  closePrompt: { fileName: string | null; saving: boolean; error: string | null; mode: 'window' | 'tab'; count: number } | null = null;
   /** What a recovery brought back and what it could not, shown after restoring. */
   recoveryReport: { title: string; lines: string[]; saveAs?: boolean } | null = null;
   /** Newest revision the host has on disk (the editor's own revision runs ahead of this by whatever is still being written). */
@@ -225,11 +242,21 @@ export class EditorModel {
     }, id => this.assetUrlIn(this.snapshot, id));
     this.adapter.project(this.snapshot, this.pageId);
     this.adapter.setTool(this.tool);
-    queueMicrotask(() => this.adapter?.zoomToFit());
+    if (this.selection.length) this.adapter.setSelection(this.selection);
+    const view = this.savedView;
+    queueMicrotask(() => {
+      if (!this.adapter) return;
+      if (!view) { this.adapter.zoomToFit(); return; }
+      this.adapter.setZoom(view.scale); // coming back to a tab: the zoom and place it was left at
+      container.scrollLeft = view.scrollLeft; container.scrollTop = view.scrollTop;
+    });
     return this.adapter;
   }
 
-  detachCanvas(): void { this.adapter?.dispose(); this.adapter = null; }
+  detachCanvas(): void {
+    if (this.adapter) { const v = this.adapter.getViewport(); this.savedView = { scale: v.scale, scrollLeft: v.scrollLeft, scrollTop: v.scrollTop }; }
+    this.adapter?.dispose(); this.adapter = null;
+  }
   get canvas(): MaxGraphAdapter | null { return this.adapter; }
 
   // ------------------------------------------------------------------ gestures and intents
@@ -501,26 +528,41 @@ export class EditorModel {
   zoomToFit(): void { this.adapter?.zoomToFit(); }
   zoomReset(): void { this.adapter?.setZoom(DEFAULT_SCALE); }
 
-  async open(): Promise<void> {
-    const r = await this.host.openJson();
-    if (!r.ok) { this.say(r.error.message, 'error'); return; }
-    if (r.value.cancelled) return;
+  /** Opens a file into this document. Says whether a file was opened (not cancelled, not failed) and which. */
+  async open(path?: string): Promise<{ opened: boolean; path?: string }> {
+    const r = await this.host.openJson(path);
+    if (!r.ok) { this.say(r.error.message, 'error'); return { opened: false }; }
+    if (r.value.cancelled) return { opened: false };
     this.selection = [];
     this.showCommitted();
     this.lastSavedAt = new Date();
     this.say(`Opened ${r.value.path ?? 'file'}.${r.value.notes?.length ? ' ' + r.value.notes.join('; ') : ''}`, 'info');
+    return r.value.path ? { opened: true, path: r.value.path } : { opened: true };
   }
 
-  async openVsdx(): Promise<void> {
+  /** Nothing in it, never saved, never edited: a new tab can take its place. */
+  get isBlank(): boolean {
+    const s = this.engine.status();
+    return !s.unsaved && !s.savedPath && this.snapshot.document.pages.every(p => p.elements.length === 0);
+  }
+
+  /** What the tab shows: the file name, or Untitled N. */
+  get tabLabel(): string {
+    const p = this.engine.status().savedPath;
+    return p ? (p.split(/[\\/]/).pop() || p) : `Untitled ${this.untitledNo}`;
+  }
+
+  async openVsdx(): Promise<{ opened: boolean }> {
     const r = await this.host.openVsdx();
-    if (!r.ok) { this.say(r.error.message, 'error'); return; }
-    if (r.value.cancelled) return;
+    if (!r.ok) { this.say(r.error.message, 'error'); return { opened: false }; }
+    if (r.value.cancelled) return { opened: false };
     this.selection = [];
     this.showCommitted();
     const items = r.value.diagnostics ?? [];
     this.say(`Opened ${r.value.path ?? 'file'}. ${r.value.summary ?? ''}`.trim(), r.value.lossy ? 'warning' : 'info');
     if (items.length) this.report = { title: 'Opened a Visio drawing', summary: r.value.summary ?? '', diagnostics: items };
     this.bump();
+    return { opened: true };
   }
 
   /** Exports an editable Visio file. If Visio cannot hold something, nothing is written until the person has seen what and agreed. */
@@ -557,6 +599,8 @@ export class EditorModel {
     this.say(`Saved ${r.value.path ?? ''}.`, 'info');
   }
 
+  showCommittedNow(): void { this.showCommitted(); }
+
   private showCommitted(): void { this.adapter?.project(this.engine.store.snapshot(), this.pageId); }
 
   /** Anything selected that no longer exists, or is hidden, is let go: a hidden object cannot stay picked. */
@@ -585,6 +629,13 @@ export class EditorModel {
   }
 
   /** At start: is there unfinished work from an earlier run? After a renderer crash it is restored at once, with a visible report. */
+  /** Puts unfinished sessions on offer to the person (the recovery dialog lists them). */
+  offerSessions(sessions: RecoveryOffer[]): void {
+    this.recoveryOffers = sessions;
+    this.recoveryBaseRevision = this.engine.revision;
+    this.bump();
+  }
+
   async checkRecovery(): Promise<void> {
     const r = await this.host.recoveryList();
     if (!r.ok || r.value.sessions.length === 0) { void this.readProtection(); return; }
@@ -606,38 +657,58 @@ export class EditorModel {
     this.bump();
   }
 
-  async restoreOffered(sessionId?: string): Promise<void> {
+  /**
+   * Brings one offered session back as a document in `target` (this editor by default). The shell passes a blank or new tab so the
+   * recovered work opens as its own tab; a target that has been edited since it was offered refuses, so no new work is thrown away.
+   */
+  async restoreOffered(sessionId?: string, target: EditorModel = this): Promise<void> {
     const offer = this.recoveryOffers.find(o => o.sessionId === sessionId) ?? this.recoveryOffers[0];
     if (!offer) return;
     const others = this.recoveryOffers.length - 1;
+    const r = await this.restoreSession(offer, target, target === this ? this.recoveryBaseRevision : target.engine.revision);
+    if (!r.ok) {
+      if (r.fatal) { this.recoveryOffers = []; this.bump(); }
+      else if (r.gone) { this.recoveryOffers = this.recoveryOffers.filter(o => o !== offer); this.bump(); }
+      return;
+    }
+    this.recoveryOffers = [];
+    const lines = [`Restored to revision ${r.revision}${r.originalPath ? ` of ${r.originalPath}` : ''}. The document is marked as unsaved.`];
+    if (r.problem) lines.push(`Not recovered: ${r.problem}.`);
+    lines.push(...offer.loss.messages);
+    if (others > 0) lines.push(`${others} other unfinished session${others === 1 ? '' : 's'} remain on disk and will be offered next time.`);
+    this.recoveryReport = { title: 'Recovered unsaved work', lines, saveAs: true };
+    target.say(`Recovered unsaved work at revision ${r.revision}. Save it to keep it.`, 'warning');
+    this.bump();
+  }
+
+  /**
+   * Replaces `target`'s document with a recovered session (checkpoint plus journal), keeps the file it came from, and lets the old session
+   * go once the rebuilt one is safe. Says nothing to the person: the caller decides what to report.
+   */
+  async restoreSession(offer: RecoveryOffer, target: EditorModel, baseRevision: number):
+    Promise<{ ok: true; revision: number; originalPath: string | null; problem?: string } | { ok: false; fatal?: boolean; gone?: boolean; message: string }> {
     const fetched = await this.host.recoveryFetch(offer.sessionId);
-    if (!fetched.ok) { this.say(fetched.error.message, 'error'); this.recoveryOffers = this.recoveryOffers.filter(o => o !== offer); this.bump(); return; }
+    if (!fetched.ok) { this.say(fetched.error.message, 'error'); return { ok: false, gone: true, message: fetched.error.message }; }
     const built = restoreRecovery(fetched.value);
     if (!built.ok) {
       this.say(`Recovery failed: ${built.error.message}`, 'error');
       this.recoveryReport = { title: 'Recovery failed', lines: [built.error.message, 'Nothing was changed, and the recovery files are still on disk.'] };
-      this.recoveryOffers = []; this.bump(); return;
+      return { ok: false, fatal: true, message: built.error.message };
     }
-    const replaced = await this.engine.replaceDocument(built.value.document, { ...this.engine.scope(), baseRevision: this.recoveryBaseRevision });
+    const replaced = await target.engine.replaceDocument(built.value.document, { ...target.engine.scope(), baseRevision });
     if (!replaced.ok) {
       const edited = replaced.error.code === 'revision_conflict';
       this.say(edited ? 'You started editing, so the recovered work was not applied. It is still available.' : `Recovery failed: ${replaced.error.message}`, 'warning');
-      return;
+      return { ok: false, message: replaced.error.message };
     }
-    this.recoveryOffers = [];
-    this.pageId = undefined;
-    this.selection = [];
-    this.afterRecoveryRestore(); // the host starts the new session (with its own checkpoint) and announces it
-    const lines = [`Restored to revision ${built.value.revision}${fetched.value.originalPath ? ` of ${fetched.value.originalPath}` : ''}. The document is marked as unsaved.`];
-    if (built.value.problem) lines.push(`Not recovered: ${built.value.problem}.`);
-    lines.push(...offer.loss.messages);
-    if (others > 0) lines.push(`${others} other unfinished session${others === 1 ? '' : 's'} remain on disk and will be offered next time.`);
-    this.recoveryReport = { title: 'Recovered unsaved work', lines, saveAs: true };
-    this.say(`Recovered unsaved work at revision ${built.value.revision}. Save it to keep it.`, 'warning');
-    this.showCommitted();
+    target.pageId = undefined;
+    target.selection = [];
+    target.afterRecoveryRestore(); // the host starts the new session (with its own checkpoint) and announces it
+    target.showCommittedNow();
     await this.host.recoveryFinish(offer.sessionId, fetched.value.originalPath ?? null);
-    void this.readProtection();
-    this.bump();
+    void target.readProtection();
+    target.bump();
+    return { ok: true, revision: built.value.revision, originalPath: fetched.value.originalPath ?? null, ...(built.value.problem ? { problem: built.value.problem } : {}) };
   }
 
   /** Throws one session away for good. The others stay on offer. */
@@ -661,39 +732,52 @@ export class EditorModel {
     if (!this.engine.status().unsaved) { this.recoveryReport = null; this.bump(); }
   }
 
-  // ------------------------------------------------------------------ closing the window
+  // ------------------------------------------------------------------ closing the window or a tab
+  /** What the shell does when the prompt is answered for a tab: close it (throwing the work away when `discard`). Set by the shell. */
+  closeTabNow: (discard: boolean) => Promise<void> = async () => {};
+  /** Saves everything the window close would lose (all unsaved tabs). Set by the shell; this document alone when absent. */
+  saveAllForClose: (() => Promise<boolean>) | null = null;
+
   /** The host wants to close. Nothing unsaved: it may. Otherwise the prompt is shown and the host waits for the person's answer. */
-  beginClose(): { dirty: boolean } {
-    if (this.newDocument.prompt?.saving) {
-      void this.host.appCloseCancelled();
-      this.say('Finish creating the new drawing before closing the window.', 'warning');
-      return { dirty: true };
-    }
-    this.newDocument.cancel();
+  beginClose(count = 1): { dirty: boolean } {
     const s = this.engine.status();
-    if (!s.unsaved) return { dirty: false };
-    this.closePrompt = { fileName: s.savedPath ?? null, saving: false, error: null };
+    if (!s.unsaved && count <= 1) return { dirty: false };
+    this.closePrompt = { fileName: s.savedPath ?? null, saving: false, error: null, mode: 'window', count };
     this.bump();
     return { dirty: true };
+  }
+
+  /** The person closed this tab. Unsaved work asks first (true: asked); otherwise it can go at once. */
+  beginTabClose(): boolean {
+    const s = this.engine.status();
+    if (!s.unsaved) return false;
+    this.closePrompt = { fileName: s.savedPath ?? null, saving: false, error: null, mode: 'tab', count: 1 };
+    this.bump();
+    return true;
   }
 
   async closeSave(): Promise<void> {
     const p = this.closePrompt; if (!p || p.saving) return;
     p.saving = true; p.error = null; this.bump();
-    await this.save(false);
-    if (this.engine.status().unsaved) { p.saving = false; p.error = 'The changes were not saved, so the window was not closed.'; this.bump(); return; } // Save as was cancelled or failed
+    let saved: boolean;
+    if (p.mode === 'window' && this.saveAllForClose) saved = await this.saveAllForClose();
+    else { await this.save(false); saved = !this.engine.status().unsaved; }
+    if (!saved) { p.saving = false; p.error = p.mode === 'tab' ? 'The changes were not saved, so the tab was not closed.' : 'The changes were not saved, so the window was not closed.'; this.bump(); return; } // Save as was cancelled or failed
     await this.finishClose(false);
   }
 
   async closeDiscard(): Promise<void> { if (this.closePrompt && !this.closePrompt.saving) await this.finishClose(true); }
 
   async closeCancel(): Promise<void> {
-    if (!this.closePrompt || this.closePrompt.saving) return;
+    const p = this.closePrompt;
+    if (!p || p.saving) return;
     this.closePrompt = null; this.bump();
-    await this.host.appCloseCancelled();
+    if (p.mode === 'window') await this.host.appCloseCancelled();
   }
 
   private async finishClose(discard: boolean): Promise<void> {
+    const mode = this.closePrompt?.mode;
+    if (mode === 'tab') { this.closePrompt = null; this.bump(); await this.closeTabNow(discard); return; }
     const r = await this.host.appClose(discard);
     if (!r.ok && this.closePrompt) { this.closePrompt.saving = false; this.closePrompt.error = r.error.message; this.bump(); }
   }

@@ -8,6 +8,21 @@ namespace Diagram.App;
 
 public sealed partial class HostServices
 {
+    async Task<ResponseEnvelope> ProtectNewDocumentAsync(RequestEnvelope request, CancellationToken ct)
+    {
+        var documentId = request.Params["documentId"]?.GetValue<string>();
+        var sessionId = request.Params["sessionId"]?.GetValue<string>();
+        var scope = documentId is null ? null : window.Router.ScopeOf(documentId);
+        if (scope is null || scope.SessionId != sessionId) return Err(request, "invalid_request", "the new tab is no longer open");
+        var snapshot = await window.Router.SendAsync(new RequestEnvelope { RequestId = Guid.NewGuid().ToString(), Method = "doc.snapshot", DocumentId = documentId, SessionId = sessionId, Params = new() }, ct);
+        if (snapshot.Error is { } error) return Err(request, error);
+        var document = snapshot.Result!.Value.GetProperty("document").Deserialize<DiagramDocument>(ContractJson.Options)!;
+        if (document.Title != "Untitled" || document.Revision != 0 || document.Pages.Count != 1 || document.Pages[0].Elements.Count != 0 || document.Assets.Count != 0 || PathOf(documentId!) is not null)
+            return Err(request, "invalid_request", "only a fresh empty untitled tab can be protected as New");
+        await window.RecoveryMgr.KeepCurrentUnsavedAsync(sessionId!, ct);
+        return Ok(request, new JsonObject { ["protected"] = true });
+    }
+
     // File actions are serialised in HandleAsync, so an earlier Save cannot mark or name a replacement document.
     readonly SemaphoreSlim newDocumentGate = new(1, 1);
     async Task<ResponseEnvelope> NewDocumentAsync(RequestEnvelope request, CancellationToken ct)

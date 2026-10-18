@@ -6,7 +6,7 @@ const nameOf = (o: RecoveryOffer): string => o.title && o.title !== 'Untitled' ?
 const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`;
 
 /** Offers unfinished work back, and afterwards says what was and was not recovered. */
-export function RecoveryDialog({ model }: { model: EditorModel }) {
+export function RecoveryDialog({ model, onRecover }: { model: EditorModel; onRecover?: (sessionId: string) => void }) {
   useModel(model);
   const offers = model.recoveryOffers;
   const report = model.recoveryReport;
@@ -49,7 +49,7 @@ export function RecoveryDialog({ model }: { model: EditorModel }) {
                   </div>
                   {o.loss.messages.length > 0 && <ul>{o.loss.messages.map((m, i) => <li key={i} className="diag diag-warning">{m}</li>)}</ul>}
                   <div className="row recovery-actions">
-                    <button type="button" data-testid="recovery-restore" onClick={() => void model.restoreOffered(o.sessionId)}>Recover</button>
+                    <button type="button" data-testid="recovery-restore" onClick={() => (onRecover ? onRecover(o.sessionId) : void model.restoreOffered(o.sessionId))}>Recover</button>
                     <button type="button" data-testid="recovery-discard" onClick={() => void model.discardOffered(o.sessionId)}>Discard</button>
                   </div>
                 </div>

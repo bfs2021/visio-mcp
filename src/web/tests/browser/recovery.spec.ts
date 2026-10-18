@@ -100,7 +100,7 @@ test('recovery: a record that cannot be applied is reported, and only what is so
   expect((await snapshot(page)).document.pages[0]!.elements[0]!.bounds.x).not.toBeCloseTo(MOVED, 0); // the move at revision 2 was not applied
 });
 
-test('recovery: not now keeps it for later, discard lets it go, and a restore after new edits changes nothing', async ({ page }) => {
+test('recovery: not now keeps it for later, discard lets it go, and a restore after new edits opens beside them', async ({ page }) => {
   await openEditor(page);
   const rec = await recordSession(page);
   await freshPage(page);
@@ -117,14 +117,18 @@ test('recovery: not now keeps it for later, discard lets it go, and a restore af
   await expect(page.getByTestId('recovery-offer')).toHaveCount(0);
   expect((await page.evaluate(() => (window as any).__calls)).discard).toEqual(['old-session']);
 
-  // editing while the question is open: the restore is refused instead of throwing the new work away
+  // editing while the question is open: the recovered work opens as its own tab, and the new work is left alone
   await armHost(page, rec, { single: true });
   await page.evaluate(() => void (window as any).__editor.checkRecovery());
   await expect(page.getByTestId('recovery-offer')).toBeVisible();
   const made = await page.evaluate(() => (window as any).__editor.agentApply([{ op: 'createShape', alias: 'new-work', bounds: { x: 10, y: 10, width: 40, height: 20 } }]));
   expect(made.ok).toBe(true);
   await page.getByTestId('recovery-restore').click();
-  await expect.poll(async () => (await status(page)).text).toMatch(/started editing/);
+  await expect(page.getByTestId('recovery-report')).toBeVisible();
+  await expect(page.getByTestId('tab')).toHaveCount(2);
+  expect((await snapshot(page)).document.pages[0]!.elements.map(e => e.id)).toEqual(rec.finalDoc.pages[0]!.elements.map((e: { id: string }) => e.id)); // the recovered tab is showing
+  await page.getByTestId('recovery-close').click();
+  await page.getByTestId('tab').nth(0).click();
   expect((await snapshot(page)).document.pages[0]!.elements.map(e => e.alias)).toEqual(['new-work']);
 });
 

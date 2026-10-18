@@ -7,7 +7,7 @@ button { cursor: pointer; border: 1px solid var(--line); background: #fff; borde
 button:hover:not(:disabled) { background: #eff6ff; border-color: #93c5fd; }
 button:disabled { opacity: .45; cursor: default; }
 
-.app { display: grid; height: 100%; grid-template-columns: 240px 1fr 260px; grid-template-rows: auto minmax(0, 1fr) auto auto 24px; grid-template-areas: "bar bar bar" "left canvas right" "tabs tabs tabs" "drawer drawer drawer" "status status status"; }
+.app { display: grid; height: 100%; grid-template-columns: 240px 1fr 260px; grid-template-rows: auto auto minmax(0, 1fr) auto auto 24px; grid-template-areas: "bar bar bar" "docs docs docs" "left canvas right" "tabs tabs tabs" "drawer drawer drawer" "status status status"; }
 .toolbar { grid-area: bar; background: var(--panel); border-bottom: 1px solid var(--line); }
 .menubar { display: flex; gap: 2px; padding: 2px 6px; border-bottom: 1px solid #e2e8f0; }
 .menu { position: relative; }
@@ -124,3 +124,17 @@ textarea { width: 100%; resize: vertical; }
 .recovery-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
 .recovery-info .muted { color: #64748b; overflow-wrap: anywhere; }
 .recovery-actions { gap: 6px; margin-top: 4px; }
+
+/* Document tabs (W02b) */
+.tabstrip { grid-area: docs; display: flex; align-items: stretch; gap: 2px; padding: 3px 6px 0; background: #e2e8f0; border-bottom: 1px solid var(--line); overflow-x: auto; min-height: 30px; }
+.tab { display: flex; align-items: center; gap: 6px; padding: 3px 6px 3px 12px; border: 1px solid var(--line); border-bottom: 0; border-radius: 5px 5px 0 0; background: #cbd5e1; cursor: default; white-space: nowrap; max-width: 220px; }
+.tab.selected { background: #fff; font-weight: 600; }
+.tab:focus-visible { outline: 2px solid #2563eb; outline-offset: -2px; }
+.tab-name { overflow: hidden; text-overflow: ellipsis; }
+.tab-dot { color: #b45309; font-size: 10px; }
+.tab-close, .tab-new { border: 0; background: transparent; border-radius: 3px; padding: 0 5px; line-height: 18px; }
+.tab-close:hover, .tab-new:hover { background: rgba(15, 23, 42, .12); }
+.tab-new { align-self: center; font-size: 16px; }
+.tab-notice { align-self: center; margin-left: 8px; color: #b45309; }
+.tab-banner { align-self: center; margin-left: auto; display: flex; gap: 6px; align-items: center; padding: 2px 8px; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 4px; max-width: 60%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.tab-banner button { border: 0; background: transparent; padding: 0 4px; }

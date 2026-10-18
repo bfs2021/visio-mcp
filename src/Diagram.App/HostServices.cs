@@ -57,6 +57,7 @@ public sealed partial class HostServices(MainWindow window)
             {
                 "host.ping" => Ok(request, new JsonObject { ["pong"] = true }),
                 "host.newDocument" => await NewDocumentAsync(request, ct),
+                "host.protectNewDocument" => await ProtectNewDocumentAsync(request, ct),
                 "host.openJson" => await OpenAsync(request, ct),
                 "host.saveJson" => await SaveAsync(request, ct),
                 "host.pickImage" => await PickImageAsync(request, ct),
@@ -66,6 +67,7 @@ public sealed partial class HostServices(MainWindow window)
                 "host.app.close" => await window.ApproveCloseAsync(request.Params["discard"]?.GetValue<bool>() == true) ? Ok(request, new JsonObject { ["closing"] = true }) : Err(request, "invalid_request", "the window is not waiting to close"),
                 "host.app.closeCancelled" => Ok(request, new JsonObject { ["cancelled"] = window.CancelClose() }),
                 var m when m.StartsWith("host.recovery.", StringComparison.Ordinal) => await RecoveryAsync(request, ct),
+                var m when m.StartsWith("host.workspace.", StringComparison.Ordinal) => await WorkspaceAsync(request, ct),
                 _ => Err(request, "method_not_found", $"unknown host method {request.Method}"),
             };
         }
@@ -85,7 +87,14 @@ public sealed partial class HostServices(MainWindow window)
 
     async Task<ResponseEnvelope> OpenAsync(RequestEnvelope request, CancellationToken ct)
     {
-        var path = Ask("open", () =>
+        string? path;
+        if (request.Params["path"]?.GetValue<string>() is { Length: > 0 } requested)
+        {
+            // reopening a tab from the last run: no dialog, but only a file that run listed
+            if (!MayReopen(requested)) return Err(request, "invalid_request", "that file was not open in the last session");
+            path = Path.GetFullPath(requested);
+        }
+        else path = Ask("open", () =>
         {
             var d = new OpenFileDialog { Title = "Open diagram", Filter = "Diagram JSON (*.diagram.json)|*.diagram.json|All files (*.*)|*.*" };
             return d.ShowDialog(window) == true ? d.FileName : null;
@@ -104,6 +113,9 @@ public sealed partial class HostServices(MainWindow window)
         var opened = await window.Coordinator.OpenJsonAsync(path, expected, ct);
         if (!opened.IsOk) return Err(request, opened.Error!);
         SetPath(expected.DocumentId, path);
+        // what was just read from the file is, by definition, what is on disk: the document is saved at this revision
+        var now = opened.Value.Snapshot;
+        await window.Router.MarkSavedAsync(new Scope { DocumentId = now.DocumentId, SessionId = now.SessionId }, now.Revision, path, ct);
         return Ok(request, new JsonObject { ["path"] = path, ["notes"] = new JsonArray(opened.Value.Notes.Select(n => (JsonNode)n).ToArray()) });
     }
 

@@ -132,12 +132,12 @@ public sealed class RecoveryManager : IAsyncDisposable
     }
 
     /// <summary>The page closed a document. Its session goes if there is nothing to keep; unsaved work stays on disk until the person decides (Don't save discards it).</summary>
-    void OnClosed(Scope scope) => Post(async () =>
+    void OnClosed(Scope scope)
     {
         Track? t;
-        lock (gate) tracks.Remove(scope.SessionId, out t);
-        if (t is not null && t.Untouched) await store.CompleteAsync(t.SessionId).ConfigureAwait(false);
-    });
+        lock (gate) tracks.Remove(scope.SessionId, out t); // at once, so a Don't save that follows is not refused as "still open"
+        if (t is not null) Post(async () => { if (t.Untouched) await store.CompleteAsync(t.SessionId).ConfigureAwait(false); });
+    }
 
     static IEnumerable<string> Shas(DiagramDocument d) => d.Assets.Select(a => a.Sha256);
 
@@ -268,6 +268,12 @@ public sealed class RecoveryManager : IAsyncDisposable
         Track? t;
         lock (gate) { tracks.Remove(sessionId, out t); if (tracks.Count == 0) ready = new(TaskCreationOptions.RunContinuationsAsynchronously); }
         await store.CompleteAsync(sessionId).ConfigureAwait(false); // also for a document already closed: its session stayed on disk waiting for this answer
+    }
+
+    /// <summary>Discards every open document's session: the person closed the window and chose to save nothing.</summary>
+    public async Task DiscardAllAsync()
+    {
+        foreach (var id in OpenSessions) await DiscardSessionAsync(id).ConfigureAwait(false);
     }
 
     /// <summary>Discards the active document's session.</summary>
