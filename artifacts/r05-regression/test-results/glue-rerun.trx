@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="f77fa63b-52bb-42b8-aa6c-553691398ba8" name="claude@W11-TEMPLATE 2026-10-18 16:20:27" runUser="W11-TEMPLATE\claude" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-18T16:20:27.6843282+01:00" queuing="2026-10-18T16:20:27.6843285+01:00" start="2026-10-18T16:20:23.7513471+01:00" finish="2026-10-18T16:20:27.7300481+01:00" />
+  <TestSettings name="default" id="a53e28de-8875-4f5f-abc4-8ec6b5802c40">
+    <Deployment runDeploymentRoot="claude_W11-TEMPLATE_2026-10-18_16_20_27" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="eb158c87-535a-44c4-b174-f6ce7fc53870" testId="f03b6180-e322-18fd-36aa-b9d78d211e32" testName="VisioAcceptanceTests.GlueFollowsMovesAndGroupsScaleInVisio" computerName="W11-TEMPLATE" duration="00:00:02.0517986" startTime="2026-10-18T16:20:25.6010589+01:00" endTime="2026-10-18T16:20:27.6558430+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="eb158c87-535a-44c4-b174-f6ce7fc53870" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="VisioAcceptanceTests.GlueFollowsMovesAndGroupsScaleInVisio" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.visio.tests\bin\debug\net10.0\diagram.visio.tests.dll" id="f03b6180-e322-18fd-36aa-b9d78d211e32">
+      <Execution id="eb158c87-535a-44c4-b174-f6ce7fc53870" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Visio.Tests\bin\Debug\net10.0\Diagram.Visio.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="VisioAcceptanceTests" name="GlueFollowsMovesAndGroupsScaleInVisio" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="f03b6180-e322-18fd-36aa-b9d78d211e32" executionId="eb158c87-535a-44c4-b174-f6ce7fc53870" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="1" executed="1" passed="1" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v4.0.1+0f7d528729 (64-bit .NET 10.0.13)&#xD;
+[xUnit.net 00:00:00.07]   Discovering: Diagram.Visio.Tests&#xD;
+[xUnit.net 00:00:01.43]   Discovered:  Diagram.Visio.Tests&#xD;
+[xUnit.net 00:00:01.46]   Starting:    Diagram.Visio.Tests&#xD;
+[xUnit.net 00:00:03.56]   Finished:    Diagram.Visio.Tests&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

@@ -1,0 +1,55 @@
+{
+  "verifiedUtc": "2026-10-18T15:29:37.0754144Z",
+  "testedCommit": "b760c2f",
+  "includedMain": "a60360d",
+  "frontendPassed": 332,
+  "browserPassed": 52,
+  "dotnetPassed": 335.0,
+  "typecheck": "PASS",
+  "contractGeneration": "PASS",
+  "build": "PASS",
+  "projects": [
+    {
+      "file": "final-r05_net10.0_20261018162341.trx",
+      "total": 24,
+      "passed": 24,
+      "failed": 0,
+      "outcome": "Completed"
+    },
+    {
+      "file": "final-r05_net10.0_20261018162359.trx",
+      "total": 119,
+      "passed": 119,
+      "failed": 0,
+      "outcome": "Completed"
+    },
+    {
+      "file": "final-r05_net10.0_20261018162520.trx",
+      "total": 13,
+      "passed": 13,
+      "failed": 0,
+      "outcome": "Completed"
+    },
+    {
+      "file": "final-r05_net10.0_20261018162531.trx",
+      "total": 125,
+      "passed": 125,
+      "failed": 0,
+      "outcome": "Completed"
+    },
+    {
+      "file": "final-r05_net10.0_20261018162538.trx",
+      "total": 17,
+      "passed": 17,
+      "failed": 0,
+      "outcome": "Completed"
+    },
+    {
+      "file": "final-r05_net10.0_20261018162902.trx",
+      "total": 37,
+      "passed": 37,
+      "failed": 0,
+      "outcome": "Completed"
+    }
+  ]
+}
