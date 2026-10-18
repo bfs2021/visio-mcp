@@ -55,10 +55,13 @@ foreach($name in $names){
  if($name -like 'shield*'){$tags+=@('security','approval','policy')}
  if($name -like 'lock*'){$tags+=@('security','access','private')}
  $path=$parts -join ' '
+ # Hash canonical upstream LF bytes even in a CRLF Windows checkout.
+ $sourceBytes=[Text.Encoding]::UTF8.GetBytes((Get-Content -LiteralPath $file -Raw).Replace("`r`n","`n"))
+ $sourceHash=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($sourceBytes)).ToLowerInvariant()
  $pathHash=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($path))).ToLowerInvariant()
- $icons+=[ordered]@{id="lucide:$name";name=($name -replace '-',' ');tags=@($tags|Select-Object -Unique);path=$path;sha256=$pathHash;sourceSha256=(Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant()}
+ $icons+=[ordered]@{id="lucide:$name";name=($name -replace '-',' ');tags=@($tags|Select-Object -Unique);path=$path;sha256=$pathHash;sourceSha256=$sourceHash}
 }
-$catalog=[ordered]@{version="lucide-$version-normalized-1";sourceVersion=$version;sourceCommit=$commit;normalization='24-unit SVG flattened at 0.01 source units, scaled to a 100x100 canonical path; M/L/Z only';licence='ISC and MIT; see vendor/lucide/LICENSE';licenceText=(Get-Content -LiteralPath (Join-Path $vendor 'LICENSE') -Raw);icons=$icons}
+$catalog=[ordered]@{version="lucide-$version-normalized-1";sourceVersion=$version;sourceCommit=$commit;normalization='24-unit SVG flattened at 0.01 source units, scaled to a 100x100 canonical path; M/L/Z only';licence='ISC and MIT; see vendor/lucide/LICENSE';licenceText=(Get-Content -LiteralPath (Join-Path $vendor 'LICENSE') -Raw).Replace("`r`n","`n");icons=$icons}
 $target=Join-Path $repoRoot 'contracts/icons/catalog.json'
 New-Item -ItemType Directory -Path ([IO.Path]::GetDirectoryName($target)) -Force | Out-Null
 $catalog|ConvertTo-Json -Depth 12|Set-Content -LiteralPath $target -Encoding utf8
