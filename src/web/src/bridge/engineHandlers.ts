@@ -1,3 +1,4 @@
+import { componentCatalog, planComponent, componentPreview } from '../layout/components';
 import type { AppError, DiagramDocument, RequestEnvelope, ResponseEnvelope, Scope } from '../contracts/generated';
 import type { CommandEngine } from '../commands/CommandEngine';
 import { fail, ok, type Result } from '../model/result';
@@ -41,6 +42,21 @@ export function createEngineHandler(engine: CommandEngine, opts: EngineHandlerOp
     const respond = <T>(r: Result<T>) => toResponse(id, r);
 
     switch (env.method) {
+      case 'components.list': {
+        const snap = await engine.snapshot(scope); if (!snap.ok) return respond(snap);
+        if (Object.keys(p).length) return respond(fail('invalid_request', 'Component discovery has no options'));
+        return respond(ok({ ...componentCatalog, documentId: snap.value.documentId, sessionId: snap.value.sessionId, revision: snap.value.revision }));
+      }
+      case 'components.get': {
+        const snap = await engine.snapshot(scope); if (!snap.ok) return respond(snap);
+        if (!opts.layoutContext || !opts.render) return respond(fail('not_ready', 'Component previews require the editor drawing and font measurement context'));
+        const ctx = await opts.layoutContext(snap.value, { includeAssets: false });
+        const proposal = planComponent(snap.value, ctx, p); if (!proposal.ok) return respond(proposal);
+        const scene = componentPreview(snap.value, proposal.value); if (!scene.ok) return respond(scene);
+        const image = await opts.render(scene.value, undefined, { scope: 'region', pageId: proposal.value.pageId, bounds: proposal.value.bounds, paddingPt: 8, maxWidth: 1200, maxHeight: 1600, format: 'png' });
+        return respond(image.ok ? ok({ ...image.value, ...proposal.value, preview: true, previewOf: 'layout_component', catalogVersion: componentCatalog.version,
+          guidance: 'Read-only proposal. Apply operations with returned documentId/sessionId/baseRevision and a new transactionId. Reflow again after conflicting edits. Named parts remain ordinary editable objects; no automatic constraints are installed.' }) : image);
+      }
       case 'icons.search':
       case 'icons.get': {
         const snap = await engine.snapshot(scope); if (!snap.ok) return respond(snap);

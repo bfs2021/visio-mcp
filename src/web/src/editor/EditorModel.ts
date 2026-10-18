@@ -1,3 +1,5 @@
+import { componentWarningText } from '../layout/componentTemplates';
+import type { ComponentProposal } from '../layout/components';
 import type { Element, Operation, PreparedAssetRef, Snapshot, TransactionResult } from '../contracts/generated';
 import { CommandEngine } from '../commands/CommandEngine';
 import { copyElements, pasteOperations, type ClipboardData } from '../commands/clipboard';
@@ -233,6 +235,21 @@ export class EditorModel {
     this.status = tool.kind === 'place' ? { text: 'Click on the page to place the shape. Esc cancels.', kind: 'info' }
       : tool.kind === 'connector' ? { text: 'Drag from one shape to another to connect them.', kind: 'info' } : { text: 'Ready', kind: 'info' };
     this.bump();
+  }
+
+  proposeComponent: (params: Record<string, unknown>) => Promise<Result<ComponentProposal & { base64: string; mimeType: string }>> = async () => fail('not_ready', 'Component preview is unavailable');
+
+  async applyComponent(proposal: ComponentProposal): Promise<boolean> {
+    const snapshot = this.snapshot;
+    if (snapshot.documentId !== proposal.documentId || snapshot.sessionId !== proposal.sessionId || snapshot.revision !== proposal.baseRevision) {
+      this.say('The document changed. Preview the component again before applying it.', 'warning'); return false;
+    }
+    const result = await this.apply('create', proposal.operations);
+    if (!result.ok) return false;
+    this.handleSelection([proposal.groupId], false);
+    this.canvas?.setSelection(this.selection);
+    this.say(proposal.warnings.length ? proposal.warnings.map(componentWarningText).join(' ') : 'Component applied as one undo step.', 'info');
+    return true;
   }
 
   async place(what: string, at: { x: number; y: number }): Promise<void> {

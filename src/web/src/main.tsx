@@ -1,3 +1,4 @@
+import type { ComponentProposal } from './layout/components';
 import '@maxgraph/core/css/common.css';
 import './styles.css';
 import { createRoot } from 'react-dom/client';
@@ -39,6 +40,11 @@ const renderer = createSnapshotRenderer({ assetUrl: assetUrl as never });
 const { engine, host, router, sessionChanged } = startApp(window.chrome?.webview, null, { onSessionChanged: () => model?.sessionReplaced(), render: renderer.render, rasterise: renderer.rasterise, layoutContext: createBrowserLayoutContext(assetUrl as never) });
 model = new EditorModel(engine);
 model.host = hostApi(host);
+model.proposeComponent = async params => {
+  if (!router) return { ok: false, error: { code: 'not_ready', message: 'The editor bridge is unavailable', retryable: false } };
+  const r = await router.dispatch({ protocolVersion: 1, kind: 'request', requestId: crypto.randomUUID(), ...engine.scope(), method: 'components.get', params } as never);
+  return r.error ? { ok: false, error: r.error } : { ok: true, value: r.result as unknown as ComponentProposal & { base64: string; mimeType: string } };
+};
 model.afterRecoveryRestore = sessionChanged;
 void model.checkRecovery(); // unfinished work from an earlier run is offered (or, after a renderer crash, restored at once)
 if (router) model.onGestureState = active => router.setGestureActive(active); // an outside mutation waits (briefly) while the user is mid-gesture

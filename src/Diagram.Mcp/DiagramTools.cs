@@ -56,6 +56,29 @@ public sealed class DiagramTools(PipeClient app)
             ("colour", colour), ("strokeWidthPt", strokeWidthPt), ("catalogVersion", catalogVersion), ("elementId", elementId)), Render, ct));
     }
 
+    [McpServerTool(Name = "list_layout_components"), Description("Discover the four reusable editable diagram components: repository-card, labelled-container, environment-columns and pipeline. Returns versioned content/layout schemas, examples, limits and guidance. Read-only. " + Identity)]
+    public async Task<CallToolResult> ListLayoutComponents(string documentId, string sessionId, CancellationToken ct = default)
+    {
+        if (Check(("documentId", documentId), ("sessionId", sessionId)) is { } bad) return ToolErrors.Fail("invalid_request", bad);
+        return Finish(await Send("components.list", documentId, sessionId, new JsonObject(), Read, ct));
+    }
+
+    [McpServerTool(Name = "get_layout_component"), Description("Preview a reusable component and obtain ordinary editable group/shape/text operations. Creation uses templateId and optional content; omit content for the example. Reflow uses componentId only and reads current text/styles without changing font sizes or identities. layout controls widthPt, paddingPt, gapPt, align and target (editor/visio). Call list_layout_components for exact schemas/examples. Apply returned operations separately at baseRevision. Read-only; damaged, locked or rotated structures are refused. " + Identity)]
+    public async Task<CallToolResult> GetLayoutComponent(string documentId, string sessionId, string pageId,
+        [Description("Template ID for creation; omit for reflow.")] string? templateId = null,
+        [Description("Content object matching the template schema from list_layout_components. Creation only.")] JsonObject? content = null,
+        [Description("Layout options: widthPt 120–2000, paddingPt/gapPt 0–100, align left/center/right, target editor/visio. Default target visio is conservative, not a native guarantee.")] JsonObject? layout = null,
+        [Description("Existing component group UUID for explicit reflow; omit templateId/content.")] string? componentId = null,
+        [Description("Top-left x in points; omitted preserves the reflow position or uses 0 for creation.")] double? x = null,
+        [Description("Top-left y in points; omitted preserves the reflow position or uses 0 for creation.")] double? y = null,
+        CancellationToken ct = default)
+    {
+        if (Check(("documentId", documentId), ("sessionId", sessionId), ("pageId", pageId)) is { } bad) return ToolErrors.Fail("invalid_request", bad);
+        if (componentId is not null && Check(("componentId", componentId)) is { } badId) return ToolErrors.Fail("invalid_request", badId);
+        if (x is { } px && !double.IsFinite(px) || y is { } py && !double.IsFinite(py)) return ToolErrors.Fail("invalid_request", "Component positions must be finite");
+        return FinishImage(await Send("components.get", documentId, sessionId, Obj(("pageId", pageId), ("templateId", templateId), ("content", content), ("layout", layout), ("componentId", componentId), ("x", x), ("y", y)), Render, ct));
+    }
+
     // Deadlines: reads 10 s, mutations 15 s, renders 30 s, export 120 s; the shim adds 5 s of transport time.
     static readonly TimeSpan Read = TimeSpan.FromSeconds(15), Mutate = TimeSpan.FromSeconds(20), Render = TimeSpan.FromSeconds(35), Export = TimeSpan.FromSeconds(125);
 

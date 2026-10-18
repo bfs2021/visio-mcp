@@ -108,3 +108,10 @@ textarea { width: 100%; resize: vertical; }
 .page-tabs { grid-area: tabs; display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 2px 8px; background: #e2e8f0; border-top: 1px solid var(--line); font-size: 12px; flex-wrap: wrap; }
 .page-tabs .tabs { display: flex; gap: 2px; align-items: end; flex-wrap: wrap; } .tab { border-radius: 4px 4px 0 0; } .tab.active { background: #fff; border-color: var(--accent); font-weight: 600; }
 .tab-tools { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; } .tab-tools input { width: 62px; } .tab-rename { width: 120px; }
+
+/* Keep the component controls readable in the narrow shapes sidebar. */
+.components-panel label { display: block; margin: 5px 0; }
+.components-panel input, .components-panel select, .components-panel textarea { max-width: 100%; box-sizing: border-box; }
+.components-panel textarea { width: 100%; resize: vertical; }
+.components-panel .row { flex-wrap: wrap; }
+.components-panel > small { display: block; margin: 6px 0; }
