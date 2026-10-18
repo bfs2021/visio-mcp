@@ -1,7 +1,7 @@
 import {spawn} from 'node:child_process';
 import {createInterface} from 'node:readline';
 import {writeFileSync,readFileSync} from 'node:fs';
-const exe=process.env.LOCALAPPDATA+'/Programs/AgenticDiagram/versions/r08-routing/mcp/Diagram.Mcp.exe';
+const exe=process.env.LOCALAPPDATA+'/Programs/AgenticDiagram/versions/r12-lines/mcp/Diagram.Mcp.exe';
 const child=spawn(exe,[],{stdio:['pipe','pipe','pipe']});child.stderr.on('data',()=>{});
 let id=0;const pending=new Map();
 createInterface({input:child.stdout}).on('line',l=>{try{const m=JSON.parse(l);pending.get(m.id)?.(m);pending.delete(m.id)}catch{}});
@@ -18,8 +18,8 @@ try{
  
  const pageId=process.env.EXPORT_ONLY?s.pages[0].id:ops[0].id;
  const r=await call('render_page',{...ident,pageId,maxWidth:1600,maxHeight:1000});
- writeFileSync('mine-r08.png',Buffer.from(r.content.find(c=>c.type==='image').data,'base64'));
+ writeFileSync('mine-r12.png',Buffer.from(r.content.find(c=>c.type==='image').data,'base64'));
  const li=sc(await call('inspect_layout',{...ident,pageId}));writeFileSync('layout.json',JSON.stringify(li,null,1));
  console.log('layout',JSON.stringify(li).slice(0,800));
- const e=await call('export_document',{...ident,format:'vsdx',path:'swimlane-r08.vsdx'});console.log('export',JSON.stringify(sc(e)).slice(0,3000));
+ const e=await call('export_document',{...ident,format:'vsdx',path:'swimlane-r12.vsdx'});console.log('export',JSON.stringify(sc(e)).slice(0,3000));
 }finally{child.kill()}

@@ -104,7 +104,9 @@
         "widthPt": { "type": "number", "minimum": 0 },
         "dash": { "enum": ["solid", "dashed", "dotted", "dash-dot"] },
         "startArrow": { "enum": ["none", "block", "open", "diamond", "oval"] },
-        "endArrow": { "enum": ["none", "block", "open", "diamond", "oval"] }
+        "endArrow": { "enum": ["none", "block", "open", "diamond", "oval"] },
+        "startArrowSize": { "enum": ["small", "medium", "large"], "description": "absent means medium" },
+        "endArrowSize": { "enum": ["small", "medium", "large"], "description": "absent means medium" }
       }
     },
     "Port": {

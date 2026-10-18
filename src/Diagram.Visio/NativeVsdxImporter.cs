@@ -788,6 +788,8 @@ public sealed class NativeVsdxImporter : IVsdxImporter
                     ["colour"] = rd.Colour(rd.Line(s, "LineColor"), "#000000", id, pageId), ["widthPt"] = Math.Max(0, D(rd.Line(s, "LineWeight"), 0.01) * PtPerInch), ["dash"] = DashOf(pattern == 0 ? 1 : pattern),
                     ["startArrow"] = ArrowName(rd.Line(s, "BeginArrow"), id, sid), ["endArrow"] = ArrowName(rd.Line(s, "EndArrow"), id, sid),
                 };
+                foreach (var (cell, key) in new[] { ("BeginArrowSize", "startArrowSize"), ("EndArrowSize", "endArrowSize") })
+                    if (rd.Line(s, cell) is { } sz && ArrowSizeOf((int)D(sz, 2)) is var named && named != "medium") ((JsonObject)el["style"]!)[key] = named;
                 var label = ReadText(s, u, id);
                 if (label is not null) el["label"] = label;
                 el["bounds"] = ConnectorBounds(el);

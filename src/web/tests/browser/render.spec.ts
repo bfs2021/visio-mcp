@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import type { RenderResult } from '../../src/render/SnapshotRenderer';
-import { armPicture, drag, elements, openEditor, placeShape, pngFixture, revision, scale, sha256, snapshot } from './support';
+import { armPicture, centre, drag, elements, openEditor, placeShape, pngFixture, revision, scale, sha256, snapshot } from './support';
 
 type Envelope = { result?: any; error?: { code: string; message: string; details?: any } };
 const call = (page: Page, method: string, params: Record<string, unknown>): Promise<Envelope> => page.evaluate(([m, p]) => (window as any).__editor.callTool(m, p), [method, params] as const);
@@ -279,4 +279,26 @@ test('an orthogonal connector leaves and enters along its ports and passes throu
   expect(w.some((p: { x: number; y: number }) => Math.abs(p.x - 40) < 0.01 && Math.abs(p.y - 130) < 0.01)).toBe(true);
   expect(w.some((p: { x: number; y: number }) => Math.abs(p.x - 40) < 0.01 && Math.abs(p.y - 530) < 0.01)).toBe(true);
   expect(w.every((p: { x: number; y: number }, i: number) => i === 0 || Math.abs(p.x - w[i - 1].x) < 0.01 || Math.abs(p.y - w[i - 1].y) < 0.01)).toBe(true);
+});
+
+test('the inspector sets arrowhead sizes on a selected connector, and the render shows the larger head', async ({ page }) => {
+  await openEditor(page);
+  await apply(page, [
+    { op: 'createConnector', id: U(31), from: { glue: 'none', point: { x: 100, y: 200 } }, to: { glue: 'none', point: { x: 400, y: 200 } }, route: 'straight', style: { widthPt: 2.25, endArrow: 'block' } },
+  ]);
+  const c = await centre(page, U(31));
+  await page.mouse.click(c.x, c.y);
+  await expect(page.getByTestId('field-end-arrow-size')).toHaveValue('medium');
+  const sizeOf = async () => {
+    const r = (await call(page, 'doc.render', { scope: 'page' })).result as RenderResult;
+    return (await pixels(page, r, [])).dark;
+  };
+  const medium = await sizeOf();
+  await page.getByTestId('field-end-arrow-size').selectOption('large');
+  const el = (await elements(page)).find(e => e.id === U(31)) as any;
+  expect(el.style.endArrowSize).toBe('large');
+  const large = await sizeOf();
+  expect(large).toBeGreaterThan(medium);
+  await page.getByTestId('field-end-arrow-size').selectOption('small');
+  expect(await sizeOf()).toBeLessThan(medium);
 });

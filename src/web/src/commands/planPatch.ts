@@ -45,7 +45,7 @@ const DEFAULT_SHAPE_STYLE: ShapeStyle = {
 };
 const DEFAULT_LINE_STYLE: LineStyle = { colour: '#334155', widthPt: 1, dash: 'solid', startArrow: 'none', endArrow: 'block' };
 const SHAPE_ONLY_STYLE = ['fill', 'stroke', 'strokeWidthPt', 'lineCap', 'lineJoin'];
-const LINE_ONLY_STYLE = ['colour', 'widthPt', 'startArrow', 'endArrow'];
+const LINE_ONLY_STYLE = ['colour', 'widthPt', 'startArrow', 'endArrow', 'startArrowSize', 'endArrowSize'];
 
 type PatchObj = Record<string, unknown>;
 type Hit = { page: Page; pageIdx: number; index: number; element: Element };

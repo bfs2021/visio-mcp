@@ -109,6 +109,24 @@ public class StructuralTests
     }
 
     [Fact]
+    public void ArrowSizesSurviveTheRoundTripAndMediumStaysImplicit()
+    {
+        var shapes = new object[]
+        {
+            Doc.Shape(1, 60, 80, 100, 50, new { alias = "a" }), Doc.Shape(2, 400, 80, 100, 50, new { alias = "b" }),
+            Doc.Connector(10, Doc.Glue(1), Doc.Glue(2), "straight", new { style = new { colour = "#334155", widthPt = 2.25, dash = "solid", startArrow = "block", endArrow = "block", startArrowSize = "small", endArrowSize = "large" } }),
+            Doc.Connector(11, Doc.Glue(1), Doc.Glue(2), "straight", new { style = new { colour = "#334155", widthPt = 2.25, dash = "solid", startArrow = "none", endArrow = "block" } }),
+        };
+        var (_, back) = RT.Trip(Doc.Snapshot(Doc.Page(shapes)));
+        var sized = RT.El(back.Document, Doc.Id(10))["style"]!;
+        Assert.Equal("small", sized["startArrowSize"]!.GetValue<string>());
+        Assert.Equal("large", sized["endArrowSize"]!.GetValue<string>());
+        var plain = RT.El(back.Document, Doc.Id(11))["style"]!.AsObject();
+        Assert.False(plain.ContainsKey("startArrowSize"));
+        Assert.False(plain.ContainsKey("endArrowSize"));
+    }
+
+    [Fact]
     public void ConnectorStyleArrowsLabelAndGlueToAMissingPort()
     {
         var shapes = new object[]

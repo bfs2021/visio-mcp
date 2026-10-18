@@ -59,6 +59,9 @@ static class Vx
 
     /// <summary>Visio arrow indexes, found by drawing each one in Visio: 0 none, 13 filled triangle, 1 open, 22 open diamond, 20 open circle.</summary>
     public static int ArrowCode(string arrow) => arrow switch { "block" => 13, "open" => 1, "diamond" => 22, "oval" => 20, _ => 0 };
+    /// <summary>Visio arrow size indexes: 1 small, 2 medium (the default), 4 large.</summary>
+    public static int ArrowSizeCode(string? size) => size switch { "small" => 1, "large" => 4, _ => 2 };
+    public static string ArrowSizeOf(int code) => code <= 1 ? "small" : code >= 3 ? "large" : "medium";
     public static string? ArrowOf(int code) => code switch
     {
         0 => "none",

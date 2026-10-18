@@ -238,3 +238,30 @@ describe('assets', () => {
     expect(byId<ImageElement>(t, t.ids.image).assetId).toBe('asset:logo');
   });
 });
+
+describe('arrowhead size', () => {
+  it('is set, validated, undone and left implicit when medium', async () => {
+    const t = createTestEngine();
+    const a = id(900), b = id(901), c = id(902);
+    await run(t, [
+      { op: 'createShape', id: a, bounds: { x: 0, y: 0, width: 50, height: 50 } },
+      { op: 'createShape', id: b, bounds: { x: 200, y: 0, width: 50, height: 50 } },
+      { op: 'createConnector', id: c, from: { elementId: a, glue: 'dynamic' }, to: { elementId: b, glue: 'dynamic' }, style: { endArrowSize: 'large', startArrow: 'open', startArrowSize: 'small' } },
+    ]);
+    expect(byId<ConnectorElement>(t, c).style).toMatchObject({ endArrowSize: 'large', startArrowSize: 'small', startArrow: 'open' });
+    const before = body(t);
+    await run(t, [{ op: 'set', target: c, patch: { style: { endArrowSize: 'medium' } } }]);
+    expect(byId<ConnectorElement>(t, c).style.endArrowSize).toBe('medium');
+    await undo(t);
+    expect(body(t)).toBe(before);
+    const bad = await refused(t, [{ op: 'set', target: c, patch: { style: { endArrowSize: 'huge' } } } as never]);
+    expect(bad.code).toBe('invalid_request');
+  });
+
+  it('is refused on a shape, which has no arrowheads', async () => {
+    const t = createTestEngine();
+    const a = id(903);
+    await run(t, [{ op: 'createShape', id: a, bounds: { x: 0, y: 0, width: 50, height: 50 } }]);
+    await refused(t, [{ op: 'set', target: a, patch: { style: { endArrowSize: 'large' } } } as never]);
+  });
+});

@@ -336,6 +336,8 @@ class Compiler {
     if (this.has('dash')) s.dash = this.enumValue(this.raw('dash')!, ['solid', 'dashed', 'dotted', 'dash-dot']);
     if (this.has('startArrow')) s.startArrow = this.enumValue(this.raw('startArrow')!, ['none', 'block', 'open', 'diamond', 'oval'], ARROWS as Record<string, 'block'>);
     if (this.has('endArrow')) s.endArrow = this.enumValue(this.raw('endArrow')!, ['none', 'block', 'open', 'diamond', 'oval'], ARROWS as Record<string, 'block'>);
+    if (this.has('startArrowSize')) s.startArrowSize = this.enumValue(this.raw('startArrowSize')!, ['small', 'medium', 'large']);
+    if (this.has('endArrowSize')) s.endArrowSize = this.enumValue(this.raw('endArrowSize')!, ['small', 'medium', 'large']);
     return s;
   }
 
@@ -529,7 +531,7 @@ class Compiler {
     this.begin(cmd);
     if (this.args.pos.length) this.err('connect takes only name=value fields', this.args.pos[0]!);
     this.finish(['id', 'uuid', 'from', 'to', 'fromAlias', 'fromPort', 'toAlias', 'toPort', 'fromX', 'fromY', 'toX', 'toY', 'route', 'name', 'layer',
-      'stroke', 'strokeWidth', 'dash', 'startArrow', 'endArrow', 'text']);
+      'stroke', 'strokeWidth', 'dash', 'startArrow', 'endArrow', 'startArrowSize', 'endArrowSize', 'text']);
     const pageId = this.pageIdForCreate();
     const { id, alias } = this.identity();
     const op: Operation = { op: 'createConnector', id, pageId, from: this.endpoint('from'), to: this.endpoint('to') };
@@ -575,9 +577,9 @@ class Compiler {
     if (this.has('layer')) { patch.layerIds = [this.layerId(this.wordOrString(this.raw('layer')!), this.raw('layer')!.value)]; handled.add('layer'); }
 
     const style = isConnector ? this.lineStyle() : this.shapeStyle();
-    for (const k of ['fill', 'stroke', 'strokeWidth', 'dash', 'lineCap', 'lineJoin', 'startArrow', 'endArrow']) if (this.has(k)) handled.add(k);
+    for (const k of ['fill', 'stroke', 'strokeWidth', 'dash', 'lineCap', 'lineJoin', 'startArrow', 'endArrow', 'startArrowSize', 'endArrowSize']) if (this.has(k)) handled.add(k);
     if (isConnector) { for (const k of ['fill', 'lineCap', 'lineJoin']) if (this.has(k)) this.err(`${k}= does not apply to a connector`, this.raw(k)!.keyToken); }
-    else for (const k of ['startArrow', 'endArrow']) if (this.has(k)) this.err(`${k}= applies to connectors only`, this.raw(k)!.keyToken);
+    else for (const k of ['startArrow', 'endArrow', 'startArrowSize', 'endArrowSize']) if (this.has(k)) this.err(`${k}= applies to connectors only`, this.raw(k)!.keyToken);
     if (Object.keys(style).length) {
       if (known.kind !== 'shape' && known.kind !== 'connector') this.err(`${known.kind === 'text' ? 'a text box' : known.kind === 'image' ? 'an image' : 'a group'} has no line or fill`, cmd.span, 'fill, stroke, strokeWidth and dash style shapes and connectors');
       patch.style = style;

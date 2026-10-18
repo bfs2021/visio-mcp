@@ -113,6 +113,8 @@ public sealed record LineStyle
     [JsonPropertyName("dash")] public required string Dash { get; init; }
     [JsonPropertyName("startArrow")] public required string StartArrow { get; init; }
     [JsonPropertyName("endArrow")] public required string EndArrow { get; init; }
+    [JsonPropertyName("startArrowSize")] public string? StartArrowSize { get; init; }
+    [JsonPropertyName("endArrowSize")] public string? EndArrowSize { get; init; }
 }
 
 public sealed record Port
@@ -309,6 +311,8 @@ public sealed record StylePatch
     [JsonPropertyName("widthPt")] public double? WidthPt { get; init; }
     [JsonPropertyName("startArrow")] public string? StartArrow { get; init; }
     [JsonPropertyName("endArrow")] public string? EndArrow { get; init; }
+    [JsonPropertyName("startArrowSize")] public string? StartArrowSize { get; init; }
+    [JsonPropertyName("endArrowSize")] public string? EndArrowSize { get; init; }
 }
 
 public sealed record GeometryPatch

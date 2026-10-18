@@ -183,8 +183,10 @@ function connectorChecks(
 ): void {
   const box = visualBounds(el);
   const ends: Array<{ side: 'from' | 'to'; ep: typeof el.from }> = [{ side: 'from', ep: el.from }, { side: 'to', ep: el.to }];
+  // both ends free: a deliberate line (a rule, a divider), not a half-attached connector
+  const freeLine = el.from.glue === 'none' && el.to.glue === 'none';
   for (const { side, ep } of ends) {
-    if (ep.glue === 'none') add('UNGLUED_CONNECTOR_END', 'warning', [el.id], box, `The connector's ${side} end is not attached to a shape.`, { end: side, point: ep.point });
+    if (ep.glue === 'none') { if (!freeLine) add('UNGLUED_CONNECTOR_END', 'warning', [el.id], box, `The connector's ${side} end is not attached to a shape.`, { end: side, point: ep.point }); }
     else if (!ep.elementId || !byId.has(ep.elementId)) add('DANGLING_CONNECTOR', 'error', [el.id], box, `The connector's ${side} end points at an element that does not exist.`, { end: side, elementId: ep.elementId });
   }
   const centre = (id?: string): Point | undefined => { const t = id ? byId.get(id) : undefined; return t ? { x: t.bounds.x + t.bounds.width / 2, y: t.bounds.y + t.bounds.height / 2 } : undefined; };

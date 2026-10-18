@@ -680,7 +680,8 @@ public sealed class NativeVsdxExporter : IVsdxExporter
                 EndCells(true, c.From, bx, by, fromIx, fromDyn);
                 EndCells(false, c.To, ex, ey, toIx, toDyn);
                 shape.Add(Cell("LineWeight", c.Style.WidthPt / PtPerInch), CellS("LineColor", Colour(c.Style.Colour)), Cell("LinePattern", LinePattern(c.Style.Dash)), Cell("FillPattern", 0),
-                    Cell("BeginArrow", ArrowCode(c.Style.StartArrow)), Cell("EndArrow", ArrowCode(c.Style.EndArrow)));
+                    Cell("BeginArrow", ArrowCode(c.Style.StartArrow)), Cell("EndArrow", ArrowCode(c.Style.EndArrow)),
+                    Cell("BeginArrowSize", ArrowSizeCode(c.Style.StartArrowSize)), Cell("EndArrowSize", ArrowSizeCode(c.Style.EndArrowSize)));
                 LayerCell(shape, c.LayerIds, c.Id);
                 Flags(shape, c.Locked);
                 if (c.Label is { } label) { AddText(shape, label, c.Id); }

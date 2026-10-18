@@ -213,6 +213,12 @@ function ConnectorStyle({ el, set }: { el: ConnectorElement; set: (p: Record<str
         <label className="field"><span>End</span>
           <select value={el.style.endArrow} data-testid="field-end-arrow" onChange={e => set({ style: { endArrow: e.target.value } })}>{arrows.map(a => <option key={a}>{a}</option>)}</select>
         </label>
+        <label className="field"><span>Start size</span>
+          <select value={el.style.startArrowSize ?? 'medium'} data-testid="field-start-arrow-size" onChange={e => set({ style: { startArrowSize: e.target.value } })}><option>small</option><option>medium</option><option>large</option></select>
+        </label>
+        <label className="field"><span>End size</span>
+          <select value={el.style.endArrowSize ?? 'medium'} data-testid="field-end-arrow-size" onChange={e => set({ style: { endArrowSize: e.target.value } })}><option>small</option><option>medium</option><option>large</option></select>
+        </label>
         <label className="field"><span>Route</span>
           <select value={el.route} data-testid="field-route" onChange={e => set({ route: e.target.value })}><option>straight</option><option>orthogonal</option><option>curved</option></select>
         </label>

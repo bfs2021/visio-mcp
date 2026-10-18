@@ -271,6 +271,9 @@ describe('compiler: typing, syntax rules and diagnostics', () => {
     expect(ops(t, 'connect fromAlias="srv.db" to=logo')[0]).toMatchObject({ from: { elementId: id(981), glue: 'dynamic' } });
     expect(ops(t, 'connect fromAlias="srv" fromPort="db" to=logo')[0]).toMatchObject({ from: { elementId: id(980), port: 'db', glue: 'static' } });
     expect(ops(t, 'connect from="srv.db" to=logo')[0]).toMatchObject({ from: { elementId: id(981), glue: 'dynamic' } }); // a quoted token is one whole alias
+    // arrowhead sizes are plain fields on a connector
+    expect(ops(t, 'connect from=solo.x to=logo.east endArrowSize=large startArrow=open startArrowSize=small')[0]).toMatchObject({ style: { endArrowSize: 'large', startArrow: 'open', startArrowSize: 'small' } });
+    expect(bad(t, 'connect from=solo.x to=logo.east endArrowSize=huge').message).toMatch(/endArrowSize/);
     // only one reading exists: no ambiguity
     expect(ops(t, 'connect from=solo.x to=logo.east')[0]).toMatchObject({ from: { elementId: id(982), glue: 'dynamic' }, to: { elementId: id(960), port: 'east', glue: 'static' } });
     expect(ops(t, 'connect from=logo.south toX=10mm toY=20mm')[0]).toMatchObject({ to: { glue: 'none', point: { x: 10 * MM, y: 20 * MM } } });

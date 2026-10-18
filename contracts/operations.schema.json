@@ -178,6 +178,12 @@
             "diamond",
             "oval"
           ]
+        },
+        "startArrowSize": {
+          "enum": ["small", "medium", "large"]
+        },
+        "endArrowSize": {
+          "enum": ["small", "medium", "large"]
         }
       }
     },

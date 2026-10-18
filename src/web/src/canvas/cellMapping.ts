@@ -87,6 +87,8 @@ const SHAPE_FOR_PRESET: Record<string, string | undefined> = {
 };
 
 const DASH: Record<string, string | undefined> = { solid: undefined, dashed: '6 4', dotted: '1 3', 'dash-dot': '6 3 1 3' };
+/** maxGraph arrow sizes; the markers scale with the line width as Visio's do. */
+const ARROW_SIZE: Record<string, number> = { small: 3, medium: 6, large: 9 };
 const ARROW: Record<string, string> = { none: 'none', block: 'block', open: 'open', diamond: 'diamond', oval: 'oval' };
 
 function paint(style: CellStyle, colourKey: 'fillColor' | 'strokeColor', opacityKey: 'fillOpacity' | 'strokeOpacity', p: Paint): void {
@@ -157,6 +159,8 @@ export function edgeStyle(c: ConnectorElement, locked: boolean): CellStyle {
   const style: CellStyle = { strokeColor: c.style.colour, strokeWidth: c.style.widthPt, startArrow: ARROW[c.style.startArrow] as CellStyle['startArrow'], endArrow: ARROW[c.style.endArrow] as CellStyle['endArrow'] };
   const dash = DASH[c.style.dash];
   if (dash) { style.dashed = true; style.dashPattern = dash; }
+  style.startSize = ARROW_SIZE[c.style.startArrowSize ?? 'medium'];
+  style.endSize = ARROW_SIZE[c.style.endArrowSize ?? 'medium'];
   if (c.route === 'orthogonal') style.edgeStyle = 'elbowEdgeStyle';
   if (c.route === 'curved') style.curved = true;
   if (c.label) textStyle(style, c.label);

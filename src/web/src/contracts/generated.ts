@@ -90,6 +90,8 @@ export interface LineStyle {
   dash: "solid" | "dashed" | "dotted" | "dash-dot";
   startArrow: "none" | "block" | "open" | "diamond" | "oval";
   endArrow: "none" | "block" | "open" | "diamond" | "oval";
+  startArrowSize?: "small" | "medium" | "large";
+  endArrowSize?: "small" | "medium" | "large";
 }
 
 export interface Port {
@@ -271,6 +273,8 @@ export interface StylePatch {
   widthPt?: number;
   startArrow?: "none" | "block" | "open" | "diamond" | "oval";
   endArrow?: "none" | "block" | "open" | "diamond" | "oval";
+  startArrowSize?: "small" | "medium" | "large";
+  endArrowSize?: "small" | "medium" | "large";
 }
 
 export interface GeometryPatch {

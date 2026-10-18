@@ -55,6 +55,13 @@ describe('inspect layout', () => {
     expect(issues[0]!.elementIds).toEqual([id(10)]);
   });
 
+  it('a connector with both ends free is a deliberate line and is not reported', async () => {
+    const t = await scene([
+      { op: 'createConnector', id: id(11), from: { glue: 'none', point: { x: 100, y: 100 } }, to: { glue: 'none', point: { x: 300, y: 100 } }, route: 'straight' },
+    ]);
+    expect(found(t).filter(i => i.code === 'UNGLUED_CONNECTOR_END')).toHaveLength(0);
+  });
+
   it('a connector through an unrelated shape is reported, but not through its own ends or their groups', async () => {
     const t = await scene([
       { op: 'createShape', id: id(1), alias: 'a', bounds: box(50, 100) },
