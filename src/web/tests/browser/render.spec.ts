@@ -236,3 +236,26 @@ test('an approved picture can be rasterised for formats that cannot hold the ori
   expect((await call(page, 'assets.rasterise', { sha256: sha })).error?.code).toBe('not_found');
   expect((await call(page, 'assets.rasterise', { sha256: 'nope' })).error?.code).toBe('invalid_request');
 });
+
+test('a connector to a rotated non-rectangular shape ends on its outline, not on its rotated frame', async ({ page }) => {
+  await openEditor(page);
+  const para = { x: 100, y: 200, width: 160, height: 100 };
+  await apply(page, [
+    { op: 'createShape', id: U(11), bounds: para, rotationDeg: 15, geometry: { preset: 'parallelogram' }, style: { fill: RED, stroke: { kind: 'none' } } },
+    { op: 'createShape', id: U(12), bounds: box(500, 220), style: { fill: BLUE, stroke: { kind: 'none' } } },
+    { op: 'createConnector', id: U(13), from: { elementId: U(11), glue: 'dynamic' }, to: { elementId: U(12), glue: 'dynamic' }, route: 'orthogonal' },
+  ]);
+  const shot = (await call(page, 'doc.exportSnapshot', {})).result;
+  const start = shot.projection.connectors[U(13)].routePoints[0];
+  // into the shape's own frame: undo the rotation about its centre, then measure the distance to the nearest edge of the parallelogram
+  const cx = para.x + para.width / 2, cy = para.y + para.height / 2, a = -15 * Math.PI / 180;
+  const dx = start.x - cx, dy = start.y - cy;
+  const p = { x: cx + dx * Math.cos(a) - dy * Math.sin(a), y: cy + dx * Math.sin(a) + dy * Math.cos(a) };
+  const poly = [[0.2, 0], [1, 0], [0.8, 1], [0, 1]].map(([u, v]) => ({ x: para.x + u! * para.width, y: para.y + v! * para.height }));
+  const dist = Math.min(...poly.map((s, i) => {
+    const e = poly[(i + 1) % poly.length]!, vx = e.x - s.x, vy = e.y - s.y;
+    const t = Math.max(0, Math.min(1, ((p.x - s.x) * vx + (p.y - s.y) * vy) / (vx * vx + vy * vy)));
+    return Math.hypot(p.x - (s.x + t * vx), p.y - (s.y + t * vy));
+  }));
+  expect(dist).toBeLessThan(1);
+});

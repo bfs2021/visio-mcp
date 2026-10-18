@@ -1,4 +1,4 @@
-import { HexagonShape, Point, ShapeRegistry, type AbstractCanvas2D, type CellStyle } from '@maxgraph/core';
+import { HexagonShape, PerimeterRegistry, Point, ShapeRegistry, type AbstractCanvas2D, type CellStyle, type PerimeterFunction } from '@maxgraph/core';
 
 // HexagonShape is the public path-shape base: its redrawPath is replaced below, keeping addPoints/rounding helpers.
 import type { ConnectorElement, Element, ImageElement, Layer, Paint, ShapeElement, TextBlock, TextElement } from '../contracts/generated';
@@ -36,6 +36,40 @@ class CalloutShape extends HexagonShape {
   }
 }
 
+/**
+ * Perimeter for a polygon given in unit (0..1) coordinates of the unrotated frame. maxGraph rotates the approach point into the
+ * shape's frame before calling this, so the connector meets the drawn outline rather than the frame's bounding rectangle.
+ */
+function polygonPerimeter(unit: ReadonlyArray<readonly [number, number]>): PerimeterFunction {
+  return (bounds, _vertex, next) => {
+    const cx = bounds.getCenterX(), cy = bounds.getCenterY();
+    const dx = next.x - cx, dy = next.y - cy;
+    let best = Infinity;
+    for (let i = 0; i < unit.length; i++) {
+      const a = unit[i]!, b = unit[(i + 1) % unit.length]!;
+      const ax = bounds.x + a[0] * bounds.width - cx, ay = bounds.y + a[1] * bounds.height - cy;
+      const ex = (b[0] - a[0]) * bounds.width, ey = (b[1] - a[1]) * bounds.height;
+      const det = dx * ey - dy * ex;
+      if (Math.abs(det) < 1e-9) continue;
+      const t = (ax * ey - ay * ex) / det, u = (ax * dy - ay * dx) / det;
+      if (t > 0 && u >= 0 && u <= 1 && t < best) best = t;
+    }
+    // A point at the centre, or a ray that misses, falls back to the centre like maxGraph's own perimeters.
+    return new Point(cx + dx * (Number.isFinite(best) ? best : 0), cy + dy * (Number.isFinite(best) ? best : 0));
+  };
+}
+
+const POLYGONS: Record<string, ReadonlyArray<readonly [number, number]> | undefined> = {
+  parallelogram: [[0.2, 0], [1, 0], [0.8, 1], [0, 1]],
+  callout: [[0, 0], [1, 0], [1, 0.8], [0, 0.8]],
+};
+
+/** Perimeter name for a preset; presets without an entry keep the frame rectangle (cylinder, cloud, rectangles). */
+const PERIMETER_FOR_PRESET: Record<string, string | undefined> = {
+  ellipse: 'ellipsePerimeter', diamond: 'rhombusPerimeter', triangle: 'trianglePerimeter', hexagon: 'hexagonPerimeter',
+  parallelogram: 'diagram-parallelogram', callout: 'diagram-callout',
+};
+
 let registered = false;
 export function registerCustomShapes(): void {
   if (registered) return;
@@ -43,6 +77,8 @@ export function registerCustomShapes(): void {
   ShapeRegistry.add('parallelogram', ParallelogramShape);
   ShapeRegistry.add('callout', CalloutShape);
   ShapeRegistry.add('custom-path', CustomPathShape);
+  PerimeterRegistry.add('diagram-parallelogram', polygonPerimeter(POLYGONS.parallelogram!));
+  PerimeterRegistry.add('diagram-callout', polygonPerimeter(POLYGONS.callout!));
 }
 
 const SHAPE_FOR_PRESET: Record<string, string | undefined> = {
@@ -94,6 +130,8 @@ export function vertexStyle(el: ShapeElement | TextElement | ImageElement, locke
   } else {
     const shape = SHAPE_FOR_PRESET[el.geometry.preset ?? 'rectangle'];
     if (shape) style.shape = shape;
+    const perimeter = PERIMETER_FOR_PRESET[el.geometry.preset ?? 'rectangle'];
+    if (perimeter) style.perimeter = perimeter;
     if (el.geometry.svgPath !== undefined) {
       style.shape = 'custom-path';
       Object.assign(style, { svgPath: el.geometry.svgPath, lineCap: el.style.lineCap, lineJoin: el.style.lineJoin });
