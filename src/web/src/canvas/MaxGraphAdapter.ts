@@ -1,3 +1,4 @@
+import { WrappedSvgText } from './WrappedSvgText';
 import {
   Cell, EdgeHandler, Geometry, Graph, InternalEvent, Point, RubberBandHandler, VertexHandler, VertexHandlerConfig, getDefaultPlugins,
   type EventSource, type InternalMouseEvent, type SelectionCellsHandler,
@@ -66,6 +67,7 @@ export class MaxGraphAdapter implements CanvasAdapter {
     container.appendChild(this.frames);
 
     const g = this.graph;
+    g.cellRenderer.defaultTextShape = WrappedSvgText;
     g.setPanning(true);
     g.setCellsCloneable(false);
     g.setConnectable(false);

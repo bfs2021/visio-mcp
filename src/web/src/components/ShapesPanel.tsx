@@ -1,3 +1,4 @@
+import { ComponentsPanel } from './ComponentsPanel';
 import type { EditorModel } from '../editor/EditorModel';
 import { useModel } from './useModel';
 import { IconsPanel } from './IconsPanel';
@@ -51,6 +52,7 @@ export function ShapesPanel({ model }: { model: EditorModel }) {
           </div>
         </details>
       ))}
+      <ComponentsPanel model={model} />
       <IconsPanel model={model} />
       <details open>
         <summary>Pictures</summary>

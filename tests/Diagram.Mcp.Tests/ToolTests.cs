@@ -15,7 +15,7 @@ public class ToolTests
     [
         "get_document_summary", "get_objects", "apply_operations", "execute_script", "render_page", "render_region",
         "inspect_layout", "list_assets", "get_changes", "export_document", "get_operation_schema", "get_text_layout",
-        "render_reference_region", "compare_reference", "search_icons", "get_icon",
+        "render_reference_region", "compare_reference", "search_icons", "get_icon", "list_layout_components", "get_layout_component",
     ];
 
     static string NewPipe() => $"mcp-test-{Guid.NewGuid():N}";
