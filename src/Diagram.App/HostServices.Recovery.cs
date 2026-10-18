@@ -14,6 +14,19 @@ public sealed partial class HostServices
         ["messages"] = new JsonArray(l.Messages.Select(m => (JsonNode)m).ToArray()),
     };
 
+    /// <summary>What a person needs to recognise a session: the document's title and file, its size at the last checkpoint, and when it last changed.</summary>
+    static JsonObject Summary(RecoveryCandidate c)
+    {
+        var pages = c.Document["pages"] as JsonArray;
+        var objects = pages?.Sum(p => (p?["elements"] as JsonArray)?.Count ?? 0) ?? 0;
+        return new JsonObject
+        {
+            ["sessionId"] = c.SessionId, ["documentId"] = c.DocumentId, ["originalPath"] = c.OriginalPath, ["title"] = c.Document["title"]?.GetValue<string>(),
+            ["pageCount"] = pages?.Count ?? 0, ["objectCount"] = objects, ["checkpointRevision"] = c.CheckpointRevision, ["lastDurableRevision"] = c.LastDurableRevision,
+            ["lastWrite"] = c.LastWrite.ToString("O"), ["loss"] = LossJson(c.Loss),
+        };
+    }
+
     async Task<ResponseEnvelope> RecoveryAsync(RequestEnvelope request, CancellationToken ct)
     {
         var mgr = window.RecoveryMgr;
@@ -36,6 +49,15 @@ public sealed partial class HostServices
                     ["found"] = true, ["auto"] = auto, ["others"] = list.Count - 1, ["sessionId"] = c.SessionId, ["originalPath"] = c.OriginalPath,
                     ["checkpointRevision"] = c.CheckpointRevision, ["lastDurableRevision"] = c.LastDurableRevision, ["lastWrite"] = c.LastWrite.ToString("O"), ["loss"] = LossJson(c.Loss),
                 });
+            }
+            case "host.recovery.list":
+            {
+                // every session that holds unsaved work, each described well enough for a person to tell them apart; the documents themselves are fetched on request
+                var auto = window.Router.TakeRendererFailure();
+                var list = await mgr.CandidatesAsync(ct);
+                var sessions = new JsonArray();
+                foreach (var c in list) sessions.Add(Summary(c));
+                return Ok(request, new JsonObject { ["auto"] = auto, ["sessions"] = sessions });
             }
             case "host.recovery.fetch":
             {

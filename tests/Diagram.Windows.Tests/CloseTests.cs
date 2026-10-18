@@ -70,6 +70,36 @@ public class CloseTests
     }
 
     [Fact]
+    public async Task TheRecoveryListDescribesEachSessionAndForgetsOnesThatWereDiscarded()
+    {
+        var (first, root, _) = await StartDirty();
+        try
+        {
+            await first.Window.RecoveryMgr.DisposeAsync(); // the application dies with unsaved work
+        }
+        finally { await first.DisposeAsync(); }
+        try
+        {
+            await using var second = await Harness.StartAsync(existingRoot: root);
+            await WaitFor(() => second.Window.RecoveryMgr.SessionId == second.Router.CurrentScope?.SessionId);
+            var list = await second.Window.Services.HandleAsync(new RequestEnvelope { RequestId = "l", Method = "host.recovery.list", Params = new JsonObject() }, default);
+            Assert.Null(list.Error);
+            var sessions = list.Result!.Value.GetProperty("sessions");
+            Assert.Equal(1, sessions.GetArrayLength());
+            var one = sessions[0];
+            Assert.Equal(1, one.GetProperty("pageCount").GetInt32());
+            Assert.Equal(1, one.GetProperty("lastDurableRevision").GetInt32());
+            Assert.True(one.TryGetProperty("title", out _) && one.TryGetProperty("lastWrite", out _) && one.TryGetProperty("objectCount", out _));
+            var id = one.GetProperty("sessionId").GetString()!;
+            var gone = await second.Window.Services.HandleAsync(new RequestEnvelope { RequestId = "d", Method = "host.recovery.discard", Params = new JsonObject { ["sessionId"] = id } }, default);
+            Assert.Null(gone.Error);
+            var after = await second.Window.Services.HandleAsync(new RequestEnvelope { RequestId = "l2", Method = "host.recovery.list", Params = new JsonObject() }, default);
+            Assert.Equal(0, after.Result!.Value.GetProperty("sessions").GetArrayLength());
+        }
+        finally { try { Directory.Delete(root, true); } catch { } }
+    }
+
+    [Fact]
     public async Task DontSaveClosesAndTheWorkIsNotOfferedOnTheNextStart()
     {
         var (h, root, closed) = await StartDirty();

@@ -1,6 +1,6 @@
 import { componentWarningText } from '../layout/componentTemplates';
 import type { ComponentProposal } from '../layout/components';
-import type { Element, Operation, PreparedAssetRef, Snapshot, TransactionResult } from '../contracts/generated';
+import type { DiagramDocument, Element, Operation, PreparedAssetRef, Snapshot, TransactionResult } from '../contracts/generated';
 import { CommandEngine } from '../commands/CommandEngine';
 import { copyElements, pasteOperations, type ClipboardData } from '../commands/clipboard';
 import { MaxGraphAdapter, DEFAULT_SCALE } from '../canvas/MaxGraphAdapter';
@@ -30,7 +30,8 @@ export interface HostApi {
   librarySetMetadata(id: string, patch: { name?: string; tags?: string[] }): Promise<Result<{ asset: LibraryEntry }>>;
   libraryDelete(id: string): Promise<Result<{ deleted: string }>>;
   recoveryStatus(): Promise<Result<{ lastDurableRevision: number; lastCommittedRevision: number; degraded: boolean; note?: string | null }>>;
-  recoveryCandidate(): Promise<Result<RecoveryOffer | { found: false }>>;
+  /** Every session that holds unsaved work, described well enough to tell them apart. */
+  recoveryList(): Promise<Result<{ auto: boolean; sessions: RecoveryOffer[] }>>;
   recoveryFetch(sessionId: string): Promise<Result<RecoveryPayload & { loss: RecoveryLossInfo }>>;
   recoveryDiscard(sessionId: string): Promise<Result<{ discarded: string }>>;
   recoveryFinish(sessionId: string, originalPath: string | null): Promise<Result<{ finished: string }>>;
@@ -46,7 +47,8 @@ export interface HostApi {
 export interface LibraryEntry { id: string; name: string; tags: string[]; mimeType: string; sha256: string; width: number; height: number; version: number; scope: 'library' }
 export interface RecoveryLossInfo { tornTailDiscarded: boolean; corruptionAfterRevision: number | null; messages: string[] }
 /** Unfinished work from an earlier run (or before a renderer crash), as the host describes it. */
-export interface RecoveryOffer { found: true; auto: boolean; others: number; sessionId: string; originalPath: string | null; checkpointRevision: number; lastDurableRevision: number; lastWrite: string; loss: RecoveryLossInfo }
+/** One unfinished session as the host describes it. Sizes are as of the session's last checkpoint. */
+export interface RecoveryOffer { sessionId: string; documentId: string; title: string | null; originalPath: string | null; pageCount: number; objectCount: number; checkpointRevision: number; lastDurableRevision: number; lastWrite: string; loss: RecoveryLossInfo }
 export interface DiagnosticItem { severity: 'info' | 'warning' | 'error'; code: string; message: string; elementId?: string; pageId?: string; action?: string }
 export interface NativeOutcome { cancelled?: true; path?: string; summary?: string; diagnostics?: DiagnosticItem[]; lossy?: boolean; revision?: number; bytes?: number }
 
@@ -55,7 +57,7 @@ export interface CompatibilityView { title: string; summary: string; diagnostics
 
 export const noHost: HostApi = {
   recoveryStatus: async () => fail('not_running', 'there is no host'),
-  recoveryCandidate: async () => ok({ found: false as const }),
+  recoveryList: async () => ok({ auto: false, sessions: [] }),
   recoveryFetch: async () => fail('not_running', 'there is no host'),
   recoveryDiscard: async () => fail('not_running', 'there is no host'),
   recoveryFinish: async () => fail('not_running', 'there is no host'),
@@ -115,13 +117,20 @@ export class EditorModel {
   /** The compatibility report dialog, when one is showing. */
   report: CompatibilityView | null = null;
   /** Unfinished work found at start, waiting for the person's answer. */
-  recoveryOffer: RecoveryOffer | null = null;
+  /** The unfinished sessions on offer; the dialog lists them, each with its own Recover and Discard. */
+  recoveryOffers: RecoveryOffer[] = [];
+  /** Thumbnails of the offered sessions, by session id: undefined while loading, null when one could not be made. */
+  offerPreviews = new Map<string, string | null>();
+  /** Pages and objects of each offered session as rebuilt (checkpoint plus journal), which the host's summary cannot know. */
+  offerStats = new Map<string, { pages: number; objects: number }>();
+  /** Draws a recovered document's first page as a data URL (set by the page, which owns the renderer). */
+  renderPreview: ((doc: DiagramDocument) => Promise<string | null>) | null = null;
   /** When this window last saved or opened a file (for the status bar). */
   lastSavedAt: Date | null = null;
   /** Set while the host's close request waits for the person: Save, Don't save or Cancel. */
   closePrompt: { fileName: string | null; saving: boolean; error: string | null } | null = null;
   /** What a recovery brought back and what it could not, shown after restoring. */
-  recoveryReport: { title: string; lines: string[] } | null = null;
+  recoveryReport: { title: string; lines: string[]; saveAs?: boolean } | null = null;
   /** Newest revision the host has on disk (the editor's own revision runs ahead of this by whatever is still being written). */
   protectedRevision: number | null = null;
   /** The revision the editor was at when recovery was offered: restoring replaces the document only if nothing was done since. */
@@ -559,24 +568,37 @@ export class EditorModel {
 
   /** At start: is there unfinished work from an earlier run? After a renderer crash it is restored at once, with a visible report. */
   async checkRecovery(): Promise<void> {
-    const r = await this.host.recoveryCandidate();
-    if (!r.ok || !r.value.found) { void this.readProtection(); return; }
-    this.recoveryOffer = r.value;
+    const r = await this.host.recoveryList();
+    if (!r.ok || r.value.sessions.length === 0) { void this.readProtection(); return; }
+    this.recoveryOffers = r.value.sessions;
     this.recoveryBaseRevision = this.engine.revision;
     this.bump();
-    if (r.value.auto) await this.restoreOffered();
+    if (r.value.auto) await this.restoreOffered(r.value.sessions[0]!.sessionId);
   }
 
-  async restoreOffered(): Promise<void> {
-    const offer = this.recoveryOffer;
+  /** Draws one offered session so a person can recognise it. Failing to is harmless: the card just has no picture. */
+  async loadOfferPreview(sessionId: string): Promise<void> {
+    if (this.offerPreviews.has(sessionId) || !this.renderPreview) return;
+    this.offerPreviews.set(sessionId, undefined as never);
+    const fetched = await this.host.recoveryFetch(sessionId);
+    const built = fetched.ok ? restoreRecovery(fetched.value) : null;
+    if (built && built.ok) this.offerStats.set(sessionId, { pages: built.value.document.pages.length, objects: built.value.document.pages.reduce((n, p) => n + p.elements.length, 0) });
+    const url = built && built.ok ? await this.renderPreview(built.value.document).catch(() => null) : null;
+    this.offerPreviews.set(sessionId, url);
+    this.bump();
+  }
+
+  async restoreOffered(sessionId?: string): Promise<void> {
+    const offer = this.recoveryOffers.find(o => o.sessionId === sessionId) ?? this.recoveryOffers[0];
     if (!offer) return;
+    const others = this.recoveryOffers.length - 1;
     const fetched = await this.host.recoveryFetch(offer.sessionId);
-    if (!fetched.ok) { this.say(fetched.error.message, 'error'); this.recoveryOffer = null; this.bump(); return; }
+    if (!fetched.ok) { this.say(fetched.error.message, 'error'); this.recoveryOffers = this.recoveryOffers.filter(o => o !== offer); this.bump(); return; }
     const built = restoreRecovery(fetched.value);
     if (!built.ok) {
       this.say(`Recovery failed: ${built.error.message}`, 'error');
       this.recoveryReport = { title: 'Recovery failed', lines: [built.error.message, 'Nothing was changed, and the recovery files are still on disk.'] };
-      this.recoveryOffer = null; this.bump(); return;
+      this.recoveryOffers = []; this.bump(); return;
     }
     const replaced = await this.engine.replaceDocument(built.value.document, { ...this.engine.scope(), baseRevision: this.recoveryBaseRevision });
     if (!replaced.ok) {
@@ -584,15 +606,15 @@ export class EditorModel {
       this.say(edited ? 'You started editing, so the recovered work was not applied. It is still available.' : `Recovery failed: ${replaced.error.message}`, 'warning');
       return;
     }
-    this.recoveryOffer = null;
+    this.recoveryOffers = [];
     this.pageId = undefined;
     this.selection = [];
     this.afterRecoveryRestore(); // the host starts the new session (with its own checkpoint) and announces it
     const lines = [`Restored to revision ${built.value.revision}${fetched.value.originalPath ? ` of ${fetched.value.originalPath}` : ''}. The document is marked as unsaved.`];
     if (built.value.problem) lines.push(`Not recovered: ${built.value.problem}.`);
     lines.push(...offer.loss.messages);
-    if (offer.others > 0) lines.push(`${offer.others} other unfinished session${offer.others === 1 ? '' : 's'} remain on disk.`);
-    this.recoveryReport = { title: 'Recovered unsaved work', lines };
+    if (others > 0) lines.push(`${others} other unfinished session${others === 1 ? '' : 's'} remain on disk and will be offered next time.`);
+    this.recoveryReport = { title: 'Recovered unsaved work', lines, saveAs: true };
     this.say(`Recovered unsaved work at revision ${built.value.revision}. Save it to keep it.`, 'warning');
     this.showCommitted();
     await this.host.recoveryFinish(offer.sessionId, fetched.value.originalPath ?? null);
@@ -600,17 +622,26 @@ export class EditorModel {
     this.bump();
   }
 
-  async discardOffered(): Promise<void> {
-    const offer = this.recoveryOffer;
+  /** Throws one session away for good. The others stay on offer. */
+  async discardOffered(sessionId?: string): Promise<void> {
+    const offer = this.recoveryOffers.find(o => o.sessionId === sessionId) ?? this.recoveryOffers[0];
     if (!offer) return;
     const r = await this.host.recoveryDiscard(offer.sessionId);
     if (!r.ok) this.say(r.error.message, 'error');
-    this.recoveryOffer = null;
+    this.recoveryOffers = this.recoveryOffers.filter(o => o !== offer);
+    this.offerPreviews.delete(offer.sessionId);
+    this.offerStats.delete(offer.sessionId);
     this.bump();
   }
 
-  /** Not now: the work stays on disk and is offered again next time. */
-  deferOffered(): void { this.recoveryOffer = null; this.bump(); }
+  /** Not now: every session stays on disk and is offered again next time. */
+  deferOffered(): void { this.recoveryOffers = []; this.bump(); }
+
+  /** After a recovery the person is offered Save as, so the work lands in a file of their choosing. */
+  async saveRecoveredAs(): Promise<void> {
+    await this.save(true);
+    if (!this.engine.status().unsaved) { this.recoveryReport = null; this.bump(); }
+  }
 
   // ------------------------------------------------------------------ closing the window
   /** The host wants to close. Nothing unsaved: it may. Otherwise the prompt is shown and the host waits for the person's answer. */

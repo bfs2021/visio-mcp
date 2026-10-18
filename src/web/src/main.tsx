@@ -16,7 +16,7 @@ function hostApi(host: HostServices | null): HostApi {
     openJson: () => host.call('host.openJson'),
     saveJson: saveAs => host.call('host.saveJson', { saveAs }),
     recoveryStatus: () => host.call('host.recovery.status'),
-    recoveryCandidate: () => host.call('host.recovery.candidate'),
+    recoveryList: () => host.call('host.recovery.list'),
     recoveryFetch: sessionId => host.call('host.recovery.fetch', { sessionId }),
     recoveryDiscard: sessionId => host.call('host.recovery.discard', { sessionId }),
     recoveryFinish: (sessionId, originalPath) => host.call('host.recovery.finish', { sessionId, originalPath }),
@@ -48,6 +48,10 @@ model.proposeComponent = async params => {
   return r.error ? { ok: false, error: r.error } : { ok: true, value: r.result as unknown as ComponentProposal & { base64: string; mimeType: string } };
 };
 model.afterRecoveryRestore = sessionChanged;
+model.renderPreview = async doc => {
+  const r = await renderer.render({ documentId: doc.id, sessionId: doc.id, revision: 0, document: doc }, undefined, { scope: 'page', pageId: doc.pages[0]!.id, maxWidth: 280, maxHeight: 200, format: 'png' });
+  return r.ok ? `data:${r.value.mimeType};base64,${r.value.base64}` : null;
+};
 void model.checkRecovery(); // unfinished work from an earlier run is offered (or, after a renderer crash, restored at once)
 if (router) model.onGestureState = active => router.setGestureActive(active); // an outside mutation waits (briefly) while the user is mid-gesture
 
