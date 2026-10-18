@@ -1,3 +1,5 @@
+import { FileConflictFlow, type FileHost, type FileOutcome } from './FileConflictFlow';
+import type { ExpectedDocument } from './NewDocumentFlow';
 import { NewDocumentFlow } from './NewDocumentFlow';
 import { componentWarningText } from '../layout/componentTemplates';
 import type { ComponentProposal } from '../layout/components';
@@ -20,7 +22,7 @@ import { iconOperations } from '../icons/catalog';
 import type { AgentDocument } from '../bridge/engineHandlers';
 
 /** What the page needs from the host. In a plain browser (tests, dev) a stub stands in. */
-export interface HostApi {
+export interface HostApi extends FileHost {
   pickImage(): Promise<Result<{ cancelled: true } | { ref: PreparedAssetRef; notes: string[]; width: number; height: number }>>;
   /** Without a path the person chooses a file; with one (from the last session's tabs) it is reopened without asking. */
   openJson(path?: string): Promise<Result<{ cancelled?: true; path?: string; notes?: string[] }>>;
@@ -28,7 +30,7 @@ export interface HostApi {
   workspaceSave(tabs: Array<{ documentId: string; sessionId: string; title: string; unsaved: boolean }>, activeDocumentId: string | null): Promise<Result<{ saved: number }>>;
   /** What the last run left open. */
   workspaceLoad(): Promise<Result<WorkspaceMemory>>;
-  saveJson(saveAs: boolean): Promise<Result<{ cancelled?: true; path?: string; revision?: number }>>;
+  saveJson(saveAs: boolean, expected?: ExpectedDocument): Promise<Result<FileOutcome>>;
   libraryList(query?: string, tags?: string[]): Promise<Result<{ assets: LibraryEntry[] }>>;
   libraryImport(): Promise<Result<{ cancelled?: true; asset?: LibraryEntry; created?: boolean; idWasTaken?: boolean; notes?: string[] }>>;
   /** Resolves a library picture to an approved preparation (optionally one specific version) a document can pin. */
@@ -98,6 +100,8 @@ export const noHost: HostApi = {
   documentReveal: async () => fail('not_running', 'there is no host'),
   documentCopyPath: async () => fail('not_running', 'there is no host'),
   workspaceLoad: async () => ok({ found: false }),
+  fileCheck: async () => ok({ unchanged: true }),
+  fileResolve: async () => fail('not_running', 'there is no host'),
   saveJson: async () => fail('not_running', 'there is no host to save files'),
 };
 
@@ -149,6 +153,7 @@ export class EditorModel {
   readonly scriptSources = new Map<string, string>();
 
   host: HostApi = noHost;
+  readonly files: FileConflictFlow;
   /** The compatibility report dialog, when one is showing. */
   report: CompatibilityView | null = null;
   /** Unfinished work found at start, waiting for the person's answer. */
@@ -187,6 +192,14 @@ export class EditorModel {
     this.engine = engine;
     this.controller = new GestureController(engine);
     this.newDocument = new NewDocumentFlow(engine, () => this.bump());
+    this.files = new FileConflictFlow(engine, () => this.host, () => this.bump());
+    this.files.canPresent = () => !this.controller.isActive() && !this.closePrompt && !this.newDocument.prompt && !this.recoveryOffers.length && !this.recoveryReport;
+    this.files.message = (text,error) => this.say(text,error?'error':'warning');
+    this.files.completed = outcome => {
+      if(outcome.reloaded){this.pageId=undefined;this.selection=[];this.tool={kind:'select'};this.sessionReplaced();this.zoomToFit();}
+      else this.lastSavedAt=new Date();
+      this.say(outcome.warning ?? (outcome.reloaded?'Reloaded the disk version.':('Saved '+(outcome.path??'')+'.')),outcome.warning?'warning':'info');
+    };
     this.newDocument.canStart = () => !this.controller.isActive() && !this.closePrompt && !this.recoveryOffers.length;
     this.newDocument.save = () => this.save();
     this.newDocument.create = async (document, expected) => {
@@ -607,13 +620,7 @@ export class EditorModel {
 
   closeReport(): void { this.report = null; this.bump(); }
 
-  async save(saveAs = false): Promise<void> {
-    const r = await this.host.saveJson(saveAs);
-    if (!r.ok) { this.say(r.error.message, 'error'); return; }
-    if (r.value.cancelled) return;
-    this.lastSavedAt = new Date();
-    this.say(`Saved ${r.value.path ?? ''}.`, 'info');
-  }
+  async save(saveAs = false): Promise<void> { await this.files.save(saveAs); }
 
   showCommittedNow(): void { this.showCommitted(); }
 
@@ -1018,7 +1025,7 @@ export class EditorModel {
   fromUnit(value: number): number { return toPoints(value, this.unit); }
 
   pageOfElement(id: string) { return pageContaining(this.snapshot, id); }
-  dispose(): void { this.detachCanvas(); this.projector.dispose(); }
+  dispose(): void { this.files.dispose(); this.detachCanvas(); this.projector.dispose(); }
 }
 
 function gestureMatches(kind: GestureKind, intent: Intent): boolean {

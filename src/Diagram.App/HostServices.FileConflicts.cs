@@ -106,8 +106,15 @@ public sealed partial class HostServices
             var marked = await window.Router.MarkSavedAsync(new Scope { DocumentId = snap.DocumentId, SessionId = snap.SessionId }, snap.Revision, offer.Path, ct);
             if (!marked.IsOk) return Err(request, marked.Error!);
             string? warning = null;
-            try { await window.RecoveryMgr.DrainAsync(); await window.RecoveryMgr.DiscardAsync(offer.Expected.SessionId); }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { warning = "Reloaded, but the previous recovery session was retained: " + e.Message; }
+            try
+            {
+                await window.RecoveryMgr.DrainAsync();
+                var protection = window.RecoveryMgr.StatusOfSession(snap.SessionId);
+                if (!window.RecoveryMgr.OpenSessions.Contains(snap.SessionId) || protection.Degraded || protection.LastDurableRevision < snap.Revision)
+                    throw new InvalidOperationException("The replacement checkpoint is not durable.");
+                await window.RecoveryMgr.DiscardAsync(offer.Expected.SessionId);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidOperationException) { warning = "Reloaded, but the previous recovery session was retained: " + e.Message; }
             return Ok(request, new JsonObject { ["reloaded"] = true, ["path"] = offer.Path, ["revision"] = snap.Revision, ["warning"] = warning });
         }
         catch (DiskChangedException e) { return OfferFile(request, offer.Path, offer.Expected, e.Observed); }

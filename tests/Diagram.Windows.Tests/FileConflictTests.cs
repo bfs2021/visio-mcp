@@ -87,4 +87,54 @@ public class FileConflictTests
         Assert.Equal("not_found",(await Resolve(h,token,"reload",true)).Error?.Code);Assert.Null((await Resolve(h,token,"overwrite")).Error);Assert.True(File.Exists(path));
     }
 
+    [Fact]
+    public async Task ReloadRetainsOldRecoveryWhenTheNewCheckpointCannotBeCreated()
+    {
+        await using var h=await Harness.StartAsync();var path=await Saved(h);
+        Assert.Null((await h.Apply(1,null,Harness.Shape("unsaved-local",90,20))).Error);await h.Window.RecoveryMgr.DrainAsync();
+        var old=h.Router.CurrentScope!;await File.AppendAllTextAsync(path,"\n");
+        var token=Token(await h.Window.Services.HandleAsync(Req("host.saveJson"),default));
+        var blocked=false;
+        h.Router.SessionChanged+=(next,_)=>{blocked=true;File.WriteAllText(Path.Combine(h.Root,"recovery",next.SessionId),"block checkpoint directory");};
+        var result=await Resolve(h,token,"reload",true);Assert.Null(result.Error);Assert.True(blocked);
+        Assert.True(Directory.Exists(Path.Combine(h.Root,"recovery",old.SessionId)));
+        Assert.Contains("retained",result.Result!.Value.GetProperty("warning").GetString());
+    }
+
+    static async Task WaitFor(Harness h,string expression)
+    {
+        var until=DateTime.UtcNow.AddSeconds(15);
+        while(await h.Eval(expression)!="true"){if(DateTime.UtcNow>until)throw new TimeoutException(expression);await Task.Delay(50);}
+    }
+    [Fact]
+    public async Task RealPageConflictSaveAsPreservesExternalFileAndLocalDrawing()
+    {
+        await using var h=await Harness.StartAsync();var path=await Saved(h);await File.AppendAllTextAsync(path,"\n");var external=await File.ReadAllBytesAsync(path);
+        Assert.Null((await h.Apply(1,null,Harness.Shape("keep",80,20))).Error);var before=(await h.Send("doc.snapshot")).Result!.Value.GetRawText();
+        await h.Eval("document.dispatchEvent(new KeyboardEvent('keydown',{key:'s',ctrlKey:true,bubbles:true})); true");
+        await WaitFor(h,"document.querySelector('[data-testid=file-conflict]') !== null");
+        var evidence=Path.Combine(Harness.RepoRoot,"artifacts/w07-save-conflicts");Directory.CreateDirectory(evidence);
+        await File.WriteAllBytesAsync(Path.Combine(evidence,"file-conflict.png"),await h.OnUi(()=>h.Host.CapturePreviewAsync()));
+        var alternate=Path.Combine(h.Root,"kept.diagram.json");h.Window.Services.DialogOverride=_=>alternate;
+        await h.Eval("[...document.querySelectorAll('[data-testid=file-conflict] button')].find(b=>b.textContent==='Keep mine (Save as)').click(); true");
+        await WaitFor(h,"document.querySelector('[data-testid=file-conflict]') === null");
+        Assert.Equal(external,await File.ReadAllBytesAsync(path));Assert.True(File.Exists(alternate));Assert.Equal(alternate,h.Window.Services.CurrentPath);
+        Assert.Equal(before,(await h.Send("doc.snapshot")).Result!.Value.GetRawText());
+        await File.WriteAllTextAsync(Path.Combine(evidence,"ui-verification.json"),JsonSerializer.Serialize(new{verifiedUtc=DateTime.UtcNow,realPageAndHost=true,externalPreserved=true,localSnapshotPreserved=true,savedAs=true}));
+    }
+    [Fact]
+    public async Task FileChoiceTargetsItsOriginalTabAfterTheActiveTabChanges()
+    {
+        await using var h=await Harness.StartAsync();var path=await Saved(h);var original=h.Router.CurrentScope!;
+        await File.AppendAllTextAsync(path,"\n");var token=Token(await h.Window.Services.HandleAsync(Req("host.saveJson"),default));
+        await h.Eval("document.querySelector('[data-testid=tab-new]').click(); true");
+        await WaitFor(h,"document.querySelectorAll('[data-testid=tab]').length === 2");
+        var until=DateTime.UtcNow.AddSeconds(10);while(h.Router.CurrentScope?.DocumentId==original.DocumentId){if(DateTime.UtcNow>until)throw new TimeoutException();await Task.Delay(50);}
+        var showing=h.Router.CurrentScope!;Assert.Null((await Resolve(h,token,"reload",true)).Error);
+        Assert.Equal(showing,h.Router.CurrentScope);Assert.Null(h.Window.Services.CurrentPath);Assert.Equal(path,h.Window.Services.PathOf(original.DocumentId));
+        var reloaded=h.Router.ScopeOf(original.DocumentId)!;Assert.False((await h.Send("doc.status",scope:reloaded)).Result!.Value.GetProperty("unsaved").GetBoolean());
+        await h.Window.RecoveryMgr.DrainAsync();
+        Assert.Equal(path,Assert.Single(await h.Window.Recovery.ReadRecoveryAsync(null,default),c=>c.SessionId==reloaded.SessionId).OriginalPath);
+    }
+
 }
