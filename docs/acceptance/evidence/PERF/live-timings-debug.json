@@ -1,5 +1,5 @@
 {
-  "recorded": "2026-10-18T18:21:55.2629984Z",
+  "recorded": "2026-10-18T18:56:54.4095693Z",
   "machine": {
     "os": "Microsoft Windows NT 10.0.26300.0",
     "cpus": 4,
@@ -9,7 +9,7 @@
   },
   "warmup": {
     "seconds": 10,
-    "longestCallMs": 60.9,
+    "longestCallMs": 4426.2,
     "note": "the shim start-up freeze of the test process, kept out of the measurements"
   },
   "fixture": {
@@ -17,30 +17,30 @@
     "shapes": 460,
     "connectors": 40,
     "pages": 1,
-    "buildMs": 128.5,
+    "buildMs": 135.8,
     "canvasGroups": 1425,
     "summaryBytes": 82732,
     "previewBytes": 196786,
-    "vsdxBytes": 42936
+    "vsdxBytes": 43388
   },
   "singleEditAgent": {
     "runs": 10,
     "samplesMs": [
-      10.7,
-      8,
+      17.3,
+      10.3,
+      10.5,
+      9.7,
+      16.4,
       9.2,
-      7.8,
-      8.5,
-      9.2,
-      8.8,
       9.8,
-      8.8,
-      7.5
+      9.6,
+      11.2,
+      10
     ],
-    "minMs": 7.5,
-    "medianMs": 8.8,
-    "p95Ms": 10.7,
-    "maxMs": 10.7,
+    "minMs": 9.2,
+    "medianMs": 10.3,
+    "p95Ms": 17.3,
+    "maxMs": 17.3,
     "preferredMs": 100,
     "acceptableMs": 250,
     "meetsPreferred": true
@@ -48,21 +48,21 @@
   "singleEditPainted": {
     "runs": 10,
     "samplesMs": [
-      40.8,
-      30.5,
-      32.4,
-      31.8,
+      42.5,
+      30.6,
+      31.3,
+      32.1,
+      46.8,
       30.3,
-      31,
-      31.7,
-      31,
-      31.2,
-      32
+      32.5,
+      29.8,
+      31.3,
+      34.1
     ],
-    "minMs": 30.3,
-    "medianMs": 31.7,
-    "p95Ms": 40.8,
-    "maxMs": 40.8,
+    "minMs": 29.8,
+    "medianMs": 32.1,
+    "p95Ms": 46.8,
+    "maxMs": 46.8,
     "preferredMs": 100,
     "acceptableMs": 250,
     "meetsPreferred": true
@@ -70,16 +70,16 @@
   "batch100": {
     "runs": 5,
     "samplesMs": [
-      38.1,
-      35.5,
-      34.7,
-      36.1,
-      34.6
+      44.2,
+      37.8,
+      39.8,
+      37.1,
+      37.4
     ],
-    "minMs": 34.6,
-    "medianMs": 35.5,
-    "p95Ms": 38.1,
-    "maxMs": 38.1,
+    "minMs": 37.1,
+    "medianMs": 37.8,
+    "p95Ms": 44.2,
+    "maxMs": 44.2,
     "preferredMs": 500,
     "acceptableMs": null,
     "meetsPreferred": true
@@ -87,21 +87,21 @@
   "summaryOverMcp": {
     "runs": 10,
     "samplesMs": [
-      8.9,
-      6.4,
-      6.3,
-      7.1,
-      6.4,
-      6.8,
-      6.8,
-      6.3,
-      8.2,
-      8.5
+      11.8,
+      8,
+      10.1,
+      17,
+      8,
+      8.1,
+      13,
+      7.2,
+      9,
+      7.2
     ],
-    "minMs": 6.3,
-    "medianMs": 6.8,
-    "p95Ms": 8.9,
-    "maxMs": 8.9,
+    "minMs": 7.2,
+    "medianMs": 9,
+    "p95Ms": 17,
+    "maxMs": 17,
     "preferredMs": 250,
     "acceptableMs": null,
     "meetsPreferred": true
@@ -109,21 +109,21 @@
   "summaryHostOnly": {
     "runs": 10,
     "samplesMs": [
-      1.7,
       1.5,
-      2.4,
-      1.9,
-      1.9,
+      2.3,
+      1.4,
+      3.5,
+      1.6,
       1.2,
       1.3,
-      1.3,
-      3.4,
+      1.2,
+      1.2,
       1.3
     ],
     "minMs": 1.2,
-    "medianMs": 1.7,
-    "p95Ms": 3.4,
-    "maxMs": 3.4,
+    "medianMs": 1.4,
+    "p95Ms": 3.5,
+    "maxMs": 3.5,
     "preferredMs": 250,
     "acceptableMs": null,
     "meetsPreferred": true
@@ -131,16 +131,16 @@
   "previewPage1600x1200": {
     "runs": 5,
     "samplesMs": [
-      187.4,
-      55.9,
-      80.3,
-      55.3,
-      52
+      192,
+      54.4,
+      74.4,
+      48,
+      49
     ],
-    "minMs": 52,
-    "medianMs": 55.9,
-    "p95Ms": 187.4,
-    "maxMs": 187.4,
+    "minMs": 48,
+    "medianMs": 54.4,
+    "p95Ms": 192,
+    "maxMs": 192,
     "preferredMs": 1000,
     "acceptableMs": null,
     "meetsPreferred": true
@@ -148,16 +148,16 @@
   "vsdxSave": {
     "runs": 5,
     "samplesMs": [
-      4297.3,
-      91,
-      101.5,
-      86.5,
-      92.3
+      72.6,
+      81.4,
+      71.4,
+      88.2,
+      90
     ],
-    "minMs": 86.5,
-    "medianMs": 92.3,
-    "p95Ms": 4297.3,
-    "maxMs": 4297.3,
+    "minMs": 71.4,
+    "medianMs": 81.4,
+    "p95Ms": 90,
+    "maxMs": 90,
     "preferredMs": 3000,
     "acceptableMs": null,
     "meetsPreferred": true

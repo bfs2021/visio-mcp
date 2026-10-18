@@ -120,7 +120,7 @@ public partial class MainWindow : Window
     public async Task<bool> ApproveCloseAsync(bool discard)
     {
         if (!closeAsked) return false;
-        if (discard) { try { await RecoveryMgr.DiscardCurrentAsync(); } catch (Exception e) when (e is IOException or UnauthorizedAccessException) { } }
+        if (discard) { try { await RecoveryMgr.DiscardAllAsync(); } catch (Exception e) when (e is IOException or UnauthorizedAccessException) { } }
         await Dispatcher.InvokeAsync(() => { closeApproved = true; Close(); });
         return true;
     }

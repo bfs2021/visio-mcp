@@ -8,6 +8,8 @@ import { EditorModel, noHost, type HostApi } from './editor/EditorModel';
 import type { HostServices } from './bridge/hostServices';
 import { createSnapshotRenderer } from './render/SnapshotRenderer';
 import { createBrowserLayoutContext } from './layout/browserContext';
+import { WorkspaceModel } from './workspace/WorkspaceModel';
+import type { DocumentState } from './workspace/Workspace';
 
 function hostApi(host: HostServices | null): HostApi {
   if (!host) return noHost;
@@ -33,65 +35,89 @@ function hostApi(host: HostServices | null): HostApi {
   };
 }
 
-let model: EditorModel | null = null;
 const assetUrl = (snapshot: { document: { assets: Array<{ id: string; sha256: string }> } }, id: string) => {
   const a = snapshot.document.assets.find(x => x.id === id);
   return a ? `/assets/${a.sha256}` : '';
 };
 const renderer = createSnapshotRenderer({ assetUrl: assetUrl as never });
-const { engine, host, router, sessionChanged, workspace } = startApp(window.chrome?.webview, null, { onSessionChanged: () => model?.sessionReplaced(), render: renderer.render, rasterise: renderer.rasterise, layoutContext: createBrowserLayoutContext(assetUrl as never), beforeClose: async () => model!.beginClose() });
-model = new EditorModel(engine);
-workspace.active!.ui = model; // the first tab's editor; the tab strip (W02b) gives every document its own
-model.host = hostApi(host);
-model.proposeComponent = async params => {
-  if (!router) return { ok: false, error: { code: 'not_ready', message: 'The editor bridge is unavailable', retryable: false } };
-  const r = await router.dispatch({ protocolVersion: 1, kind: 'request', requestId: crypto.randomUUID(), ...engine.scope(), method: 'components.get', params } as never);
-  return r.error ? { ok: false, error: r.error } : { ok: true, value: r.result as unknown as ComponentProposal & { base64: string; mimeType: string } };
-};
-model.afterRecoveryRestore = sessionChanged;
-model.renderPreview = async doc => {
-  const r = await renderer.render({ documentId: doc.id, sessionId: doc.id, revision: 0, document: doc }, undefined, { scope: 'page', pageId: doc.pages[0]!.id, maxWidth: 280, maxHeight: 200, format: 'png' });
-  return r.ok ? `data:${r.value.mimeType};base64,${r.value.base64}` : null;
-};
+let ws: WorkspaceModel | null = null;
+const app = startApp(window.chrome?.webview, null, {
+  onSessionChanged: state => (state.ui as EditorModel | null)?.sessionReplaced(),
+  render: renderer.render, rasterise: renderer.rasterise, layoutContext: createBrowserLayoutContext(assetUrl as never),
+  beforeClose: async () => ws!.beginClose(),
+});
+const { engine, host, router, sessionChanged, workspace } = app;
+
+/** What every tab's editor needs from the page: the host, component previews, the renderer, and the gesture interlock. */
+function configure(model: EditorModel, state: DocumentState): void {
+  model.proposeComponent = async params => {
+    if (!router) return { ok: false, error: { code: 'not_ready', message: 'The editor bridge is unavailable', retryable: false } };
+    const r = await router.dispatch({ protocolVersion: 1, kind: 'request', requestId: crypto.randomUUID(), ...model.engine.scope(), method: 'components.get', params } as never);
+    return r.error ? { ok: false, error: r.error } : { ok: true, value: r.result as unknown as ComponentProposal & { base64: string; mimeType: string } };
+  };
+  model.afterRecoveryRestore = () => sessionChanged(state);
+  model.renderPreview = async doc => {
+    const r = await renderer.render({ documentId: doc.id, sessionId: doc.id, revision: 0, document: doc }, undefined, { scope: 'page', pageId: doc.pages[0]!.id, maxWidth: 280, maxHeight: 200, format: 'png' });
+    return r.ok ? `data:${r.value.mimeType};base64,${r.value.base64}` : null;
+  };
+  if (router) model.onGestureState = active => router.setGestureActive(active); // an outside mutation waits (briefly) while the user is mid-gesture
+}
+
+const firstModel = new EditorModel(engine);
+ws = new WorkspaceModel(app, firstModel);
+ws.configure = configure;
+ws.host = hostApi(host);
+configure(firstModel, workspace.active!);
+const model = firstModel;
 void model.checkRecovery(); // unfinished work from an earlier run is offered (or, after a renderer crash, restored at once)
-if (router) model.onGestureState = active => router.setGestureActive(active); // an outside mutation waits (briefly) while the user is mid-gesture
 
 // A read-only window onto the editor for automated tests. It is compiled out of production builds, and nothing here edits the document.
+// It always points at the active tab, so a test sees what the person sees.
 if (import.meta.env.VITE_TEST_API === '1') {
-  const m = model;
-  const recorded: unknown[] = [];
-  engine.onCommitted(e => recorded.push(JSON.parse(JSON.stringify(e))));
+  const shell = ws;
+  const cur = () => shell.active;
+  const recorded = new Map<unknown, unknown[]>();
+  const record = (state: DocumentState) => { const list: unknown[] = []; recorded.set(state.engine, list); state.engine.onCommitted(e => list.push(JSON.parse(JSON.stringify(e)))); };
+  record(workspace.active!);
+  workspace.subscribe(e => { if (e.kind === 'opened') record(e.state); });
   (window as unknown as { __editor: unknown }).__editor = {
-    committedEvents: () => JSON.parse(JSON.stringify(recorded)),
-    checkRecovery: () => m.checkRecovery(),
-    beginClose: () => m.beginClose(),
-    markSaved: async (path: string) => { await m.engine.markSaved(m.engine.scope(), m.engine.revision, path); m.say(`Saved ${path}.`, 'info'); },
-    snapshot: () => JSON.parse(JSON.stringify(m.snapshot)),
-    selection: () => [...m.selection],
-    status: () => ({ ...m.status, ...m.engine.status() }),
-    centre: (id: string) => m.canvas!.centerOf(id),
-    handle: (id: string, which: 'rotate' | 'se' | 'bend') => m.canvas!.handleOf(id, which),
-    sheetRect: () => m.canvas!.sheetRect(),
-    viewport: () => m.viewport,
+    committedEvents: () => JSON.parse(JSON.stringify(recorded.get(cur().engine) ?? [])),
+    checkRecovery: () => cur().checkRecovery(),
+    beginClose: () => shell.beginClose(),
+    markSaved: async (path: string) => { const m = cur(); await m.engine.markSaved(m.engine.scope(), m.engine.revision, path); m.say(`Saved ${path}.`, 'info'); },
+    snapshot: () => JSON.parse(JSON.stringify(cur().snapshot)),
+    selection: () => [...cur().selection],
+    status: () => ({ ...cur().status, ...cur().engine.status() }),
+    centre: (id: string) => cur().canvas!.centerOf(id),
+    handle: (id: string, which: 'rotate' | 'se' | 'bend') => cur().canvas!.handleOf(id, which),
+    sheetRect: () => cur().canvas!.sheetRect(),
+    viewport: () => cur().viewport,
     textEdit: (id: string, text: string | null) => {
-      const g = m.canvas!.graph;
+      const g = cur().canvas!.graph;
       const cell = g.getDataModel().getCell(id)!;
       g.startEditingAtCell(cell);
       const ed = g.getPlugin('CellEditorHandler') as unknown as { textarea: HTMLElement };
       if (text !== null) ed.textarea.innerText = text;
       g.stopEditing(text === null);
     },
-    callTool: (method: string, params: Record<string, unknown>) => router!.dispatch({ protocolVersion: 1, kind: 'request', requestId: crypto.randomUUID(), method, ...m.engine.scope(), params } as never),
-    setHost: (h: Partial<HostApi>) => { m.host = { ...noHost, ...h }; },
-    exportSnapshot: async () => { const r = await m.engine.exportSnapshot(m.engine.scope()); return r.ok ? JSON.parse(JSON.stringify(r.value)) : { error: r.error }; },
-    changesSince: async (revision: number) => { const r = await m.engine.getChanges(m.engine.scope(), revision); return r.ok ? JSON.parse(JSON.stringify(r.value)) : { error: r.error }; },
-    targets: () => [...m.targets],
-    gestureActive: () => m.controller.isActive(),
-    agentApply: (operations: unknown[], baseRevision?: number) => m.engine.execute({
+    callTool: (method: string, params: Record<string, unknown>) => router!.dispatch({ protocolVersion: 1, kind: 'request', requestId: crypto.randomUUID(), method, ...cur().engine.scope(), params } as never),
+    setHost: (h: Partial<HostApi>) => { shell.host = { ...noHost, ...h }; },
+    exportSnapshot: async () => { const m = cur(); const r = await m.engine.exportSnapshot(m.engine.scope()); return r.ok ? JSON.parse(JSON.stringify(r.value)) : { error: r.error }; },
+    changesSince: async (revision: number) => { const m = cur(); const r = await m.engine.getChanges(m.engine.scope(), revision); return r.ok ? JSON.parse(JSON.stringify(r.value)) : { error: r.error }; },
+    targets: () => [...cur().targets],
+    gestureActive: () => cur().controller.isActive(),
+    agentApply: (operations: unknown[], baseRevision?: number) => { const m = cur(); return m.engine.execute({
       ...m.engine.scope(), transactionId: crypto.randomUUID(), baseRevision: baseRevision ?? m.engine.revision, atomic: true, operations,
-    } as never, 'mcp'),
-    nodeCount: () => m.canvas!.graph.getDataModel().getCell(m.currentPage.id) ? 0 : (m.canvas!.graph.getDefaultParent().getChildCount()),
+    } as never, 'mcp'); },
+    nodeCount: () => cur().canvas!.graph.getDataModel().getCell(cur().currentPage.id) ? 0 : (cur().canvas!.graph.getDefaultParent().getChildCount()),
+    // tabs
+    tabs: () => shell.tabs.map(t => ({ label: t.tabLabel, unsaved: t.engine.status().unsaved, documentId: t.engine.scope().documentId, active: t === shell.active })),
+    newTab: () => { shell.newTab(); },
+    openFile: (kind?: 'json' | 'vsdx') => shell.openFile(kind),
+    closeTab: (index?: number) => shell.closeTab(index === undefined ? shell.active : shell.tabs[index]!),
+    activateTab: (index: number) => shell.activate(shell.tabs[index]!),
+    agentOpenDocument: (opts?: { activate?: boolean }) => app.openDocument(opts ?? {}).engine.scope(),
   };
 }
 
-createRoot(document.getElementById('root')!).render(<App model={model} />);
+createRoot(document.getElementById('root')!).render(<App ws={ws} />);

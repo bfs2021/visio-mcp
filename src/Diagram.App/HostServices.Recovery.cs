@@ -73,7 +73,7 @@ public sealed partial class HostServices
             case "host.recovery.discard":
             {
                 var id = request.Params["sessionId"]?.GetValue<string>();
-                if (string.IsNullOrEmpty(id) || id == mgr.SessionId) return Err(request, "invalid_request", "that session cannot be discarded");
+                if (string.IsNullOrEmpty(id) || mgr.OpenSessions.Contains(id)) return Err(request, "invalid_request", "that session belongs to an open document and cannot be discarded");
                 await mgr.DiscardAsync(id);
                 return Ok(request, new JsonObject { ["discarded"] = id });
             }
@@ -81,7 +81,7 @@ public sealed partial class HostServices
             {
                 // the page replaced the document with the rebuilt one: keep its original path, and let the old session go once the new one is safe
                 var id = request.Params["sessionId"]?.GetValue<string>();
-                if (string.IsNullOrEmpty(id) || id == mgr.SessionId) return Err(request, "invalid_request", "that session cannot be finished");
+                if (string.IsNullOrEmpty(id) || mgr.OpenSessions.Contains(id)) return Err(request, "invalid_request", "that session cannot be finished");
                 var original = request.Params["originalPath"]?.GetValue<string>();
                 SetCurrentPath(original);
                 await mgr.FinishRestoreAsync(id);

@@ -15,7 +15,7 @@ declare global {
  * announces readiness. `editor.ready` is sent only after the handler is registered, so the host never sees a ready editor that cannot answer.
  * Documents opened or closed later are announced to the host as they happen, so it always knows which are open and which is active.
  */
-export function startApp(webview: WebViewLike | undefined, root: HTMLElement | null = typeof document !== 'undefined' ? document.getElementById('status') : null, hooks: { onSessionChanged?: () => void; render?: EngineHandlerOptions['render']; layoutContext?: EngineHandlerOptions['layoutContext']; rasterise?: EngineHandlerOptions['rasterise']; beforeClose?: EngineHandlerOptions['beforeClose'] } = {}) {
+export function startApp(webview: WebViewLike | undefined, root: HTMLElement | null = typeof document !== 'undefined' ? document.getElementById('status') : null, hooks: { onSessionChanged?: (state: DocumentState) => void; render?: EngineHandlerOptions['render']; layoutContext?: EngineHandlerOptions['layoutContext']; rasterise?: EngineHandlerOptions['rasterise']; beforeClose?: EngineHandlerOptions['beforeClose'] } = {}) {
   const workspace = new Workspace();
   const first = workspace.add(new CommandEngine({ document: newDocument() }));
   const engine = first.engine;
@@ -35,7 +35,7 @@ export function startApp(webview: WebViewLike | undefined, root: HTMLElement | n
   // The one place that reacts to a replaced document, whether the host asked for it (open) or the page did (recovery).
   const sessionChanged = (state: DocumentState = workspace.active ?? first) => {
     const replaces = workspace.restarted(state);
-    router.cancelGesture(); show(); announce('editor.session', state, { replaces }); hooks.onSessionChanged?.();
+    router.cancelGesture(); show(); announce('editor.session', state, { replaces }); hooks.onSessionChanged?.(state);
   };
   // The router exists with or without a host, so a plain browser (tests, development) can exercise the same request path.
   const router = createRequestRouter(workspace.engineOf, {
