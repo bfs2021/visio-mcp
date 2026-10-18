@@ -1,6 +1,6 @@
 # W03 — New document and page-size templates
 
-Status: proposed design for user review, 2026-10-18.
+Status: approved by the user in chat, 2026-10-18; implemented on the feature branch.
 Issue: https://github.com/rp2839/visio-mcp/issues/25
 Branch: `codex/w03-new-document`, based on main `0c336be`.
 
@@ -40,4 +40,4 @@ R09 has not been implemented, so swim-lane/flow starter choices are deferred to 
 
 ## Approval requested
 
-Approve this bounded design before implementation. The next step is focused tests and code on this branch, reconciled with W02's current creation interface. The design is a proposal; this file does not claim that W03 is implemented or tested.
+The user approved this design in chat on 2026-10-18. Implementation and verification are recorded in [W03 results](../m5/W03-new-document.md). W02a main `1dbcf56` was merged during development. It supplies internal workspace/registry interfaces but retains a single visible document; this implementation uses the protected replacement flow until W02b supplies the tab shell. W02b must reuse the picker/factory, create a new tab, skip the replacement/discard step and preserve the previous model and recovery track.

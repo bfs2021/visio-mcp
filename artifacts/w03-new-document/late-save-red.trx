@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="beb47401-8a30-45ff-89a3-2c8831bcfa36" name="claude@W11-TEMPLATE 2026-10-18 19:36:52" runUser="W11-TEMPLATE\claude" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-18T19:36:52.8601096+01:00" queuing="2026-10-18T19:36:52.8601100+01:00" start="2026-10-18T19:36:45.8093046+01:00" finish="2026-10-18T19:36:52.8640811+01:00" />
+  <TestSettings name="default" id="5fa8e8ff-2e07-423a-a6ac-8731f918a568">
+    <Deployment runDeploymentRoot="claude_W11-TEMPLATE_2026-10-18_19_36_52" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="49575c37-a622-4440-b262-ef63dcf67aa7" testId="bc62a921-e852-5e27-5c5e-33239a47efcf" testName="Diagram.Windows.Tests.NewDocumentTests.APreviousSaveCannotGiveTheNewDrawingItsOldPath" computerName="W11-TEMPLATE" duration="00:00:03.0065151" startTime="2026-10-18T19:36:49.7464406+01:00" endTime="2026-10-18T19:36:52.7602109+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="49575c37-a622-4440-b262-ef63dcf67aa7">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Null() Failure: Value is not null&#xD;
+Expected: null&#xD;
+Actual:   AppError { Code = document_mismatch, Message = the document is not the open one, Retryable = False, Details = , Outcome =  }</Message>
+          <StackTrace>   at Diagram.Windows.Tests.NewDocumentTests.APreviousSaveCannotGiveTheNewDrawingItsOldPath() in C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\NewDocumentTests.cs:line 59&#xD;
+   at Diagram.Windows.Tests.NewDocumentTests.APreviousSaveCannotGiveTheNewDrawingItsOldPath() in C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\NewDocumentTests.cs:line 63&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Diagram.Windows.Tests.NewDocumentTests.APreviousSaveCannotGiveTheNewDrawingItsOldPath" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="bc62a921-e852-5e27-5c5e-33239a47efcf">
+      <Execution id="49575c37-a622-4440-b262-ef63dcf67aa7" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.NewDocumentTests" name="APreviousSaveCannotGiveTheNewDrawingItsOldPath" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="bc62a921-e852-5e27-5c5e-33239a47efcf" executionId="49575c37-a622-4440-b262-ef63dcf67aa7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="1" executed="1" passed="0" failed="1" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v4.0.1+0f7d528729 (64-bit .NET 10.0.13)&#xD;
+[xUnit.net 00:00:00.37]   Discovering: Diagram.Windows.Tests&#xD;
+[xUnit.net 00:00:02.68]   Discovered:  Diagram.Windows.Tests&#xD;
+[xUnit.net 00:00:02.70]   Starting:    Diagram.Windows.Tests&#xD;
+[xUnit.net 00:00:05.75]       Assert.Null() Failure: Value is not null&#xD;
+[xUnit.net 00:00:05.75]       Expected: null&#xD;
+[xUnit.net 00:00:05.75]       Actual:   AppError { Code = document_mismatch, Message = the document is not the open one, Retryable = False, Details = , Outcome =  }&#xD;
+[xUnit.net 00:00:05.75]       Stack Trace:&#xD;
+[xUnit.net 00:00:05.75]         C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\NewDocumentTests.cs(59,0): at Diagram.Windows.Tests.NewDocumentTests.APreviousSaveCannotGiveTheNewDrawingItsOldPath()&#xD;
+[xUnit.net 00:00:05.75]         C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\NewDocumentTests.cs(63,0): at Diagram.Windows.Tests.NewDocumentTests.APreviousSaveCannotGiveTheNewDrawingItsOldPath()&#xD;
+[xUnit.net 00:00:05.75]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:05.76]   Finished:    Diagram.Windows.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="W11-TEMPLATE" outcome="Error" timestamp="2026-10-18T19:36:52.7651413+01:00">
+        <Text>[xUnit.net 00:00:05.75]     Diagram.Windows.Tests.NewDocumentTests.APreviousSaveCannotGiveTheNewDrawingItsOldPath [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

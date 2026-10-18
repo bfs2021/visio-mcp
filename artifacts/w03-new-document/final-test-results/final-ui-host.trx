@@ -1,0 +1,88 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="cdabda3a-1109-4fc3-8be7-2875ff6ce166" name="claude@W11-TEMPLATE 2026-10-18 19:49:24" runUser="W11-TEMPLATE\claude" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-18T19:49:24.8740201+01:00" queuing="2026-10-18T19:49:24.8740209+01:00" start="2026-10-18T19:49:19.1339395+01:00" finish="2026-10-18T19:49:41.0568237+01:00" />
+  <TestSettings name="default" id="f282310f-d278-4352-8b99-c4009c468980">
+    <Deployment runDeploymentRoot="claude_W11-TEMPLATE_2026-10-18_19_49_24" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="bf97652a-08ef-437c-93d5-2385bd78f9dd" testId="75b5a00c-0190-6a9e-d9d8-17719c40c0ba" testName="Diagram.Windows.Tests.CloseTests.CancelKeepsTheWindowOpenAndTheWorkProtectedAndItAsksAgain" computerName="W11-TEMPLATE" duration="00:00:01.8094407" startTime="2026-10-18T19:49:31.3481562+01:00" endTime="2026-10-18T19:49:33.1580658+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bf97652a-08ef-437c-93d5-2385bd78f9dd" />
+    <UnitTestResult executionId="ddd49701-91f5-4ed0-a890-7beaf4c8c6a9" testId="9caea819-6f4e-020c-c225-fd84794b7b8d" testName="Diagram.Windows.Tests.CloseTests.DontSaveClosesAndTheWorkIsNotOfferedOnTheNextStart" computerName="W11-TEMPLATE" duration="00:00:02.4689954" startTime="2026-10-18T19:49:35.6142970+01:00" endTime="2026-10-18T19:49:38.0837478+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ddd49701-91f5-4ed0-a890-7beaf4c8c6a9" />
+    <UnitTestResult executionId="630624fb-cf49-4eed-9eb4-87847e4c3acf" testId="735a184b-c6da-bd85-efb1-e47d15f0a6bf" testName="Diagram.Windows.Tests.CloseTests.ACancelledSaveAsDoesNotCloseTheWindow" computerName="W11-TEMPLATE" duration="00:00:01.2337360" startTime="2026-10-18T19:49:38.0842863+01:00" endTime="2026-10-18T19:49:39.3208175+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="630624fb-cf49-4eed-9eb4-87847e4c3acf" />
+    <UnitTestResult executionId="6e1eead9-6f25-4933-8982-19025458855a" testId="1610d583-872f-3ea7-2f44-0d1a84067d00" testName="Diagram.Windows.Tests.CloseTests.TheWindowTitleNamesTheFileAndMarksUnsavedWork" computerName="W11-TEMPLATE" duration="00:00:01.5120979" startTime="2026-10-18T19:49:33.1585447+01:00" endTime="2026-10-18T19:49:34.6708050+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6e1eead9-6f25-4933-8982-19025458855a" />
+    <UnitTestResult executionId="11eb5051-625b-4638-af60-00b03681759f" testId="65893e3e-2153-b571-11bc-b2094f6e3553" testName="Diagram.Windows.Tests.CloseTests.SaveWritesTheFileThenClosesAndLeavesNothingToRecover" computerName="W11-TEMPLATE" duration="00:00:01.4079374" startTime="2026-10-18T19:49:29.9412132+01:00" endTime="2026-10-18T19:49:31.3479511+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="11eb5051-625b-4638-af60-00b03681759f" />
+    <UnitTestResult executionId="0bb9a75e-4679-4998-b06e-0ac850ee29e9" testId="776a9a4a-0e4f-3b7b-2314-8213dbdfadc0" testName="Diagram.Windows.Tests.CloseTests.ADocumentWithNoChangesClosesWithoutAsking" computerName="W11-TEMPLATE" duration="00:00:00.9421694" startTime="2026-10-18T19:49:34.6713198+01:00" endTime="2026-10-18T19:49:35.6140539+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0bb9a75e-4679-4998-b06e-0ac850ee29e9" />
+    <UnitTestResult executionId="6c8a05d2-e55a-4c71-b681-56643b9ea97d" testId="bc62a921-e852-5e27-5c5e-33239a47efcf" testName="Diagram.Windows.Tests.NewDocumentTests.APreviousSaveCannotGiveTheNewDrawingItsOldPath" computerName="W11-TEMPLATE" duration="00:00:02.5687160" startTime="2026-10-18T19:49:27.3671143+01:00" endTime="2026-10-18T19:49:29.9352122+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6c8a05d2-e55a-4c71-b681-56643b9ea97d" />
+    <UnitTestResult executionId="0ad698cb-98cc-41ec-b192-06659823380b" testId="55c4b1c2-d760-707a-1acc-9d53f5c9a311" testName="Diagram.Windows.Tests.NewDocumentTests.FileNewRunsThroughTheRealPageAndHostAndClearsSavedPath" computerName="W11-TEMPLATE" duration="00:00:02.5053492" startTime="2026-10-18T19:49:24.8585464+01:00" endTime="2026-10-18T19:49:27.3658212+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0ad698cb-98cc-41ec-b192-06659823380b" />
+    <UnitTestResult executionId="4c6916b0-0675-444d-8e86-2ff6c69170f4" testId="b0f68377-37d0-542e-0c60-e13e69145db3" testName="Diagram.Windows.Tests.NewDocumentTests.NewGuardsRevisionAndConsentAndPersistsExplicitBlankRecovery" computerName="W11-TEMPLATE" duration="00:00:02.7526970" startTime="2026-10-18T19:49:22.0860087+01:00" endTime="2026-10-18T19:49:24.8464343+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4c6916b0-0675-444d-8e86-2ff6c69170f4" />
+    <UnitTestResult executionId="b688932c-5c9d-42d9-b3e2-773119a882bb" testId="9f76b0bd-f024-48bb-beb6-c171c39b8b85" testName="Diagram.Windows.Tests.CloseTests.TheRecoveryListDescribesEachSessionAndForgetsOnesThatWereDiscarded" computerName="W11-TEMPLATE" duration="00:00:01.6474609" startTime="2026-10-18T19:49:39.3209601+01:00" endTime="2026-10-18T19:49:40.9700259+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b688932c-5c9d-42d9-b3e2-773119a882bb" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Diagram.Windows.Tests.NewDocumentTests.FileNewRunsThroughTheRealPageAndHostAndClearsSavedPath" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="55c4b1c2-d760-707a-1acc-9d53f5c9a311">
+      <Execution id="0ad698cb-98cc-41ec-b192-06659823380b" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.NewDocumentTests" name="FileNewRunsThroughTheRealPageAndHostAndClearsSavedPath" />
+    </UnitTest>
+    <UnitTest name="Diagram.Windows.Tests.CloseTests.ADocumentWithNoChangesClosesWithoutAsking" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="776a9a4a-0e4f-3b7b-2314-8213dbdfadc0">
+      <Execution id="0bb9a75e-4679-4998-b06e-0ac850ee29e9" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.CloseTests" name="ADocumentWithNoChangesClosesWithoutAsking" />
+    </UnitTest>
+    <UnitTest name="Diagram.Windows.Tests.CloseTests.DontSaveClosesAndTheWorkIsNotOfferedOnTheNextStart" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="9caea819-6f4e-020c-c225-fd84794b7b8d">
+      <Execution id="ddd49701-91f5-4ed0-a890-7beaf4c8c6a9" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.CloseTests" name="DontSaveClosesAndTheWorkIsNotOfferedOnTheNextStart" />
+    </UnitTest>
+    <UnitTest name="Diagram.Windows.Tests.NewDocumentTests.NewGuardsRevisionAndConsentAndPersistsExplicitBlankRecovery" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="b0f68377-37d0-542e-0c60-e13e69145db3">
+      <Execution id="4c6916b0-0675-444d-8e86-2ff6c69170f4" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.NewDocumentTests" name="NewGuardsRevisionAndConsentAndPersistsExplicitBlankRecovery" />
+    </UnitTest>
+    <UnitTest name="Diagram.Windows.Tests.CloseTests.ACancelledSaveAsDoesNotCloseTheWindow" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="735a184b-c6da-bd85-efb1-e47d15f0a6bf">
+      <Execution id="630624fb-cf49-4eed-9eb4-87847e4c3acf" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.CloseTests" name="ACancelledSaveAsDoesNotCloseTheWindow" />
+    </UnitTest>
+    <UnitTest name="Diagram.Windows.Tests.CloseTests.TheRecoveryListDescribesEachSessionAndForgetsOnesThatWereDiscarded" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="9f76b0bd-f024-48bb-beb6-c171c39b8b85">
+      <Execution id="b688932c-5c9d-42d9-b3e2-773119a882bb" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.CloseTests" name="TheRecoveryListDescribesEachSessionAndForgetsOnesThatWereDiscarded" />
+    </UnitTest>
+    <UnitTest name="Diagram.Windows.Tests.NewDocumentTests.APreviousSaveCannotGiveTheNewDrawingItsOldPath" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="bc62a921-e852-5e27-5c5e-33239a47efcf">
+      <Execution id="6c8a05d2-e55a-4c71-b681-56643b9ea97d" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.NewDocumentTests" name="APreviousSaveCannotGiveTheNewDrawingItsOldPath" />
+    </UnitTest>
+    <UnitTest name="Diagram.Windows.Tests.CloseTests.TheWindowTitleNamesTheFileAndMarksUnsavedWork" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="1610d583-872f-3ea7-2f44-0d1a84067d00">
+      <Execution id="6e1eead9-6f25-4933-8982-19025458855a" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.CloseTests" name="TheWindowTitleNamesTheFileAndMarksUnsavedWork" />
+    </UnitTest>
+    <UnitTest name="Diagram.Windows.Tests.CloseTests.CancelKeepsTheWindowOpenAndTheWorkProtectedAndItAsksAgain" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="75b5a00c-0190-6a9e-d9d8-17719c40c0ba">
+      <Execution id="bf97652a-08ef-437c-93d5-2385bd78f9dd" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.CloseTests" name="CancelKeepsTheWindowOpenAndTheWorkProtectedAndItAsksAgain" />
+    </UnitTest>
+    <UnitTest name="Diagram.Windows.Tests.CloseTests.SaveWritesTheFileThenClosesAndLeavesNothingToRecover" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="65893e3e-2153-b571-11bc-b2094f6e3553">
+      <Execution id="11eb5051-625b-4638-af60-00b03681759f" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.CloseTests" name="SaveWritesTheFileThenClosesAndLeavesNothingToRecover" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="75b5a00c-0190-6a9e-d9d8-17719c40c0ba" executionId="bf97652a-08ef-437c-93d5-2385bd78f9dd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9caea819-6f4e-020c-c225-fd84794b7b8d" executionId="ddd49701-91f5-4ed0-a890-7beaf4c8c6a9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="735a184b-c6da-bd85-efb1-e47d15f0a6bf" executionId="630624fb-cf49-4eed-9eb4-87847e4c3acf" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1610d583-872f-3ea7-2f44-0d1a84067d00" executionId="6e1eead9-6f25-4933-8982-19025458855a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="65893e3e-2153-b571-11bc-b2094f6e3553" executionId="11eb5051-625b-4638-af60-00b03681759f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="776a9a4a-0e4f-3b7b-2314-8213dbdfadc0" executionId="0bb9a75e-4679-4998-b06e-0ac850ee29e9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bc62a921-e852-5e27-5c5e-33239a47efcf" executionId="6c8a05d2-e55a-4c71-b681-56643b9ea97d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="55c4b1c2-d760-707a-1acc-9d53f5c9a311" executionId="0ad698cb-98cc-41ec-b192-06659823380b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b0f68377-37d0-542e-0c60-e13e69145db3" executionId="4c6916b0-0675-444d-8e86-2ff6c69170f4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9f76b0bd-f024-48bb-beb6-c171c39b8b85" executionId="b688932c-5c9d-42d9-b3e2-773119a882bb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="10" executed="10" passed="10" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v4.0.1+0f7d528729 (64-bit .NET 10.0.13)&#xD;
+[xUnit.net 00:00:00.17]   Discovering: Diagram.Windows.Tests&#xD;
+[xUnit.net 00:00:02.38]   Discovered:  Diagram.Windows.Tests&#xD;
+[xUnit.net 00:00:02.39]   Starting:    Diagram.Windows.Tests&#xD;
+[xUnit.net 00:00:21.31]   Finished:    Diagram.Windows.Tests&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>
