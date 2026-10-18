@@ -10,18 +10,18 @@
     "expected": 0
   },
   "layoutInspector": {
-    "documentId": "7bdb4776-a618-447e-8510-f585163197e8",
-    "sessionId": "0b2c7b81-168f-47d7-b67f-6e3b15dd18a0",
+    "documentId": "0306668f-9b02-4584-b456-72400aa30d15",
+    "sessionId": "748bba55-cc9b-47f6-a0fc-68e8fa3cfad6",
     "revision": 1,
     "issues": [
       {
         "code": "NEAR_ALIGNMENT",
         "severity": "info",
         "elementIds": [
-          "0d45e60a-2aae-498e-90f7-472163254f70",
-          "a74aa9df-fe05-43c3-8640-6a3a9ad8efc9"
+          "46b6be6a-613a-41df-bce3-ad1539b660a2",
+          "4f5719b9-8faf-4302-95f5-4390f8d40af9"
         ],
-        "pageId": "e5355d24-5a65-4510-b3a6-ec9173581acf",
+        "pageId": "d0d0b81c-65a1-462f-8e92-582fed1a80ba",
         "bounds": {
           "x": 56.69291338582678,
           "y": 113.38582677165356,
@@ -36,8 +36,8 @@
           "deltaPt": 11.338582677165348,
           "tolerancePt": 12,
           "coordinatesPt": {
-            "0d45e60a-2aae-498e-90f7-472163254f70": 124.7244094488189,
-            "a74aa9df-fe05-43c3-8640-6a3a9ad8efc9": 113.38582677165356
+            "46b6be6a-613a-41df-bce3-ad1539b660a2": 113.38582677165356,
+            "4f5719b9-8faf-4302-95f5-4390f8d40af9": 124.7244094488189
           }
         }
       }

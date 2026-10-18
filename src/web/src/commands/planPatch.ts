@@ -14,6 +14,7 @@ import {
 import { ancestorsOf, groupBoundsFrom, leavesUnder } from './groups';
 import { lookupTarget } from './resolveTarget';
 import { parsePath } from '../geometry/svgPath';
+import { isOutlinePreset, PRESET_PORTS } from '../geometry/presetOutlines';
 
 export interface PlanContext {
   newId(): string;
@@ -412,6 +413,7 @@ class Planner {
         if (op.name !== undefined) el.name = op.name;
         if (op.text) el.text = merge(DEFAULT_TEXT, op.text as PatchObj);
         if (op.ports) el.ports = op.ports.map(p => ({ ...p }));
+        else if (isOutlinePreset(el.geometry.preset)) el.ports = PRESET_PORTS[el.geometry.preset].map(p => ({ ...p })); // a flowchart symbol starts with its own connection points
         this.assertPositive(el.bounds, id);
         this.assertFinite(el.rotationDeg, 'rotationDeg');
         if (el.geometry.svgPath !== undefined) { const parsed = parsePath(el.geometry.svgPath); if (!parsed.ok) stop('invalid_request', parsed.error.message); }

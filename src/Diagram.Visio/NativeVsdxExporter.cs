@@ -440,7 +440,7 @@ public sealed class NativeVsdxExporter : IVsdxExporter
                 }
                 if (s.Hidden) foreach (var g2 in new[] { "NoShow" }) shape.Add(Cell("HideText", 1));
                 AddText(shape, s.Text, s.Id);
-                var extra = new List<XElement> { UserRow("AgentPreset", preset), UserRow("AgentGeomSig", GeometryMap.Signature(geo)) };
+                var extra = new List<XElement> { UserRow("AgentPreset", preset), UserRow("AgentGeomSig", GeometryMap.Signature(geo, s.Bounds.Width, s.Bounds.Height)) };
                 if (s.Text is { } tb) { extra.Add(UserRow("AgentTextBlock", "1")); if (!tb.Wrap) extra.Add(UserRow("AgentNoWrap", "1")); }
                 if (s.Style.Stroke is NonePaint) extra.Add(UserRow("AgentStrokeWidthPt", N(s.Style.StrokeWidthPt)));
                 if (s.Geometry.CornerRadiusPt is { } r) extra.Add(UserRow("AgentCornerRadiusPt", N(r)));
@@ -506,6 +506,19 @@ public sealed class NativeVsdxExporter : IVsdxExporter
                         {
                             case MoveRow m: sec.Add(Row("MoveTo", n++, m.At, size)); break;
                             case LineRow l: sec.Add(Row("LineTo", n++, l.To, size)); break;
+                            case ArcRow a:
+                            {
+                                // a native Visio arc: end point plus the distance from the chord to the arc (A), kept in step with the shape's size by formula
+                                var row = Row("ArcTo", n++, a.To, size);
+                                var bulgeIn = a.Bulge(size.Width, size.Height) / PtPerInch;
+                                var terms = new List<string>();
+                                if (a.BulgeW != 0) terms.Add($"Width*{N(a.BulgeW)}");
+                                if (a.BulgeH != 0) terms.Add($"Height*{N(a.BulgeH)}");
+                                if (a.BulgeM != 0) terms.Add($"MIN(Width,Height)*{N(a.BulgeM / 2)}");
+                                row.Add(Cell("A", bulgeIn, terms.Count == 0 ? "0" : string.Join("+", terms).Replace("+-", "-")));
+                                sec.Add(row);
+                                break;
+                            }
                             case EllipseRow el:
                                 sec.Add(new XElement(V + "Row", new XAttribute("T", "Ellipse"), new XAttribute("IX", n++),
                                     Cell("X", el.Centre.X * wi, $"Width*{N(el.Centre.X)}"), Cell("Y", (1 - el.Centre.Y) * hi, $"Height*{N(1 - el.Centre.Y)}"),
@@ -520,7 +533,8 @@ public sealed class NativeVsdxExporter : IVsdxExporter
             // placeholders for unit sizes: rows carry fractions as V and Width/Height formulas; the V values are rewritten with real sizes by SizeFix
             XElement Row(string type, int ix, Frac f, Bounds size) =>
                 new(V + "Row", new XAttribute("T", type), new XAttribute("IX", ix),
-                    Cell("X", f.X * size.Width / PtPerInch, $"Width*{N(f.X)}"), Cell("Y", (1 - f.Y) * size.Height / PtPerInch, $"Height*{N(1 - f.Y)}"));
+                    Cell("X", f.At(size.Width, size.Height).X / PtPerInch, f.Mx == 0 ? $"Width*{N(f.X)}" : $"Width*{N(f.X)}+MIN(Width,Height)*{N(f.Mx / 2)}"),
+                    Cell("Y", (size.Height - f.At(size.Width, size.Height).Y) / PtPerInch, f.My == 0 ? $"Height*{N(1 - f.Y)}" : $"Height*{N(1 - f.Y)}-MIN(Width,Height)*{N(f.My / 2)}"));
 
             IEnumerable<XElement> PortRows(string id) =>
                 ports.TryGetValue(id, out var list) && list.Count > 0

@@ -120,7 +120,7 @@
     "ShapeGeometry": {
       "type": "object", "additionalProperties": false, "required": [],
       "properties": {
-        "preset": { "enum": ["rectangle", "rounded-rectangle", "ellipse", "diamond", "triangle", "hexagon", "parallelogram", "cylinder", "cloud", "callout"] },
+        "preset": { "enum": ["rectangle", "rounded-rectangle", "ellipse", "diamond", "triangle", "hexagon", "parallelogram", "cylinder", "cloud", "callout", "terminator", "stored-data", "document", "lined-document"] },
         "svgPath": { "type": "string", "maxLength": 65536 },
         "cornerRadiusPt": { "type": "number", "minimum": 0 }
       }
