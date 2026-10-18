@@ -15,7 +15,8 @@ sealed class Harness : IAsyncDisposable
 {
     public Dispatcher Ui = null!;
     public MainWindow Window = null!;
-    public readonly string Root = Path.Combine(Path.GetTempPath(), "diagram-win-" + Guid.NewGuid().ToString("N"));
+    public string Root { get; private set; } = Path.Combine(Path.GetTempPath(), "diagram-win-" + Guid.NewGuid().ToString("N"));
+    bool sharedRoot;
     Thread thread = null!;
 
     public BridgeRouter Router => Window.Router;
@@ -24,10 +25,11 @@ sealed class Harness : IAsyncDisposable
     public static string RepoRoot => Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
     public static string Dist => Path.Combine(RepoRoot, "src", "web", "dist");
 
-    public static async Task<Harness> StartAsync(bool navigate = true, string? pipe = null, string? exportRoot = null)
+    public static async Task<Harness> StartAsync(bool navigate = true, string? pipe = null, string? exportRoot = null, string? existingRoot = null)
     {
         EnsureBuilt();
         var h = new Harness();
+        if (existingRoot is not null) { h.Root = existingRoot; h.sharedRoot = true; } // a second run over the same files: what a restart looks like
         var started = new TaskCompletionSource<Dispatcher>();
         h.thread = new Thread(() => { started.SetResult(Dispatcher.CurrentDispatcher); Dispatcher.Run(); }) { IsBackground = true };
         h.thread.SetApartmentState(ApartmentState.STA);
@@ -83,7 +85,7 @@ sealed class Harness : IAsyncDisposable
         try { await Ui.InvokeAsync(() => Window.Close()).Task; } catch { }
         Ui.InvokeShutdown();
         thread.Join(5000);
-        try { Directory.Delete(Root, true); } catch { }
+        if (!sharedRoot) { try { Directory.Delete(Root, true); } catch { } }
     }
 }
 

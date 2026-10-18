@@ -56,6 +56,13 @@ public sealed class BridgeRouter : IEditorChannel, IExportSource, IRasteriser
     /// <summary>Raised for each committed-change event the page emits (the recovery journal subscribes in I51).</summary>
     public event Action<CommittedEvent>? Committed;
 
+    /// <summary>Raised when the page announces a session (first ready, or after the document was replaced). The recovery manager starts its own checkpoint here.</summary>
+    public event Action<Scope, int>? SessionChanged;
+
+    /// <summary>True from a renderer failure until someone takes it: the next session is a restart, so unfinished work should be offered back at once.</summary>
+    public bool RendererFailedRecently { get; private set; }
+    public bool TakeRendererFailure() { lock (gate) { var v = RendererFailedRecently; RendererFailedRecently = false; return v; } }
+
     public async Task WaitReadyAsync(CancellationToken ct)
     {
         Task t;
@@ -109,13 +116,15 @@ public sealed class BridgeRouter : IEditorChannel, IExportSource, IRasteriser
     {
         if (p?["documentId"]?.GetValue<string>() is not { } doc || p["sessionId"]?.GetValue<string>() is not { } session) { Reject("bad_scope"); return; }
         TaskCompletionSource toRelease;
+        Scope announced; int announcedRevision;
         lock (gate)
         {
-            scope = new Scope { DocumentId = doc, SessionId = session };
-            revision = p["revision"]?.GetValue<int>() ?? 0;
+            scope = announced = new Scope { DocumentId = doc, SessionId = session };
+            revision = announcedRevision = p["revision"]?.GetValue<int>() ?? 0;
             toRelease = ready;
         }
         toRelease.TrySetResult();
+        try { SessionChanged?.Invoke(announced, announcedRevision); } catch (Exception) { /* a recovery failure must not break the bridge */ }
     }
 
     void Complete(JsonObject msg)
@@ -151,6 +160,7 @@ public sealed class BridgeRouter : IEditorChannel, IExportSource, IRasteriser
         lock (gate)
         {
             scope = null;
+            RendererFailedRecently = true;
             ready = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             all = pending.Values.Select(p => p.Tcs).ToList();
             pending.Clear();

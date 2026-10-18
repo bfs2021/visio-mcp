@@ -12,7 +12,7 @@ namespace Diagram.App;
 /// <param name="Offscreen">Place the window out of sight (automated tests).</param>
 /// <param name="PipeName">Pipe the MCP shim connects to; null leaves live control off.</param>
 /// <param name="ExportRoot">Folder a client may export into (besides the open document's own folder).</param>
-public sealed record AppOptions(string ContentRoot, string UserDataDir, string BlobDir, bool Offscreen = false, string? PipeName = null, string? ExportRoot = null, string? LibraryDir = null)
+public sealed record AppOptions(string ContentRoot, string UserDataDir, string BlobDir, bool Offscreen = false, string? PipeName = null, string? ExportRoot = null, string? LibraryDir = null, string? RecoveryDir = null)
 {
     public static AppOptions Default()
     {
@@ -40,6 +40,7 @@ public partial class MainWindow : Window
         Preparer = new AssetPreparer(Blobs);
         Library = new AssetLibrary(options.LibraryDir ?? Path.GetFullPath(Path.Combine(options.BlobDir, "..", "library")), Blobs);
         Resolver = new AssetResolver(Library, Preparer);
+        Recovery = new RecoveryStore(options.RecoveryDir ?? Path.GetFullPath(Path.Combine(options.BlobDir, "..", "recovery")), Blobs);
     }
 
     public BlobStore Blobs { get; }
@@ -47,6 +48,8 @@ public partial class MainWindow : Window
     public AssetPreparer Preparer { get; }
     public AssetLibrary Library { get; }
     public AssetResolver Resolver { get; }
+    public RecoveryStore Recovery { get; }
+    public RecoveryManager RecoveryMgr { get; private set; } = null!;
     public WebViewHost Host => host ?? throw new InvalidOperationException("call InitializeAsync first");
     public BridgeRouter Router => Host.Router;
     public SessionCoordinator Coordinator { get; private set; } = null!;
@@ -65,10 +68,17 @@ public partial class MainWindow : Window
         Coordinator = new SessionCoordinator(host.Router, Blobs, Preparer, Writer);
         Services = services;
         Native = new NativeFileCoordinator(host.Router, host.Router, Blobs, Writer, new NativeVsdxImporter(), new NativeVsdxExporter(), host.Router);
-        Exports = new ExportService(this, options.ExportRoot ?? Path.Combine(Path.GetTempPath(), "AgenticDiagramExports"));
+        Exports = new ExportService(this, options.ExportRoot ?? Path.Combine(Path.GetTempPath(), "AgenticDiagramExports"), options.Offscreen ? null : new ExportConsentWindow(this));
+        RecoveryMgr = new RecoveryManager(host.Router, Recovery, Blobs, () => Services.CurrentPath);
+        RecoveryMgr.Start();
         Comparisons = new ReferenceComparisonService(this);
         if (options.PipeName is { } pipe) Live = new LiveControl(pipe, host.Router, Exports.HandleAsync, Library, Resolver, Comparisons.HandleAsync); // fails on a name collision rather than attaching to another owner
-        Closed += async (_, _) => { if (Live is not null) await Live.DisposeAsync(); };
+        Closed += async (_, _) =>
+        {
+            if (Live is not null) await Live.DisposeAsync();
+            try { await RecoveryMgr.CloseCleanlyAsync(); } catch (Exception e) when (e is IOException or UnauthorizedAccessException) { } // leaving recovery files behind is the safe failure
+            await RecoveryMgr.DisposeAsync();
+        };
     }
 
     public void Navigate() => Host.Navigate();

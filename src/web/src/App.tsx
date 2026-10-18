@@ -5,6 +5,7 @@ import { CompatibilityDialog } from './components/CompatibilityDialog';
 import { Drawer } from './components/Drawer';
 import { Inspector } from './components/Inspector';
 import { LayersPanel } from './components/LayersPanel';
+import { RecoveryDialog } from './components/RecoveryDialog';
 import { PageTabs } from './components/PageTabs';
 import { PageCanvas } from './components/PageCanvas';
 import { ShapesPanel } from './components/ShapesPanel';
@@ -63,6 +64,7 @@ export function App({ model }: { model: EditorModel }) {
       <PageTabs model={model} />
       <Drawer model={model} />
       <CompatibilityDialog model={model} />
+      <RecoveryDialog model={model} />
       <StatusBar model={model} />
     </div>
   );

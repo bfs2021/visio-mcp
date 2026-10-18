@@ -77,7 +77,8 @@ public sealed class NativeFileCoordinator(IEditorChannel editor, IExportSource s
         return Result<NativeOpened>.Ok(new NativeOpened(replaced.Value, new CompatibilityReport(result.Diagnostics), result.Identity, safe.Value));
     }
 
-    public async Task<Result<NativeExported>> ExportAsync(string path, Scope scope, bool acceptLoss, CancellationToken ct)
+    /// <param name="revalidate">Run immediately before the file is written: a last look at whether the destination is still the one that was approved.</param>
+    public async Task<Result<NativeExported>> ExportAsync(string path, Scope scope, bool acceptLoss, CancellationToken ct, Func<Result<Unit>>? revalidate = null)
     {
         var safe = PathPolicy.Validate(path);
         if (!safe.IsOk) return Result<NativeExported>.Fail(safe.Error!);
@@ -95,6 +96,7 @@ public sealed class NativeFileCoordinator(IEditorChannel editor, IExportSource s
         var check = await Verify(snap.Value, exported.Value, ct);
         if (!check.IsOk) return Result<NativeExported>.Fail(check.Error!);
 
+        if (revalidate?.Invoke() is { IsOk: false } stale) return Result<NativeExported>.Fail(stale.Error!);
         try { await writer.WriteAsync(safe.Value, exported.Value.Package, ct); }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {

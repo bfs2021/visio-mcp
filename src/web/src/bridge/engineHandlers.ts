@@ -67,6 +67,10 @@ export function createEngineHandler(engine: CommandEngine, opts: EngineHandlerOp
       }
       case 'doc.snapshot':
         return respond(await engine.snapshot(scope));
+      case 'doc.retainedBlobs': {
+        const s = await engine.snapshot(scope); // checks scope and waits for the queue like any read
+        return respond(s.ok ? ok({ revision: s.value.revision, hashes: engine.retainedBlobHashes() }) : s);
+      }
       case 'doc.apply': {
         const req = validateMutationRequest({ ...p, ...scope });
         return respond(req.ok ? await engine.execute(req.value, 'mcp') : req);

@@ -58,6 +58,20 @@ public sealed class BlobStore
 
     public bool Contains(string sha) => File.Exists(PathFor(sha));
 
+    /// <summary>Every stored blob, for garbage collection. Temp files from an interrupted write are not blobs and are not listed.</summary>
+    public IEnumerable<(string Sha, DateTime LastWriteUtc)> Enumerate() =>
+        Directory.EnumerateFiles(directory).Select(f => (Name: Path.GetFileName(f), f))
+            .Where(x => x.Name.Length == 64 && x.Name.All(c => c is (>= '0' and <= '9') or (>= 'a' and <= 'f')))
+            .Select(x => (x.Name, File.GetLastWriteTimeUtc(x.f)));
+
+    public bool Delete(string sha)
+    {
+        var path = PathFor(sha);
+        if (!File.Exists(path)) return false;
+        File.Delete(path);
+        return true;
+    }
+
     public async Task<string> PutDurableAsync(ReadOnlyMemory<byte> bytes, CancellationToken ct)
     {
         var sha = HashOf(bytes.Span);

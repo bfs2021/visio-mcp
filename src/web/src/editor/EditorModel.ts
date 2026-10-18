@@ -10,6 +10,7 @@ import { deleteOperations, findElement, intentOperations, nudgeOperations, pageC
 import { fail, ok, type Result } from '../model/result';
 import { canDeleteAsset, prepareDocumentAsset, imagesUsing, replaceEverywhere, replaceOneImage } from '../commands/assetVersions';
 import { effectiveState } from '../canvas/cellMapping';
+import { restoreRecovery, type RecoveryPayload } from '../commands/recovery';
 import { drawScriptCompiler, validateScript, type ValidationReport } from '../script/compiler';
 import { toPoints, type Unit } from '../model/validate';
 import { iconOperations } from '../icons/catalog';
@@ -26,12 +27,20 @@ export interface HostApi {
   libraryReplaceSource(id: string): Promise<Result<{ cancelled?: true; asset?: LibraryEntry }>>;
   librarySetMetadata(id: string, patch: { name?: string; tags?: string[] }): Promise<Result<{ asset: LibraryEntry }>>;
   libraryDelete(id: string): Promise<Result<{ deleted: string }>>;
+  recoveryStatus(): Promise<Result<{ lastDurableRevision: number; lastCommittedRevision: number; degraded: boolean; note?: string | null }>>;
+  recoveryCandidate(): Promise<Result<RecoveryOffer | { found: false }>>;
+  recoveryFetch(sessionId: string): Promise<Result<RecoveryPayload & { loss: RecoveryLossInfo }>>;
+  recoveryDiscard(sessionId: string): Promise<Result<{ discarded: string }>>;
+  recoveryFinish(sessionId: string, originalPath: string | null): Promise<Result<{ finished: string }>>;
   openVsdx(): Promise<Result<NativeOutcome>>;
   /** `path` repeats a choice the person already made when they agree to a lossy export. */
   exportVsdx(opts: { acceptLoss?: boolean; path?: string }): Promise<Result<NativeOutcome>>;
 }
 
 export interface LibraryEntry { id: string; name: string; tags: string[]; mimeType: string; sha256: string; width: number; height: number; version: number; scope: 'library' }
+export interface RecoveryLossInfo { tornTailDiscarded: boolean; corruptionAfterRevision: number | null; messages: string[] }
+/** Unfinished work from an earlier run (or before a renderer crash), as the host describes it. */
+export interface RecoveryOffer { found: true; auto: boolean; others: number; sessionId: string; originalPath: string | null; checkpointRevision: number; lastDurableRevision: number; lastWrite: string; loss: RecoveryLossInfo }
 export interface DiagnosticItem { severity: 'info' | 'warning' | 'error'; code: string; message: string; elementId?: string; pageId?: string; action?: string }
 export interface NativeOutcome { cancelled?: true; path?: string; summary?: string; diagnostics?: DiagnosticItem[]; lossy?: boolean; revision?: number; bytes?: number }
 
@@ -39,6 +48,11 @@ export interface NativeOutcome { cancelled?: true; path?: string; summary?: stri
 export interface CompatibilityView { title: string; summary: string; diagnostics: DiagnosticItem[]; confirm?: { label: string; run: () => void } }
 
 export const noHost: HostApi = {
+  recoveryStatus: async () => fail('not_running', 'there is no host'),
+  recoveryCandidate: async () => ok({ found: false as const }),
+  recoveryFetch: async () => fail('not_running', 'there is no host'),
+  recoveryDiscard: async () => fail('not_running', 'there is no host'),
+  recoveryFinish: async () => fail('not_running', 'there is no host'),
   libraryList: async () => fail('not_running', 'there is no host to read the picture library'),
   libraryImport: async () => fail('not_running', 'there is no host to add pictures'),
   libraryUse: async () => fail('not_running', 'there is no host to read the picture library'),
@@ -92,6 +106,18 @@ export class EditorModel {
   host: HostApi = noHost;
   /** The compatibility report dialog, when one is showing. */
   report: CompatibilityView | null = null;
+  /** Unfinished work found at start, waiting for the person's answer. */
+  recoveryOffer: RecoveryOffer | null = null;
+  /** What a recovery brought back and what it could not, shown after restoring. */
+  recoveryReport: { title: string; lines: string[] } | null = null;
+  /** Newest revision the host has on disk (the editor's own revision runs ahead of this by whatever is still being written). */
+  protectedRevision: number | null = null;
+  /** The revision the editor was at when recovery was offered: restoring replaces the document only if nothing was done since. */
+  private recoveryBaseRevision = 0;
+  protectionNote: string | null = null;
+  /** Called after a restore replaced the document, so the host learns the new session. */
+  afterRecoveryRestore: () => void = () => {};
+  private protectionTimer: ReturnType<typeof setTimeout> | null = null;
   selection: string[] = [];
   tool: Tool = { kind: 'select' };
   iconSettings = { sizePt: 24, colour: '#334155', strokeWidthPt: 2 };
@@ -112,7 +138,7 @@ export class EditorModel {
     };
     engine.setProjector(snapshot => this.adapter ? this.adapter.project(snapshot, this.pageId) : ok(undefined));
     engine.setSnapshotProjector(this.projector.project);
-    engine.onCommitted(() => { this.pruneSelection(); this.syncGroupFrames(); this.bump(); });
+    engine.onCommitted(() => { this.pruneSelection(); this.syncGroupFrames(); this.scheduleProtectionRead(); this.bump(); });
   }
 
   // ------------------------------------------------------------------ React subscription
@@ -486,6 +512,77 @@ export class EditorModel {
     this.selection = next;
     this.canvas?.setSelection(next);
   }
+
+
+  // ------------------------------------------------------------------ recovery
+  private scheduleProtectionRead(): void {
+    if (this.protectionTimer) return;
+    this.protectionTimer = setTimeout(() => { this.protectionTimer = null; void this.readProtection(); }, 600);
+  }
+
+  async readProtection(): Promise<void> {
+    const r = await this.host.recoveryStatus();
+    if (!r.ok) return; // no host (a plain browser): nothing to show
+    this.protectedRevision = r.value.lastDurableRevision;
+    this.protectionNote = r.value.degraded ? (r.value.note ?? 'recovery is not keeping up') : null;
+    this.bump();
+  }
+
+  /** At start: is there unfinished work from an earlier run? After a renderer crash it is restored at once, with a visible report. */
+  async checkRecovery(): Promise<void> {
+    const r = await this.host.recoveryCandidate();
+    if (!r.ok || !r.value.found) { void this.readProtection(); return; }
+    this.recoveryOffer = r.value;
+    this.recoveryBaseRevision = this.engine.revision;
+    this.bump();
+    if (r.value.auto) await this.restoreOffered();
+  }
+
+  async restoreOffered(): Promise<void> {
+    const offer = this.recoveryOffer;
+    if (!offer) return;
+    const fetched = await this.host.recoveryFetch(offer.sessionId);
+    if (!fetched.ok) { this.say(fetched.error.message, 'error'); this.recoveryOffer = null; this.bump(); return; }
+    const built = restoreRecovery(fetched.value);
+    if (!built.ok) {
+      this.say(`Recovery failed: ${built.error.message}`, 'error');
+      this.recoveryReport = { title: 'Recovery failed', lines: [built.error.message, 'Nothing was changed, and the recovery files are still on disk.'] };
+      this.recoveryOffer = null; this.bump(); return;
+    }
+    const replaced = await this.engine.replaceDocument(built.value.document, { ...this.engine.scope(), baseRevision: this.recoveryBaseRevision });
+    if (!replaced.ok) {
+      const edited = replaced.error.code === 'revision_conflict';
+      this.say(edited ? 'You started editing, so the recovered work was not applied. It is still available.' : `Recovery failed: ${replaced.error.message}`, 'warning');
+      return;
+    }
+    this.recoveryOffer = null;
+    this.pageId = undefined;
+    this.selection = [];
+    this.afterRecoveryRestore(); // the host starts the new session (with its own checkpoint) and announces it
+    const lines = [`Restored to revision ${built.value.revision}${fetched.value.originalPath ? ` of ${fetched.value.originalPath}` : ''}. The document is marked as unsaved.`];
+    if (built.value.problem) lines.push(`Not recovered: ${built.value.problem}.`);
+    lines.push(...offer.loss.messages);
+    if (offer.others > 0) lines.push(`${offer.others} other unfinished session${offer.others === 1 ? '' : 's'} remain on disk.`);
+    this.recoveryReport = { title: 'Recovered unsaved work', lines };
+    this.say(`Recovered unsaved work at revision ${built.value.revision}. Save it to keep it.`, 'warning');
+    this.showCommitted();
+    await this.host.recoveryFinish(offer.sessionId, fetched.value.originalPath ?? null);
+    void this.readProtection();
+    this.bump();
+  }
+
+  async discardOffered(): Promise<void> {
+    const offer = this.recoveryOffer;
+    if (!offer) return;
+    const r = await this.host.recoveryDiscard(offer.sessionId);
+    if (!r.ok) this.say(r.error.message, 'error');
+    this.recoveryOffer = null;
+    this.bump();
+  }
+
+  /** Not now: the work stays on disk and is offered again next time. */
+  deferOffered(): void { this.recoveryOffer = null; this.bump(); }
+  closeRecoveryReport(): void { this.recoveryReport = null; this.bump(); }
 
   // ------------------------------------------------------------------ pages
   setCurrentPage(id: string): void {

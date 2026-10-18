@@ -28,3 +28,45 @@ Recorded 2026-10-17, same Windows 11 machine.
 3. New objects start on no layer; there is no "active layer" for new objects yet.
 4. Global replacement offers one confirmation-free button; the status line reports how many pictures changed, and Undo reverts it as one transaction.
 5. The M0 second-Windows-user pipe check remains open.
+
+---
+
+# I51: durable recovery, export path policy and boundary hardening
+
+Recorded 2026-10-18.
+
+## Recovery
+- **What is recorded.** The editor already emits every committed change as a resolved diff (generated ids, undo and redo included). The host journals those, in order, per session, in `recovery/<session>/journal.log`: one line per record with a checksum. The host never interprets or replays them.
+- **When a record counts as saved.** `RecoveryJournal.AppendDurableAsync` answers only after the record is on disk (batched, never more than 250 ms). It refuses a record that names a picture whose bytes are not stored, one that leaves a gap in the revision chain, and anything after a write failure until a checkpoint rebases the journal. The status bar shows the newest revision that is on disk ("Protected to revision N") and says so when recovery is behind.
+- **Checkpoints.** Every 50 commits, every 60 s while there are unsaved commits, and at save, the host asks the editor for the committed state at one revision, writes it as a new immutable generation, then replaces `manifest.json` atomically. The previous generation stays until the new manifest is durable. Commits that arrive while a checkpoint is being written stay in the journal (`CheckpointDoesNotLoseTailRPlus1`). A crash before the manifest leaves the old generation current; after it, the new one.
+- **Reading it back.** A cut-off last record is dropped silently; a damaged record with good ones after it stops recovery at the last good revision and the loss is reported; a record that does not continue the checkpoint is reported, not applied.
+- **Restoring.** On start the page asks whether unfinished, unsaved work exists. The person can recover, defer or discard. The page (not the host) rebuilds the document from the checkpoint plus the records with `restoreRecovery`, validating every step into a candidate, and only then replaces the document, which starts a fresh session with its own checkpoint. Recovered work stays marked unsaved, the original path is kept, and the old session is removed only after the new one is safe. After a renderer crash the same thing happens at once, with a visible report of what was and was not recovered. If the person edited while the question was open, the restore is refused rather than discarding that work.
+- **A clean close** removes only a session with nothing unsaved. A crash after a save does not offer the saved work again.
+- **Blob garbage collection** (`BlobGc`, `RecoveryManager.CollectGarbageAsync`) keeps everything that a document, the library, undo or redo history, a retained checkpoint or a journal record names, and anything newer than a grace period. Without the editor's answer it removes nothing.
+
+## Export paths
+`ExportPathPolicy` replaces the fail-closed check from I40. Exports go to the open document's folder or the export folder with a generated, unique name. A path elsewhere, or one that would replace a file, needs a yes from a window showing who asked, the full path and the action; no answer within 60 s is a no, and an answer given after the document changed is refused. Network shares, device and extended paths, alternate data streams, reserved names and links that lead out of the approved folder are refused even with consent. The destination is checked again right before the write.
+
+## Boundaries
+Static guards fail the build if code starts a program, opens its own network connection, writes anything but the shim's fixed startup line to a log, or lets the page open windows, run text as code, render links or markup from content, or fetch anything except approved pictures from its own origin. Pipe frames nested deeper than 64 levels, and every malformed frame, are refused as clean frame errors. The package, XML, SVG and raster limits from I11 and I40 were left as they are: no test found a gap.
+
+## Test results
+| Suite | Result |
+|---|---|
+| `npm --prefix src/web test` | 284 pass (recovery 7, boundary 4) |
+| `npm --prefix src/web run test:browser` | 42 pass (recovery dialog 4) |
+| Contracts / Host / Ipc / Mcp / Visio | 24 / 119 / 17 / 13 / 115 pass (Host: RecoveryTests 13, ExportPathTests 26, BoundaryGuardTests 3) |
+| Windows.Tests | 30 pass (CrashRecoveryTests 3: renderer killed mid-session and restored; application restarted and offered its work; discard and clean close) |
+
+## Found while building
+- Restoring used the editor's revision at the moment of the click as the base, so edits made while the question was open would have been thrown away. The base is now the revision when the offer was made (browser test).
+- Candidates were looked up excluding the session the host was still following, so right after a crash the dead session excluded itself. They now exclude the editor's announced session.
+- The Windows suite had grown to the point where parallel WebView2 windows starved each other (requests timing out in unrelated tests, passing alone). Tests there now run one at a time.
+- Codex's R02 evidence test re-exported to the same file name; under the new rule that needs a yes, so the test deletes its previous file first.
+
+## Known gaps
+1. The consent window and the recovery dialog were exercised through automation (the browser test with a mocked host, and clicks inside the real page); the WPF consent window itself has not been clicked by a person.
+2. Recovery covers the document. Undo history does not survive a crash, as designed.
+3. A recovered session that was not edited since restoring is offered again after another crash (it cannot tell it was restored).
+4. Library picture bytes are not garbage-collected automatically; `CollectGarbageAsync` exists and is tested but nothing calls it on a schedule yet.
+5. The M0 second-Windows-user pipe check remains open.

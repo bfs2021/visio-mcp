@@ -14,6 +14,11 @@ function hostApi(host: HostServices | null): HostApi {
     pickImage: () => host.call('host.pickImage'),
     openJson: () => host.call('host.openJson'),
     saveJson: saveAs => host.call('host.saveJson', { saveAs }),
+    recoveryStatus: () => host.call('host.recovery.status'),
+    recoveryCandidate: () => host.call('host.recovery.candidate'),
+    recoveryFetch: sessionId => host.call('host.recovery.fetch', { sessionId }),
+    recoveryDiscard: sessionId => host.call('host.recovery.discard', { sessionId }),
+    recoveryFinish: (sessionId, originalPath) => host.call('host.recovery.finish', { sessionId, originalPath }),
     libraryList: (query, tags) => host.call('host.library.list', { query, tags }),
     libraryImport: () => host.call('host.library.import'),
     libraryUse: (id, hash) => host.call('host.library.use', { id, hash }),
@@ -31,15 +36,21 @@ const assetUrl = (snapshot: { document: { assets: Array<{ id: string; sha256: st
   return a ? `/assets/${a.sha256}` : '';
 };
 const renderer = createSnapshotRenderer({ assetUrl: assetUrl as never });
-const { engine, host, router } = startApp(window.chrome?.webview, null, { onSessionChanged: () => model?.sessionReplaced(), render: renderer.render, rasterise: renderer.rasterise, layoutContext: createBrowserLayoutContext(assetUrl as never) });
+const { engine, host, router, sessionChanged } = startApp(window.chrome?.webview, null, { onSessionChanged: () => model?.sessionReplaced(), render: renderer.render, rasterise: renderer.rasterise, layoutContext: createBrowserLayoutContext(assetUrl as never) });
 model = new EditorModel(engine);
 model.host = hostApi(host);
+model.afterRecoveryRestore = sessionChanged;
+void model.checkRecovery(); // unfinished work from an earlier run is offered (or, after a renderer crash, restored at once)
 if (router) model.onGestureState = active => router.setGestureActive(active); // an outside mutation waits (briefly) while the user is mid-gesture
 
 // A read-only window onto the editor for automated tests. It is compiled out of production builds, and nothing here edits the document.
 if (import.meta.env.VITE_TEST_API === '1') {
   const m = model;
+  const recorded: unknown[] = [];
+  engine.onCommitted(e => recorded.push(JSON.parse(JSON.stringify(e))));
   (window as unknown as { __editor: unknown }).__editor = {
+    committedEvents: () => JSON.parse(JSON.stringify(recorded)),
+    checkRecovery: () => m.checkRecovery(),
     snapshot: () => JSON.parse(JSON.stringify(m.snapshot)),
     selection: () => [...m.selection],
     status: () => ({ ...m.status, ...m.engine.status() }),

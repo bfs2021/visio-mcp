@@ -68,6 +68,8 @@ public class ReferenceDiagramTextFitTests
         Assert.True(picture.IsError != true);
         var image = Assert.IsType<ModelContextProtocol.Protocol.ImageContentBlock>(picture.Content.First());
         await File.WriteAllBytesAsync(Path.Combine(evidence, "editor.png"), image.DecodedData.ToArray());
+        // an export never replaces a file without the person's say-so, so a re-run starts from a clean evidence file
+        File.Delete(Path.Combine(evidence, "reference-text-fit.vsdx"));
         var export = Scoped(); export["format"] = "vsdx"; export["path"] = "reference-text-fit.vsdx";
         var exported = await Call("export_document", export);
         await File.WriteAllTextAsync(Path.Combine(evidence, "export.json"), exported.GetRawText());

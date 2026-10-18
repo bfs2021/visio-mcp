@@ -46,6 +46,13 @@ export class History {
   moveUndoToRedo(): void { const r = this.undoStack.pop(); if (r) this.redoStack.push(r); }
   moveRedoToUndo(): void { const r = this.redoStack.pop(); if (r) this.undoStack.push(r); }
 
+  /** Hashes of pictures that undo or redo could bring back: every asset a stored diff registers or removes the registration of. */
+  retainedAssetHashes(): string[] {
+    const out = new Set<string>();
+    for (const r of [...this.undoStack, ...this.redoStack]) for (const d of [r.forward, r.inverse]) for (const a of d.upserts.assets) out.add(a.sha256);
+    return [...out];
+  }
+
   /** The newest summaries, newest last. */
   recent(limit: number): TransactionSummary[] { return this.records.slice(-limit).map(r => r.summary); }
 

@@ -17,6 +17,7 @@ public sealed partial class HostServices(MainWindow window)
 
     /// <summary>Path of the last successful open or save (informational; the editor tracks the saved revision).</summary>
     public string? CurrentPath { get; private set; }
+    internal void SetCurrentPath(string? path) => CurrentPath = path;
 
     /// <summary>Test seam: replaces the native dialogs so automated tests can drive open, save and insert without UI.</summary>
     public Func<string, string?>? DialogOverride { get; set; }
@@ -34,6 +35,7 @@ public sealed partial class HostServices(MainWindow window)
                 "host.openVsdx" => await OpenVsdxAsync(request, ct),
                 "host.exportVsdx" => await ExportVsdxAsync(request, ct),
                 var m when m.StartsWith("host.library.", StringComparison.Ordinal) => await LibraryAsync(request, ct),
+                var m when m.StartsWith("host.recovery.", StringComparison.Ordinal) => await RecoveryAsync(request, ct),
                 _ => Err(request, "method_not_found", $"unknown host method {request.Method}"),
             };
         }
@@ -135,6 +137,7 @@ public sealed partial class HostServices(MainWindow window)
         var saved = await window.Coordinator.SaveJsonAsync(path, scope, ct);
         if (!saved.IsOk) return Err(request, saved.Error!);
         CurrentPath = saved.Value.Path;
+        await window.RecoveryMgr.OnSavedAsync(scope.SessionId, saved.Value.Revision, saved.Value.Path); // work saved up to here needs no recovery
         return Ok(request, new JsonObject { ["path"] = saved.Value.Path, ["revision"] = saved.Value.Revision });
     }
 

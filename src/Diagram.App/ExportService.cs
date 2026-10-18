@@ -9,51 +9,26 @@ namespace Diagram.App;
 
 /// <summary>
 /// export_document: writes vsdx, svg, png or jpeg for an outside client. A client never names a place on the disk freely: files go to the
-/// folder of the open document or to the application's export folder, so a path from an agent cannot reach anywhere else.
+/// folder of the open document or to the application's export folder, anywhere else needs the person's choice (see <see cref="ExportPathPolicy"/>),
+/// and the destination is checked again right before the write.
 /// </summary>
-public sealed class ExportService(MainWindow window, string exportRoot)
+public sealed class ExportService
 {
-    static readonly Dictionary<string, string[]> Extensions = new() { ["vsdx"] = [".vsdx"], ["svg"] = [".svg"], ["png"] = [".png"], ["jpeg"] = [".jpg", ".jpeg"] };
+    readonly MainWindow window;
 
-    public string ExportRoot { get; } = Path.GetFullPath(exportRoot);
-
-    /// <summary>The folders a client may export into: the export folder, and the folder the open document came from.</summary>
-    public IReadOnlyList<string> ApprovedRoots()
+    public ExportService(MainWindow window, string exportRoot, IExportConsent? consent = null)
     {
-        var roots = new List<string> { ExportRoot };
-        if (window.Services?.CurrentPath is { } p && Path.GetDirectoryName(p) is { Length: > 0 } dir) roots.Add(Path.GetFullPath(dir));
-        return roots;
+        this.window = window;
+        Policy = new ExportPathPolicy(exportRoot,
+            () => window.Services?.CurrentPath is { } p && Path.GetDirectoryName(p) is { Length: > 0 } dir ? [Path.GetFullPath(dir)] : [],
+            () => window.Router.CurrentScope, consent);
     }
 
-    /// <summary>Resolves a requested path (or makes a default one) and refuses anything outside the approved folders.</summary>
-    public Result<string> ResolvePath(string? requested, string format, string title, int revision)
-    {
-        if (!Extensions.TryGetValue(format, out var exts)) return Result<string>.Fail("invalid_request", "format must be vsdx, svg, png or jpeg");
-        var name = requested is null
-            ? $"{Slug(title)}-r{revision}{exts[0]}"
-            : requested;
-        string combined;
-        try { combined = Path.IsPathRooted(name) ? name : Path.Combine(ExportRoot, name); }
-        catch (ArgumentException) { return Result<string>.Fail("path_not_permitted", "the path is not valid"); }
-        var safe = PathPolicy.Validate(combined);
-        if (!safe.IsOk) return safe;
-        var full = safe.Value;
-        if (!exts.Contains(Path.GetExtension(full).ToLowerInvariant())) return Result<string>.Fail("invalid_request", $"a {format} export must end in {string.Join(" or ", exts)}");
-        var inside = ApprovedRoots().Any(root => full.StartsWith(root.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase));
-        if (!inside) return Result<string>.Fail("path_not_permitted", "exports go to the open document's folder or the application's export folder only", details: new JsonObject { ["exportFolder"] = ExportRoot });
-        // a link inside the folder must not lead out of it
-        var dir = Path.GetDirectoryName(full)!;
-        if (Directory.Exists(dir) && new DirectoryInfo(dir).ResolveLinkTarget(true) is { } target && !ApprovedRoots().Any(r => target.FullName.StartsWith(r, StringComparison.OrdinalIgnoreCase)))
-            return Result<string>.Fail("path_not_permitted", "that folder is a link that leads outside the approved folders");
-        return Result<string>.Ok(full);
-    }
+    public ExportPathPolicy Policy { get; }
+    public string ExportRoot => Policy.ExportRoot;
 
-    static string Slug(string s)
-    {
-        var t = new string(s.Select(c => char.IsLetterOrDigit(c) ? char.ToLowerInvariant(c) : '-').ToArray()).Trim('-');
-        while (t.Contains("--")) t = t.Replace("--", "-");
-        return t.Length == 0 ? "diagram" : t.Length > 60 ? t[..60] : t;
-    }
+    /// <summary>The folders a client may export into without being asked: the export folder, and the folder the open document came from.</summary>
+    public IReadOnlyList<string> ApprovedRoots() => Policy.ApprovedRoots();
 
     public async Task<ResponseEnvelope> HandleAsync(RequestEnvelope request, CancellationToken ct)
     {
@@ -72,13 +47,15 @@ public sealed class ExportService(MainWindow window, string exportRoot)
         // the snapshot barrier gives the title and revision this export will be labelled with
         var snap = await window.Router.SnapshotAsync(scope, ct);
         if (!snap.IsOk) return Err2(snap.Error!);
-        var path = ResolvePath(requested, format, snap.Value.Document.Title, snap.Value.Revision);
-        if (!path.IsOk) return Err2(path.Error!);
+        var dest = await Policy.ResolveAsync(requested, format, snap.Value.Document.Title, scope, snap.Value.Revision, "MCP client", ct);
+        if (!dest.IsOk) return Err2(dest.Error!);
+        var path = Result<string>.Ok(dest.Value.Path);
         Directory.CreateDirectory(Path.GetDirectoryName(path.Value)!);
+        Result<Unit> Revalidate() { var again = Policy.Revalidate(dest.Value, scope); return again.IsOk ? Result<Unit>.Ok(default) : Result<Unit>.Fail(again.Error!); }
 
         if (format == "vsdx")
         {
-            var r = await window.Native.ExportAsync(path.Value, scope, acceptLoss: true, ct);
+            var r = await window.Native.ExportAsync(path.Value, scope, acceptLoss: true, ct, Revalidate);
             if (!r.IsOk) return Err2(r.Error!);
             return Ok(request, new JsonObject
             {
@@ -94,6 +71,7 @@ public sealed class ExportService(MainWindow window, string exportRoot)
         byte[] bytes;
         try { bytes = Convert.FromBase64String(rendered.Value.GetProperty("base64").GetString()!); }
         catch (Exception e) when (e is FormatException or KeyNotFoundException or InvalidOperationException) { return Err("internal_error", "the editor returned an unreadable picture"); }
+        if (Revalidate() is { IsOk: false } stale) return Err2(stale.Error!);
         try { await window.Writer.WriteAsync(path.Value, bytes, ct); }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return Err("io_error", "the file could not be written: " + e.Message, retryable: true); }
         return Ok(request, new JsonObject

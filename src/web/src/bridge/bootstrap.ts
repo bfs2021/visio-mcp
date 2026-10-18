@@ -27,13 +27,15 @@ export function startApp(webview: WebViewLike | undefined, root: HTMLElement | n
   let client: BridgeClient | null = null;
   const announce = (name: 'editor.ready' | 'editor.session') => client?.sendEvent(name, { protocolVersion: 1, ...engine.scope(), revision: engine.revision });
   // The router exists with or without a host, so a plain browser (tests, development) can exercise the same request path.
-  const router = createRequestRouter(engine, { ...(hooks.render ? { render: hooks.render } : {}), ...(hooks.layoutContext ? { layoutContext: hooks.layoutContext } : {}), ...(hooks.rasterise ? { rasterise: hooks.rasterise } : {}), onSessionChanged: () => { router.cancelGesture(); show(); announce('editor.session'); hooks.onSessionChanged?.(); } });
-  if (!webview) return { engine, client: null, host: null, router };
+  // The one place that reacts to a replaced document, whether the host asked for it (open) or the page did (recovery).
+  const sessionChanged = () => { router.cancelGesture(); show(); announce('editor.session'); hooks.onSessionChanged?.(); };
+  const router = createRequestRouter(engine, { ...(hooks.render ? { render: hooks.render } : {}), ...(hooks.layoutContext ? { layoutContext: hooks.layoutContext } : {}), ...(hooks.rasterise ? { rasterise: hooks.rasterise } : {}), onSessionChanged: () => sessionChanged() });
+  if (!webview) return { engine, client: null, host: null, router, sessionChanged };
   client = new BridgeClient(webview);
   const host = createHostServices(client);
   client.onRequest(router.dispatch);
   const sender = client;
   engine.onCommitted(e => sender.sendEvent('editor.committed', e as unknown as Record<string, unknown>));
   announce('editor.ready');
-  return { engine, client, host, router };
+  return { engine, client, host, router, sessionChanged };
 }

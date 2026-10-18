@@ -2,7 +2,7 @@
 
 Updated: 2026-10-18 (Europe/London).
 
-Status: **M0 (I00 to I05) and M1 (I10, I11, I12) done, see [docs/m1/results.md](docs/m1/results.md); I20, I21, I30 and I31 done, see [docs/m2/results.md](docs/m2/results.md); I40 done, see [docs/m4/results.md](docs/m4/results.md); I41 done, see [docs/acceptance/WA-results-2026-10-17.md](docs/acceptance/WA-results-2026-10-17.md); I50 done, see [docs/m5/results.md](docs/m5/results.md)**; I51 onwards not started. This file splits future implementation into bounded work
+Status: **M0 (I00 to I05) and M1 (I10, I11, I12) done, see [docs/m1/results.md](docs/m1/results.md); I20, I21, I30 and I31 done, see [docs/m2/results.md](docs/m2/results.md); I40 done, see [docs/m4/results.md](docs/m4/results.md); I41 done, see [docs/acceptance/WA-results-2026-10-17.md](docs/acceptance/WA-results-2026-10-17.md); I50 done, see [docs/m5/results.md](docs/m5/results.md)**; I51 done, see [docs/m5/results.md](docs/m5/results.md); I52 not started. This file splits future implementation into bounded work
 packages. It is a progress and dependency register, not a claim that feasibility
 spikes, builds, tests or Windows acceptance have run.
 
@@ -32,7 +32,7 @@ write-capable delegation or have Claude return reviewable patches for Codex to a
 | I40 | M4: production VSDX mappings and compatibility diagnostics | Codex; Claude review | I01, I20, I30, I31 | done | Feature matrix and supported-subset round-trip tests |
 | I41 | M4: Visio/Word manual acceptance suite | Windows tester + Codex | I40 | done | Editable objects, glue, UUID retention, Word activation |
 | I50 | M5: multipage/layers and approved asset library | Codex; Claude review | I20, I40 | done | Page/layer operations; one-logo and global-replace tests |
-| I51 | M5: durable recovery, security limits and failure handling | Codex; Claude review | I11, I30, I40, I50 | not started | Crash recovery and hostile-input boundary tests |
+| I51 | M5: durable recovery, security limits and failure handling | Codex; Claude review | I11, I30, I40, I50 | done | Crash recovery and hostile-input boundary tests |
 | I52 | M5: performance measurements and complete demo | Codex + Windows tester | I31, I41, I50, I51 | not started | Spec §23 demo; every §27 criterion evidenced |
 
 Input validation and safe IO are introduced in the first package that accepts

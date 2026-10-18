@@ -89,6 +89,13 @@ export class CommandEngine {
     };
   }
 
+  /** Picture hashes the document and its undo/redo history still need (for garbage collection, which must never remove them). */
+  retainedBlobHashes(): string[] {
+    const live = new Set(this.store.snapshot().document.assets.map(a => a.sha256));
+    for (const h of this.history.retainedAssetHashes()) live.add(h);
+    return [...live];
+  }
+
   setProjector(project: Projector): void { this.projector = project; }
   setSnapshotProjector(project: SnapshotProjector): void { this.snapshotProjector = project; }
 
