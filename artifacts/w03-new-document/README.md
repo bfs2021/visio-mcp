@@ -10,3 +10,5 @@ See [W03 results and limits](../../docs/m5/W03-new-document.md) and the [approve
 Product verification is automated on this Windows/WebView2/Office installation. R09 starters and the W02b visible tab shell are outside this completed W03 fallback flow.
 
 Final results: 341 frontend, 63 browser and 353 .NET tests passed; a final separate New/Close Windows run passed 10 tests. Typecheck, generated-contract checks and production build passed. See `suite-summary.json` for the tested code commit and result-file mapping.
+
+The `merge-results` folder records integration with W02b–W02e and R05. `combined-frontend.txt` and `combined-browser.txt` are the final frontend runs (348 and 95 passed). Earlier partial full-suite files are superseded: one run overlapped a main integration and failed compilation; the next was stopped after the pre-fix shutdown cleanup failures were confirmed. `shutdown-fixed.trx` includes a test-setup workspace-file lock, addressed by waiting for the clean-exit write. Final results are the `shutdown-final.trx` targeted run and `w03-combined-final` full suite.
