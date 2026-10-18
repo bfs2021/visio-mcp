@@ -1,6 +1,6 @@
 {
-  "verified": "2026-10-18T11:17:17.149Z",
-  "evidenceFrom": "2026-10-18T10:56:10.5889002Z",
+  "verified": "2026-10-18T14:05:32.890Z",
+  "evidenceFrom": "2026-10-18T13:16:59.0616611Z",
   "checks": 49,
   "failed": 0,
   "notRunSteps": [],
@@ -45,7 +45,7 @@
       "step": 5,
       "name": "the transaction changed only the misaligned shape",
       "ok": true,
-      "detail": "df9ea1f3-96ea-4037-ad87-dfe9c6b62ce3"
+      "detail": "0f84e9f1-53e4-4a77-ab35-59670128d425"
     },
     {
       "step": 5,
@@ -135,7 +135,7 @@
       "step": 9,
       "name": "only that image object changed",
       "ok": true,
-      "detail": "e8aa60ce-9f49-40dc-b93f-92e4d0c81ebe"
+      "detail": "d91060c6-0b46-488f-8a7b-dcdc7c1d6727"
     },
     {
       "step": 9,
@@ -267,7 +267,7 @@
       "step": 10,
       "name": "recorded step 10: Document saves as .vsdx",
       "ok": true,
-      "detail": "PASS: 7172 bytes, lossy=False"
+      "detail": "PASS: 7176 bytes, lossy=False"
     },
     {
       "step": 11,
