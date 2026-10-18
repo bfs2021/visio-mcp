@@ -63,7 +63,7 @@ export function startApp(webview: WebViewLike | undefined, root: HTMLElement | n
   workspace.subscribe(e => {
     if (e.kind === 'opened') { mirror(e.state); announce('editor.document.opened', e.state); }
     else if (e.kind === 'closed') sender.sendEvent('editor.document.closed', { protocolVersion: 1, documentId: e.documentId });
-    else sender.sendEvent('editor.document.activated', { protocolVersion: 1, documentId: e.state.engine.scope().documentId });
+    else if (e.kind === 'activated') sender.sendEvent('editor.document.activated', { protocolVersion: 1, documentId: e.state.engine.scope().documentId });
   });
   announce('editor.ready', first);
   return { engine, client, host, router, sessionChanged, workspace, openDocument, closeDocument, activateDocument };

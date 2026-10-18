@@ -70,6 +70,8 @@ public sealed partial class HostServices(MainWindow window)
                 var m when m.StartsWith("host.workspace.", StringComparison.Ordinal) => await WorkspaceAsync(request, ct),
                 "host.documents.show" => await window.Documents.ShowAsync(request, ct),
                 "host.documents.discard" => await window.Documents.DiscardAsync(request, ct),
+                "host.documents.reveal" => Shell(request, "reveal"),
+                "host.documents.copyPath" => Shell(request, "copyPath"),
                 "host.documents.agent" => Ok(request, new JsonObject { ["documents"] = await window.Documents.ListAsync(ct, agentOnly: true) }),
                 _ => Err(request, "method_not_found", $"unknown host method {request.Method}"),
             };
@@ -85,6 +87,25 @@ public sealed partial class HostServices(MainWindow window)
     static ResponseEnvelope Err(RequestEnvelope r, string code, string message, bool retryable = false) =>
         new() { RequestId = r.RequestId, Error = new AppError { Code = code, Message = message, Retryable = retryable } };
     static ResponseEnvelope Err(RequestEnvelope r, AppError e) => new() { RequestId = r.RequestId, Error = e };
+
+    /// <summary>Test seam: stands in for Explorer and the clipboard, receiving ("reveal" | "copyPath", path).</summary>
+    public Action<string, string>? ShellOverride { get; set; }
+
+    /// <summary>Shows a document's file in Explorer or copies its path. Only the file a document is actually saved to can be named, and only by that document's id.</summary>
+    ResponseEnvelope Shell(RequestEnvelope request, string what)
+    {
+        var id = request.Params["documentId"]?.GetValue<string>();
+        var path = id is null ? null : PathOf(id);
+        if (path is null || window.Router.ChannelOf(id!) is null) return Err(request, "not_found", "that document has not been saved to a file");
+        try
+        {
+            if (ShellOverride is { } o) o(what, path);
+            else if (what == "copyPath") window.Dispatcher.Invoke(() => System.Windows.Clipboard.SetText(path));
+            else window.Dispatcher.Invoke(() => ShellReveal.Reveal(path));
+        }
+        catch (Exception e) when (e is IOException or System.Runtime.InteropServices.ExternalException) { return Err(request, "io_error", e.Message); }
+        return Ok(request, new JsonObject { [what == "copyPath" ? "copied" : "revealed"] = path });
+    }
 
     string? Ask(string kind, Func<string?> dialog) => DialogOverride is { } o ? o(kind) : window.Dispatcher.Invoke(dialog);
 
