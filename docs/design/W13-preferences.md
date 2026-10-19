@@ -1,6 +1,6 @@
 # W13 — persisted preferences and new-document defaults
 
-Status: written design for review. Approach approved in Codex chat, 2026-10-19; implementation is not approved yet.
+Status: written design approved in Codex chat, 2026-10-19. Implementation plan is prepared for review; implementation is not approved yet.
 Issue: https://github.com/rp2839/visio-mcp/issues/35
 Branch: codex/w13-preferences. Base: origin/main e67f2e7. Implement before W14.
 
@@ -85,3 +85,4 @@ No installer, association changes, new font assets, user-defined CSS, automatic 
 ## Review gate
 
 The approach is approved. Approval of this written specification permits preparation of W13's implementation plan. That plan will be provided for review with an execution-method choice before product implementation begins.
+
