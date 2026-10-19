@@ -19,7 +19,17 @@ Issue #10. Design approved by the owner in conversation: open the file as a new 
 - `npx vitest run` in `src/web`: 399 passed (new `agentAdopt.test.ts`).
 - `dotnet test tests/Diagram.Windows.Tests --filter AgentViewTests`: 9 passed, including `AVisioFileOpensAsABackgroundReferenceWithAReportAndLeavesTheEditorAndTheFileAlone`, which imports the Visio-saved `sample-resaved.vsdx` through the live host.
 
+## Importer fixes found by importing real files (2026-10-19)
+Importing the owner's `Lego Infrastructure - v2.vsdx` and `Swim-lane_flow_diag.vsdx` through the live host showed importer defects, fixed here:
+- **Master merge:** a shape that overrides only some cells of a master row (a `LineTo` with just a `Y`) now takes the others from the master's row, and merged rows are put back in row order so a path opens with its `MoveTo`. Before, swim-lane rectangles came out as triangles and diagonal lines.
+- **NURBS and elliptical arcs** are evaluated and flattened instead of being drawn through their control points (this caused long spikes and white wedges across the Lego diagram). A curve that cannot be evaluated becomes a line to its end point and is reported.
+- **Open outlines:** a shape whose outlines are all `NoFill` is imported with no fill (11 polyline connectors in the Lego file were filled white).
+- **Rules with no width or height** become a 0.01 pt hairline (`zero_size_adjusted`) instead of failing the whole import with "must have positive size".
+
+Result with the owner's files: swim-lane imports with 0 `geometry_approximated` and renders as the original layout; Lego went from 233 diagnostics to 97 (none `geometry_approximated`) and shows SVS, AZ-WDC01, Domain Controllers, BYOD and LVDB that were missing. Renders compared by eye with `artifacts/lego-infra/original-visio.png`.
+
 ## Limits
-- The original `Lego Infrastructure - v2.vsdx` is not in the repository, so it was not re-imported. The repository's Visio-saved and generated fixtures were used instead; importing the Lego file remains a manual check (**NOT RUN**).
+- The owner's Lego and swim-lane files are private and not committed. They were imported once through the live host and judged by eye (above); the committed regression tests build the same situations from small synthetic edits (`ReferenceImportFidelityTests`). The master-merge fix has no committed test of its own.
+- Still different from the original Lego diagram: the Azure Active Directory box has no label (stencil text not carried), container borders are solid where Visio's are dotted, and 8 themed colours were approximated as black (`colour_approximated`).
 - Fidelity is that of `NativeVsdxImporter`; shapes it reports as approximated appear in `diagnostics`.
 - Manual Visio/editor sign-off: **NOT RUN**.
