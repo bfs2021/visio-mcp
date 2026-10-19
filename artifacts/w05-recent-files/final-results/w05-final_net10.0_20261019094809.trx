@@ -1,0 +1,172 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="5777c826-4496-40a6-bec0-f556895598d6" name="claude@W11-TEMPLATE 2026-10-19 09:48:08" runUser="W11-TEMPLATE\claude" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-19T09:48:08.6393814+01:00" queuing="2026-10-19T09:48:08.6393815+01:00" start="2026-10-19T09:48:02.6989519+01:00" finish="2026-10-19T09:48:09.1904817+01:00" />
+  <TestSettings name="default" id="e4c18c01-d5c9-40d9-9ff7-bbfad349e2da">
+    <Deployment runDeploymentRoot="claude_W11-TEMPLATE_2026-10-19_09_48_08" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="46957c05-c0bc-4188-9831-e966e25f5c4d" testId="1c7be73f-1178-6ee4-5dcf-8ccc6de12efb" testName="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;Snapshot&quot;)" computerName="W11-TEMPLATE" duration="00:00:00.0020161" startTime="2026-10-19T09:48:08.6720003+01:00" endTime="2026-10-19T09:48:08.6739288+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="46957c05-c0bc-4188-9831-e966e25f5c4d" />
+    <UnitTestResult executionId="a22f0f87-bf36-4393-bac2-499236f9c4e0" testId="a46cb4b6-cbc9-cca6-79b2-8b02802369a8" testName="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;ResponseEnvelopeError&quot;)" computerName="W11-TEMPLATE" duration="00:00:00.0035954" startTime="2026-10-19T09:48:08.6585027+01:00" endTime="2026-10-19T09:48:08.6620691+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a22f0f87-bf36-4393-bac2-499236f9c4e0" />
+    <UnitTestResult executionId="b5e66400-afc7-4e34-91ba-0cc5de83b0b8" testId="29f63afa-7d29-a84e-93c5-ada79dd9ce2f" testName="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;TransactionResult&quot;)" computerName="W11-TEMPLATE" duration="00:00:00.0035144" startTime="2026-10-19T09:48:08.6529257+01:00" endTime="2026-10-19T09:48:08.6565946+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b5e66400-afc7-4e34-91ba-0cc5de83b0b8" />
+    <UnitTestResult executionId="39de6f14-a634-4b38-a740-7cf10a24634d" testId="0f08e8cd-7dfc-3a3d-7498-9568c34eebdc" testName="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;ScriptRequest&quot;)" computerName="W11-TEMPLATE" duration="00:00:00.0176865" startTime="2026-10-19T09:48:08.6041772+01:00" endTime="2026-10-19T09:48:08.6218717+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="39de6f14-a634-4b38-a740-7cf10a24634d" />
+    <UnitTestResult executionId="35cdeb48-11ba-442c-884a-2ae136f3f32c" testId="aaaf04f3-3e06-9656-abfd-5aaba3704816" testName="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;MutationRequest&quot;)" computerName="W11-TEMPLATE" duration="00:00:00.2892474" startTime="2026-10-19T09:48:08.7289512+01:00" endTime="2026-10-19T09:48:09.0184947+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="35cdeb48-11ba-442c-884a-2ae136f3f32c" />
+    <UnitTestResult executionId="7c6445d4-0bfb-40fe-b00b-c878bef4e6a8" testId="7e36edb3-22ec-a4d3-65de-ba2f853ee85b" testName="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;AppError&quot;)" computerName="W11-TEMPLATE" duration="00:00:00.0030178" startTime="2026-10-19T09:48:08.5920373+01:00" endTime="2026-10-19T09:48:08.5921659+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7c6445d4-0bfb-40fe-b00b-c878bef4e6a8" />
+    <UnitTestResult executionId="b3b44d63-0e96-4336-ad8e-317b44ad4c1a" testId="7c1d11a4-13c6-71ee-a92e-562eabc5cfde" testName="SchemaParityTests.InvalidFixtureWithUnknownFieldIsRejected" computerName="W11-TEMPLATE" duration="00:00:00.0308086" startTime="2026-10-19T09:48:09.0224492+01:00" endTime="2026-10-19T09:48:09.0526743+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b3b44d63-0e96-4336-ad8e-317b44ad4c1a" />
+    <UnitTestResult executionId="96fd3cc6-9ad5-4551-8462-a13415345821" testId="4a3004aa-49f0-cdb4-496c-0f6d181763d4" testName="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;RequestEnvelope&quot;)" computerName="W11-TEMPLATE" duration="00:00:00.0027358" startTime="2026-10-19T09:48:08.6024548+01:00" endTime="2026-10-19T09:48:08.6040580+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="96fd3cc6-9ad5-4551-8462-a13415345821" />
+    <UnitTestResult executionId="72709a61-b84a-48f2-b5e5-3fca951d02cc" testId="74d1882c-1cb0-0cf1-f4f2-cb57e73f7e2c" testName="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;ChangeSet&quot;)" computerName="W11-TEMPLATE" duration="00:00:00.0093059" startTime="2026-10-19T09:48:08.6623593+01:00" endTime="2026-10-19T09:48:08.6718577+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="72709a61-b84a-48f2-b5e5-3fca951d02cc" />
+    <UnitTestResult executionId="1cc06c94-3537-4cb3-85de-949326f8fa59" testId="2869737d-b06e-7040-882b-9b3c0bdec424" testName="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;Diagnostic&quot;)" computerName="W11-TEMPLATE" duration="00:00:00.0034096" startTime="2026-10-19T09:48:08.5922618+01:00" endTime="2026-10-19T09:48:08.5925737+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1cc06c94-3537-4cb3-85de-949326f8fa59" />
+    <UnitTestResult executionId="9aecb063-4dea-4591-828c-04bbee4c9c09" testId="46b9d270-d639-a198-fb12-b4aa9a88b456" testName="SchemaParityTests.DiscriminatorMayAppearInAnyPropertyOrder" computerName="W11-TEMPLATE" duration="00:00:00.0001437" startTime="2026-10-19T09:48:09.0654642+01:00" endTime="2026-10-19T09:48:09.0654983+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9aecb063-4dea-4591-828c-04bbee4c9c09" />
+    <UnitTestResult executionId="59d05069-b378-42aa-8df7-5ba00a8688bf" testId="f408cc1c-d94b-49f5-b67c-c1597cbfd7eb" testName="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;ResolvedDiff&quot;)" computerName="W11-TEMPLATE" duration="00:00:00.0009800" startTime="2026-10-19T09:48:09.0200624+01:00" endTime="2026-10-19T09:48:09.0211078+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="59d05069-b378-42aa-8df7-5ba00a8688bf" />
+    <UnitTestResult executionId="d7cd3028-3944-42cc-97f7-f2f67bda76d3" testId="2b460b62-270f-08d9-af42-6461d545b801" testName="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;TransactionSummary&quot;)" computerName="W11-TEMPLATE" duration="00:00:00.0025255" startTime="2026-10-19T09:48:08.5926337+01:00" endTime="2026-10-19T09:48:08.5951655+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d7cd3028-3944-42cc-97f7-f2f67bda76d3" />
+    <UnitTestResult executionId="b74173ce-79bb-45bc-9054-dc229b83faad" testId="825821d6-af07-3022-f956-3695c9df5632" testName="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;ResponseEnvelope&quot;)" computerName="W11-TEMPLATE" duration="00:00:00.0027136" startTime="2026-10-19T09:48:08.7231013+01:00" endTime="2026-10-19T09:48:08.7256915+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b74173ce-79bb-45bc-9054-dc229b83faad" />
+    <UnitTestResult executionId="c5be5e05-f1b9-4974-8c8f-d84b674a0571" testId="7509af51-ea7d-21bb-009a-a0a6eb5c108a" testName="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;DiagramDocument&quot;)" computerName="W11-TEMPLATE" duration="00:00:00.1685743" startTime="2026-10-19T09:48:08.4303010+01:00" endTime="2026-10-19T09:48:08.5816228+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c5be5e05-f1b9-4974-8c8f-d84b674a0571" />
+    <UnitTestResult executionId="96d90518-5663-4111-b3b2-e70154403d78" testId="f18afb79-0f44-930d-0fda-31fc2c991155" testName="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;PreparedAsset&quot;)" computerName="W11-TEMPLATE" duration="00:00:00.0044144" startTime="2026-10-19T09:48:08.5909262+01:00" endTime="2026-10-19T09:48:08.5911693+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="96d90518-5663-4111-b3b2-e70154403d78" />
+    <UnitTestResult executionId="5dcd8d11-dcce-452e-9c20-5ef38e82eb20" testId="1fd51ed6-0f90-596a-8bad-e73fadafce4d" testName="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;PreparedAssetRef&quot;)" computerName="W11-TEMPLATE" duration="00:00:00.0014559" startTime="2026-10-19T09:48:09.0196555+01:00" endTime="2026-10-19T09:48:09.0199382+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5dcd8d11-dcce-452e-9c20-5ef38e82eb20" />
+    <UnitTestResult executionId="76c43c43-a264-4874-a6f4-616896076c40" testId="88edfe39-19bd-a548-d6c1-e7f6770c4025" testName="SchemaParityTests.ValidFixtureEnvelopeAndParamsDeserialize" computerName="W11-TEMPLATE" duration="00:00:00.0062038" startTime="2026-10-19T09:48:09.0655908+01:00" endTime="2026-10-19T09:48:09.0722823+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="76c43c43-a264-4874-a6f4-616896076c40" />
+    <UnitTestResult executionId="6af6e96a-ea95-476c-9bfc-91b8db3f7b33" testId="be5df2d6-3b02-5bec-1d7b-248c7333f2b1" testName="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;Scope&quot;)" computerName="W11-TEMPLATE" duration="00:00:00.0017096" startTime="2026-10-19T09:48:08.6567014+01:00" endTime="2026-10-19T09:48:08.6583821+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6af6e96a-ea95-476c-9bfc-91b8db3f7b33" />
+    <UnitTestResult executionId="256f2253-8422-4958-af27-9df32ce2e44f" testId="434ea677-8de8-3b3c-47ed-a5e640b3b911" testName="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;ExportSnapshot&quot;)" computerName="W11-TEMPLATE" duration="00:00:00.0059561" startTime="2026-10-19T09:48:08.5952449+01:00" endTime="2026-10-19T09:48:08.6022526+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="256f2253-8422-4958-af27-9df32ce2e44f" />
+    <UnitTestResult executionId="84966cb8-f672-4a85-9ecb-0b9d45200f4e" testId="fb596452-3aad-4172-6b42-60303bcf52a0" testName="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;UndoRequest&quot;)" computerName="W11-TEMPLATE" duration="00:00:00.0024941" startTime="2026-10-19T09:48:08.7259013+01:00" endTime="2026-10-19T09:48:08.7286796+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="84966cb8-f672-4a85-9ecb-0b9d45200f4e" />
+    <UnitTestResult executionId="98346b7d-b55f-424e-a984-16f5311e5032" testId="536b1b62-41eb-ed0a-520e-6e214500a5be" testName="SchemaParityTests.EveryOperationAndElementKindDeserializesToItsOwnType" computerName="W11-TEMPLATE" duration="00:00:00.0124949" startTime="2026-10-19T09:48:09.0529074+01:00" endTime="2026-10-19T09:48:09.0652550+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="98346b7d-b55f-424e-a984-16f5311e5032" />
+    <UnitTestResult executionId="419d1218-11c1-4a6f-b292-fb7bc60343c2" testId="98994cd3-9dbe-8e69-ef77-afb4d258be79" testName="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;CommittedEvent&quot;)" computerName="W11-TEMPLATE" duration="00:00:00.0281421" startTime="2026-10-19T09:48:08.6321706+01:00" endTime="2026-10-19T09:48:08.6525978+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="419d1218-11c1-4a6f-b292-fb7bc60343c2" />
+    <UnitTestResult executionId="6c81face-ae66-49ac-a287-774bb449acb2" testId="e8d5662a-0b7e-b224-aa01-cbcfecc3c7e5" testName="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;Projection&quot;)" computerName="W11-TEMPLATE" duration="00:00:00.0011551" startTime="2026-10-19T09:48:08.6221014+01:00" endTime="2026-10-19T09:48:08.6233627+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6c81face-ae66-49ac-a287-774bb449acb2" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;Scope&quot;)" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.contracts.tests\bin\debug\net10.0\diagram.contracts.tests.dll" id="be5df2d6-3b02-5bec-1d7b-248c7333f2b1">
+      <Execution id="6af6e96a-ea95-476c-9bfc-91b8db3f7b33" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="SchemaParityTests" name="SampleRoundTripsThroughGeneratedDto" />
+    </UnitTest>
+    <UnitTest name="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;MutationRequest&quot;)" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.contracts.tests\bin\debug\net10.0\diagram.contracts.tests.dll" id="aaaf04f3-3e06-9656-abfd-5aaba3704816">
+      <Execution id="35cdeb48-11ba-442c-884a-2ae136f3f32c" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="SchemaParityTests" name="SampleRoundTripsThroughGeneratedDto" />
+    </UnitTest>
+    <UnitTest name="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;ExportSnapshot&quot;)" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.contracts.tests\bin\debug\net10.0\diagram.contracts.tests.dll" id="434ea677-8de8-3b3c-47ed-a5e640b3b911">
+      <Execution id="256f2253-8422-4958-af27-9df32ce2e44f" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="SchemaParityTests" name="SampleRoundTripsThroughGeneratedDto" />
+    </UnitTest>
+    <UnitTest name="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;UndoRequest&quot;)" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.contracts.tests\bin\debug\net10.0\diagram.contracts.tests.dll" id="fb596452-3aad-4172-6b42-60303bcf52a0">
+      <Execution id="84966cb8-f672-4a85-9ecb-0b9d45200f4e" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="SchemaParityTests" name="SampleRoundTripsThroughGeneratedDto" />
+    </UnitTest>
+    <UnitTest name="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;ResolvedDiff&quot;)" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.contracts.tests\bin\debug\net10.0\diagram.contracts.tests.dll" id="f408cc1c-d94b-49f5-b67c-c1597cbfd7eb">
+      <Execution id="59d05069-b378-42aa-8df7-5ba00a8688bf" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="SchemaParityTests" name="SampleRoundTripsThroughGeneratedDto" />
+    </UnitTest>
+    <UnitTest name="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;Projection&quot;)" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.contracts.tests\bin\debug\net10.0\diagram.contracts.tests.dll" id="e8d5662a-0b7e-b224-aa01-cbcfecc3c7e5">
+      <Execution id="6c81face-ae66-49ac-a287-774bb449acb2" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="SchemaParityTests" name="SampleRoundTripsThroughGeneratedDto" />
+    </UnitTest>
+    <UnitTest name="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;RequestEnvelope&quot;)" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.contracts.tests\bin\debug\net10.0\diagram.contracts.tests.dll" id="4a3004aa-49f0-cdb4-496c-0f6d181763d4">
+      <Execution id="96fd3cc6-9ad5-4551-8462-a13415345821" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="SchemaParityTests" name="SampleRoundTripsThroughGeneratedDto" />
+    </UnitTest>
+    <UnitTest name="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;Snapshot&quot;)" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.contracts.tests\bin\debug\net10.0\diagram.contracts.tests.dll" id="1c7be73f-1178-6ee4-5dcf-8ccc6de12efb">
+      <Execution id="46957c05-c0bc-4188-9831-e966e25f5c4d" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="SchemaParityTests" name="SampleRoundTripsThroughGeneratedDto" />
+    </UnitTest>
+    <UnitTest name="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;TransactionResult&quot;)" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.contracts.tests\bin\debug\net10.0\diagram.contracts.tests.dll" id="29f63afa-7d29-a84e-93c5-ada79dd9ce2f">
+      <Execution id="b5e66400-afc7-4e34-91ba-0cc5de83b0b8" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="SchemaParityTests" name="SampleRoundTripsThroughGeneratedDto" />
+    </UnitTest>
+    <UnitTest name="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;ScriptRequest&quot;)" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.contracts.tests\bin\debug\net10.0\diagram.contracts.tests.dll" id="0f08e8cd-7dfc-3a3d-7498-9568c34eebdc">
+      <Execution id="39de6f14-a634-4b38-a740-7cf10a24634d" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="SchemaParityTests" name="SampleRoundTripsThroughGeneratedDto" />
+    </UnitTest>
+    <UnitTest name="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;PreparedAsset&quot;)" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.contracts.tests\bin\debug\net10.0\diagram.contracts.tests.dll" id="f18afb79-0f44-930d-0fda-31fc2c991155">
+      <Execution id="96d90518-5663-4111-b3b2-e70154403d78" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="SchemaParityTests" name="SampleRoundTripsThroughGeneratedDto" />
+    </UnitTest>
+    <UnitTest name="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;ResponseEnvelopeError&quot;)" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.contracts.tests\bin\debug\net10.0\diagram.contracts.tests.dll" id="a46cb4b6-cbc9-cca6-79b2-8b02802369a8">
+      <Execution id="a22f0f87-bf36-4393-bac2-499236f9c4e0" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="SchemaParityTests" name="SampleRoundTripsThroughGeneratedDto" />
+    </UnitTest>
+    <UnitTest name="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;CommittedEvent&quot;)" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.contracts.tests\bin\debug\net10.0\diagram.contracts.tests.dll" id="98994cd3-9dbe-8e69-ef77-afb4d258be79">
+      <Execution id="419d1218-11c1-4a6f-b292-fb7bc60343c2" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="SchemaParityTests" name="SampleRoundTripsThroughGeneratedDto" />
+    </UnitTest>
+    <UnitTest name="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;ResponseEnvelope&quot;)" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.contracts.tests\bin\debug\net10.0\diagram.contracts.tests.dll" id="825821d6-af07-3022-f956-3695c9df5632">
+      <Execution id="b74173ce-79bb-45bc-9054-dc229b83faad" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="SchemaParityTests" name="SampleRoundTripsThroughGeneratedDto" />
+    </UnitTest>
+    <UnitTest name="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;Diagnostic&quot;)" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.contracts.tests\bin\debug\net10.0\diagram.contracts.tests.dll" id="2869737d-b06e-7040-882b-9b3c0bdec424">
+      <Execution id="1cc06c94-3537-4cb3-85de-949326f8fa59" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="SchemaParityTests" name="SampleRoundTripsThroughGeneratedDto" />
+    </UnitTest>
+    <UnitTest name="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;TransactionSummary&quot;)" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.contracts.tests\bin\debug\net10.0\diagram.contracts.tests.dll" id="2b460b62-270f-08d9-af42-6461d545b801">
+      <Execution id="d7cd3028-3944-42cc-97f7-f2f67bda76d3" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="SchemaParityTests" name="SampleRoundTripsThroughGeneratedDto" />
+    </UnitTest>
+    <UnitTest name="SchemaParityTests.DiscriminatorMayAppearInAnyPropertyOrder" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.contracts.tests\bin\debug\net10.0\diagram.contracts.tests.dll" id="46b9d270-d639-a198-fb12-b4aa9a88b456">
+      <Execution id="9aecb063-4dea-4591-828c-04bbee4c9c09" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="SchemaParityTests" name="DiscriminatorMayAppearInAnyPropertyOrder" />
+    </UnitTest>
+    <UnitTest name="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;PreparedAssetRef&quot;)" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.contracts.tests\bin\debug\net10.0\diagram.contracts.tests.dll" id="1fd51ed6-0f90-596a-8bad-e73fadafce4d">
+      <Execution id="5dcd8d11-dcce-452e-9c20-5ef38e82eb20" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="SchemaParityTests" name="SampleRoundTripsThroughGeneratedDto" />
+    </UnitTest>
+    <UnitTest name="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;DiagramDocument&quot;)" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.contracts.tests\bin\debug\net10.0\diagram.contracts.tests.dll" id="7509af51-ea7d-21bb-009a-a0a6eb5c108a">
+      <Execution id="c5be5e05-f1b9-4974-8c8f-d84b674a0571" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="SchemaParityTests" name="SampleRoundTripsThroughGeneratedDto" />
+    </UnitTest>
+    <UnitTest name="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;ChangeSet&quot;)" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.contracts.tests\bin\debug\net10.0\diagram.contracts.tests.dll" id="74d1882c-1cb0-0cf1-f4f2-cb57e73f7e2c">
+      <Execution id="72709a61-b84a-48f2-b5e5-3fca951d02cc" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="SchemaParityTests" name="SampleRoundTripsThroughGeneratedDto" />
+    </UnitTest>
+    <UnitTest name="SchemaParityTests.ValidFixtureEnvelopeAndParamsDeserialize" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.contracts.tests\bin\debug\net10.0\diagram.contracts.tests.dll" id="88edfe39-19bd-a548-d6c1-e7f6770c4025">
+      <Execution id="76c43c43-a264-4874-a6f4-616896076c40" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="SchemaParityTests" name="ValidFixtureEnvelopeAndParamsDeserialize" />
+    </UnitTest>
+    <UnitTest name="SchemaParityTests.EveryOperationAndElementKindDeserializesToItsOwnType" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.contracts.tests\bin\debug\net10.0\diagram.contracts.tests.dll" id="536b1b62-41eb-ed0a-520e-6e214500a5be">
+      <Execution id="98346b7d-b55f-424e-a984-16f5311e5032" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="SchemaParityTests" name="EveryOperationAndElementKindDeserializesToItsOwnType" />
+    </UnitTest>
+    <UnitTest name="SchemaParityTests.InvalidFixtureWithUnknownFieldIsRejected" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.contracts.tests\bin\debug\net10.0\diagram.contracts.tests.dll" id="7c1d11a4-13c6-71ee-a92e-562eabc5cfde">
+      <Execution id="b3b44d63-0e96-4336-ad8e-317b44ad4c1a" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="SchemaParityTests" name="InvalidFixtureWithUnknownFieldIsRejected" />
+    </UnitTest>
+    <UnitTest name="SchemaParityTests.SampleRoundTripsThroughGeneratedDto(key: &quot;AppError&quot;)" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.contracts.tests\bin\debug\net10.0\diagram.contracts.tests.dll" id="7e36edb3-22ec-a4d3-65de-ba2f853ee85b">
+      <Execution id="7c6445d4-0bfb-40fe-b00b-c878bef4e6a8" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="SchemaParityTests" name="SampleRoundTripsThroughGeneratedDto" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="1c7be73f-1178-6ee4-5dcf-8ccc6de12efb" executionId="46957c05-c0bc-4188-9831-e966e25f5c4d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a46cb4b6-cbc9-cca6-79b2-8b02802369a8" executionId="a22f0f87-bf36-4393-bac2-499236f9c4e0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="29f63afa-7d29-a84e-93c5-ada79dd9ce2f" executionId="b5e66400-afc7-4e34-91ba-0cc5de83b0b8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0f08e8cd-7dfc-3a3d-7498-9568c34eebdc" executionId="39de6f14-a634-4b38-a740-7cf10a24634d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="aaaf04f3-3e06-9656-abfd-5aaba3704816" executionId="35cdeb48-11ba-442c-884a-2ae136f3f32c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7e36edb3-22ec-a4d3-65de-ba2f853ee85b" executionId="7c6445d4-0bfb-40fe-b00b-c878bef4e6a8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7c1d11a4-13c6-71ee-a92e-562eabc5cfde" executionId="b3b44d63-0e96-4336-ad8e-317b44ad4c1a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4a3004aa-49f0-cdb4-496c-0f6d181763d4" executionId="96fd3cc6-9ad5-4551-8462-a13415345821" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="74d1882c-1cb0-0cf1-f4f2-cb57e73f7e2c" executionId="72709a61-b84a-48f2-b5e5-3fca951d02cc" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2869737d-b06e-7040-882b-9b3c0bdec424" executionId="1cc06c94-3537-4cb3-85de-949326f8fa59" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="46b9d270-d639-a198-fb12-b4aa9a88b456" executionId="9aecb063-4dea-4591-828c-04bbee4c9c09" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f408cc1c-d94b-49f5-b67c-c1597cbfd7eb" executionId="59d05069-b378-42aa-8df7-5ba00a8688bf" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2b460b62-270f-08d9-af42-6461d545b801" executionId="d7cd3028-3944-42cc-97f7-f2f67bda76d3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="825821d6-af07-3022-f956-3695c9df5632" executionId="b74173ce-79bb-45bc-9054-dc229b83faad" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7509af51-ea7d-21bb-009a-a0a6eb5c108a" executionId="c5be5e05-f1b9-4974-8c8f-d84b674a0571" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f18afb79-0f44-930d-0fda-31fc2c991155" executionId="96d90518-5663-4111-b3b2-e70154403d78" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1fd51ed6-0f90-596a-8bad-e73fadafce4d" executionId="5dcd8d11-dcce-452e-9c20-5ef38e82eb20" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="88edfe39-19bd-a548-d6c1-e7f6770c4025" executionId="76c43c43-a264-4874-a6f4-616896076c40" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="be5df2d6-3b02-5bec-1d7b-248c7333f2b1" executionId="6af6e96a-ea95-476c-9bfc-91b8db3f7b33" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="434ea677-8de8-3b3c-47ed-a5e640b3b911" executionId="256f2253-8422-4958-af27-9df32ce2e44f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fb596452-3aad-4172-6b42-60303bcf52a0" executionId="84966cb8-f672-4a85-9ecb-0b9d45200f4e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="536b1b62-41eb-ed0a-520e-6e214500a5be" executionId="98346b7d-b55f-424e-a984-16f5311e5032" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="98994cd3-9dbe-8e69-ef77-afb4d258be79" executionId="419d1218-11c1-4a6f-b292-fb7bc60343c2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e8d5662a-0b7e-b224-aa01-cbcfecc3c7e5" executionId="6c81face-ae66-49ac-a287-774bb449acb2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="24" executed="24" passed="24" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v4.0.1+0f7d528729 (64-bit .NET 10.0.13)&#xD;
+[xUnit.net 00:00:01.15]   Discovering: Diagram.Contracts.Tests&#xD;
+[xUnit.net 00:00:02.82]   Discovered:  Diagram.Contracts.Tests&#xD;
+[xUnit.net 00:00:03.05]   Starting:    Diagram.Contracts.Tests&#xD;
+[xUnit.net 00:00:03.83]   Finished:    Diagram.Contracts.Tests&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>
