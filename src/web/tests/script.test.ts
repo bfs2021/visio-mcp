@@ -420,3 +420,35 @@ describe('scripts and the engine', () => {
     expect(t.engine.undoHead()?.transactionId).not.toBe(id(7309)); // a later change now sits above the script's
   });
 });
+
+describe('compiler: things riding on a connector', () => {
+  it('on= at= offset= attach a shape or text box, labelAt= labelOffset= place a connector label', async () => {
+    const t = await scene();
+    await run(t, [
+      { op: 'createShape', id: id(970), alias: 'p', bounds: { x: 0, y: 200, width: 10, height: 10 } },
+      { op: 'createShape', id: id(971), alias: 'q', bounds: { x: 200, y: 200, width: 10, height: 10 } },
+    ]);
+    const made = ops(t, 'connect id=wire from=p to=q text="feed" labelAt=25% labelOffset=-4pt\nadd shape id=tag x=0mm y=0mm w=10mm h=5mm on=wire at=0.75 offset=6pt\nadd text id=note x=0mm y=0mm w=10mm h=5mm text="Report" on=wire');
+    expect(made[0]).toMatchObject({ op: 'createConnector', label: { value: 'feed' }, labelAnchor: { position: 0.25, offsetPt: -4 } });
+    expect(made[1]).toMatchObject({ op: 'createShape', attachment: { connector: U(1), position: 0.75, offsetPt: 6 } });
+    expect(made[2]).toMatchObject({ op: 'createText', attachment: { connector: U(1) } });
+    expect((made[2] as { attachment: object }).attachment).not.toHaveProperty('position');
+  });
+
+  it('set moves an attachment along (keeping the connector), detaches with on=none, and refuses nonsense', async () => {
+    const t = await scene();
+    await run(t, [
+      { op: 'createShape', id: id(970), alias: 'p', bounds: { x: 0, y: 200, width: 10, height: 10 } },
+      { op: 'createShape', id: id(971), alias: 'q', bounds: { x: 200, y: 200, width: 10, height: 10 } },
+      { op: 'createConnector', id: id(972), alias: 'wire', from: { elementId: id(970), glue: 'dynamic' }, to: { elementId: id(971), glue: 'dynamic' } },
+      { op: 'createShape', id: id(973), alias: 'tag', bounds: { x: 0, y: 0, width: 20, height: 10 }, attachment: { connector: 'wire', position: 0.5 } },
+    ]);
+    expect(ops(t, 'set tag at=0.9')[0]).toMatchObject({ op: 'set', patch: { attachment: { connector: id(972), position: 0.9, offsetPt: 0 } } });
+    expect(ops(t, 'set tag on=none')[0]).toMatchObject({ patch: { attachment: null } });
+    expect(ops(t, 'set wire labelAt=0.1')[0]).toMatchObject({ patch: { labelAnchor: { position: 0.1 } } });
+    expect(bad(t, 'set tag on=p').message).toMatch(/is a shape/);
+    expect(bad(t, 'set wire on=wire').message).toMatch(/apply to shapes/);
+    expect(bad(t, 'set tag labelAt=0.1').message).toMatch(/apply to connectors/);
+    expect(bad(t, 'set p at=0.5').message).toMatch(/go with on=/);
+  });
+});

@@ -1,0 +1,29 @@
+# R13: labels on connectors and shapes pinned to connectors
+
+Issue #8. Evidence: `artifacts/r13-connector-attachments/` (`editor-before.png`, `editor-after-move.png`, `visio.png` drawn by Visio itself, `attachments.vsdx`, the file Visio re-saved).
+
+The original puts a small "PSGL Report" document on a connector; the recreation placed it by coordinates. It is now pinned to the connector.
+
+## What was added
+- **Label placement.** A connector's `label` can sit anywhere along its route: `labelAnchor { position, offsetPt }`. `position` is a fraction (0 to 1) of the route's drawn length from its start; `offsetPt` is the distance to the right of the direction of travel (negative is left). Absent means the middle, on the line, as before.
+- **Pinned elements.** A shape or text box can carry `attachment { connectorId, position, offsetPt }`. Its centre is kept on that place along the connector's route *as drawn* (straight, elbow or curved), so it follows when an end shape moves, the connector is rerouted or the connector's route is edited.
+- **One undo step.** The follow-up positions are part of the same transaction as the edit that caused them (`commands/attachments.ts`, run by the engine after the plan, using the same hidden-drawing projection that renders and exports use). Undo and redo replay stored diffs, so they return the connector change and the pinned shapes together.
+- **Dragging.** Moving a pinned element (mouse, Inspector X/Y, `move`) slides it along the line: it is re-pinned to the nearest point and stays exactly where it was dropped, keeping its side. Moving the connector together with it keeps the pin unchanged.
+- **Deleting the connector** detaches what was pinned to it, which stays where it is. Duplicating a connector together with its pinned elements pins the copies to the copied connector; copying a pinned element alone leaves a free copy. A shape cannot be pinned to a connector glued to it, and a connector cannot be glued to a shape pinned to it (a loop).
+- **Operations (MCP).** `createShape`/`createText` take `attachment { connector, position?, offsetPt? }` (connector is an id or alias, including one created earlier in the batch; defaults 0.5 and 0). `createConnector` takes `labelAnchor`. `set` patches `attachment` and `labelAnchor` (`null` detaches or returns the label to the middle; a partial `labelAnchor` merges). `get_document_summary` shows `attachedTo` on pinned elements and `labelAnchor` on connectors.
+- **DrawScript.** `add shape|text ... on=CONNECTOR at=0.6 offset=6pt` (`at` also accepts `60%`). `connect ... labelAt=25% labelOffset=-14pt`. `set TAG at=0.9`, `set TAG on=OTHER`, `set TAG on=none`, `set LINK labelAt=0.1`.
+- **Inspector.** A connector has "Label at %" and "Label offset pt". A pinned shape or text box has an "On a connector" panel with "Along %", "Offset pt" and Detach. Selecting a shape or text box together with one connector offers "Pin to connector" (pinned to the middle).
+- **Visio.** Written to the `.vsdx` as: the pinned shape placed where the line puts it, with its pin in a user cell (`AgentAttachment`); a label with `labelAnchor` written with `TxtPinX/TxtPinY` (and an estimated text block size, `TxtWidth/TxtHeight`, so Visio does not wrap it a letter to a line) plus `AgentLabelAnchor`. Both read back, so a round trip through Visio keeps the pins and label positions. Compatibility notes, both `info`: `attachment_not_native` (Visio has no connector-attached shapes, so in Visio the shape stays put if the line is rerouted there) and `label_position_fixed` (Visio keeps the label at a fixed offset). A pin whose connector is no longer in the file is dropped with `attachment_connector_missing`; a damaged pin cell is ignored.
+
+## Verification
+- Unit `attachment.test.ts` (10): positions along an L-shaped route (both offsets' sides) and finding them again; attach at create and by `set`; follow an end shape and one undo restores both; dragging slides and keeps the dropped spot; connector deleted detaches; detach on purpose; refusals (not a connector, out of range, loop either way); copy with and without the connector; label anchor kept, merged, cleared and refused on a non-connector. `script.test.ts` (+2): the DrawScript forms and their mistakes.
+- Browser `attachment.spec.ts` (4): dragging an end shape with the mouse moves the pinned shape in the same step, one Ctrl+Z returns both; Inspector Along/Offset and Detach, and dragging slides it; Inspector label position (drawn right of the line at 75% with a positive offset); Pin to connector from a two-object selection.
+- Visio `ConnectorAttachmentTests` (3): pins and positions round trip, the label's text pin is where the route puts it, a damaged or orphaned pin is ignored and reported.
+- Windows with real Visio `ConnectorAttachmentVisioTests`: a straight connector and an elbow connector with labels, a document shape and a text box pinned to them, made through MCP; the pinned shape follows when the target moves and one undo returns it; exported with the two notes; opened and drawn by Visio (`visio.png` places the labels and pinned shapes where the editor does), re-saved, and read back with the same pins and positions.
+
+## Limitations
+- In Visio the pinned shape is an ordinary shape and does not follow the connector there; a label keeps a fixed offset (see the two `info` notes). A Visio label the author moved by hand in a file this editor did not write is not read as a label position.
+- The pin is to the shape's centre; there is no pin by corner or edge, and no rotation to follow the line's direction.
+- Pinned elements follow when a change is committed, not live during a mouse drag of the end shape (they jump on release).
+- Image elements and groups cannot be pinned (a group's members can, individually).
+- "Pin to connector" always pins to the middle; set Along % afterwards.

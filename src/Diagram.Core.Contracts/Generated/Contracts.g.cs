@@ -108,6 +108,16 @@ public sealed record TextBlock
     [JsonPropertyName("verticalAlign")] public required string VerticalAlign { get; init; }
     [JsonPropertyName("wrap")] public required bool Wrap { get; init; }
     [JsonPropertyName("paddingPt")] public required double PaddingPt { get; init; }
+    [JsonPropertyName("insetsPt")] public TextInsets? InsetsPt { get; init; }
+    [JsonPropertyName("orientation")] public string? Orientation { get; init; }
+}
+
+public sealed record TextInsets
+{
+    [JsonPropertyName("top")] public required double Top { get; init; }
+    [JsonPropertyName("right")] public required double Right { get; init; }
+    [JsonPropertyName("bottom")] public required double Bottom { get; init; }
+    [JsonPropertyName("left")] public required double Left { get; init; }
 }
 
 public sealed record ShapeStyle
@@ -136,6 +146,19 @@ public sealed record Port
     [JsonPropertyName("id")] public required string Id { get; init; }
     [JsonPropertyName("x")] public required double X { get; init; }
     [JsonPropertyName("y")] public required double Y { get; init; }
+}
+
+public sealed record PathAnchor
+{
+    [JsonPropertyName("position")] public required double Position { get; init; }
+    [JsonPropertyName("offsetPt")] public required double OffsetPt { get; init; }
+}
+
+public sealed record Attachment
+{
+    [JsonPropertyName("connectorId")] public required string ConnectorId { get; init; }
+    [JsonPropertyName("position")] public required double Position { get; init; }
+    [JsonPropertyName("offsetPt")] public required double OffsetPt { get; init; }
 }
 
 public sealed record ShapeGeometry
@@ -169,6 +192,7 @@ public sealed record ShapeElement : Element
     [JsonPropertyName("style")] public required ShapeStyle Style { get; init; }
     [JsonPropertyName("text")] public TextBlock? Text { get; init; }
     [JsonPropertyName("ports")] public IReadOnlyList<Port>? Ports { get; init; }
+    [JsonPropertyName("attachment")] public Attachment? Attachment { get; init; }
 }
 
 public sealed record TextElement : Element
@@ -184,6 +208,7 @@ public sealed record TextElement : Element
     [JsonPropertyName("rotationDeg")] public required double RotationDeg { get; init; }
     [JsonPropertyName("metadata")] public required IReadOnlyDictionary<string, string> Metadata { get; init; }
     [JsonPropertyName("text")] public required TextBlock Text { get; init; }
+    [JsonPropertyName("attachment")] public Attachment? Attachment { get; init; }
 }
 
 public sealed record ImageElement : Element
@@ -222,6 +247,7 @@ public sealed record ConnectorElement : Element
     [JsonPropertyName("waypoints")] public required IReadOnlyList<Point> Waypoints { get; init; }
     [JsonPropertyName("style")] public required LineStyle Style { get; init; }
     [JsonPropertyName("label")] public TextBlock? Label { get; init; }
+    [JsonPropertyName("labelAnchor")] public PathAnchor? LabelAnchor { get; init; }
 }
 
 public sealed record GroupElement : Element
@@ -311,6 +337,8 @@ public sealed record TextBlockPatch
     [JsonPropertyName("verticalAlign")] public string? VerticalAlign { get; init; }
     [JsonPropertyName("wrap")] public bool? Wrap { get; init; }
     [JsonPropertyName("paddingPt")] public double? PaddingPt { get; init; }
+    [JsonPropertyName("insetsPt")] public JsonElement? InsetsPt { get; init; }
+    [JsonPropertyName("orientation")] public string? Orientation { get; init; }
 }
 
 public sealed record StylePatch
@@ -356,6 +384,8 @@ public sealed record ElementPatch
     [JsonPropertyName("from")] public Endpoint? From { get; init; }
     [JsonPropertyName("to")] public Endpoint? To { get; init; }
     [JsonPropertyName("ports")] public IReadOnlyList<Port>? Ports { get; init; }
+    [JsonPropertyName("attachment")] public JsonObject? Attachment { get; init; }
+    [JsonPropertyName("labelAnchor")] public JsonObject? LabelAnchor { get; init; }
 }
 
 public sealed record CreateShapeOp : Operation
@@ -371,6 +401,7 @@ public sealed record CreateShapeOp : Operation
     [JsonPropertyName("style")] public StylePatch? Style { get; init; }
     [JsonPropertyName("text")] public TextBlockPatch? Text { get; init; }
     [JsonPropertyName("ports")] public IReadOnlyList<Port>? Ports { get; init; }
+    [JsonPropertyName("attachment")] public AttachmentInput? Attachment { get; init; }
 }
 
 public sealed record CreateTextOp : Operation
@@ -383,6 +414,7 @@ public sealed record CreateTextOp : Operation
     [JsonPropertyName("bounds")] public required Bounds Bounds { get; init; }
     [JsonPropertyName("rotationDeg")] public double? RotationDeg { get; init; }
     [JsonPropertyName("text")] public required TextBlockPatch Text { get; init; }
+    [JsonPropertyName("attachment")] public AttachmentInput? Attachment { get; init; }
 }
 
 public sealed record CreateImageOp : Operation
@@ -413,6 +445,20 @@ public sealed record CreateConnectorOp : Operation
     [JsonPropertyName("waypoints")] public IReadOnlyList<Point>? Waypoints { get; init; }
     [JsonPropertyName("style")] public StylePatch? Style { get; init; }
     [JsonPropertyName("label")] public TextBlockPatch? Label { get; init; }
+    [JsonPropertyName("labelAnchor")] public LabelAnchorInput? LabelAnchor { get; init; }
+}
+
+public sealed record AttachmentInput
+{
+    [JsonPropertyName("connector")] public required string Connector { get; init; }
+    [JsonPropertyName("position")] public double? Position { get; init; }
+    [JsonPropertyName("offsetPt")] public double? OffsetPt { get; init; }
+}
+
+public sealed record LabelAnchorInput
+{
+    [JsonPropertyName("position")] public double? Position { get; init; }
+    [JsonPropertyName("offsetPt")] public double? OffsetPt { get; init; }
 }
 
 public sealed record EndpointInput

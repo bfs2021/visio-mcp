@@ -86,6 +86,9 @@ export function Inspector({ model }: { model: EditorModel }) {
 
   if (els.length > 1) {
     const shapes = els.filter((e): e is ShapeElement => e.kind === 'shape');
+    const connectors = els.filter((e): e is ConnectorElement => e.kind === 'connector');
+    const connector = connectors.length === 1 ? connectors[0] : undefined;
+    const pinnable = connector ? els.filter(e => (e.kind === 'shape' || e.kind === 'text') && e.id !== connector.from.elementId && e.id !== connector.to.elementId) : [];
     return (
       <aside className="panel panel-right" aria-label="Inspector">
         <h2>{els.length} objects</h2>
@@ -94,6 +97,13 @@ export function Inspector({ model }: { model: EditorModel }) {
             <h3>Style</h3>
             <PaintField label="Fill" testId="multi-fill" paint={shapes[0]!.style.fill} onCommit={fill => void model.apply('inspector', shapes.map(s => ({ op: 'set', target: s.id, patch: { style: { fill } } }) as Operation))} />
             <PaintField label="Line" testId="multi-stroke" paint={shapes[0]!.style.stroke} onCommit={stroke => void model.apply('inspector', shapes.map(s => ({ op: 'set', target: s.id, patch: { style: { stroke } } }) as Operation))} />
+          </section>
+        )}
+        {pinnable.length > 0 && (
+          <section>
+            <h3>On a connector</h3>
+            <button type="button" data-testid="pin-to-connector" title="Pin the selected shapes and text to the middle of the selected connector, so they follow it"
+              onClick={() => void model.apply('inspector', pinnable.map(e => ({ op: 'set', target: e.id, patch: { attachment: { connector: connector!.id, position: 0.5, offsetPt: 0 } } }) as Operation))}>Pin to connector</button>
           </section>
         )}
         <section>
@@ -139,6 +149,7 @@ export function Inspector({ model }: { model: EditorModel }) {
 
       {el.kind === 'shape' && <ShapeStyle model={model} el={el} set={set} />}
       {el.kind === 'connector' && <ConnectorStyle el={el} set={set} />}
+      {(el.kind === 'shape' || el.kind === 'text') && el.attachment && <Pin el={el} model={model} set={set} />}
       {el.kind === 'image' && <ImageProps el={el} model={model} set={set} />}
 
       {text && (
@@ -159,6 +170,13 @@ export function Inspector({ model }: { model: EditorModel }) {
               <label key={k}><input type="checkbox" checked={text[k]} data-testid={`field-${k}`} onChange={e => setText({ [k]: e.target.checked })} /> {k[0]!.toUpperCase() + k.slice(1)}</label>
             ))}
             <label><input type="checkbox" checked={text.wrap} data-testid="field-wrap" onChange={e => setText({ wrap: e.target.checked })} /> Wrap</label>
+            <label><input type="checkbox" checked={text.orientation === 'vertical'} data-testid="field-vertical" onChange={e => setText({ orientation: e.target.checked ? 'vertical' : 'horizontal' })} /> Vertical</label>
+          </div>
+          <div className="grid2">
+            {(['top', 'right', 'bottom', 'left'] as const).map(side => (
+              <NumberField key={side} label={`Margin ${side} pt`} testId={`field-margin-${side}`} value={(text.insetsPt ?? { top: text.paddingPt, right: text.paddingPt, bottom: text.paddingPt, left: text.paddingPt })[side]} min={0}
+                onCommit={v => set({ text: { insetsPt: { [side]: v } } })} />
+            ))}
           </div>
           <div className="grid2">
             <label className="field"><span>Align</span>
@@ -217,6 +235,24 @@ function ShapeStyle({ el, set }: { model: EditorModel; el: ShapeElement; set: (p
   );
 }
 
+/** A shape or text box riding on a connector: where along it, and how far to its side. Dragging it slides it along. */
+function Pin({ el, model, set }: { el: ShapeElement | TextElement; model: EditorModel; set: (p: Record<string, unknown>) => void }) {
+  const a = el.attachment!;
+  const connector = model.snapshot.document.pages.flatMap(p => p.elements).find(e => e.id === a.connectorId);
+  const to = (position: number, offsetPt: number) => set({ attachment: { connector: a.connectorId, position: Math.min(1, Math.max(0, position)), offsetPt } });
+  return (
+    <section data-testid="pin">
+      <h3>On a connector</h3>
+      <p className="muted small">Follows {connector?.alias ?? connector?.name ?? 'its connector'}; drag it to slide it along.</p>
+      <div className="grid2">
+        <NumberField label="Along %" testId="field-pin-at" value={Math.round(a.position * 100)} min={0} onCommit={v => to(v / 100, a.offsetPt)} />
+        <NumberField label="Offset pt" testId="field-pin-offset" value={a.offsetPt} onCommit={v => to(a.position, v)} />
+      </div>
+      <button type="button" data-testid="pin-detach" onClick={() => set({ attachment: null })}>Detach</button>
+    </section>
+  );
+}
+
 function ConnectorStyle({ el, set }: { el: ConnectorElement; set: (p: Record<string, unknown>) => void }) {
   const arrows = ['none', 'block', 'open', 'diamond', 'oval'];
   return (
@@ -244,6 +280,11 @@ function ConnectorStyle({ el, set }: { el: ConnectorElement; set: (p: Record<str
           <select value={el.route} data-testid="field-route" onChange={e => set({ route: e.target.value })}><option>straight</option><option>orthogonal</option><option>curved</option></select>
         </label>
       </div>
+      <div className="grid2">
+        <NumberField label="Label at %" testId="field-label-at" value={Math.round((el.labelAnchor?.position ?? 0.5) * 100)} min={0} onCommit={v => set({ labelAnchor: { position: Math.min(1, Math.max(0, v / 100)), offsetPt: el.labelAnchor?.offsetPt ?? 0 } })} />
+        <NumberField label="Label offset pt" testId="field-label-offset" value={el.labelAnchor?.offsetPt ?? 0} onCommit={v => set({ labelAnchor: { position: el.labelAnchor?.position ?? 0.5, offsetPt: v } })} />
+      </div>
+      <p className="muted small">The offset is to the right of the line's direction; negative is to the left.</p>
       <p className="muted small">From {el.from.glue === 'none' ? 'a point' : 'a shape'} to {el.to.glue === 'none' ? 'a point' : 'a shape'}</p>
     </section>
   );

@@ -100,7 +100,16 @@
         "horizontalAlign": { "enum": ["left", "center", "right"] },
         "verticalAlign": { "enum": ["top", "middle", "bottom"] },
         "wrap": { "type": "boolean" },
-        "paddingPt": { "type": "number", "minimum": 0 }
+        "paddingPt": { "type": "number", "minimum": 0 },
+        "insetsPt": { "$ref": "#/$defs/TextInsets", "description": "per-side text margins; when present they replace paddingPt" },
+        "orientation": { "enum": ["horizontal", "vertical"], "description": "vertical reads bottom to top; absent means horizontal" }
+      }
+    },
+    "TextInsets": {
+      "type": "object", "additionalProperties": false, "required": ["top", "right", "bottom", "left"],
+      "properties": {
+        "top": { "type": "number", "minimum": 0, "maximum": 2000 }, "right": { "type": "number", "minimum": 0, "maximum": 2000 },
+        "bottom": { "type": "number", "minimum": 0, "maximum": 2000 }, "left": { "type": "number", "minimum": 0, "maximum": 2000 }
       }
     },
     "ShapeStyle": {
@@ -132,6 +141,23 @@
         "id": { "type": "string", "minLength": 1, "maxLength": 64 },
         "x": { "type": "number", "minimum": 0, "maximum": 1, "description": "fraction of width, element-local, unrotated" },
         "y": { "type": "number", "minimum": 0, "maximum": 1, "description": "fraction of height, element-local, unrotated" }
+      }
+    },
+    "PathAnchor": {
+      "type": "object", "additionalProperties": false, "required": ["position", "offsetPt"],
+      "description": "A place along a connector's drawn route: position is the fraction of the route's length from its start (0 start, 0.5 middle, 1 end); offsetPt is the distance to the right of the direction of travel (negative is left).",
+      "properties": {
+        "position": { "type": "number", "minimum": 0, "maximum": 1 },
+        "offsetPt": { "type": "number", "minimum": -2000, "maximum": 2000 }
+      }
+    },
+    "Attachment": {
+      "type": "object", "additionalProperties": false, "required": ["connectorId", "position", "offsetPt"],
+      "description": "Pins an element's centre to a place along a connector's route. The element follows the connector when its endpoints move or it is rerouted; its bounds are kept in step by the editor.",
+      "properties": {
+        "connectorId": { "$ref": "#/$defs/Uuid" },
+        "position": { "type": "number", "minimum": 0, "maximum": 1 },
+        "offsetPt": { "type": "number", "minimum": -2000, "maximum": 2000 }
       }
     },
     "ShapeGeometry": {
@@ -169,7 +195,8 @@
         "geometry": { "$ref": "#/$defs/ShapeGeometry" },
         "style": { "$ref": "#/$defs/ShapeStyle" },
         "text": { "$ref": "#/$defs/TextBlock" },
-        "ports": { "type": "array", "items": { "$ref": "#/$defs/Port" }, "maxItems": 64 }
+        "ports": { "type": "array", "items": { "$ref": "#/$defs/Port" }, "maxItems": 64 },
+        "attachment": { "$ref": "#/$defs/Attachment" }
       }
     },
     "TextElement": {
@@ -187,7 +214,8 @@
         "bounds": { "$ref": "#/$defs/Bounds" },
         "rotationDeg": { "type": "number" },
         "metadata": { "type": "object", "additionalProperties": { "type": "string", "maxLength": 4096 } },
-        "text": { "$ref": "#/$defs/TextBlock" }
+        "text": { "$ref": "#/$defs/TextBlock" },
+        "attachment": { "$ref": "#/$defs/Attachment" }
       }
     },
     "ImageElement": {
@@ -231,7 +259,8 @@
         "route": { "enum": ["straight", "orthogonal", "curved"] },
         "waypoints": { "type": "array", "items": { "$ref": "#/$defs/Point" }, "maxItems": 256 },
         "style": { "$ref": "#/$defs/LineStyle" },
-        "label": { "$ref": "#/$defs/TextBlock" }
+        "label": { "$ref": "#/$defs/TextBlock" },
+        "labelAnchor": { "$ref": "#/$defs/PathAnchor", "description": "where the label sits along the route; absent means the middle, on the line" }
       }
     },
     "GroupElement": {

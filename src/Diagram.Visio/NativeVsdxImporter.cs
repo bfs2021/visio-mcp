@@ -373,6 +373,7 @@ public sealed class NativeVsdxImporter : IVsdxImporter
 
                 // a connector's fallback box needs the shapes it is glued to, which may come later in the file
                 foreach (var c in connectorEls) c["bounds"] = ConnectorBounds(c);
+                RestoreAttachments();
                 foreach (var (group, shape, connMembers) in groups)
                 {
                     var members = (JsonArray)group["childIds"]!;
@@ -557,14 +558,22 @@ public sealed class NativeVsdxImporter : IVsdxImporter
                 var style = (int)D(C("Style"), 0);
                 var size = D(C("Size"), 12.0 / PtPerInch) * PtPerInch;
                 var font = C("Font");
-                var margin = D(Own(s, "LeftMargin"), 4.0 / PtPerInch) * PtPerInch;
-                return new JsonObject
+                double Margin(string name) => Math.Max(0, D(Own(s, name), 4.0 / PtPerInch) * PtPerInch);
+                var margin = Margin("LeftMargin");
+                double top = Margin("TopMargin"), right = Margin("RightMargin"), bottom = Margin("BottomMargin");
+                var txtAngle = D(Own(s, "TxtAngle"), 0);
+                var turned = Math.Abs(((txtAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI) - Math.PI / 2) < 0.01;
+                var text = new JsonObject
                 {
                     ["value"] = value, ["fontFamily"] = font is not null && rd.faces.TryGetValue(font, out var face) ? Trim(face, 128) : "Segoe UI", ["fontSizePt"] = Math.Clamp(size, 1, 1000),
                     ["bold"] = (style & 1) != 0, ["italic"] = (style & 2) != 0, ["underline"] = (style & 4) != 0, ["colour"] = rd.Colour(C("Color"), "#000000", elementId, pageId),
                     ["horizontalAlign"] = para switch { "0" => "left", "2" => "right", _ => "center" }, ["verticalAlign"] = D(Own(s, "VerticalAlign"), 1) switch { 0 => "top", 2 => "bottom", _ => "middle" },
-                    ["wrap"] = u.GetValueOrDefault("AgentNoWrap") != "1", ["paddingPt"] = Math.Max(0, margin),
+                    ["wrap"] = u.GetValueOrDefault("AgentNoWrap") != "1", ["paddingPt"] = margin,
                 };
+                if (Math.Abs(top - margin) > 1e-6 || Math.Abs(right - margin) > 1e-6 || Math.Abs(bottom - margin) > 1e-6)
+                    text["insetsPt"] = new JsonObject { ["top"] = top, ["right"] = right, ["bottom"] = bottom, ["left"] = margin };
+                if (turned) text["orientation"] = "vertical";
+                return text;
             }
 
             // ------------------------------------------------------------ geometry
@@ -825,9 +834,35 @@ public sealed class NativeVsdxImporter : IVsdxImporter
                     if (rd.Line(s, cell) is { } sz && ArrowSizeOf((int)D(sz, 2)) is var named && named != "medium") ((JsonObject)el["style"]!)[key] = named;
                 var label = ReadText(s, u, id);
                 if (label is not null) el["label"] = label;
+                if (u.TryGetValue("AgentLabelAnchor", out var la))
+                {
+                    try { var n = JsonNode.Parse(la)!; el["labelAnchor"] = new JsonObject { ["position"] = Math.Clamp(n["position"]!.GetValue<double>(), 0, 1), ["offsetPt"] = Math.Clamp(n["offsetPt"]!.GetValue<double>(), -2000, 2000) }; }
+                    catch (Exception e) when (e is JsonException or InvalidOperationException or NullReferenceException or FormatException) { }
+                }
                 el["bounds"] = ConnectorBounds(el);
                 connectorEls.Add(el);
                 Add(el);
+            }
+
+            /// <summary>Shapes and text boxes the editor pinned to a connector come back pinned, when that connector is still on the page.</summary>
+            void RestoreAttachments()
+            {
+                var resolvedByAgentId = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var (sid, u) in userByShape) if (u.GetValueOrDefault("AgentId") is { } aid && idByShape.TryGetValue(sid, out var rid)) resolvedByAgentId[aid] = rid;
+                foreach (var (sid, u) in userByShape)
+                {
+                    if (!u.TryGetValue("AgentAttachment", out var json) || !idByShape.TryGetValue(sid, out var elId) || !elementById.TryGetValue(elId, out var el)) continue;
+                    if (el["kind"]!.GetValue<string>() is not ("shape" or "text")) continue;
+                    try
+                    {
+                        var n = JsonNode.Parse(json)!;
+                        var cid = n["connectorId"]!.GetValue<string>();
+                        var target = resolvedByAgentId.GetValueOrDefault(cid) ?? cid;
+                        if (!elementById.TryGetValue(target, out var c) || c["kind"]!.GetValue<string>() != "connector") { Note("attachment_connector_missing", "A shape was pinned to a connector that is no longer in the file; it is left where it is.", elId, sid, "attachment dropped", "info"); continue; }
+                        el["attachment"] = new JsonObject { ["connectorId"] = target, ["position"] = Math.Clamp(n["position"]!.GetValue<double>(), 0, 1), ["offsetPt"] = Math.Clamp(n["offsetPt"]!.GetValue<double>(), -2000, 2000) };
+                    }
+                    catch (Exception e) when (e is JsonException or InvalidOperationException or NullReferenceException or FormatException) { }
+                }
             }
 
             bool elementKnownLater(string shapeId) => shapeById.ContainsKey(shapeId) && (string?)shapeById[shapeId].Attribute("Type") != "Guide" && !IsConnector(shapeById[shapeId]);

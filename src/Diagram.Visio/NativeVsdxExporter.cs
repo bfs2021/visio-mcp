@@ -347,6 +347,14 @@ public sealed class NativeVsdxExporter : IVsdxExporter
             string NativeName(Element e) { var c = Common(e); return Sanitise(c.Alias ?? c.Name ?? Kind(e)); }
             static string Sanitise(string s) { var t = new string(s.Where(ch => ch >= 0x20 && ch != '<' && ch != '>' && ch != '&').ToArray()); return t.Length == 0 ? "Shape" : t.Length > 120 ? t[..120] : t; }
 
+            /// <summary>Visio cannot pin a shape to a connector: the shape is written where the line puts it, and the pin travels in a user cell so the editor can restore it.</summary>
+            XElement? AttachmentRow(string elementId, Attachment? a)
+            {
+                if (a is null || !shapeIds.ContainsKey(a.ConnectorId)) return null;
+                Warn("attachment_not_native", "Visio has no connector-attached shapes: the shape is placed on the line and will not follow it if the line is rerouted in Visio. Reopened in the editor it follows again.", elementId, "placed on the line", "info");
+                return UserRow("AgentAttachment", JsonSerializer.Serialize(new { connectorId = a.ConnectorId, position = a.Position, offsetPt = a.OffsetPt }));
+            }
+
             XElement UserSection(Element e, params XElement[] extra)
             {
                 var c = Common(e);
@@ -455,12 +463,13 @@ public sealed class NativeVsdxExporter : IVsdxExporter
                     if (GeometryMap.IsApproximated(preset)) Warn("preset_approximated", $"The {preset} outline is an approximation of the editor's shape.", s.Id, "approximated", "info");
                 }
                 if (s.Hidden) foreach (var g2 in new[] { "NoShow" }) shape.Add(Cell("HideText", 1));
-                AddText(shape, s.Text, s.Id);
+                AddText(shape, s.Text, s.Id, s.Bounds);
                 var extra = new List<XElement> { UserRow("AgentPreset", preset), UserRow("AgentGeomSig", GeometryMap.Signature(geo, s.Bounds.Width, s.Bounds.Height)) };
                 if (s.Text is { } tb) { extra.Add(UserRow("AgentTextBlock", "1")); if (!tb.Wrap) extra.Add(UserRow("AgentNoWrap", "1")); }
                 if (s.Style.Stroke is NonePaint) extra.Add(UserRow("AgentStrokeWidthPt", N(s.Style.StrokeWidthPt)));
                 if (s.Geometry.CornerRadiusPt is { } r) extra.Add(UserRow("AgentCornerRadiusPt", N(r)));
                 if (s.Geometry.SvgPath is { Length: > 0 and <= 30000 } keep) extra.Add(UserRow("AgentSvgPath", keep));
+                if (AttachmentRow(s.Id, s.Attachment) is { } att) extra.Add(att);
                 shape.Add(UserSection(s, extra.Concat(PortRows(s.Id)).ToArray()));
                 if (GradientSection(s.Style.Fill) is { } gradient) shape.Add(gradient);
                 shape.Add(GeometrySections(geo, s.Bounds, s.Hidden));
@@ -478,22 +487,30 @@ public sealed class NativeVsdxExporter : IVsdxExporter
                 LayerCell(shape, t.LayerIds, t.Id);
                 Flags(shape, t.Locked);
                 if (t.Hidden) shape.Add(Cell("HideText", 1));
-                AddText(shape, t.Text, t.Id);
+                AddText(shape, t.Text, t.Id, t.Bounds);
                 var geo = GeometryMap.ForPreset("rectangle");
                 var extra = new List<XElement> { UserRow("AgentPreset", "text"), UserRow("AgentGeomSig", GeometryMap.Signature(geo)), UserRow("AgentTextBlock", "1") };
                 if (!t.Text.Wrap) extra.Add(UserRow("AgentNoWrap", "1"));
+                if (AttachmentRow(t.Id, t.Attachment) is { } att) extra.Add(att);
                 shape.Add(UserSection(t, extra.ToArray()));
                 shape.Add(GeometrySections(geo, t.Bounds, t.Hidden, noFill: true));
                 run.nativeIds[t.Id] = $"{pageIndex}/{id}";
                 return shape;
             }
 
-            void AddText(XElement shape, TextBlock? t, string elementId)
+            void AddText(XElement shape, TextBlock? t, string elementId, Bounds? box = null)
             {
                 if (t is null) return;
                 var colour = Colour(t.Colour);
                 shape.Add(Cell("VerticalAlign", t.VerticalAlign switch { "top" => 0, "bottom" => 2, _ => 1 }),
-                    Cell("TopMargin", t.PaddingPt / PtPerInch), Cell("BottomMargin", t.PaddingPt / PtPerInch), Cell("LeftMargin", t.PaddingPt / PtPerInch), Cell("RightMargin", t.PaddingPt / PtPerInch));
+                    Cell("TopMargin", (t.InsetsPt?.Top ?? t.PaddingPt) / PtPerInch), Cell("BottomMargin", (t.InsetsPt?.Bottom ?? t.PaddingPt) / PtPerInch),
+                    Cell("LeftMargin", (t.InsetsPt?.Left ?? t.PaddingPt) / PtPerInch), Cell("RightMargin", (t.InsetsPt?.Right ?? t.PaddingPt) / PtPerInch));
+                if (t.Orientation == "vertical" && box is not null)
+                {
+                    // the text block is the shape turned a quarter (reads bottom to top): as wide as the shape is tall, pinned at the middle
+                    double w = box.Width / PtPerInch, h = box.Height / PtPerInch;
+                    shape.Add(Cell("TxtPinX", w / 2), Cell("TxtPinY", h / 2), Cell("TxtLocPinX", h / 2), Cell("TxtLocPinY", w / 2), Cell("TxtWidth", h), Cell("TxtHeight", w), Cell("TxtAngle", Math.PI / 2));
+                }
                 shape.Add(new XElement(V + "Section", new XAttribute("N", "Character"), new XElement(V + "Row", new XAttribute("IX", "0"),
                     Cell("Font", run.Face(t.FontFamily)), CellS("Color", colour), Cell("Style", (t.Bold ? 1 : 0) | (t.Italic ? 2 : 0) | (t.Underline ? 4 : 0)), Cell("Size", t.FontSizePt / PtPerInch))));
                 shape.Add(new XElement(V + "Section", new XAttribute("N", "Paragraph"), new XElement(V + "Row", new XAttribute("IX", "0"),
@@ -720,6 +737,21 @@ public sealed class NativeVsdxExporter : IVsdxExporter
                 Flags(shape, c.Locked);
                 if (c.Label is { } label) { AddText(shape, label, c.Id); }
                 var cx = new List<XElement> { UserRow("AgentRoute", c.Route) };
+                if (c.LabelAnchor is { } la)
+                {
+                    cx.Add(UserRow("AgentLabelAnchor", JsonSerializer.Serialize(new { position = la.Position, offsetPt = la.OffsetPt })));
+                    if (c.Label is not null && PathMath.PointAt(polyline, la.Position, la.OffsetPt) is { } at)
+                    {
+                        // the text block's pin, in the connector's own frame (origin at its start, page directions, y up)
+                        // a pinned text block needs a size of its own, or Visio wraps it a letter to a line: estimated from the text, centred on the pin
+                        var lines = c.Label.Value.Split((char)10);
+                        var tw = Math.Max(lines.Max(l => l.Length) * c.Label.FontSizePt * 0.6, 8) + 2 * c.Label.PaddingPt;
+                        var th = lines.Length * c.Label.FontSizePt * 1.3 + 2 * c.Label.PaddingPt;
+                        shape.Add(Cell("TxtPinX", at.X / PtPerInch - bx), Cell("TxtPinY", Vy(at.Y) - by), Cell("TxtWidth", tw / PtPerInch), Cell("TxtHeight", th / PtPerInch),
+                            Cell("TxtLocPinX", tw / PtPerInch / 2), Cell("TxtLocPinY", th / PtPerInch / 2), Cell("TxtAngle", 0));
+                        Warn("label_position_fixed", "The label is placed at its position along the line; Visio keeps it there as a fixed offset, so it may drift if the line is rerouted in Visio.", c.Id, "label placed", "info");
+                    }
+                }
                 if (c.Label is not null) cx.Add(UserRow("AgentTextBlock", "1"));
                 if (c.Waypoints.Count > 0) cx.Add(UserRow("AgentWaypoints", JsonSerializer.Serialize(c.Waypoints.Select(w => new { x = w.X, y = w.Y }))));
                 shape.Add(UserSection(c, cx.ToArray()));

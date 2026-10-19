@@ -85,6 +85,15 @@ export interface TextBlock {
   verticalAlign: "top" | "middle" | "bottom";
   wrap: boolean;
   paddingPt: number;
+  insetsPt?: TextInsets;
+  orientation?: "horizontal" | "vertical";
+}
+
+export interface TextInsets {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
 }
 
 export interface ShapeStyle {
@@ -110,6 +119,17 @@ export interface Port {
   id: string;
   x: number;
   y: number;
+}
+
+export interface PathAnchor {
+  position: number;
+  offsetPt: number;
+}
+
+export interface Attachment {
+  connectorId: Uuid;
+  position: number;
+  offsetPt: number;
 }
 
 export interface ShapeGeometry {
@@ -141,6 +161,7 @@ export interface ShapeElement {
   style: ShapeStyle;
   text?: TextBlock;
   ports?: Port[];
+  attachment?: Attachment;
 }
 
 export interface TextElement {
@@ -156,6 +177,7 @@ export interface TextElement {
   rotationDeg: number;
   metadata: Record<string, string>;
   text: TextBlock;
+  attachment?: Attachment;
 }
 
 export interface ImageElement {
@@ -194,6 +216,7 @@ export interface ConnectorElement {
   waypoints: Point[];
   style: LineStyle;
   label?: TextBlock;
+  labelAnchor?: PathAnchor;
 }
 
 export interface GroupElement {
@@ -272,6 +295,8 @@ export interface TextBlockPatch {
   verticalAlign?: "top" | "middle" | "bottom";
   wrap?: boolean;
   paddingPt?: number;
+  insetsPt?: unknown;
+  orientation?: "horizontal" | "vertical";
 }
 
 export interface StylePatch {
@@ -314,6 +339,15 @@ export interface ElementPatch {
   from?: Endpoint;
   to?: Endpoint;
   ports?: Port[];
+  attachment?: {
+  connector: Target;
+  position?: number;
+  offsetPt?: number;
+} | null;
+  labelAnchor?: {
+  position?: number;
+  offsetPt?: number;
+} | null;
 }
 
 export interface CreateShapeOp {
@@ -329,6 +363,7 @@ export interface CreateShapeOp {
   style?: StylePatch;
   text?: TextBlockPatch;
   ports?: Port[];
+  attachment?: AttachmentInput;
 }
 
 export interface CreateTextOp {
@@ -341,6 +376,7 @@ export interface CreateTextOp {
   bounds: Bounds;
   rotationDeg?: number;
   text: TextBlockPatch;
+  attachment?: AttachmentInput;
 }
 
 export interface CreateImageOp {
@@ -371,6 +407,18 @@ export interface CreateConnectorOp {
   waypoints?: Point[];
   style?: StylePatch;
   label?: TextBlockPatch;
+  labelAnchor?: LabelAnchorInput;
+}
+
+export interface AttachmentInput {
+  connector: Target;
+  position?: number;
+  offsetPt?: number;
+}
+
+export interface LabelAnchorInput {
+  position?: number;
+  offsetPt?: number;
 }
 
 export interface EndpointInput {

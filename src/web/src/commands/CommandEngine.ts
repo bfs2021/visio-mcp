@@ -10,6 +10,7 @@ import { validateDocument, validateMutationRequest, validateOperation, validateS
 import { withSpan, type SourceSpan } from '../script/compiler';
 import { applyDiff, type DiffBody } from './diff';
 import { History } from './history';
+import { settleAttachments } from './attachments';
 import { planPatch } from './planPatch';
 
 export type Projector = (snapshot: Snapshot, diff: ResolvedDiff) => Result<void>;
@@ -210,7 +211,7 @@ export class CommandEngine {
     if (!ops.ok) return ops;
     const planned = planPatch(before.document, ops.value, { newId: this.newId, ...(req.pageId ? { pageId: req.pageId } : {}) });
     if (!planned.ok) return spans ? withSpan(planned, spans()) : planned;
-    const plan = planned.value;
+    const plan = settleAttachments(before.document, planned.value, this.snapshotProjector, doc => ({ ...before, revision: before.revision + 1, document: doc }));
     const previousRevision = before.revision;
 
     if (plan.noChange) {

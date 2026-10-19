@@ -1,11 +1,11 @@
 {
-  "transactionId": "0fbeae3d-bfe4-4380-9b4d-4cafe0141da8",
+  "transactionId": "593076fb-00cf-4d51-933b-91e87ae9008a",
   "previousRevision": 5,
   "revision": 6,
   "noChange": false,
   "created": [],
   "changed": [
-    "5b9c3a53-ced8-4fce-baa6-92d4787ccdfb"
+    "5bac1d8f-639c-442b-9b28-1c6888872ff6"
   ],
   "deleted": [],
   "changedPageIds": [],
@@ -14,7 +14,7 @@
     "asset:esg-global-primary"
   ],
   "visuallyAffectedIds": [
-    "5b9c3a53-ced8-4fce-baa6-92d4787ccdfb"
+    "5bac1d8f-639c-442b-9b28-1c6888872ff6"
   ],
   "warnings": [],
   "projectionStatus": "applied"

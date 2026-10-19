@@ -297,6 +297,7 @@ export class MaxGraphAdapter implements CanvasAdapter {
     const geo = new Geometry();
     geo.relative = true;
     geo.points = el.waypoints.map(p => new Point(p.x, p.y));
+    if (el.labelAnchor) { geo.x = el.labelAnchor.position * 2 - 1; geo.y = -el.labelAnchor.offsetPt; } // maxGraph: x runs -1 (start) to 1 (end) along the line; its y is positive to the left of travel, ours to the right
     if (el.from.glue === 'none' && el.from.point) geo.setTerminalPoint(new Point(el.from.point.x, el.from.point.y), true);
     if (el.to.glue === 'none' && el.to.point) geo.setTerminalPoint(new Point(el.to.point.x, el.to.point.y), false);
     const style = edgeStyle(el, state.locked);

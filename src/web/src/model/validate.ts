@@ -137,6 +137,7 @@ export function validateDocument(value: unknown): Result<DiagramDocument> {
         if (!(el.bounds.width > 0 && el.bounds.height > 0)) return fail('invalid_request', `element ${el.id} must have positive size`);
       }
       if (el.kind === 'shape') { const bad = paintProblem(el.style.fill, 'fill') ?? paintProblem(el.style.stroke, 'stroke'); if (bad) return fail('invalid_request', `${bad} (element ${el.id})`); }
+      if ((el.kind === 'shape' || el.kind === 'text') && el.attachment && !pageElements.has(el.attachment.connectorId)) return fail('invalid_request', `element ${el.id} is attached to a connector that is not on its page`);
       if (el.kind === 'image' && !assetIds.has(el.assetId)) return fail('invalid_request', `image ${el.id} references unknown asset ${el.assetId}`);
       if (el.kind === 'connector') {
         for (const ep of [el.from, el.to]) {

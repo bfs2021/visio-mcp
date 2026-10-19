@@ -196,6 +196,37 @@ class Compiler {
     return value;
   }
 
+  /** `on=CONNECTOR at=0..1 offset=DIM`: pins a shape or text box to a place along a connector. */
+  private attachmentInput(patching = false): { connector: string; position?: number; offsetPt?: number } | null | undefined {
+    const on = this.raw('on');
+    if (!on) {
+      if (this.has('at') || this.has('offset')) {
+        if (!patching) this.err('at= and offset= go with on=CONNECTOR', (this.raw('at') ?? this.raw('offset'))!.keyToken);
+        return undefined;
+      }
+      return undefined;
+    }
+    if (on.value.type === 'word' && on.value.text === 'none') return patching ? null : this.err('on=none only makes sense with set', on.value);
+    const known = this.target(on.value);
+    if (known.kind !== 'connector') this.err(`on= takes a connector, and ${on.value.type === 'word' ? on.value.text : 'that'} is a ${known.kind}`, on.value);
+    const out: { connector: string; position?: number; offsetPt?: number } = { connector: known.id };
+    if (this.has('at')) out.position = this.num(this.raw('at')!, 0, 1);
+    if (this.has('offset')) out.offsetPt = this.signedDim(this.raw('offset')!);
+    return out;
+  }
+
+  /** A dimension that may be negative, such as -6mm. */
+  private signedDim(n: Named): number { return this.dim(n); }
+
+  /** `labelAt=0..1 labelOffset=DIM` on a connector: where its text sits along the line. */
+  private labelAnchorInput(): { position?: number; offsetPt?: number } | undefined {
+    if (!this.has('labelAt') && !this.has('labelOffset')) return undefined;
+    const out: { position?: number; offsetPt?: number } = {};
+    if (this.has('labelAt')) out.position = this.num(this.raw('labelAt')!, 0, 1);
+    if (this.has('labelOffset')) out.offsetPt = this.dim(this.raw('labelOffset')!);
+    return out;
+  }
+
   private enumValue<T extends string>(n: Named, allowed: readonly T[], synonyms: Record<string, T> = {}): T {
     const text = n.value.type === 'word' ? n.value.text : n.value.type === 'string' ? n.value.value : '';
     const hit = (allowed as readonly string[]).includes(text) ? (text as T) : synonyms[text];
@@ -333,9 +364,13 @@ class Compiler {
     take('valign', n => this.enumValue(n, ['top', 'middle', 'bottom'] as const), 'verticalAlign');
     take('wrap', n => this.bool(n), 'wrap');
     take('padding', n => this.dim(n), 'paddingPt');
+    take('textDir', n => this.enumValue(n, ['horizontal', 'vertical'] as const), 'orientation');
+    const sides: Record<string, number> = {};
+    for (const side of ['Top', 'Right', 'Bottom', 'Left']) { const key = `inset${side}`; const n = this.raw(key); if (n) { sides[side.toLowerCase()] = this.dim(n); known.add(key); } }
+    if (Object.keys(sides).length) t.insetsPt = sides;
     return t as Partial<TextBlock>;
   }
-  private static readonly TEXT_KEYS = ['text', 'font', 'fontSize', 'bold', 'italic', 'underline', 'textColor', 'align', 'valign', 'wrap', 'padding'];
+  private static readonly TEXT_KEYS = ['text', 'font', 'fontSize', 'bold', 'italic', 'underline', 'textColor', 'align', 'valign', 'wrap', 'padding', 'textDir', 'insetTop', 'insetRight', 'insetBottom', 'insetLeft'];
 
   private bounds(): Bounds {
     const x = this.dim(this.need('x')), y = this.dim(this.need('y')), width = this.dim(this.need('w')), height = this.dim(this.need('h'));
@@ -471,7 +506,7 @@ class Compiler {
     if (this.has('name')) common.name = this.str(this.raw('name')!);
     if (this.has('layer')) common.layerIds = [this.layerId(this.wordOrString(this.raw('layer')!), this.raw('layer')!.value)];
     if (this.has('rotate')) common.rotationDeg = this.angle(this.raw('rotate')!);
-    const base = ['id', 'uuid', 'x', 'y', 'w', 'h', 'name', 'layer', 'rotate'];
+    const base = ['id', 'uuid', 'x', 'y', 'w', 'h', 'name', 'layer', 'rotate', 'on', 'at', 'offset'];
 
     if (what === 'shape') {
       this.finish([...base, 'type', 'cornerRadius', 'fill', 'stroke', 'strokeWidth', 'dash', 'lineCap', 'lineJoin', ...Compiler.TEXT_KEYS]);
@@ -484,6 +519,7 @@ class Compiler {
       if (Object.keys(style).length) op.style = style as never;
       const text = this.textPatch(new Set());
       if (Object.keys(text).length) op.text = text as never;
+      const att = this.attachmentInput(); if (att) op.attachment = att;
       this.emit(op);
       this.register(alias, { id, kind: 'shape' }, this.raw('id')?.value ?? cmd.span);
       return;
@@ -492,6 +528,7 @@ class Compiler {
       this.finish([...base, ...Compiler.TEXT_KEYS]);
       if (!this.has('text')) this.err('add text needs text="..."', cmd.span);
       const op: Operation = { op: 'createText', ...common, bounds: this.bounds(), text: this.textPatch(new Set()) as never };
+      const att = this.attachmentInput(); if (att) op.attachment = att;
       this.emit(op);
       this.register(alias, { id, kind: 'text' }, this.raw('id')?.value ?? cmd.span);
       return;
@@ -556,7 +593,7 @@ class Compiler {
     this.begin(cmd);
     if (this.args.pos.length) this.err('connect takes only name=value fields', this.args.pos[0]!);
     this.finish(['id', 'uuid', 'from', 'to', 'fromAlias', 'fromPort', 'toAlias', 'toPort', 'fromX', 'fromY', 'toX', 'toY', 'route', 'name', 'layer',
-      'stroke', 'strokeWidth', 'dash', 'startArrow', 'endArrow', 'startArrowSize', 'endArrowSize', 'text']);
+      'stroke', 'strokeWidth', 'dash', 'startArrow', 'endArrow', 'startArrowSize', 'endArrowSize', 'text', 'labelAt', 'labelOffset']);
     const pageId = this.pageIdForCreate();
     const { id, alias } = this.identity();
     const op: Operation = { op: 'createConnector', id, pageId, from: this.endpoint('from'), to: this.endpoint('to') };
@@ -567,6 +604,7 @@ class Compiler {
     const style = this.lineStyle();
     if (Object.keys(style).length) op.style = style as never;
     if (this.has('text')) op.label = { value: this.str(this.raw('text')!) };
+    const anchor = this.labelAnchorInput(); if (anchor) op.labelAnchor = anchor;
     this.emit(op);
     this.register(alias, { id, kind: 'connector' }, this.raw('id')?.value ?? cmd.span);
   }
@@ -634,6 +672,21 @@ class Compiler {
     if (this.has('route')) {
       if (!isConnector) this.err('route= applies to connectors only', this.raw('route')!.keyToken);
       patch.route = this.enumValue(this.raw('route')!, ['straight', 'orthogonal', 'curved'] as const); handled.add('route');
+    }
+    if (this.has('on') || this.has('at') || this.has('offset')) {
+      if (known.kind !== 'shape' && known.kind !== 'text') this.err('on=, at= and offset= apply to shapes and text boxes', (this.raw('on') ?? this.raw('at') ?? this.raw('offset'))!.keyToken);
+      const current = this.ctx.snapshot.document.pages.flatMap(pg => pg.elements).find(e => e.id === known.id);
+      const was = current && (current.kind === 'shape' || current.kind === 'text') ? current.attachment : undefined;
+      const att = this.attachmentInput(true);
+      if (att === null) patch.attachment = null;
+      else if (att) patch.attachment = att;
+      else if (was) patch.attachment = { connector: was.connectorId, ...(this.has('at') ? { position: this.num(this.raw('at')!, 0, 1) } : { position: was.position }), ...(this.has('offset') ? { offsetPt: this.dim(this.raw('offset')!) } : { offsetPt: was.offsetPt }) };
+      else this.err('at= and offset= go with on=CONNECTOR', (this.raw('at') ?? this.raw('offset'))!.keyToken);
+      for (const k of ['on', 'at', 'offset']) handled.add(k);
+    }
+    if (this.has('labelAt') || this.has('labelOffset')) {
+      if (!isConnector) this.err('labelAt= and labelOffset= apply to connectors', (this.raw('labelAt') ?? this.raw('labelOffset'))!.keyToken);
+      patch.labelAnchor = this.labelAnchorInput(); handled.add('labelAt'); handled.add('labelOffset');
     }
     for (const n of cmd.named) {
       if (!handled.has(n.key)) this.err(`unknown field "${n.key}" for set`, n.keyToken, 'to change position or size use move, resize, rotate');
