@@ -11,11 +11,7 @@ public sealed partial class HostServices
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException)
         { return "The drawing operation succeeded, but recent-file history could not be updated: " + e.Message; }
     }
-    async Task<string?> RecentOpenFolderAsync(CancellationToken ct)
-    {
-        var state = await Task.Run(() => window.Recents.ReadAsync(ct), ct);
-        return state.LastOpenFolder is { } folder && await Task.Run(() => Directory.Exists(folder), ct) ? folder : null;
-    }
+    Task<string?> RecentOpenFolderAsync(CancellationToken ct) => Task.Run(() => window.Recents.OpenFolderAsync(ct), ct);
     async Task<ResponseEnvelope> RecentAsync(RequestEnvelope request, CancellationToken ct)
     {
         string? warning = null;

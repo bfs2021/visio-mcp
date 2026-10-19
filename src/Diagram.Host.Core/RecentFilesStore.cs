@@ -61,6 +61,8 @@ public sealed class RecentFilesStore(string file, AtomicFileWriter writer)
     public Task<string?> RemoveAsync(string id, CancellationToken ct = default) => Change(s => s with { Entries = s.Entries.Where(e => e.Id != id).ToArray() }, ct);
     public Task<string?> ClearAsync(CancellationToken ct = default) => Change(s => s with { Entries = [] }, ct);
     public async Task<RecentFile?> ResolveAsync(string id, string kind, CancellationToken ct = default) => (await ReadAsync(ct).ConfigureAwait(false)).Entries.FirstOrDefault(e => e.Id == id && e.Kind == kind);
+    public async Task<string?> OpenFolderAsync(CancellationToken ct = default)
+    { var folder = (await ReadAsync(ct).ConfigureAwait(false)).LastOpenFolder; return folder is not null && await Availability.IsDirectoryAsync(folder, ct).ConfigureAwait(false) ? folder : null; }
     static readonly RecentFileAvailability Availability = new();
     public static Task<string> AvailabilityAsync(string path, CancellationToken ct = default) => Availability.CheckAsync(path, ct);
 }

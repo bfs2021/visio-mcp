@@ -7,6 +7,9 @@ public sealed class RecentFileAvailability(Func<string, string>? probe = null, T
     readonly ConcurrentDictionary<string, Lazy<Task<string>>> probes = new(StringComparer.OrdinalIgnoreCase);
     readonly SemaphoreSlim workers = new(16, 16);
     public async Task<string> CheckAsync(string path, CancellationToken ct = default)
+    { var result = await CheckCoreAsync(path, ct).ConfigureAwait(false); return result == "directory" ? "unavailable" : result; }
+    public async Task<bool> IsDirectoryAsync(string path, CancellationToken ct = default) => await CheckCoreAsync(path, ct).ConfigureAwait(false) == "directory";
+    async Task<string> CheckCoreAsync(string path, CancellationToken ct)
     {
         var pending = probes.GetOrAdd(path, p => new Lazy<Task<string>>(() =>
         {
@@ -21,7 +24,7 @@ public sealed class RecentFileAvailability(Func<string, string>? probe = null, T
     }
     static string Probe(string path)
     {
-        try { return (System.IO.File.GetAttributes(path) & FileAttributes.Directory) != 0 ? "unavailable" : "available"; }
+        try { return (System.IO.File.GetAttributes(path) & FileAttributes.Directory) != 0 ? "directory" : "available"; }
         catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException) { return "missing"; }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return "unavailable"; }
     }
