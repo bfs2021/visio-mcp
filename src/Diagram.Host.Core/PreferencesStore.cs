@@ -26,7 +26,12 @@ public sealed class PreferencesStore(string file, AtomicFileWriter writer)
     public async Task<PreferencesSnapshot> ReadAsync(CancellationToken ct = default)
     {
         await gate.WaitAsync(ct).ConfigureAwait(false);
-        try { return effective = await ReadUnlockedAsync(ct).ConfigureAwait(false); }
+        try
+        {
+            var snapshot = await ReadUnlockedAsync(ct).ConfigureAwait(false);
+            if (snapshot.VersionTag != "unreadable") effective = snapshot;
+            return snapshot;
+        }
         finally { gate.Release(); }
     }
 
@@ -57,7 +62,7 @@ public sealed class PreferencesStore(string file, AtomicFileWriter writer)
         catch (FileNotFoundException) { return new(defaults, "missing", null); }
         catch (DirectoryNotFoundException) { return new(defaults, "missing", null); }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-        { return new(defaults, "unreadable", "Preferences could not be read."); }
+        { return new(effective.Preferences, "unreadable", "Preferences could not be read."); }
     }
 
     public async Task<PreferencesSaveResult> SaveAsync(AppPreferences preferences, string expectedVersionTag, bool resetInvalid, CancellationToken ct = default)

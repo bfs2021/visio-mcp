@@ -54,9 +54,33 @@ public class PreferencesStoreTests
         await using (var held = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
         {
             var store = Make(d); var before = await store.ReadAsync(); Assert.NotNull(before.Diagnostic);
+            Assert.Equal("light", before.Preferences.Theme);
             Assert.Equal(PreferencesSaveStatus.IoError, (await store.SaveAsync(before.Preferences, before.VersionTag, true)).Status);
         }
         Assert.Equal("original", await File.ReadAllTextAsync(path)); Assert.Empty(Directory.GetFiles(d.Path, "*.bak"));
+    }
+
+    [Fact] public async Task TransientUnreadableReadRetainsLastPublishedPreferencesUntilFileIsReadable()
+    {
+        using var d = new TempDir(); var path = d.File("preferences.json"); var store = Make(d);
+        var first = await store.ReadAsync();
+        var saved = await store.SaveAsync(first.Preferences with { Theme = "dark" }, first.VersionTag, false);
+        Assert.Equal(PreferencesSaveStatus.Success, saved.Status);
+        await using (var held = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+        {
+            var unreadable = await store.ReadAsync();
+            Assert.Equal("unreadable", unreadable.VersionTag);
+            Assert.NotNull(unreadable.Diagnostic);
+            Assert.Equal("dark", unreadable.Preferences.Theme);
+            var failed = await store.SaveAsync(saved.Snapshot.Preferences with { Units = "in" }, unreadable.VersionTag, true);
+            Assert.Equal(PreferencesSaveStatus.IoError, failed.Status);
+            Assert.Equal("dark", failed.Snapshot.Preferences.Theme);
+            Assert.Equal(saved.Snapshot.VersionTag, failed.Snapshot.VersionTag);
+        }
+        var recovered = await store.ReadAsync();
+        Assert.Null(recovered.Diagnostic);
+        Assert.Equal("dark", recovered.Preferences.Theme);
+        Assert.Equal(saved.Snapshot.VersionTag, recovered.VersionTag);
     }
     [Fact] public async Task ExclusiveSiblingLockWaitIsCancellable()
     {
@@ -65,6 +89,20 @@ public class PreferencesStoreTests
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => store.SaveAsync(before.Preferences, before.VersionTag, false, cts.Token));
         Assert.False(File.Exists(d.File("preferences.json")));
+    }
+
+    [Fact] public async Task CancellationBeforeAtomicReplacementPreservesOriginalBytes()
+    {
+        using var d = new TempDir(); var path = d.File("preferences.json");
+        var writer = new AtomicFileWriter(); var store = Make(d, writer); var first = await store.ReadAsync();
+        var saved = await store.SaveAsync(first.Preferences, first.VersionTag, false);
+        Assert.Equal(PreferencesSaveStatus.Success, saved.Status);
+        var original = await File.ReadAllBytesAsync(path);
+        using var cts = new CancellationTokenSource();
+        writer.BeforeReplace = cts.Cancel;
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => store.SaveAsync(saved.Snapshot.Preferences with { Theme = "dark" }, saved.Snapshot.VersionTag, false, cts.Token));
+        Assert.Equal(original, await File.ReadAllBytesAsync(path));
+        Assert.Equal("light", (await store.ReadAsync()).Preferences.Theme);
     }
 
     [Fact] public async Task ExternalEditBeforeAtomicReplaceReturnsConflictAndPreservesItsBytes()
