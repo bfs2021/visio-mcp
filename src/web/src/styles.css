@@ -148,3 +148,7 @@ textarea { width: 100%; resize: vertical; }
 .tab-scroll:hover { background: rgba(15, 23, 42, .12); }
 .tab-menu { position: fixed; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* W17: the keyboard and accessibility twin of the canvas is out of sight but takes focus; the canvas shows where focus is */
+.object-list { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.canvas-frame:has(.object-list:focus-visible) { outline: 3px solid #2563eb; outline-offset: -3px; }

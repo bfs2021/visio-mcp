@@ -18,6 +18,7 @@ import { effectiveState } from '../canvas/cellMapping';
 import { restoreRecovery, type RecoveryPayload } from '../commands/recovery';
 import { drawScriptCompiler, validateScript, type ValidationReport } from '../script/compiler';
 import { toPoints, type Unit } from '../model/validate';
+import { connectable, navigableObjects, nearestIn, stepFrom, type Direction } from './objectNav';
 import { iconOperations } from '../icons/catalog';
 import type { AgentDocument } from '../bridge/engineHandlers';
 
@@ -532,7 +533,69 @@ export class EditorModel {
   }
 
 
+  /** What an arrow key moves the selection by: one grid step (at least 1 pt). */
+  get nudgeStepPt(): number { return Math.max(1, this.currentPage.grid.spacingPt); }
   async nudge(dx: number, dy: number): Promise<void> { await this.apply('nudge', nudgeOperations(this.snapshot, this.selection, dx, dy)); }
+
+  // ------------------------------------------------------------------ keyboard navigation (W17)
+  /** The object the keyboard is on: the last thing selected, standing as a group when the whole group is. */
+  get activeObjectId(): string | undefined { return this.targets.at(-1); }
+
+  /** Selects exactly these objects (a group stands for its members) and brings the last into view. Not a pointer gesture, so nothing is moved or edited. */
+  selectObjects(ids: string[]): void {
+    const leaves = leavesOfTargets(this.snapshot, ids);
+    this.selection = leaves;
+    this.canvas?.setSelection(leaves);
+    if (ids.length) this.canvas?.reveal(leaves.at(-1)!);
+    this.bump();
+  }
+
+  /** Tab / Shift+Tab. False when there is nowhere further to go, so the key can leave the canvas. */
+  stepObject(delta: 1 | -1): boolean {
+    const next = stepFrom(navigableObjects(this.currentPage), this.activeObjectId, delta);
+    if (!next) return false;
+    this.selectObjects([next.id]);
+    return true;
+  }
+
+  jumpObject(dir: Direction): void {
+    const page = this.currentPage, order = navigableObjects(page), from = this.activeObjectId;
+    const next = from ? nearestIn(page, order, from, dir) : order[0];
+    if (next) this.selectObjects([next.id]); else if (from) this.say(`No object ${dir === 'up' || dir === 'down' ? dir : 'to the ' + dir} of this one.`, 'info');
+  }
+
+  endObject(which: 'first' | 'last'): void {
+    const order = navigableObjects(this.currentPage);
+    const e = which === 'first' ? order[0] : order.at(-1);
+    if (e) this.selectObjects([e.id]);
+  }
+
+  /** Enter / F2: edit the text of the selected shape or text box. */
+  editSelectedText(): void {
+    const only = this.selectedElements();
+    if (only.length !== 1 || (only[0]!.kind !== 'shape' && only[0]!.kind !== 'text')) { this.say('Select one shape or text box to edit its text.', 'info'); return; }
+    if (only[0]!.locked) { this.say('That object is locked.', 'warning'); return; }
+    this.canvas?.startTextEdit(only[0]!.id);
+  }
+
+  /** "Connect objects": choose where a connector starts and ends from lists, with no pointer. */
+  connectPrompt: { from: string; to: string; error: string | null } | null = null;
+  beginConnect(): void {
+    const picks = connectable(this.currentPage);
+    if (picks.length < 2) { this.say('Add at least two objects before connecting them.', 'info'); return; }
+    const chosen = this.targets.filter(id => picks.some(p => p.id === id));
+    this.connectPrompt = { from: chosen[0] ?? picks[0]!.id, to: chosen[1] ?? picks.find(p => p.id !== (chosen[0] ?? picks[0]!.id))!.id, error: null };
+    this.bump();
+  }
+  connectCancel(): void { this.connectPrompt = null; this.bump(); }
+  async connectCreate(from: string, to: string): Promise<void> {
+    if (from === to) { this.connectPrompt = { from, to, error: 'Choose two different objects.' }; this.bump(); return; }
+    const r = await this.apply('create', intentOperations(this.snapshot, { type: 'connect', from, to }));
+    if (!r.ok) { this.connectPrompt = { from, to, error: r.error.message }; this.bump(); return; }
+    this.connectPrompt = null;
+    if (r.value.created[0]) this.selectObjects([r.value.created[0]]); else this.bump();
+    this.say('Connector created.', 'info');
+  }
 
   selectAll(): void {
     const page = this.currentPage;
