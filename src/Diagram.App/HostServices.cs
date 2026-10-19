@@ -60,6 +60,7 @@ public sealed partial class HostServices(MainWindow window)
                 "host.protectNewDocument" => await ProtectNewDocumentAsync(request, ct),
                 "host.openJson" => await OpenAsync(request, ct),
                 "host.saveJson" => await SaveAsync(request, ct),
+                var m when m.StartsWith("host.recent.", StringComparison.Ordinal) => await RecentAsync(request, ct),
                 "host.pickImage" => await PickImageAsync(request, ct),
                 "host.openVsdx" => await OpenVsdxAsync(request, ct),
                 "host.exportVsdx" => await ExportVsdxAsync(request, ct),
@@ -112,17 +113,27 @@ public sealed partial class HostServices(MainWindow window)
     async Task<ResponseEnvelope> OpenAsync(RequestEnvelope request, CancellationToken ct)
     {
         string? path;
-        if (request.Params["path"]?.GetValue<string>() is { Length: > 0 } requested)
+        var recentId = request.Params["recentId"]?.GetValue<string>();
+        var restored = request.Params["path"]?.GetValue<string>() is { Length: > 0 };
+        if (recentId is not null)
+        {
+            if (restored) return Err(request, "invalid_request", "choose either a recent entry or a restored path");
+            var entry = await window.Recents.ResolveAsync(recentId, "json", ct);
+            if (entry is null) return Err(request, "not_found", "that recent file is no longer listed");
+            path = entry.Path;
+        }
+        else if (request.Params["path"]?.GetValue<string>() is { Length: > 0 } requested)
         {
             // reopening a tab from the last run: no dialog, but only a file that run listed
             if (!MayReopen(requested)) return Err(request, "invalid_request", "that file was not open in the last session");
             path = Path.GetFullPath(requested);
         }
-        else path = Ask("open", () =>
+        else { var folder = await RecentOpenFolderAsync(ct); path = Ask("open", () =>
         {
-            var d = new OpenFileDialog { Title = "Open diagram", Filter = "Diagram JSON (*.diagram.json)|*.diagram.json|All files (*.*)|*.*" };
+            var d = new OpenFileDialog { Title = "Open diagram", InitialDirectory = folder ?? "", Filter = "Diagram JSON (*.diagram.json)|*.diagram.json|All files (*.*)|*.*" };
             return d.ShowDialog(window) == true ? d.FileName : null;
         });
+        }
         if (path is null) return Ok(request, new JsonObject { ["cancelled"] = true });
 
         // Ask the editor where it is right now; the open must name that revision so it cannot discard later edits.
@@ -140,14 +151,20 @@ public sealed partial class HostServices(MainWindow window)
         // what was just read from the file is, by definition, what is on disk: the document is saved at this revision
         var now = opened.Value.Snapshot;
         await window.Router.MarkSavedAsync(new Scope { DocumentId = now.DocumentId, SessionId = now.SessionId }, now.Revision, path, ct);
-        return Ok(request, new JsonObject { ["path"] = path, ["notes"] = new JsonArray(opened.Value.Notes.Select(n => (JsonNode)n).ToArray()) });
+        var notes = opened.Value.Notes.ToList();
+        if (!restored && await RecordRecentAsync(path, "json", true) is { } warning) notes.Add(warning);
+        return Ok(request, new JsonObject { ["path"] = path, ["notes"] = new JsonArray(notes.Select(n => (JsonNode)n).ToArray()) });
     }
 
     async Task<ResponseEnvelope> OpenVsdxAsync(RequestEnvelope request, CancellationToken ct)
     {
-        var path = Ask("openVsdx", () =>
+        var recentId = request.Params["recentId"]?.GetValue<string>();
+        var entry = recentId is null ? null : await window.Recents.ResolveAsync(recentId, "vsdx", ct);
+        if (recentId is not null && entry is null) return Err(request, "not_found", "that recent Visio file is no longer listed");
+        var folder = await RecentOpenFolderAsync(ct);
+        var path = entry?.Path ?? Ask("openVsdx", () =>
         {
-            var d = new OpenFileDialog { Title = "Open Visio drawing", Filter = "Visio drawings (*.vsdx)|*.vsdx|All files (*.*)|*.*" };
+            var d = new OpenFileDialog { Title = "Open Visio drawing", InitialDirectory = folder ?? "", Filter = "Visio drawings (*.vsdx)|*.vsdx|All files (*.*)|*.*" };
             return d.ShowDialog(window) == true ? d.FileName : null;
         });
         if (path is null) return Ok(request, new JsonObject { ["cancelled"] = true });
@@ -162,7 +179,7 @@ public sealed partial class HostServices(MainWindow window)
         var opened = await window.Native.OpenAsync(path, expected, ct);
         if (!opened.IsOk) return Err(request, opened.Error!);
         SetPath(expected.DocumentId, null); // the JSON file the person had open is not this document's home any more: Save asks where to put it
-        return Ok(request, new JsonObject { ["path"] = opened.Value.Path, ["summary"] = opened.Value.Report.Summary, ["diagnostics"] = opened.Value.Report.ToJson(), ["lossy"] = opened.Value.Report.IsLossy });
+        return Ok(request, new JsonObject { ["warning"] = await RecordRecentAsync(path, "vsdx", true), ["path"] = opened.Value.Path, ["summary"] = opened.Value.Report.Summary, ["diagnostics"] = opened.Value.Report.ToJson(), ["lossy"] = opened.Value.Report.IsLossy });
     }
 
     async Task<ResponseEnvelope> ExportVsdxAsync(RequestEnvelope request, CancellationToken ct)
@@ -207,7 +224,7 @@ public sealed partial class HostServices(MainWindow window)
         if (!saved.IsOk) return Err(request, saved.Error!);
         SetPath(scope.DocumentId, saved.Value.Path);
         await window.RecoveryMgr.OnSavedAsync(scope.SessionId, saved.Value.Revision, saved.Value.Path); // work saved up to here needs no recovery
-        return Ok(request, new JsonObject { ["path"] = saved.Value.Path, ["revision"] = saved.Value.Revision });
+        return Ok(request, new JsonObject { ["path"] = saved.Value.Path, ["revision"] = saved.Value.Revision, ["warning"] = await RecordRecentAsync(saved.Value.Path, "json", false) });
     }
 
     async Task<ResponseEnvelope> PickImageAsync(RequestEnvelope request, CancellationToken ct)

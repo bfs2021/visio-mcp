@@ -39,6 +39,7 @@ public partial class MainWindow : Window
         Closing += OnClosing;
         Blobs = new BlobStore(options.BlobDir);
         Writer = new AtomicFileWriter();
+        Recents = new RecentFilesStore(Path.GetFullPath(Path.Combine(options.BlobDir, "..", "recent-files.json")), new AtomicFileWriter());
         Preparer = new AssetPreparer(Blobs);
         Library = new AssetLibrary(options.LibraryDir ?? Path.GetFullPath(Path.Combine(options.BlobDir, "..", "library")), Blobs);
         Resolver = new AssetResolver(Library, Preparer);
@@ -48,6 +49,7 @@ public partial class MainWindow : Window
 
     public BlobStore Blobs { get; }
     public AtomicFileWriter Writer { get; }
+    public RecentFilesStore Recents { get; }
     public AssetPreparer Preparer { get; }
     public AssetLibrary Library { get; }
     public AssetResolver Resolver { get; }

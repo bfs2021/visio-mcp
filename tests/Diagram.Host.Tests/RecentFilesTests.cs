@@ -26,4 +26,12 @@ public class RecentFilesTests
  {
   using var d=new TempDir();var writer=new AtomicFileWriter();var s=new RecentFilesStore(d.File("recent.json"),writer);await File.WriteAllTextAsync(s.File,new string('x',131073));Assert.NotNull((await s.ReadAsync()).Warning);await s.RecordAsync(d.File("ok.diagram.json"),"json",false);var before=await File.ReadAllBytesAsync(s.File);writer.BeforeReplace=()=>throw new IOException("injected");await Assert.ThrowsAsync<IOException>(()=>s.ClearAsync());Assert.Equal(before,await File.ReadAllBytesAsync(s.File));
  }
+ [Fact] public async Task AvailabilityAndConcurrentUpdatesRemainConsistent()
+ {
+  using var d=new TempDir();var s=new RecentFilesStore(d.File("recent.json"),new AtomicFileWriter());var file=d.File("exists.diagram.json");await File.WriteAllTextAsync(file,"keep");
+  Assert.Equal("available",await RecentFilesStore.AvailabilityAsync(file));Assert.Equal("missing",await RecentFilesStore.AvailabilityAsync(d.File("gone")));Assert.Equal("unavailable",await RecentFilesStore.AvailabilityAsync(Path.GetDirectoryName(file)!));
+  await Task.WhenAll(Enumerable.Range(0,25).Select(i=>s.RecordAsync(d.File($"{i}.diagram.json"),"json",false)));Assert.Equal(10,(await s.ReadAsync()).Entries.Count);
+  await s.RecordAsync(file,"json",true);var state=await s.ReadAsync();Assert.Single(state.Entries.Where(e=>e.Path==file));
+  await File.WriteAllTextAsync(s.File,"{\"version\":1,\"entries\":[{\"id\":\"bad\",\"path\":\"relative\",\"kind\":\"json\"}]}");Assert.NotNull((await s.ReadAsync()).Warning);
+ }
 }

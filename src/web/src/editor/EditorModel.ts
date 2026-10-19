@@ -21,14 +21,17 @@ import type { AgentDocument } from '../bridge/engineHandlers';
 
 /** What the page needs from the host. In a plain browser (tests, dev) a stub stands in. */
 export interface HostApi {
+  recentList(): Promise<Result<RecentList>>;
+  recentRemove(id: string): Promise<Result<RecentList>>;
+  recentClear(): Promise<Result<RecentList>>;
   pickImage(): Promise<Result<{ cancelled: true } | { ref: PreparedAssetRef; notes: string[]; width: number; height: number }>>;
   /** Without a path the person chooses a file; with one (from the last session's tabs) it is reopened without asking. */
-  openJson(path?: string): Promise<Result<{ cancelled?: true; path?: string; notes?: string[] }>>;
+  openJson(path?: string, recentId?: string): Promise<Result<{ cancelled?: true; path?: string; notes?: string[] }>>;
   /** Records the open tabs so the next start can reopen them. */
   workspaceSave(tabs: Array<{ documentId: string; sessionId: string; title: string; unsaved: boolean }>, activeDocumentId: string | null): Promise<Result<{ saved: number }>>;
   /** What the last run left open. */
   workspaceLoad(): Promise<Result<WorkspaceMemory>>;
-  saveJson(saveAs: boolean): Promise<Result<{ cancelled?: true; path?: string; revision?: number }>>;
+  saveJson(saveAs: boolean): Promise<Result<{ cancelled?: true; path?: string; revision?: number; warning?: string | null }>>;
   libraryList(query?: string, tags?: string[]): Promise<Result<{ assets: LibraryEntry[] }>>;
   libraryImport(): Promise<Result<{ cancelled?: true; asset?: LibraryEntry; created?: boolean; idWasTaken?: boolean; notes?: string[] }>>;
   /** Resolves a library picture to an approved preparation (optionally one specific version) a document can pin. */
@@ -46,7 +49,7 @@ export interface HostApi {
   appClose(discard: boolean): Promise<Result<{ closing: true }>>;
   /** The person cancelled the close prompt: the window stays open and may ask again. */
   appCloseCancelled(): Promise<Result<{ cancelled: true }>>;
-  openVsdx(): Promise<Result<NativeOutcome>>;
+  openVsdx(recentId?: string): Promise<Result<NativeOutcome>>;
   /** `path` repeats a choice the person already made when they agree to a lossy export. */
   exportVsdx(opts: { acceptLoss?: boolean; path?: string }): Promise<Result<NativeOutcome>>;
   /** Brings a document an agent made in the background into this window as a tab. */
@@ -61,6 +64,8 @@ export interface HostApi {
   documentCopyPath(documentId: string): Promise<Result<{ copied: string }>>;
 }
 
+export interface RecentEntry { id: string; path: string; kind: 'json' | 'vsdx'; availability: 'available' | 'missing' | 'unavailable' }
+export interface RecentList { entries: RecentEntry[]; warning?: string | null }
 export interface LibraryEntry { id: string; name: string; tags: string[]; mimeType: string; sha256: string; width: number; height: number; version: number; scope: 'library' }
 export type WorkspaceMemory = { found: false } | { found: true; cleanExit: boolean; activeDocumentId: string | null; tabs: Array<{ documentId: string; sessionId: string; path: string | null; title: string | null; unsaved: boolean }> };
 export interface RecoveryLossInfo { tornTailDiscarded: boolean; corruptionAfterRevision: number | null; messages: string[] }
@@ -68,12 +73,15 @@ export interface RecoveryLossInfo { tornTailDiscarded: boolean; corruptionAfterR
 /** One unfinished session as the host describes it. Sizes are as of the session's last checkpoint. */
 export interface RecoveryOffer { sessionId: string; documentId: string; title: string | null; originalPath: string | null; pageCount: number; objectCount: number; checkpointRevision: number; lastDurableRevision: number; lastWrite: string; loss: RecoveryLossInfo }
 export interface DiagnosticItem { severity: 'info' | 'warning' | 'error'; code: string; message: string; elementId?: string; pageId?: string; action?: string }
-export interface NativeOutcome { cancelled?: true; path?: string; summary?: string; diagnostics?: DiagnosticItem[]; lossy?: boolean; revision?: number; bytes?: number }
+export interface NativeOutcome { warning?: string | null; cancelled?: true; path?: string; summary?: string; diagnostics?: DiagnosticItem[]; lossy?: boolean; revision?: number; bytes?: number }
 
 /** What a person is shown about a Visio file: what came across and what did not, with an optional action (export anyway). */
 export interface CompatibilityView { title: string; summary: string; diagnostics: DiagnosticItem[]; confirm?: { label: string; run: () => void } }
 
 export const noHost: HostApi = {
+  recentList: async () => fail('not_running', 'Recent files require the desktop app'),
+  recentRemove: async () => fail('not_running', 'Recent files require the desktop app'),
+  recentClear: async () => fail('not_running', 'Recent files require the desktop app'),
   recoveryStatus: async () => fail('not_running', 'there is no host'),
   recoveryList: async () => ok({ auto: false, sessions: [] }),
   recoveryFetch: async () => fail('not_running', 'there is no host'),
@@ -545,9 +553,9 @@ export class EditorModel {
   zoomReset(): void { this.adapter?.setZoom(DEFAULT_SCALE); }
 
   /** Opens a file into this document. Says whether a file was opened (not cancelled, not failed) and which. */
-  async open(path?: string): Promise<{ opened: boolean; path?: string }> {
-    const r = await this.host.openJson(path);
-    if (!r.ok) { this.say(r.error.message, 'error'); return { opened: false }; }
+  async open(path?: string, recentId?: string): Promise<{ opened: boolean; path?: string; error?: string }> {
+    const r = await this.host.openJson(path, recentId);
+    if (!r.ok) { this.say(r.error.message, 'error'); return { opened: false, error: r.error.message }; }
     if (r.value.cancelled) return { opened: false };
     this.selection = [];
     this.showCommitted();
@@ -568,14 +576,14 @@ export class EditorModel {
     return p ? (p.split(/[\\/]/).pop() || p) : `Untitled ${this.untitledNo}`;
   }
 
-  async openVsdx(): Promise<{ opened: boolean }> {
-    const r = await this.host.openVsdx();
-    if (!r.ok) { this.say(r.error.message, 'error'); return { opened: false }; }
+  async openVsdx(recentId?: string): Promise<{ opened: boolean; error?: string }> {
+    const r = await this.host.openVsdx(recentId);
+    if (!r.ok) { this.say(r.error.message, 'error'); return { opened: false, error: r.error.message }; }
     if (r.value.cancelled) return { opened: false };
     this.selection = [];
     this.showCommitted();
     const items = r.value.diagnostics ?? [];
-    this.say(`Opened ${r.value.path ?? 'file'}. ${r.value.summary ?? ''}`.trim(), r.value.lossy ? 'warning' : 'info');
+    this.say(`Opened ${r.value.path ?? 'file'}. ${r.value.summary ?? ''} ${r.value.warning ?? ''}`.trim(), r.value.lossy || r.value.warning ? 'warning' : 'info');
     if (items.length) this.report = { title: 'Opened a Visio drawing', summary: r.value.summary ?? '', diagnostics: items };
     this.bump();
     return { opened: true };
@@ -612,7 +620,7 @@ export class EditorModel {
     if (!r.ok) { this.say(r.error.message, 'error'); return; }
     if (r.value.cancelled) return;
     this.lastSavedAt = new Date();
-    this.say(`Saved ${r.value.path ?? ''}.`, 'info');
+    this.say(`Saved ${r.value.path ?? ''}.${r.value.warning ? ' ' + r.value.warning : ''}`, r.value.warning ? 'warning' : 'info');
   }
 
   showCommittedNow(): void { this.showCommitted(); }

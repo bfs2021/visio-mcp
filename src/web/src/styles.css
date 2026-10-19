@@ -148,3 +148,8 @@ textarea { width: 100%; resize: vertical; }
 .tab-scroll:hover { background: rgba(15, 23, 42, .12); }
 .tab-menu { position: fixed; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.recent-files {width:min(680px,90vw)}
+.recent-items {max-height:50vh;overflow:auto;padding:0;list-style:none}
+.recent-items li {padding:10px 0;border-bottom:1px solid #ddd}
+.recent-path {overflow-wrap:anywhere;margin:4px 0;color:#526174}
