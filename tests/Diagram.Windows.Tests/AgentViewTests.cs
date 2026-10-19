@@ -35,6 +35,47 @@ public class AgentViewTests
     }
 
     [Fact]
+    public async Task AVisioFileOpensAsABackgroundReferenceWithAReportAndLeavesTheEditorAndTheFileAlone()
+    {
+        var exports = Path.Combine(Path.GetTempPath(), "r15-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(exports);
+        var source = Path.Combine(Harness.RepoRoot, "tests/fixtures/vsdx/visio-saved/sample-resaved.vsdx");
+        var file = Path.Combine(exports, "reference.vsdx"); File.Copy(source, file);
+        var before = File.ReadAllBytes(file);
+        try
+        {
+            await using var h = await Harness.StartAsync(exportRoot: exports);
+            await WaitFor(() => h.Window.RecoveryMgr.SessionId == h.Router.CurrentScope?.SessionId);
+            var mine = h.Router.CurrentScope!;
+            var r = await h.Window.Documents.HandleAsync(Docs("docs.importVisio", new JsonObject { ["path"] = "reference.vsdx" }), Harness.Ct(90));
+            Assert.Null(r.Error);
+            var o = JsonNode.Parse(r.Result!.Value.GetRawText())!;
+            var id = o["documentId"]!.GetValue<string>();
+            Assert.Equal(BridgeRouter.Agent, h.Router.ChannelOf(id));
+            Assert.Equal(BridgeRouter.User, h.Router.ChannelOf(mine.DocumentId));
+            Assert.Equal(mine.DocumentId, h.Router.CurrentScope!.DocumentId); // the person's document is untouched
+            Assert.NotNull(o["diagnostics"]); Assert.NotNull(o["identity"]); Assert.NotNull(o["lossy"]);
+            Assert.True(o["pages"]!.GetValue<int>() >= 1);
+
+            var summary = await h.Send("doc.summary", new JsonObject { ["includeGeometry"] = true }, scope: new Scope { DocumentId = id, SessionId = o["sessionId"]!.GetValue<string>() });
+            Assert.Null(summary.Error);
+            Assert.True(summary.Result!.Value.GetProperty("pages")[0].GetProperty("elements").GetArrayLength() > 0);
+
+            // the same file again is a second, separate document
+            var again = JsonNode.Parse((await h.Window.Documents.HandleAsync(Docs("docs.importVisio", new JsonObject { ["path"] = file }), Harness.Ct(90))).Result!.Value.GetRawText())!;
+            Assert.NotEqual(id, again["documentId"]!.GetValue<string>());
+
+            // a place nobody approved is refused (nobody can say yes in the test window), and a missing file is not found
+            var outside = Path.Combine(Harness.RepoRoot, "tests/fixtures/vsdx/visio-saved/m0-v7.vsdx");
+            Assert.Equal("path_not_permitted", (await h.Window.Documents.HandleAsync(Docs("docs.importVisio", new JsonObject { ["path"] = outside }), Harness.Ct(30))).Error!.Code);
+            Assert.Equal("not_found", (await h.Window.Documents.HandleAsync(Docs("docs.importVisio", new JsonObject { ["path"] = "missing.vsdx" }), Harness.Ct(30))).Error!.Code);
+            File.WriteAllText(Path.Combine(exports, "broken.vsdx"), "not a zip");
+            Assert.NotNull((await h.Window.Documents.HandleAsync(Docs("docs.importVisio", new JsonObject { ["path"] = "broken.vsdx" }), Harness.Ct(30))).Error);
+            Assert.Equal(before, File.ReadAllBytes(file)); // a reference is only ever read
+        }
+        finally { try { Directory.Delete(exports, true); } catch (IOException) { } }
+    }
+
+    [Fact]
     public async Task ADocumentMadeInTheBackgroundIsEditedAndRenderedThereWithoutTouchingTheEditorWindow()
     {
         await using var h = await StartAsync();

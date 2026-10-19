@@ -2,6 +2,7 @@ using System.Text.Json.Nodes;
 using Diagram.Core.Contracts;
 using Diagram.Host.Core;
 using Diagram.Ipc;
+using Diagram.Visio;
 
 namespace Diagram.App;
 
@@ -76,11 +77,49 @@ public sealed class DocumentService
                 o["note"] = "The document is open in the background. Edit it with the returned documentId and sessionId; call show_document to put it in front of the person.";
                 return Wire.Ok(request.RequestId, o);
             }
+            case "docs.importVisio":
+                return await ImportVisioAsync(request, ct);
             case "docs.show":
                 return await ShowAsync(request, ct);
             default:
                 return Wire.Error(request.RequestId, "method_not_found", $"{request.Method} is not available");
         }
+    }
+
+    /// <summary>
+    /// import_visio: reads a .vsdx an agent names (inside the approved folders, or anywhere the person agrees to) and opens it as a new background
+    /// document. Nothing that is already open changes. The file is never the document's save target, and the document gets a fresh id so the same
+    /// file can be imported again, or a file this application exported can be compared with the document it came from.
+    /// </summary>
+    async Task<ResponseEnvelope> ImportVisioAsync(RequestEnvelope request, CancellationToken ct)
+    {
+        var requested = request.Params["path"]?.GetValue<string>();
+        if (string.IsNullOrWhiteSpace(requested)) return Wire.Error(request.RequestId, "invalid_request", "path is required");
+        var source = await window.Exports.Policy.ResolveReadAsync(requested, ".vsdx", "MCP client", ct);
+        if (!source.IsOk) return Wire.Error(request.RequestId, source.Error!.Code, source.Error.Message, source.Error.Retryable);
+        try { await window.Agents.EnsureStartedAsync(ct); }
+        catch (Exception e) when (e is TimeoutException or OperationCanceledException or InvalidOperationException) { return Wire.Error(request.RequestId, "not_ready", "the background editor could not be started: " + e.Message, retryable: true); }
+
+        var imported = await window.Native.ImportFileAsync(source.Value.Path, ct, () => { var again = window.Exports.Policy.RevalidateRead(source.Value); return again.IsOk ? Result<Unit>.Ok(default) : Result<Unit>.Fail(again.Error!); });
+        if (!imported.IsOk) return Wire.Error(request.RequestId, imported.Error!.Code, imported.Error.Message, imported.Error.Retryable);
+        var result = imported.Value;
+        var candidate = result.Document with { Id = Guid.NewGuid().ToString(), Source = null };
+        var document = System.Text.Json.JsonSerializer.SerializeToNode(candidate, ContractJson.Options);
+        var adopt = await Router.SendAsync(App("app.adoptDocument", new JsonObject { ["document"] = document, ["activate"] = false }), ct, BridgeRouter.Agent);
+        if (adopt.Error is not null) return adopt with { RequestId = request.RequestId };
+        PushSoon();
+        var report = new CompatibilityReport(result.Diagnostics);
+        var o = JsonNode.Parse(adopt.Result!.Value.GetRawText())!.AsObject();
+        o["view"] = "background";
+        o["title"] = candidate.Title;
+        o["pages"] = candidate.Pages.Count;
+        o["sourceFile"] = source.Value.Path;
+        o["lossy"] = report.IsLossy;
+        o["summary"] = report.Summary;
+        o["diagnostics"] = report.ToJson();
+        o["identity"] = new JsonObject { ["preserved"] = result.Identity.Preserved, ["generated"] = result.Identity.Generated, ["repaired"] = result.Identity.Repaired, ["notes"] = new JsonArray(result.Identity.Notes.Select(n => (JsonNode)n).ToArray()) };
+        o["note"] = "The file is open as a new background document and is a copy: the .vsdx is never changed. Read it with get_document_summary and get_objects (absolute page coordinates in points), render it with render_page, and call show_document to put it in front of the person. Diagnostics list what the importer could not represent.";
+        return Wire.Ok(request.RequestId, o);
     }
 
     /// <summary>Puts a document in front of the person. A document already in the editor window is activated; one in the background is handed over first.</summary>

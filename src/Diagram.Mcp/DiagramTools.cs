@@ -178,6 +178,15 @@ public sealed class DiagramTools(PipeClient app)
         return Finish(await Send("docs.create", null, null, Obj(("title", title), ("widthPt", widthPt), ("heightPt", heightPt)), Render, ct));
     }
 
+    [McpServerTool(Name = "import_visio"), Description("Opens a Visio drawing (.vsdx) as a new background document so it can be inspected or edited as a reference. Read the shapes with get_document_summary and get_objects (absolute page coordinates in points, groups, layers, text, geometry, connections), look at it with render_page, and call show_document to show the person. The file is only read, never changed, and no document that is already open is touched. The result lists what the importer could not represent (diagnostics, lossy) and what happened to element identity. The file must be in the open document's folder or the application's export folder, otherwise the person is asked to approve it; files over 64 MB or with more than 200 pages or 20,000 shapes are refused.")]
+    public async Task<CallToolResult> ImportVisio(
+        [Description("Absolute path of a .vsdx file, or a file name inside the application's export folder.")] string path,
+        CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(path) || path.Length > 1024) return ToolErrors.Fail("invalid_request", "path must be 1 to 1024 characters");
+        return Finish(await Send("docs.importVisio", null, null, Obj(("path", path)), Export, ct));
+    }
+
     [McpServerTool(Name = "show_document"), Description("Puts an open document in front of the person: a document in an editor tab is switched to; one made in the background is moved into the editor window as a new tab and gets a new sessionId (read it from the result). Refused with busy_user_editing while the person is in the middle of dragging or typing: wait a moment and try again. Nothing is saved or exported by this.")]
     public async Task<CallToolResult> ShowDocument(
         [Description("The documentId from list_documents or create_document.")] string documentId,
