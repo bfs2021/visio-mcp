@@ -1,6 +1,6 @@
 # W05 — recent files, last folder and Windows jump list
 
-Status: proposed for user approval, 2026-10-19. Issue: https://github.com/rp2839/visio-mcp/issues/27
+Status: approved by the user in chat, 2026-10-19. Issue: https://github.com/rp2839/visio-mcp/issues/27
 Planned branch: `codex/w05-recent-files`, after W08. Design published with the W08 batch for review.
 
 ## Outcome and scope

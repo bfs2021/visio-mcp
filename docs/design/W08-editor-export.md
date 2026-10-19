@@ -1,6 +1,6 @@
 # W08 — editor image/PDF export and Copy as image
 
-Status: proposed for user approval, 2026-10-19. Issue: https://github.com/rp2839/visio-mcp/issues/30
+Status: approved by the user in chat, 2026-10-19. Issue: https://github.com/rp2839/visio-mcp/issues/30
 Branch: `codex/w08-editor-export`, based on origin/main b9eadbd. W07 remains separate PR #46.
 
 ## Outcome and scope
@@ -21,7 +21,7 @@ Use the existing renderer through the router render barrier, including assets/fo
 
 Extract/reuse shared rendering and destination checks with ExportService. Extend the format/extension policy narrowly for PDF/ZIP. A native destination choice is scoped consent for that operation, not a general path grant. Retain forbidden-path, overwrite, link/reparse checks and final revalidation. Produce bytes first and publish through the existing atomic writer. Enforce total bytes/pixels/page limits before allocation; no silent clipping or downscaling.
 
-Generate PDF from self-contained, barrier-rendered page SVGs in a short-lived host-controlled WebView2 print document. Block scripts, navigation and external network/resource loading; await image/font readiness; use PrintToPdfStreamAsync and atomically publish the returned bytes. Verify mixed page dimensions rather than assume browser print settings preserve them. Fail clearly if the installed runtime cannot produce the requested layout.
+Generate PDF from self-contained, barrier-rendered page SVGs in a short-lived host-controlled WebView2 print document. Block scripts, navigation and external network/resource loading; await image/font readiness; use the Chromium PDF engine and atomically publish the returned bytes. The tested PrintToPdfStreamAsync API normalized mixed page sizes, so the implementation uses the same runtime’s Page.printToPDF API with preferCSSPageSize to preserve them. Verify mixed page dimensions rather than assume browser print settings preserve them. Fail clearly if the installed runtime cannot produce the requested layout.
 
 Likely files: Toolbar, App dialog integration, EditorModel/host API wiring, ExportService/HostServices, ExportPathPolicy and new small export/PDF/clipboard helpers. Public MCP export behaviour remains compatible. Coordinate these shared files through #30; rebase/merge main changes before implementation and validation.
 
