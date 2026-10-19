@@ -71,6 +71,7 @@ public sealed partial class HostServices(MainWindow window)
                 "host.app.closeCancelled" => Ok(request, new JsonObject { ["cancelled"] = window.CancelClose() }),
                 var m when m.StartsWith("host.recovery.", StringComparison.Ordinal) => await RecoveryAsync(request, ct),
                 var m when m.StartsWith("host.workspace.", StringComparison.Ordinal) => await WorkspaceAsync(request, ct),
+                var m when m.StartsWith("host.preferences.", StringComparison.Ordinal) => await PreferencesAsync(request, ct),
                 "host.documents.show" => await window.Documents.ShowAsync(request, ct),
                 "host.documents.discard" => await window.Documents.DiscardAsync(request, ct),
                 "host.documents.reveal" => Shell(request, "reveal"),

@@ -43,6 +43,7 @@ public partial class MainWindow : Window
         Library = new AssetLibrary(options.LibraryDir ?? Path.GetFullPath(Path.Combine(options.BlobDir, "..", "library")), Blobs);
         Resolver = new AssetResolver(Library, Preparer);
         Workspace = new WorkspaceStore(Path.GetFullPath(Path.Combine(options.RecoveryDir ?? Path.Combine(options.BlobDir, "..", "recovery"), "..", "workspace.json")), Writer);
+        Preferences = new PreferencesStore(Path.Combine(Path.GetDirectoryName(Workspace.File)!, "preferences.json"), Writer);
         Recovery = new RecoveryStore(options.RecoveryDir ?? Path.GetFullPath(Path.Combine(options.BlobDir, "..", "recovery")), Blobs);
     }
 
@@ -53,6 +54,7 @@ public partial class MainWindow : Window
     public AssetResolver Resolver { get; }
     public RecoveryStore Recovery { get; }
     public WorkspaceStore Workspace { get; }
+    public PreferencesStore Preferences { get; }
     public RecoveryManager RecoveryMgr { get; private set; } = null!;
     public WebViewHost Host => host ?? throw new InvalidOperationException("call InitializeAsync first");
     public BridgeRouter Router => Host.Router;
