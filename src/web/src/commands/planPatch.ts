@@ -1,6 +1,6 @@
 import type {
-  Asset, Bounds, ConnectorElement, DiagramDocument, Element, Endpoint, EndpointInput, GroupElement, ImageElement, Layer, LineStyle,
-  Operation, Page, Point, ShapeElement, ShapeStyle, TextBlock, TextElement,
+  Asset, Attachment, Bounds, ConnectorElement, DiagramDocument, Element, Endpoint, EndpointInput, GroupElement, ImageElement, Layer, LineStyle,
+  Operation, Page, PathAnchor, Point, ShapeElement, ShapeStyle, TextBlock, TextElement,
 } from '../contracts/generated';
 import { canonicalSerialize } from '../model/canonical';
 import { fail, ok, type Result } from '../model/result';
@@ -247,9 +247,27 @@ class Planner {
     const hit = this.resolve(input.elementId!, pageId);
     if (hit.page.id !== pageId) stop('invalid_request', 'a connector can only attach to elements on its own page');
     if (hit.element.kind === 'connector' || hit.element.id === selfId) stop('invalid_request', 'a connector cannot attach to a connector or to itself');
+    if ((hit.element.kind === 'shape' || hit.element.kind === 'text') && hit.element.attachment?.connectorId === selfId) stop('invalid_request', 'a connector cannot be glued to an element that rides on it');
     const ep: Endpoint = { elementId: hit.element.id, glue: input.glue };
     if (input.port !== undefined) ep.port = input.port;
     return ep;
+  }
+
+  /** An attachment to a connector on the same page: the connector may be named by alias or id, and may be one created earlier in the batch. */
+  private resolveAttachment(input: { connector: string; position?: number; offsetPt?: number }, pageId: string, selfId: string): Attachment {
+    const hit = this.resolve(input.connector, pageId);
+    if (hit.page.id !== pageId) stop('invalid_request', 'an element can only attach to a connector on its own page');
+    if (hit.element.kind !== 'connector') stop('invalid_request', `${input.connector} is not a connector: only a connector can carry attached elements`);
+    if (hit.element.id === selfId) stop('invalid_request', 'an element cannot attach to itself');
+    if (hit.element.from.elementId === selfId || hit.element.to.elementId === selfId) stop('invalid_request', 'an element cannot ride a connector that is glued to it');
+    return { connectorId: hit.element.id, ...this.anchorOf(input) };
+  }
+
+  private anchorOf(input: { position?: number; offsetPt?: number }): PathAnchor {
+    const position = input.position ?? 0.5, offsetPt = input.offsetPt ?? 0;
+    this.assertFinite(position, 'position'); this.assertFinite(offsetPt, 'offsetPt');
+    if (position < 0 || position > 1) stop('invalid_request', `position ${position} is outside 0 to 1 (the fraction of the connector's length from its start)`);
+    return { position, offsetPt };
   }
 
   private connectorBounds(from: Endpoint, to: Endpoint, waypoints: readonly Point[]): Bounds {
@@ -414,6 +432,7 @@ class Planner {
         if (op.alias) el.alias = op.alias;
         if (op.name !== undefined) el.name = op.name;
         if (op.text) el.text = merge(DEFAULT_TEXT, op.text as PatchObj);
+        if (op.attachment) el.attachment = this.resolveAttachment(op.attachment, page.id, id);
         if (op.ports) el.ports = op.ports.map(p => ({ ...p }));
         else if (isOutlinePreset(el.geometry.preset)) el.ports = PRESET_PORTS[el.geometry.preset].map(p => ({ ...p })); // a flowchart symbol starts with its own connection points
         this.assertPositive(el.bounds, id);
@@ -435,6 +454,7 @@ class Planner {
         };
         if (op.alias) el.alias = op.alias;
         if (op.name !== undefined) el.name = op.name;
+        if (op.attachment) el.attachment = this.resolveAttachment(op.attachment, page.id, id);
         this.assertPositive(el.bounds, id);
         this.assertFinite(el.rotationDeg, 'rotationDeg');
         this.addElement(pageIdx, el);
@@ -480,6 +500,7 @@ class Planner {
         if (op.alias) el.alias = op.alias;
         if (op.name !== undefined) el.name = op.name;
         if (op.label) el.label = merge(DEFAULT_TEXT, op.label as PatchObj);
+        if (op.labelAnchor) el.labelAnchor = this.anchorOf(op.labelAnchor);
         this.addElement(pageIdx, el);
         return;
       }
@@ -795,6 +816,10 @@ class Planner {
       } else {
         copy.zIndex = zOf.get(e.id)!;
         copy.bounds = translateBounds(e.bounds, dx, dy);
+        if ((e.kind === 'shape' || e.kind === 'text') && e.attachment) { // rides the copied connector, or lands where it is put when the connector is not copied
+          const to = idMap.get(e.attachment.connectorId);
+          if (to) copy.attachment = { ...e.attachment, connectorId: to }; else delete copy.attachment;
+        }
         if (e.kind === 'connector') {
           copy.from = remapEnd(e.from, e.id);
           copy.to = remapEnd(e.to, e.id);
@@ -835,6 +860,7 @@ class Planner {
       const copy: Record<string, unknown> = { ...e, id: idMap.get(e.id)!, layerIds: e.layerIds.map(l => layerMap.get(l)!) };
       if (e.kind === 'group') copy.childIds = e.childIds.map(c => idMap.get(c)!);
       if (e.kind === 'connector') { copy.from = end(e.from); copy.to = end(e.to); }
+      if ((e.kind === 'shape' || e.kind === 'text') && e.attachment) copy.attachment = { ...e.attachment, connectorId: idMap.get(e.attachment.connectorId)! };
       return copy as unknown as Element;
     });
     const page: Page = {
@@ -891,6 +917,16 @@ class Planner {
         case 'ports': need(element.kind === 'shape', key); next.ports = (value as ShapeElement['ports'])!.map(p => ({ ...p })); break;
         case 'assetId': need(element.kind === 'image', key); this.assertAsset(value as string); next.assetId = value; break;
         case 'fit': case 'opacity': case 'preserveAspectRatio': need(element.kind === 'image', key); next[key] = value; break;
+        case 'attachment': {
+          need(element.kind === 'shape' || element.kind === 'text', key);
+          if (value === null) delete next.attachment; else next.attachment = this.resolveAttachment(value as { connector: string }, page.id, element.id);
+          break;
+        }
+        case 'labelAnchor': {
+          need(element.kind === 'connector', key);
+          if (value === null) delete next.labelAnchor; else next.labelAnchor = this.anchorOf({ ...((element as ConnectorElement).labelAnchor ?? {}), ...(value as object) });
+          break;
+        }
         case 'route': need(element.kind === 'connector', key); next.route = value; break;
         case 'waypoints': need(element.kind === 'connector', key); next.waypoints = (value as Point[]).map(p => ({ ...p })); break;
         case 'from': case 'to': {

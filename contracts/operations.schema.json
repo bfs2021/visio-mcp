@@ -315,6 +315,52 @@
             "$ref": "document.schema.json#/$defs/Port"
           },
           "maxItems": 64
+        },
+        "attachment": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "required": [
+            "connector"
+          ],
+          "description": "null detaches the element and leaves it where it is",
+          "properties": {
+            "connector": {
+              "$ref": "#/$defs/Target"
+            },
+            "position": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "offsetPt": {
+              "type": "number",
+              "minimum": -2000,
+              "maximum": 2000
+            }
+          }
+        },
+        "labelAnchor": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "description": "null returns the label to the middle of the line",
+          "properties": {
+            "position": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "offsetPt": {
+              "type": "number",
+              "minimum": -2000,
+              "maximum": 2000
+            }
+          }
         }
       }
     },
@@ -372,6 +418,9 @@
             "$ref": "document.schema.json#/$defs/Port"
           },
           "maxItems": 64
+        },
+        "attachment": {
+          "$ref": "#/$defs/AttachmentInput"
         }
       }
     },
@@ -417,6 +466,9 @@
         },
         "text": {
           "$ref": "#/$defs/TextBlockPatch"
+        },
+        "attachment": {
+          "$ref": "#/$defs/AttachmentInput"
         }
       }
     },
@@ -541,6 +593,52 @@
         },
         "label": {
           "$ref": "#/$defs/TextBlockPatch"
+        },
+        "labelAnchor": {
+          "$ref": "#/$defs/LabelAnchorInput"
+        }
+      }
+    },
+    "AttachmentInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "connector"
+      ],
+      "description": "Pins the element's centre to a place along a connector's route. connector is a Target resolved on the same page, including a connector created earlier in the batch.",
+      "properties": {
+        "connector": {
+          "$ref": "#/$defs/Target"
+        },
+        "position": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "fraction of the route's length from its start; default 0.5"
+        },
+        "offsetPt": {
+          "type": "number",
+          "minimum": -2000,
+          "maximum": 2000,
+          "description": "distance to the right of the direction of travel; default 0"
+        }
+      }
+    },
+    "LabelAnchorInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "position": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "fraction of the route's length from its start; default 0.5"
+        },
+        "offsetPt": {
+          "type": "number",
+          "minimum": -2000,
+          "maximum": 2000,
+          "description": "distance to the right of the direction of travel; default 0 (on the line)"
         }
       }
     },

@@ -1,5 +1,5 @@
 {
-  "recorded": "2026-10-18T22:15:36.6015962Z",
+  "recorded": "2026-10-19T01:07:50.7403576Z",
   "machine": {
     "os": "Microsoft Windows NT 10.0.26300.0",
     "cpus": 4,
@@ -9,7 +9,7 @@
   },
   "warmup": {
     "seconds": 10,
-    "longestCallMs": 79.7,
+    "longestCallMs": 4092.3,
     "note": "the shim start-up freeze of the test process, kept out of the measurements"
   },
   "fixture": {
@@ -17,30 +17,30 @@
     "shapes": 460,
     "connectors": 40,
     "pages": 1,
-    "buildMs": 126.5,
+    "buildMs": 119.7,
     "canvasGroups": 1425,
     "summaryBytes": 82732,
     "previewBytes": 196786,
-    "vsdxBytes": 42875
+    "vsdxBytes": 43096
   },
   "singleEditAgent": {
     "runs": 10,
     "samplesMs": [
-      11.6,
-      8,
-      8.8,
-      9,
-      9.1,
-      8.6,
-      10.2,
-      10.1,
-      8,
-      9
+      12.9,
+      9.5,
+      6.8,
+      14.2,
+      7.8,
+      11.1,
+      13.5,
+      10,
+      7.6,
+      7
     ],
-    "minMs": 8,
-    "medianMs": 9,
-    "p95Ms": 11.6,
-    "maxMs": 11.6,
+    "minMs": 6.8,
+    "medianMs": 10,
+    "p95Ms": 14.2,
+    "maxMs": 14.2,
     "preferredMs": 100,
     "acceptableMs": 250,
     "meetsPreferred": true
@@ -48,21 +48,21 @@
   "singleEditPainted": {
     "runs": 10,
     "samplesMs": [
-      42.9,
-      29.9,
-      31.7,
-      31.5,
-      30.5,
       32,
-      29.8,
-      32.5,
+      32.2,
+      30.9,
+      47.4,
+      31.4,
+      30,
+      32,
       31.5,
-      31.5
+      32.8,
+      29.9
     ],
-    "minMs": 29.8,
-    "medianMs": 31.5,
-    "p95Ms": 42.9,
-    "maxMs": 42.9,
+    "minMs": 29.9,
+    "medianMs": 32,
+    "p95Ms": 47.4,
+    "maxMs": 47.4,
     "preferredMs": 100,
     "acceptableMs": 250,
     "meetsPreferred": true
@@ -70,16 +70,16 @@
   "batch100": {
     "runs": 5,
     "samplesMs": [
-      41,
-      37.8,
-      36.5,
-      34.2,
-      36.3
+      34.5,
+      34.8,
+      36.6,
+      35.1,
+      35.6
     ],
-    "minMs": 34.2,
-    "medianMs": 36.5,
-    "p95Ms": 41,
-    "maxMs": 41,
+    "minMs": 34.5,
+    "medianMs": 35.1,
+    "p95Ms": 36.6,
+    "maxMs": 36.6,
     "preferredMs": 500,
     "acceptableMs": null,
     "meetsPreferred": true
@@ -87,21 +87,21 @@
   "summaryOverMcp": {
     "runs": 10,
     "samplesMs": [
-      11,
-      6.7,
-      7,
-      7,
-      9.2,
-      7,
-      6.7,
-      6.3,
+      12.2,
       8.4,
-      6.9
+      8,
+      6.6,
+      6.6,
+      8.5,
+      7.1,
+      6,
+      6.6,
+      6.3
     ],
-    "minMs": 6.3,
-    "medianMs": 7,
-    "p95Ms": 11,
-    "maxMs": 11,
+    "minMs": 6,
+    "medianMs": 7.1,
+    "p95Ms": 12.2,
+    "maxMs": 12.2,
     "preferredMs": 250,
     "acceptableMs": null,
     "meetsPreferred": true
@@ -109,21 +109,21 @@
   "summaryHostOnly": {
     "runs": 10,
     "samplesMs": [
-      1.9,
       1.3,
+      1.5,
+      1,
+      1.7,
+      2.2,
       1.2,
-      1.2,
-      1.1,
-      1.1,
-      1.1,
-      1.1,
-      1.2,
-      1.1
+      2.9,
+      1.3,
+      1.6,
+      1.2
     ],
-    "minMs": 1.1,
-    "medianMs": 1.2,
-    "p95Ms": 1.9,
-    "maxMs": 1.9,
+    "minMs": 1,
+    "medianMs": 1.5,
+    "p95Ms": 2.9,
+    "maxMs": 2.9,
     "preferredMs": 250,
     "acceptableMs": null,
     "meetsPreferred": true
@@ -131,16 +131,16 @@
   "previewPage1600x1200": {
     "runs": 5,
     "samplesMs": [
-      196,
-      48.5,
-      74.2,
-      45.7,
-      57
+      183.1,
+      48.8,
+      74.3,
+      41.9,
+      46.3
     ],
-    "minMs": 45.7,
-    "medianMs": 57,
-    "p95Ms": 196,
-    "maxMs": 196,
+    "minMs": 41.9,
+    "medianMs": 48.8,
+    "p95Ms": 183.1,
+    "maxMs": 183.1,
     "preferredMs": 1000,
     "acceptableMs": null,
     "meetsPreferred": true
@@ -148,16 +148,16 @@
   "vsdxSave": {
     "runs": 5,
     "samplesMs": [
-      100.4,
-      85.4,
-      74,
-      70.7,
-      102.3
+      79.4,
+      77.4,
+      66.4,
+      86.9,
+      76.3
     ],
-    "minMs": 70.7,
-    "medianMs": 85.4,
-    "p95Ms": 102.3,
-    "maxMs": 102.3,
+    "minMs": 66.4,
+    "medianMs": 77.4,
+    "p95Ms": 86.9,
+    "maxMs": 86.9,
     "preferredMs": 3000,
     "acceptableMs": null,
     "meetsPreferred": true

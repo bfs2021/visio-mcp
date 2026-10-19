@@ -1,0 +1,1 @@
+Visio drew the labels and pinned shapes (visio.png) and re-saved them; the label positions and pins read back unchanged

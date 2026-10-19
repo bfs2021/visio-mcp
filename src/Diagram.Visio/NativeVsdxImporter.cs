@@ -373,6 +373,7 @@ public sealed class NativeVsdxImporter : IVsdxImporter
 
                 // a connector's fallback box needs the shapes it is glued to, which may come later in the file
                 foreach (var c in connectorEls) c["bounds"] = ConnectorBounds(c);
+                RestoreAttachments();
                 foreach (var (group, shape, connMembers) in groups)
                 {
                     var members = (JsonArray)group["childIds"]!;
@@ -825,9 +826,35 @@ public sealed class NativeVsdxImporter : IVsdxImporter
                     if (rd.Line(s, cell) is { } sz && ArrowSizeOf((int)D(sz, 2)) is var named && named != "medium") ((JsonObject)el["style"]!)[key] = named;
                 var label = ReadText(s, u, id);
                 if (label is not null) el["label"] = label;
+                if (u.TryGetValue("AgentLabelAnchor", out var la))
+                {
+                    try { var n = JsonNode.Parse(la)!; el["labelAnchor"] = new JsonObject { ["position"] = Math.Clamp(n["position"]!.GetValue<double>(), 0, 1), ["offsetPt"] = Math.Clamp(n["offsetPt"]!.GetValue<double>(), -2000, 2000) }; }
+                    catch (Exception e) when (e is JsonException or InvalidOperationException or NullReferenceException or FormatException) { }
+                }
                 el["bounds"] = ConnectorBounds(el);
                 connectorEls.Add(el);
                 Add(el);
+            }
+
+            /// <summary>Shapes and text boxes the editor pinned to a connector come back pinned, when that connector is still on the page.</summary>
+            void RestoreAttachments()
+            {
+                var resolvedByAgentId = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var (sid, u) in userByShape) if (u.GetValueOrDefault("AgentId") is { } aid && idByShape.TryGetValue(sid, out var rid)) resolvedByAgentId[aid] = rid;
+                foreach (var (sid, u) in userByShape)
+                {
+                    if (!u.TryGetValue("AgentAttachment", out var json) || !idByShape.TryGetValue(sid, out var elId) || !elementById.TryGetValue(elId, out var el)) continue;
+                    if (el["kind"]!.GetValue<string>() is not ("shape" or "text")) continue;
+                    try
+                    {
+                        var n = JsonNode.Parse(json)!;
+                        var cid = n["connectorId"]!.GetValue<string>();
+                        var target = resolvedByAgentId.GetValueOrDefault(cid) ?? cid;
+                        if (!elementById.TryGetValue(target, out var c) || c["kind"]!.GetValue<string>() != "connector") { Note("attachment_connector_missing", "A shape was pinned to a connector that is no longer in the file; it is left where it is.", elId, sid, "attachment dropped", "info"); continue; }
+                        el["attachment"] = new JsonObject { ["connectorId"] = target, ["position"] = Math.Clamp(n["position"]!.GetValue<double>(), 0, 1), ["offsetPt"] = Math.Clamp(n["offsetPt"]!.GetValue<double>(), -2000, 2000) };
+                    }
+                    catch (Exception e) when (e is JsonException or InvalidOperationException or NullReferenceException or FormatException) { }
+                }
             }
 
             bool elementKnownLater(string shapeId) => shapeById.ContainsKey(shapeId) && (string?)shapeById[shapeId].Attribute("Type") != "Guide" && !IsConnector(shapeById[shapeId]);
