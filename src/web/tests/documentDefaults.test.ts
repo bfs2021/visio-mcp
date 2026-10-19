@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { newDocument } from '../src/model/newDocument';
-import { readDocumentDefaults } from '../src/model/documentDefaults';
+import { readDocumentDefaults, serializeDocumentDefaults } from '../src/model/documentDefaults';
 import { captureDefaults, defaultPreferences } from '../src/model/preferences';
 import { canonicalSerialize } from '../src/model/canonical';
 import { validateDocument } from '../src/model/validate';
@@ -35,6 +35,16 @@ describe('captured document defaults', () => {
     expect(doc.pages[0]!.grid.spacingPt).toBe(27);
     expect(newDocument(id).metadata).toEqual({});
     expect(() => newDocument(id, undefined, { ...captured(), font: { family: '', sizePt: 12 } })).toThrow();
+  });
+
+  it('serializes equal captures to identical bytes regardless of input key insertion order', () => {
+    const defaults = captured();
+    const reordered = {
+      font: { sizePt: defaults.font.sizePt, family: defaults.font.family },
+      grid: { snap: defaults.grid.snap, visible: defaults.grid.visible, spacingPt: defaults.grid.spacingPt },
+    };
+    expect(serializeDocumentDefaults(reordered)).toBe(serializeDocumentDefaults(defaults));
+    expect(newDocument(id, undefined, reordered).metadata).toEqual(newDocument(id, undefined, defaults).metadata);
   });
 
   it('keeps captured settings after the source preferences change, and leaves legacy documents untouched', async () => {
@@ -125,9 +135,13 @@ describe('captured document defaults', () => {
     const doc = newDocument(id);
     doc.metadata['editor.defaults.v1'] = raw;
     const before = canonicalSerialize(doc);
-    expect(readDocumentDefaults(doc).diagnostic).toBeTruthy();
-    expect(canonicalSerialize(doc)).toBe(before);
     const { engine, run } = fixture(doc);
+    const snapshot = engine.store.snapshot();
+    const revision = engine.revision;
+    expect(readDocumentDefaults(snapshot.document).diagnostic).toBeTruthy();
+    expect(engine.store.snapshot()).toEqual(snapshot);
+    expect(canonicalSerialize(engine.store.snapshot().document)).toBe(before);
+    expect(engine.revision).toBe(revision);
     const result = await run([{ op: 'createText', bounds: box, text: { value: 'legacy' } }]);
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.value.warnings.some(w => w.code === 'DOCUMENT_DEFAULTS_INVALID')).toBe(true);

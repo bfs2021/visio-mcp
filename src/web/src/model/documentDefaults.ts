@@ -11,7 +11,10 @@ export function serializeDocumentDefaults(defaults: CapturedDocumentDefaults): s
   if (!V.CapturedDocumentDefaults(defaults) || !Number.isFinite(defaults.grid.spacingPt) || !Number.isFinite(defaults.font.sizePt) || defaults.font.family.trim() !== defaults.font.family) {
     throw new RangeError('Invalid captured document defaults');
   }
-  const value = JSON.stringify({ grid: defaults.grid, font: defaults.font });
+  const value = JSON.stringify({
+    grid: { spacingPt: defaults.grid.spacingPt, visible: defaults.grid.visible, snap: defaults.grid.snap },
+    font: { family: defaults.font.family, sizePt: defaults.font.sizePt },
+  });
   if (new TextEncoder().encode(value).byteLength > MAX_CAPTURE_BYTES) throw new RangeError('Captured document defaults exceed 4096 UTF-8 bytes');
   return value;
 }
