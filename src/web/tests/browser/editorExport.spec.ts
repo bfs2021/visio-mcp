@@ -23,3 +23,9 @@ test('page background opacity is preserved and white/transparent overrides are e
  async function corner(background:string){return page.evaluate(async bg=>{const r=await (window as any).__editor.callTool('doc.render',{scope:'page',format:'png',scale:1,background:bg});if(r.error)throw Error(r.error.message);const image=new Image();image.src='data:image/png;base64,'+r.result.base64;await image.decode();const c=document.createElement('canvas');c.width=image.naturalWidth;c.height=image.naturalHeight;const g=c.getContext('2d')!;g.drawImage(image,0,0);return Array.from(g.getImageData(10,10,1,1).data);},background);}
  expect((await corner('page'))[3]).toBeGreaterThanOrEqual(63);expect((await corner('page'))[3]).toBeLessThanOrEqual(65);expect(await corner('transparent')).toEqual([0,0,0,0]);expect(await corner('white')).toEqual([255,255,255,255]);
 });
+test('busy Copy keeps focus inside its modal and does not activate the canvas shortcuts',async({page})=>{
+ await openEditor(page);await placeShape(page,'shape-rectangle',{x:200,y:150},'copy');const before=await snapshot(page);
+ await page.evaluate(()=>{(window as any).__editor.setHost({editorExport:()=>new Promise(resolve=>{(window as any).__finishExport=resolve;})});});
+ await page.getByTestId('menu-edit').click();await page.getByTestId('menu-copy-image').click();const dialog=page.getByRole('dialog',{name:'Export image'});await expect(dialog).toBeFocused();await page.keyboard.press('Tab');await expect(dialog).toBeFocused();await page.keyboard.press('Control+n');await expect(page.getByTestId('new-document')).toHaveCount(0);expect(await snapshot(page)).toEqual(before);
+ await page.evaluate(()=>(window as any).__finishExport({ok:false,error:{code:'clipboard_unavailable',message:'Busy clipboard',retryable:true}}));await expect(dialog.getByRole('alert')).toHaveText('Busy clipboard');await page.keyboard.press('Escape');await expect(dialog).toHaveCount(0);
+});

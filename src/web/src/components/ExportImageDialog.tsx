@@ -5,7 +5,8 @@ import {useModel} from './useModel';
 export function ExportImageDialog({model}:{model:EditorModel}){useModel(model);return model.exportPrompt?<Picker model={model}/>:null;}
 function Picker({model}:{model:EditorModel}){
  const p=model.exportPrompt!,o=p.options,box=useRef<HTMLDivElement>(null),pdf=o.format==='pdf';
- useEffect(()=>{const old=document.activeElement as HTMLElement|null;box.current?.querySelector<HTMLElement>('select,button')?.focus();return()=>{if(old?.isConnected)old.focus();};},[]);
+ useEffect(()=>{const old=document.activeElement as HTMLElement|null;box.current?.querySelector<HTMLElement>('select:not(:disabled),button:not(:disabled)')?.focus();return()=>{if(old?.isConnected)old.focus();};},[]);
+ useEffect(()=>{if(p.busy)box.current?.focus();else box.current?.querySelector<HTMLElement>('select:not(:disabled),button:not(:disabled)')?.focus();},[p.busy]);
  const change=(v:Partial<EditorExportOptions>)=>{Object.assign(o,v);model.bump();};
  return <div className="dialog-backdrop"><div className="dialog" ref={box} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="image-export-title" data-testid="image-export" onKeyDown={e=>{e.stopPropagation();if(e.key==='Escape'){e.preventDefault();model.cancelImageExport();}if(e.key==='Tab'){const items=Array.from(box.current!.querySelectorAll<HTMLElement>('select:not(:disabled),button:not(:disabled)'));if(!items.length){e.preventDefault();box.current?.focus();}else if(e.shiftKey&&document.activeElement===items[0]){e.preventDefault();items.at(-1)?.focus();}else if(!e.shiftKey&&document.activeElement===items.at(-1)){e.preventDefault();items[0]?.focus();}}}}>
  <h2 id="image-export-title">{pdf?'Export PDF':'Export image'}</h2>

@@ -20,6 +20,7 @@ public sealed partial class ExportService
         if(window.Router.CurrentScope!=scope) Refuse("session_mismatch","The active drawing changed. Open Export again.");
         var snap=await window.Router.SnapshotAsync(scope,ct);
         if(!snap.IsOk)throw new ExportRejected(snap.Error!);
+        if(window.Router.CurrentScope!=scope)Refuse("session_mismatch","The active drawing changed during export.");
         if(snap.Value.Revision!=expected.BaseRevision)Refuse("revision_conflict","The drawing changed. Open Export again so every page uses the same revision.");
         return snap.Value;
     }
@@ -84,6 +85,9 @@ public sealed partial class ExportService
             if(copy)
             {
                 await window.Dispatcher.InvokeAsync(()=>{
+                    ct.ThrowIfCancellationRequested();
+                    if(window.Router.CurrentScope!=scope)Refuse("session_mismatch","The active drawing changed before Copy as image.");
+                    if(window.Router.CurrentRevision!=expected.BaseRevision)Refuse("revision_conflict","The drawing changed before Copy as image.");
                     using var ms=new MemoryStream(output);var bitmap=new BitmapImage();bitmap.BeginInit();bitmap.CacheOption=BitmapCacheOption.OnLoad;bitmap.StreamSource=ms;bitmap.EndInit();bitmap.Freeze();
                     var data=new DataObject();data.SetImage(bitmap);using var png=new MemoryStream(output);data.SetData("PNG",png);Clipboard.SetDataObject(data,true);
                 });

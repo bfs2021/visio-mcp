@@ -22,7 +22,7 @@ static class PdfExport
             var html=new StringBuilder("<!doctype html><meta charset=utf-8><meta http-equiv=Content-Security-Policy content=\"default-src 'none'; img-src data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'\"><style>html,body{margin:0;padding:0}img{display:block}section{break-after:page;overflow:hidden}section:last-child{break-after:auto}");
             string N(double n)=>n.ToString("0.########",CultureInfo.InvariantCulture);
             for(var i=0;i<pages.Count;i++)html.Append($"@page p{i}{{size:{N(pages[i].Page.WidthPt)}pt {N(pages[i].Page.HeightPt)}pt;margin:0}}#p{i}{{page:p{i};width:{N(pages[i].Page.WidthPt)}pt;height:{N(pages[i].Page.HeightPt)}pt}}");
-            html.Append("</style>");for(var i=0;i<pages.Count;i++)html.Append($"<section id=p{i}><img width='{N(pages[i].Page.WidthPt*96/72)}' height='{N(pages[i].Page.HeightPt*96/72)}' src='data:image/svg+xml;base64,{Convert.ToBase64String(pages[i].Bytes)}'></section>");
+            html.Append("</style>");for(var i=0;i<pages.Count;i++)html.Append($"<section id=p{i}><img style='width:100%;height:100%' src='data:image/svg+xml;base64,{Convert.ToBase64String(pages[i].Bytes)}'></section>");
             var bytes=Encoding.UTF8.GetBytes(html.ToString());
             core.NavigationStarting+=(_,e)=>{events.Add("navigate "+e.Uri);e.Cancel=e.Uri!=origin;};
             core.NewWindowRequested+=(_,e)=>e.Handled=true;
