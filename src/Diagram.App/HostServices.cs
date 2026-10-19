@@ -49,6 +49,16 @@ public sealed partial class HostServices(MainWindow window)
 
     public async Task<ResponseEnvelope> HandleAsync(RequestEnvelope request, CancellationToken ct)
     {
+        // Capture the intended tab and revision before waiting for a dialog, disk probe or another file action.
+        ExpectedState? openExpected = null;
+        if (request.Method is "host.openJson" or "host.openVsdx")
+        {
+            var target = window.Router.CurrentScope;
+            if (target is null) return Err(request, "not_ready", "the editor is not ready");
+            var status = await window.Router.SendAsync(new RequestEnvelope { RequestId = Guid.NewGuid().ToString(), Method = "doc.status", DocumentId = target.DocumentId, SessionId = target.SessionId, Params = new() }, ct);
+            if (status.Error is { } error) return Err(request, error);
+            openExpected = new ExpectedState { DocumentId = target.DocumentId, SessionId = target.SessionId, BaseRevision = status.Result!.Value.GetProperty("revision").GetInt32() };
+        }
         var fileAction = request.Method is "host.newDocument" or "host.openJson" or "host.openVsdx" or "host.saveJson";
         if (fileAction) await newDocumentGate.WaitAsync(ct);
         try
@@ -58,11 +68,11 @@ public sealed partial class HostServices(MainWindow window)
                 "host.ping" => Ok(request, new JsonObject { ["pong"] = true }),
                 "host.newDocument" => await NewDocumentAsync(request, ct),
                 "host.protectNewDocument" => await ProtectNewDocumentAsync(request, ct),
-                "host.openJson" => await OpenAsync(request, ct),
+                "host.openJson" => await OpenAsync(request, openExpected!, ct),
                 "host.saveJson" => await SaveAsync(request, ct),
                 var m when m.StartsWith("host.recent.", StringComparison.Ordinal) => await RecentAsync(request, ct),
                 "host.pickImage" => await PickImageAsync(request, ct),
-                "host.openVsdx" => await OpenVsdxAsync(request, ct),
+                "host.openVsdx" => await OpenVsdxAsync(request, openExpected!, ct),
                 "host.exportVsdx" => await ExportVsdxAsync(request, ct),
                 var m when m.StartsWith("host.library.", StringComparison.Ordinal) => await LibraryAsync(request, ct),
                 "host.app.close" => await window.ApproveCloseAsync(request.Params["discard"]?.GetValue<bool>() == true) ? Ok(request, new JsonObject { ["closing"] = true }) : Err(request, "invalid_request", "the window is not waiting to close"),
@@ -110,7 +120,7 @@ public sealed partial class HostServices(MainWindow window)
 
     string? Ask(string kind, Func<string?> dialog) => DialogOverride is { } o ? o(kind) : window.Dispatcher.Invoke(dialog);
 
-    async Task<ResponseEnvelope> OpenAsync(RequestEnvelope request, CancellationToken ct)
+    async Task<ResponseEnvelope> OpenAsync(RequestEnvelope request, ExpectedState expected, CancellationToken ct)
     {
         string? path;
         var recentId = request.Params["recentId"]?.GetValue<string>();
@@ -136,15 +146,6 @@ public sealed partial class HostServices(MainWindow window)
         }
         if (path is null) return Ok(request, new JsonObject { ["cancelled"] = true });
 
-        // Ask the editor where it is right now; the open must name that revision so it cannot discard later edits.
-        var status = await window.Router.SendAsync(new RequestEnvelope
-        {
-            RequestId = Guid.NewGuid().ToString(), Method = "doc.status", DocumentId = window.Router.CurrentScope?.DocumentId, SessionId = window.Router.CurrentScope?.SessionId, Params = new JsonObject(),
-        }, ct);
-        if (status.Error is { } se) return Err(request, se);
-        var s = status.Result!.Value;
-        var expected = new ExpectedState { DocumentId = s.GetProperty("documentId").GetString()!, SessionId = s.GetProperty("sessionId").GetString()!, BaseRevision = s.GetProperty("revision").GetInt32() };
-
         var opened = await window.Coordinator.OpenJsonAsync(path, expected, ct);
         if (!opened.IsOk) return Err(request, opened.Error!);
         SetPath(expected.DocumentId, path);
@@ -156,26 +157,18 @@ public sealed partial class HostServices(MainWindow window)
         return Ok(request, new JsonObject { ["path"] = path, ["notes"] = new JsonArray(notes.Select(n => (JsonNode)n).ToArray()) });
     }
 
-    async Task<ResponseEnvelope> OpenVsdxAsync(RequestEnvelope request, CancellationToken ct)
+    async Task<ResponseEnvelope> OpenVsdxAsync(RequestEnvelope request, ExpectedState expected, CancellationToken ct)
     {
         var recentId = request.Params["recentId"]?.GetValue<string>();
         var entry = recentId is null ? null : await window.Recents.ResolveAsync(recentId, "vsdx", ct);
         if (recentId is not null && entry is null) return Err(request, "not_found", "that recent Visio file is no longer listed");
-        var folder = await RecentOpenFolderAsync(ct);
+        var folder = entry is null ? await RecentOpenFolderAsync(ct) : null;
         var path = entry?.Path ?? Ask("openVsdx", () =>
         {
             var d = new OpenFileDialog { Title = "Open Visio drawing", InitialDirectory = folder ?? "", Filter = "Visio drawings (*.vsdx)|*.vsdx|All files (*.*)|*.*" };
             return d.ShowDialog(window) == true ? d.FileName : null;
         });
         if (path is null) return Ok(request, new JsonObject { ["cancelled"] = true });
-        var status = await window.Router.SendAsync(new RequestEnvelope
-        {
-            RequestId = Guid.NewGuid().ToString(), Method = "doc.status", DocumentId = window.Router.CurrentScope?.DocumentId, SessionId = window.Router.CurrentScope?.SessionId, Params = new JsonObject(),
-        }, ct);
-        if (status.Error is { } se) return Err(request, se);
-        var s = status.Result!.Value;
-        var expected = new ExpectedState { DocumentId = s.GetProperty("documentId").GetString()!, SessionId = s.GetProperty("sessionId").GetString()!, BaseRevision = s.GetProperty("revision").GetInt32() };
-
         var opened = await window.Native.OpenAsync(path, expected, ct);
         if (!opened.IsOk) return Err(request, opened.Error!);
         SetPath(expected.DocumentId, null); // the JSON file the person had open is not this document's home any more: Save asks where to put it

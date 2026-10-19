@@ -40,30 +40,27 @@ public sealed class RecentFilesStore(string file, AtomicFileWriter writer)
     }
     public async Task<RecentFilesState> ReadAsync(CancellationToken ct = default)
     { await gate.WaitAsync(ct).ConfigureAwait(false); try { return await ReadCore(ct).ConfigureAwait(false); } finally { gate.Release(); } }
-    async Task Change(Func<RecentFilesState, RecentFilesState> change, CancellationToken ct)
+    async Task<string?> Change(Func<RecentFilesState, RecentFilesState> change, CancellationToken ct)
     {
         await gate.WaitAsync(ct).ConfigureAwait(false);
         try
         {
-            var next = change(await ReadCore(ct).ConfigureAwait(false));
+            var previous = await ReadCore(ct).ConfigureAwait(false);
+            var next = change(previous);
             Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(file))!);
             await writer.WriteAsync(file, JsonSerializer.SerializeToUtf8Bytes(new Persisted(1, next.Entries.ToList(), next.LastOpenFolder), Json), ct).ConfigureAwait(false);
+            return previous.Warning;
         }
         finally { gate.Release(); }
     }
-    public Task RecordAsync(string path, string kind, bool opened, CancellationToken ct = default)
+    public Task<string?> RecordAsync(string path, string kind, bool opened, CancellationToken ct = default)
     {
         path = Normalize(path); if (kind is not ("json" or "vsdx")) throw new ArgumentException("Unsupported recent file kind");
         return Change(s => { var old = s.Entries.FirstOrDefault(e => string.Equals(e.Path, path, StringComparison.OrdinalIgnoreCase)); var entry = new RecentFile(old?.Id ?? Guid.NewGuid().ToString("N"), path, kind); return new(new[] { entry }.Concat(s.Entries.Where(e => e.Id != old?.Id)).Take(10).ToArray(), opened ? Path.GetDirectoryName(path) : s.LastOpenFolder); }, ct);
     }
-    public Task RemoveAsync(string id, CancellationToken ct = default) => Change(s => s with { Entries = s.Entries.Where(e => e.Id != id).ToArray() }, ct);
-    public Task ClearAsync(CancellationToken ct = default) => Change(s => s with { Entries = [] }, ct);
+    public Task<string?> RemoveAsync(string id, CancellationToken ct = default) => Change(s => s with { Entries = s.Entries.Where(e => e.Id != id).ToArray() }, ct);
+    public Task<string?> ClearAsync(CancellationToken ct = default) => Change(s => s with { Entries = [] }, ct);
     public async Task<RecentFile?> ResolveAsync(string id, string kind, CancellationToken ct = default) => (await ReadAsync(ct).ConfigureAwait(false)).Entries.FirstOrDefault(e => e.Id == id && e.Kind == kind);
-    /// <summary>Run native availability probes off the UI thread; failure does not remove history.</summary>
-    public static Task<string> AvailabilityAsync(string path, CancellationToken ct = default) => Task.Run(() =>
-    {
-        try { return (System.IO.File.GetAttributes(path) & FileAttributes.Directory) != 0 ? "unavailable" : "available"; }
-        catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException) { return "missing"; }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return "unavailable"; }
-    }, ct);
+    static readonly RecentFileAvailability Availability = new();
+    public static Task<string> AvailabilityAsync(string path, CancellationToken ct = default) => Availability.CheckAsync(path, ct);
 }

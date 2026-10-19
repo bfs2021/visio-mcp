@@ -20,7 +20,7 @@ public class RecentFilesTests
  [Theory] [InlineData("{bad")] [InlineData("null")] [InlineData("{\"version\":99,\"entries\":[]}")]
  public async Task InvalidStoreWarnsAndCanRecover(string content)
  {
-  using var d=new TempDir();var s=new RecentFilesStore(d.File("recent.json"),new AtomicFileWriter());await File.WriteAllTextAsync(s.File,content);var back=await s.ReadAsync();Assert.Empty(back.Entries);Assert.NotNull(back.Warning);await s.RecordAsync(d.File("ok.diagram.json"),"json",false);Assert.Single((await s.ReadAsync()).Entries);
+  using var d=new TempDir();var s=new RecentFilesStore(d.File("recent.json"),new AtomicFileWriter());await File.WriteAllTextAsync(s.File,content);var back=await s.ReadAsync();Assert.Empty(back.Entries);Assert.NotNull(back.Warning);Assert.NotNull(await s.RecordAsync(d.File("ok.diagram.json"),"json",false));Assert.Single((await s.ReadAsync()).Entries);
  }
  [Fact] public async Task OversizeIsBoundedAndFailedAtomicUpdatePreservesHistory()
  {
@@ -33,5 +33,11 @@ public class RecentFilesTests
   await Task.WhenAll(Enumerable.Range(0,25).Select(i=>s.RecordAsync(d.File($"{i}.diagram.json"),"json",false)));Assert.Equal(10,(await s.ReadAsync()).Entries.Count);
   await s.RecordAsync(file,"json",true);var state=await s.ReadAsync();Assert.Single(state.Entries.Where(e=>e.Path==file));
   await File.WriteAllTextAsync(s.File,"{\"version\":1,\"entries\":[{\"id\":\"bad\",\"path\":\"relative\",\"kind\":\"json\"}]}");Assert.NotNull((await s.ReadAsync()).Warning);
+ }
+ [Fact] public async Task ASlowProbeHasADeadlineAndIsSharedWhileHealthyPathsStillWork()
+ {
+  using var release=new ManualResetEventSlim();var calls=0;
+  var availability=new RecentFileAvailability(path=>{if(path=="slow"){Interlocked.Increment(ref calls);if(!release.Wait(TimeSpan.FromSeconds(5)))throw new TimeoutException();}return "available";},TimeSpan.FromMilliseconds(250));
+  try{var results=await Task.WhenAll(availability.CheckAsync("slow"),availability.CheckAsync("healthy"));Assert.Equal(new[]{"unavailable","available"},results);Assert.Equal("unavailable",await availability.CheckAsync("slow"));Assert.Equal(1,calls);}finally{release.Set();}
  }
 }

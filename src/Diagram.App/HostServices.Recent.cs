@@ -7,7 +7,7 @@ public sealed partial class HostServices
 {
     async Task<string?> RecordRecentAsync(string path, string kind, bool opened)
     {
-        try { await window.Recents.RecordAsync(path, kind, opened); return null; }
+        try { return await window.Recents.RecordAsync(path, kind, opened); }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException)
         { return "The drawing operation succeeded, but recent-file history could not be updated: " + e.Message; }
     }
@@ -18,19 +18,24 @@ public sealed partial class HostServices
     }
     async Task<ResponseEnvelope> RecentAsync(RequestEnvelope request, CancellationToken ct)
     {
+        string? warning = null;
         switch (request.Method)
         {
             case "host.recent.remove":
                 if (request.Params["id"]?.GetValue<string>() is not { } id) return Err(request, "invalid_request", "choose a recent entry to remove");
-                await window.Recents.RemoveAsync(id, ct); break;
-            case "host.recent.clear": await window.Recents.ClearAsync(ct); break;
+                warning = await window.Recents.RemoveAsync(id, ct); break;
+            case "host.recent.clear": warning = await window.Recents.ClearAsync(ct); break;
             case "host.recent.list": break;
             default: return Err(request, "method_not_found", "unknown recent-file action");
         }
         var state = await Task.Run(() => window.Recents.ReadAsync(ct), ct);
+        var availability = await Task.WhenAll(state.Entries.Select(e => RecentFilesStore.AvailabilityAsync(e.Path, ct)));
         var entries = new JsonArray();
-        foreach (var entry in state.Entries)
-            entries.Add(new JsonObject { ["id"] = entry.Id, ["path"] = entry.Path, ["kind"] = entry.Kind, ["availability"] = await RecentFilesStore.AvailabilityAsync(entry.Path, ct) });
-        return Ok(request, new JsonObject { ["entries"] = entries, ["warning"] = state.Warning });
+        for (var i = 0; i < state.Entries.Count; i++)
+        {
+            var entry = state.Entries[i];
+            entries.Add(new JsonObject { ["id"] = entry.Id, ["path"] = entry.Path, ["kind"] = entry.Kind, ["availability"] = availability[i] });
+        }
+        return Ok(request, new JsonObject { ["entries"] = entries, ["warning"] = warning ?? state.Warning });
     }
 }

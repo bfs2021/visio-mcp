@@ -46,5 +46,16 @@ public class RecentFilesTests
   await using var h=await Harness.StartAsync();await h.Window.RecoveryMgr.WhenSessionReadyAsync();var file=Path.Combine(h.Root,"kept.diagram.json");Directory.CreateDirectory(h.Window.Recents.File);h.Window.Services.DialogOverride=_=>file;
   var saved=await h.Window.Services.HandleAsync(Request("host.saveJson"),default);Assert.Null(saved.Error);Assert.True(File.Exists(file));Assert.Contains("succeeded",saved.Result!.Value.GetProperty("warning").GetString());Assert.Equal(file,h.Window.Services.CurrentPath);
  }
+ [Theory] [InlineData("host.openJson")] [InlineData("host.openVsdx")]
+ public async Task AnEditWhileOpenIsWaitingCannotBeDiscardedByItsLateReply(string method)
+ {
+  await using var h=await Harness.StartAsync();await h.Window.RecoveryMgr.WhenSessionReadyAsync();Assert.Null((await h.Apply(0,null,Harness.Shape("first",20,20))).Error);
+  var json=Path.Combine(h.Root,"first.diagram.json");h.Window.Services.DialogOverride=_=>json;Assert.Null((await h.Window.Services.HandleAsync(Request("host.saveJson"),default)).Error);
+  var vsdx=Path.Combine(h.Root,"first.vsdx");Assert.True((await h.Window.Native.ExportAsync(vsdx,h.Router.CurrentScope!,true,default)).IsOk);
+  var waiting=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);using var release=new ManualResetEventSlim();
+  h.Window.Services.DialogOverride=_=>{waiting.TrySetResult();if(!release.Wait(TimeSpan.FromSeconds(10)))throw new TimeoutException("dialog");return method=="host.openJson"?json:vsdx;};
+  var opening=h.Window.Services.HandleAsync(Request(method),default);
+  try{await waiting.Task.WaitAsync(TimeSpan.FromSeconds(10));Assert.Null((await h.Apply(1,null,Harness.Shape("late",120,20))).Error);var before=(await h.Send("doc.snapshot")).Result!.Value.GetRawText();release.Set();Assert.Equal("revision_conflict",(await opening).Error?.Code);Assert.Equal(before,(await h.Send("doc.snapshot")).Result!.Value.GetRawText());}finally{release.Set();}
+ }
  static async Task WaitFor(Harness h,string expression){var end=DateTime.UtcNow.AddSeconds(15);while(await h.Eval(expression)!="true"){if(DateTime.UtcNow>end)throw new TimeoutException(expression);await Task.Delay(50);}}
 }
