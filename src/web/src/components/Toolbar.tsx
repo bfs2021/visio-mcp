@@ -56,6 +56,8 @@ export function Toolbar({ model, ws }: { model: EditorModel; ws: WorkspaceModel 
       { id: 'zoom-100', label: 'Actual size', run: () => model.zoomReset() },
       'sep',
       { id: 'grid', label: 'Show grid', checked: page.grid.visible, run: () => void model.toggleGrid('visible') },
+      { id: 'guides', label: 'Show guides', checked: model.showGuides, run: () => model.toggleGuides('showGuides') },
+      { id: 'snap-guides', label: 'Snap to guides', checked: model.snapToGuides, run: () => model.toggleGuides('snapToGuides') },
       { id: 'snap', label: 'Snap to grid', checked: page.grid.snap, run: () => void model.toggleGrid('snap') },
       'sep',
       { id: 'script-drawer', label: 'Script drawer', checked: model.drawerOpen && model.drawerTab === 'script', run: () => model.toggleDrawer('script') },

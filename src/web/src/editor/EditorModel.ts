@@ -18,6 +18,7 @@ import { effectiveState } from '../canvas/cellMapping';
 import { restoreRecovery, type RecoveryPayload } from '../commands/recovery';
 import { drawScriptCompiler, validateScript, type ValidationReport } from '../script/compiler';
 import { toPoints, type Unit } from '../model/validate';
+import { snapCreation } from '../canvas/guideSnapping';
 import { iconOperations } from '../icons/catalog';
 import type { AgentDocument } from '../bridge/engineHandlers';
 
@@ -185,6 +186,9 @@ export class EditorModel {
   unit: Unit = 'mm';
   status: Status = { text: 'Ready', kind: 'info' };
   viewport: ViewportInfo | null = null;
+  showGuides = true;
+  snapToGuides = true;
+  toggleGuides(field: 'showGuides' | 'snapToGuides'): void { this[field] = !this[field]; this.bump(); }
   /** Called when the interlock should hold agent mutations (I30 wires this to the admission gate). */
   onGestureState: (active: boolean) => void = () => {};
 
@@ -301,7 +305,7 @@ export class EditorModel {
     if (token && !gestureMatches(token.kind, intent)) token = null;
     const oneShot = !token;
     if (!token) token = this.controller.begin(intent.type === 'connect' ? 'create' : 'inspector', this.engine.scope(), []);
-    const operations = intentOperations(token.startSnapshot, intent);
+    const operations = intentOperations(token.startSnapshot, intent, { enabled: this.showGuides && this.snapToGuides, scale: this.viewport?.scale ?? 1 });
     const planned = this.controller.preview(token, operations);
     if (!planned.ok) { this.controller.cancel(token); this.say(planned.error.message, 'warning'); return; }
     const r = await this.controller.commit(token);
@@ -351,7 +355,7 @@ export class EditorModel {
       const prepared = iconOperations({ ...this.iconSettings, iconId: what.slice(5), pageId: page.id,
         x: at.x - this.iconSettings.sizePt / 2, y: at.y - this.iconSettings.sizePt / 2 });
       if (!prepared.ok) { this.say(prepared.error.message, 'error'); return; }
-      const r = await this.apply('create', prepared.value.operations);
+      const r = await this.apply('create', prepared.value.operations.map(op => snapCreation(op,page,{enabled:this.showGuides && this.snapToGuides,scale:this.viewport?.scale??1,preserveSize:true})));
       this.setTool({ kind: 'select' });
       if (r.ok) { this.selection = [prepared.value.elementId]; this.canvas?.setSelection(this.selection); this.bump(); }
       return;
@@ -363,7 +367,7 @@ export class EditorModel {
       const size = DEFAULT_SIZE[what] ?? DEFAULT_SIZE.rectangle!;
       op = { op: 'createShape', bounds: { x: at.x - size.w / 2, y: at.y - size.h / 2, width: size.w, height: size.h }, geometry: { preset: what as 'rectangle' } };
     }
-    const snapped = snapCreate(op, page.grid);
+    const snapped = snapCreation(op, page, {enabled:this.showGuides && this.snapToGuides,scale:this.viewport?.scale??1});
     const r = await this.apply('create', [snapped]);
     this.setTool({ kind: 'select' });
     if (r.ok && r.value.created[0]) this.canvas?.setSelection([r.value.created[0]]), this.selection = [r.value.created[0]], this.bump();
@@ -985,7 +989,7 @@ export class EditorModel {
     const natW = p.value.width ? toPoints(p.value.width, 'px') : 96, natH = p.value.height ? toPoints(p.value.height, 'px') : 96;
     const k = Math.min(1, page.widthPt / 2 / natW, page.heightPt / 2 / natH);
     const w = natW * k, h = natH * k;
-    const r = await this.apply('create', [...plan.operations, { op: 'createImage', assetId: plan.resolvedAssetId, name: p.value.ref.asset.name, bounds: { x: (at?.x ?? page.widthPt / 2) - w / 2, y: (at?.y ?? page.heightPt / 2) - h / 2, width: w, height: h }, fit: 'contain', preserveAspectRatio: true }]);
+    const r = await this.apply('create', [...plan.operations, snapCreation({ op: 'createImage', assetId: plan.resolvedAssetId, name: p.value.ref.asset.name, bounds: { x: (at?.x ?? page.widthPt / 2) - w / 2, y: (at?.y ?? page.heightPt / 2) - h / 2, width: w, height: h }, fit: 'contain', preserveAspectRatio: true }, page, {enabled:this.showGuides && this.snapToGuides,scale:this.viewport?.scale??1})]);
     if (r.ok && r.value.created.length) { this.selection = [r.value.created[r.value.created.length - 1]!]; this.canvas?.setSelection(this.selection); this.bump(); }
   }
 
@@ -1040,14 +1044,6 @@ function gestureMatches(kind: GestureKind, intent: Intent): boolean {
   }
 }
 
-/** New shapes snap to the grid like moved ones (page grid, absolute coordinates). */
-function snapCreate(op: Operation, grid: { snap: boolean; spacingPt: number }): Operation {
-  if (!grid.snap || (op.op !== 'createShape' && op.op !== 'createText')) return op;
-  const g = grid.spacingPt;
-  const s = (v: number) => Math.round(v / g) * g;
-  const b = op.bounds;
-  return { ...op, bounds: { x: s(b.x), y: s(b.y), width: Math.max(g, s(b.width)), height: Math.max(g, s(b.height)) } };
-}
 
 function diagnosticOf(details: Record<string, unknown> | undefined): { line?: number; column?: number; hint?: string } {
   const out: { line?: number; column?: number; hint?: string } = {};

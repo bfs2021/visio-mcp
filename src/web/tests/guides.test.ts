@@ -29,3 +29,15 @@ it('rejects invalid guide batches and stale guide arrays without a partial edit'
  expect((await t.engine.execute(stale, 'gui')).ok).toBe(false);
  expect(t.store.snapshot().document.pages[0]!.guides).toEqual([]);
 });
+
+it('discards a stale guide gesture instead of overwriting a newer guide edit',async()=>{
+ const {GestureController}=await import('../src/canvas/GestureController');const t=createTestEngine();
+ const controller=new GestureController(t.engine,()=>id(880));const notices:boolean[]=[];controller.onGestureState=a=>notices.push(a);
+ const token=controller.begin('guide',t.scope(),[]);
+ const g={id:id(881),orientation:'vertical' as const,positionPt:100};
+ expect(controller.preview(token,[{op:'setPage',patch:{guides:[g]}}]).ok).toBe(true);
+ await run(t,[{op:'setPage',patch:{guides:[{...g,positionPt:200}]}}]);
+ const result=await controller.commit(token);expect(result.ok).toBe(false);
+ expect(t.store.snapshot().document.pages[0]!.guides[0]!.positionPt).toBe(200);
+ expect(notices).toEqual([true,false]);
+});

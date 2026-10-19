@@ -1,6 +1,6 @@
 # W11 — find, replace and matching selection
 
-Status: proposed for user review. Issue: https://github.com/rp2839/visio-mcp/issues/33
+Status: approved by the user in Codex chat, 2026-10-19. Issue: https://github.com/rp2839/visio-mcp/issues/33
 Planned branch: codex/w11-find-replace, after W10. Design published with W10 for review.
 
 ## Purpose

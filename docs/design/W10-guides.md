@@ -1,6 +1,6 @@
 # W10 — draggable guides and snapping
 
-Status: proposed for user review. Issue: https://github.com/rp2839/visio-mcp/issues/32
+Status: approved by the user in Codex chat, 2026-10-19. Issue: https://github.com/rp2839/visio-mcp/issues/32
 Branch: codex/w10-guides. Base: main e67f2e7. Implement before W11.
 
 ## Purpose

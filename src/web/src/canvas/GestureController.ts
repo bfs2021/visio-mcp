@@ -3,7 +3,7 @@ import type { CommandEngine } from '../commands/CommandEngine';
 import { planPatch } from '../commands/planPatch';
 import { fail, ok, type Result } from '../model/result';
 
-export type GestureKind = 'move' | 'resize' | 'rotate' | 'bend' | 'text' | 'nudge' | 'inspector' | 'paste' | 'create' | 'arrange';
+export type GestureKind = 'guide' | 'move' | 'resize' | 'rotate' | 'bend' | 'text' | 'nudge' | 'inspector' | 'paste' | 'create' | 'arrange';
 
 export interface GestureToken {
   readonly id: number;
@@ -16,7 +16,7 @@ export interface GestureToken {
 }
 
 let tokenCounter = 0;
-const GESTURE_KINDS: ReadonlySet<GestureKind> = new Set(['move', 'resize', 'rotate', 'bend', 'text']);
+const GESTURE_KINDS: ReadonlySet<GestureKind> = new Set(['guide', 'move', 'resize', 'rotate', 'bend', 'text']);
 
 /**
  * One user gesture, one canonical transaction. `begin` captures the committed state, `preview` plans the gesture's operations
