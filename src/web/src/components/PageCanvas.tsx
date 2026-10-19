@@ -54,6 +54,9 @@ export function PageCanvas({ model }: { model: EditorModel }) {
     const d=drag.current;if(!d)return;const at=point(e);const r=frame.current!.getBoundingClientRect();
     const onRuler=d.guide.orientation==='horizontal'?e.clientY>=r.top&&e.clientY<r.top+RULER_SIZE&&e.clientX>=r.left+RULER_SIZE&&e.clientX<=r.right:e.clientX>=r.left&&e.clientX<r.left+RULER_SIZE&&e.clientY>=r.top+RULER_SIZE&&e.clientY<=r.bottom;
     const page=model.currentPage;
+    const hostRect=host.current!.getBoundingClientRect();
+    const insideCanvas=e.clientX>=hostRect.left&&e.clientX<=hostRect.right&&e.clientY>=hostRect.top&&e.clientY<=hostRect.bottom;
+    if(!onRuler&&!insideCanvas){cancelGuide();return;}
     if(!at || page.id!==d.pageId || (!onRuler && (at.x<0||at.y<0||at.x>page.widthPt||at.y>page.heightPt))) {cancelGuide();return;}
     const original=d.token.startSnapshot.document.pages.find(p=>p.id===d.pageId)!;
     const existing=original.guides.some(g=>g.id===d.guide.id);
