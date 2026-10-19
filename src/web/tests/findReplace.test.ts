@@ -41,3 +41,21 @@ it('matches style without text value and exact normalized layer membership',()=>
  expect(matchingSelection(p,el.id,'style').ids).toHaveLength(17);
  expect(matchingSelection(p,el.id,'layers').ids).toHaveLength(18);
 });
+
+it('finds and replaces connector labels and compares their label formatting',async()=>{
+ const t=createTestEngine();await run(t,[
+ {op:'createConnector',id:id(930),from:{glue:'none',point:{x:10,y:10}},to:{glue:'none',point:{x:80,y:80}},label:{value:'Service',bold:true}},
+ {op:'createConnector',id:id(931),from:{glue:'none',point:{x:100,y:10}},to:{glue:'none',point:{x:180,y:80}},label:{value:'Other',bold:false}}
+ ]);
+ expect(searchDocument(t.store.snapshot(),{...options,query:'Service'})).toMatchObject([{id:id(930),fields:['text'],replaceable:true}]);
+ expect(matchingSelection(t.store.snapshot().document.pages[0]!,id(930),'style').ids).toEqual([id(930)]);
+ const p=replacementProposal(t.store.snapshot(),{...options,query:'Service'},'$&');expect(p.ok).toBe(true);if(!p.ok)return;
+ expect((await t.engine.execute({...p.value,transactionId:id(932),atomic:true},'gui')).ok).toBe(true);
+ expect(t.store.snapshot().document.pages[0]!.elements.find(e=>e.id===id(930))).toMatchObject({label:{value:'$&',bold:true}});
+});
+
+it('reveals only visible descendants when navigating a named group',async()=>{
+ const {findSelection}=await import('../src/editor/findReplace');const t=createTestEngine();
+ await run(t,[{op:'group',id:id(940),name:'Named group',targets:t.ids.shapes.slice(0,2)},{op:'set',target:t.ids.shapes[1]!,patch:{hidden:true}}]);
+ expect(findSelection(t.store.snapshot().document.pages[0]!,id(940))).toEqual([t.ids.shape]);
+});

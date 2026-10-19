@@ -1,3 +1,4 @@
+import { FindPanel } from './components/FindPanel';
 import { FileConflictDialog } from './components/FileConflictDialog';
 import { NewDocumentDialog } from './components/NewDocumentDialog';
 import { useEffect } from 'react';
@@ -27,6 +28,11 @@ function useShortcuts(ws: WorkspaceModel) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const model = ws.active;
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase()==='f') {
+        e.preventDefault();
+        if(!ws.tabs.some(t=>t.newDocument.prompt||t.closePrompt||t.files.prompt||t.report||t.recoveryOffers.length||t.recoveryReport))model.find.open();
+        return;
+      }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') { e.preventDefault(); if (!ws.tabs.some(t => t.newDocument.prompt || t.closePrompt || t.files.prompt)) model.newDocument.begin(); return; }
       if (ws.tabs.some(t => t.newDocument.prompt || t.closePrompt)) return;
       if (e.ctrlKey && e.key === 'Tab') { e.preventDefault(); ws.cycle(e.shiftKey ? -1 : 1); return; } // most recently used first; works while typing too, like a browser
@@ -88,6 +94,7 @@ export function App({ ws }: { ws: WorkspaceModel }) {
       <Inspector key={`i${model.tabId}`} model={model} />
       <PageTabs model={model} />
       <Drawer model={model} />
+      {!ws.tabs.some(t=>t.newDocument.prompt||t.closePrompt||t.files.prompt||t.report||t.recoveryOffers.length||t.recoveryReport)&&<FindPanel key={model.tabId} model={model} />}
       <CompatibilityDialog model={model} />
       {!ws.tabs.some(t=>t.files.prompt) && <RecoveryDialog model={holder} onRecover={id => void ws.restoreOrphan(holder, id)} />}
       {asking && !ws.tabs.some(t=>t.files.prompt) && <CloseDialog model={asking} />}

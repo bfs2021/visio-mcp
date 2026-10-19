@@ -1,6 +1,6 @@
 import type { Element, Operation, Page, Snapshot } from '../contracts/generated';
 import { effectiveState } from '../canvas/cellMapping';
-import { ancestorsOf, parentMap } from '../commands/groups';
+import { ancestorsOf, parentMap, leavesUnder } from '../commands/groups';
 import { canonicalSerialize } from '../model/canonical';
 import { fail, ok, type Result } from '../model/result';
 
@@ -12,6 +12,7 @@ export interface FindHit {
 export interface ReplacementProposal {
   documentId: string; sessionId: string; baseRevision: number; operations: Operation[];
 }
+const textOf = (el: Element) => el.kind === 'connector' ? el.label : 'text' in el ? el.text : undefined;
 function literal(query: string, caseSensitive: boolean, global = false): RegExp {
   const special = '\\^$.*+?()[]{}|';
   const escaped = Array.from(query, c => special.includes(c) ? '\\' + c : c).join('');
@@ -31,7 +32,7 @@ export function searchDocument(snapshot: Snapshot, options: FindOptions): FindHi
     for (const el of page.elements) {
       const state = stateOf(page, el, parents);
       if (state.hidden && !options.includeHidden) continue;
-      const text = 'text' in el ? el.text?.value ?? '' : '';
+      const text = textOf(el)?.value ?? '';
       const fields: FindHit['fields'] = [];
       if (re.test(text)) fields.push('text');
       if (el.name && re.test(el.name)) fields.push('name');
@@ -53,9 +54,10 @@ export function replacementProposal(snapshot: Snapshot, options: FindOptions, re
     const byId = new Map(snapshot.document.pages.flatMap(p => p.elements.map(e => [e.id, e] as const)));
     for (const hit of hits) {
       const el = byId.get(hit.id)!;
-      if (!('text' in el) || !el.text) continue;
-      const value = el.text.value.replace(re, () => replacement); // replacement is literal, including dollar signs
-      if (value !== el.text.value) operations.push({ op: 'set', target: el.id, patch: { text: { value } } });
+      const text = textOf(el);
+      if (!text) continue;
+      const value = text.value.replace(re, () => replacement); // replacement is literal, including dollar signs
+      if (value !== text.value) operations.push({ op: 'set', target: el.id, patch: { text: { value } } });
     }
   }
   if (operations.length > 1000) return fail('invalid_request', 'Replace all exceeds the 1000-object transaction limit. Narrow the search; no changes were applied.');
@@ -63,7 +65,8 @@ export function replacementProposal(snapshot: Snapshot, options: FindOptions, re
 }
 function styleKey(el: Element): string | null {
   if (el.kind === 'group') return null;
-  const text = 'text' in el && el.text ? { ...el.text, value: '' } : undefined;
+  const block=textOf(el);
+  const text = block ? { ...block, value: '' } : undefined;
   if (el.kind === 'image') return canonicalSerialize({kind:el.kind,fit:el.fit,opacity:el.opacity,preserveAspectRatio:el.preserveAspectRatio});
   return canonicalSerialize({kind:el.kind,...('style' in el ? {style:el.style}:{}),text});
 }
@@ -78,4 +81,10 @@ export function matchingSelection(page: Page, seedId: string, mode: 'style' | 'l
     if (state.hidden || state.locked || el.kind === 'group') return false;
     return (mode === 'style' ? styleKey(el) : canonicalSerialize([...el.layerIds].sort())) === key;
   }).map(el=>el.id)};
+}
+
+/** Group navigation must not select hidden members or alter their visibility. */
+export function findSelection(page: Page, id: string): string[] {
+ const byId=new Map(page.elements.map(el=>[el.id,el] as const));const parents=parentMap(page.elements);
+ return leavesUnder(byId,id).filter(key=>!stateOf(page,byId.get(key)!,parents).hidden);
 }

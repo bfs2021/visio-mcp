@@ -4,6 +4,7 @@ import { replacementProposal, searchDocument, type FindHit, type FindOptions } f
 /** Current-tab search state; proposals always carry the snapshot's revision and scope. */
 export class FindReplaceFlow {
   visible = false;
+  focusVersion = 0;
   options: FindOptions = {query:'',caseSensitive:false,includeHidden:false};
   replacement = '';
   currentId: string | null = null;
@@ -12,7 +13,7 @@ export class FindReplaceFlow {
   canStart: () => boolean = () => true;
   private cache: {key:string;hits:FindHit[]} | null = null;
   constructor(private readonly engine: CommandEngine, private readonly changed: () => void, private readonly visit: (hit:FindHit) => void) {}
-  open(): void { if(!this.canStart())return;this.visible=true;this.changed(); }
+  open(): void { if(!this.canStart())return;this.visible=true;this.focusVersion++;this.changed(); }
   close(): void { this.visible=false;this.changed(); }
   setOptions(patch: Partial<FindOptions>): void { this.options={...this.options,...patch};this.currentId=null;this.message='';this.changed(); }
   get hits(): FindHit[] {
