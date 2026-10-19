@@ -110,6 +110,11 @@ public sealed partial class HostServices(MainWindow window)
         return Ok(request, new JsonObject { [what == "copyPath" ? "copied" : "revealed"] = path });
     }
 
+    /// <summary>The tab an open is meant for. A page that just made a tab names it, because the host may not yet have been told that tab is the current one.</summary>
+    Scope? TargetOf(RequestEnvelope request) =>
+        request.Params["documentId"]?.GetValue<string>() is { Length: > 0 } d && request.Params["sessionId"]?.GetValue<string>() is { Length: > 0 } s
+            ? new Scope { DocumentId = d, SessionId = s } : window.Router.CurrentScope;
+
     string? Ask(string kind, Func<string?> dialog) => DialogOverride is { } o ? o(kind) : window.Dispatcher.Invoke(dialog);
 
     async Task<ResponseEnvelope> OpenAsync(RequestEnvelope request, CancellationToken ct)
@@ -118,7 +123,7 @@ public sealed partial class HostServices(MainWindow window)
         if (request.Params["path"]?.GetValue<string>() is { Length: > 0 } requested)
         {
             // reopening a tab from the last run: no dialog, but only a file that run listed
-            if (!MayReopen(requested)) return Err(request, "invalid_request", "that file was not open in the last session");
+            if (!TakeLaunch(requested) && !MayReopen(requested)) return Err(request, "invalid_request", "that file was not open in the last session");
             path = Path.GetFullPath(requested);
         }
         else path = Ask("open", () =>
@@ -131,7 +136,7 @@ public sealed partial class HostServices(MainWindow window)
         // Ask the editor where it is right now; the open must name that revision so it cannot discard later edits.
         var status = await window.Router.SendAsync(new RequestEnvelope
         {
-            RequestId = Guid.NewGuid().ToString(), Method = "doc.status", DocumentId = window.Router.CurrentScope?.DocumentId, SessionId = window.Router.CurrentScope?.SessionId, Params = new JsonObject(),
+            RequestId = Guid.NewGuid().ToString(), Method = "doc.status", DocumentId = TargetOf(request)?.DocumentId, SessionId = TargetOf(request)?.SessionId, Params = new JsonObject(),
         }, ct);
         if (status.Error is { } se) return Err(request, se);
         var s = status.Result!.Value;
@@ -149,7 +154,9 @@ public sealed partial class HostServices(MainWindow window)
 
     async Task<ResponseEnvelope> OpenVsdxAsync(RequestEnvelope request, CancellationToken ct)
     {
-        var path = Ask("openVsdx", () =>
+        string? requested = request.Params["path"]?.GetValue<string>();
+        if (requested is { Length: > 0 } && !TakeLaunch(requested)) return Err(request, "invalid_request", "that file was not given to the app by the shell");
+        var path = requested is { Length: > 0 } ? Path.GetFullPath(requested) : Ask("openVsdx", () =>
         {
             var d = new OpenFileDialog { Title = "Open Visio drawing", Filter = "Visio drawings (*.vsdx)|*.vsdx|All files (*.*)|*.*" };
             return d.ShowDialog(window) == true ? d.FileName : null;
@@ -157,7 +164,7 @@ public sealed partial class HostServices(MainWindow window)
         if (path is null) return Ok(request, new JsonObject { ["cancelled"] = true });
         var status = await window.Router.SendAsync(new RequestEnvelope
         {
-            RequestId = Guid.NewGuid().ToString(), Method = "doc.status", DocumentId = window.Router.CurrentScope?.DocumentId, SessionId = window.Router.CurrentScope?.SessionId, Params = new JsonObject(),
+            RequestId = Guid.NewGuid().ToString(), Method = "doc.status", DocumentId = TargetOf(request)?.DocumentId, SessionId = TargetOf(request)?.SessionId, Params = new JsonObject(),
         }, ct);
         if (status.Error is { } se) return Err(request, se);
         var s = status.Result!.Value;

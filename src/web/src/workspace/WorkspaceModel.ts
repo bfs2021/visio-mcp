@@ -158,11 +158,11 @@ export class WorkspaceModel {
   }
 
   /** Opens a file in a tab: an untouched blank tab is used up first; opening a file that is already open shows that tab instead. */
-  async openFile(kind: 'json' | 'vsdx' = 'json'): Promise<void> {
+  async openFile(kind: 'json' | 'vsdx' = 'json', file?: string): Promise<void> {
     const reuse = this.active.isBlank ? this.active : null;
     const target = reuse ?? this.newTab();
     if (!target) return;
-    const outcome: { opened: boolean; path?: string } = kind === 'json' ? await target.open() : await target.openVsdx();
+    const outcome: { opened: boolean; path?: string } = kind === 'json' ? await target.open(file) : await target.openVsdx(file);
     if (!outcome.opened) { if (!reuse) await this.closeNow(target, true); return; }
     const path = outcome.path;
     if (path) {
@@ -170,6 +170,17 @@ export class WorkspaceModel {
       if (existing) { await this.closeNow(target, true); this.activate(existing); existing.say(`${path} is already open.`, 'info'); }
     }
     this.bump();
+  }
+
+  /** Resolves once the last session's tabs are back; files the shell names are opened after that, so they land beside them. */
+  restored: Promise<void> = Promise.resolve();
+
+  /** The shell named files to open (double-click, Open with, second launch): one tab each, in order, the last one shown. */
+  async openFromShell(files: Array<{ path: string; kind: 'json' | 'vsdx' }>): Promise<Result<{ opened: number }>> {
+    await this.restored;
+    const before = this.tabs.length;
+    for (const f of files) await this.openFile(f.kind, f.path);
+    return ok({ opened: Math.max(0, this.tabs.length - before) });
   }
 
   /** The person asked to close a tab. Unsaved work asks first. Resolves true once it is closed, false if they chose Cancel. */

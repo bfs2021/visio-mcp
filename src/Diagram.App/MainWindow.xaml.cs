@@ -145,5 +145,29 @@ public partial class MainWindow : Window
     public bool CancelClose() { var was = closeAsked; closeAsked = false; return was; }
 
     public void Navigate() => Host.Navigate();
+
+    /// <summary>
+    /// Opens files the shell named (a double-click, Open with, or a second launch). The window comes to the front, each file is approved for one
+    /// open without a dialog, and the page opens them in tabs once it has finished bringing back the last session. Returns what could not be opened.
+    /// </summary>
+    public async Task<IReadOnlyList<string>> OpenFromShellAsync(LaunchRequest launch, CancellationToken ct = default)
+    {
+        await Dispatcher.InvokeAsync(BringToFront);
+        if (launch.Files.Count == 0) return launch.Skipped;
+        await Router.WaitReadyAsync(ct);
+        Services.ApproveLaunch(launch.Files);
+        var files = new System.Text.Json.Nodes.JsonArray(launch.Files.Select(f => (System.Text.Json.Nodes.JsonNode)new System.Text.Json.Nodes.JsonObject { ["path"] = f.Path, ["kind"] = f.Kind }).ToArray());
+        var r = await Router.SendAsync(new RequestEnvelope { RequestId = Guid.NewGuid().ToString(), Method = "app.openFiles", Params = new System.Text.Json.Nodes.JsonObject { ["files"] = files } }, ct);
+        return r.Error is { } e ? [.. launch.Skipped, e.Message] : launch.Skipped;
+    }
+
+    void BringToFront()
+    {
+        if (options.Offscreen) return;
+        if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
+        Show();
+        Activate();
+        Topmost = true; Topmost = false; // Windows lets a window it did not start take focus only this way
+    }
 }
 
