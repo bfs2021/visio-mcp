@@ -1,0 +1,20 @@
+
+> test:browser
+> playwright test tests/browser/findReplace.spec.ts
+
+[WebServer] (node:16312) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:9860) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 5 tests using 1 worker
+
+(node:18456) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 tests\browser\findReplace.spec.ts:6:1 › find navigates pages and replaces editable text in one undo without renaming references (2.3s)
+  ok 2 tests\browser\findReplace.spec.ts:23:1 › hidden and locked results are reported and never silently edited (2.5s)
+  ok 3 tests\browser\findReplace.spec.ts:34:1 › matching selection uses style or exact layer membership without adding revisions (1.3s)
+  ok 4 tests\browser\findReplace.spec.ts:45:1 › search updates after agent edits and stays scoped to each document tab (1.0s)
+  ok 5 tests\browser\findReplace.spec.ts:53:1 › connector labels replace safely and named groups reveal only visible members (947ms)
+
+  5 passed (11.4s)
