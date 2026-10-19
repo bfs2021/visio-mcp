@@ -1,0 +1,15 @@
+{
+  "valid": [
+    { "path": "recovery.checkpointSeconds", "value": 10.0 },
+    { "path": "schemaVersion", "value": 1.0 },
+    { "path": "font.family", "value": "\ufeff Missing Font \ufeff", "normalized": "Missing Font" },
+    { "path": "font.family", "value": "\u0085", "normalized": "\u0085" },
+    { "path": "units", "value": "cm" }, { "path": "units", "value": "in" }, { "path": "units", "value": "pt" }, { "path": "units", "value": "px" },
+    { "path": "theme", "value": "dark" }, { "path": "grid.visible", "value": false }, { "path": "grid.snap", "value": false }
+  ],
+  "invalid": [
+    { "path": "font", "value": null }, { "path": "grid", "value": [] }, { "path": "recovery", "value": false },
+    { "path": "font.sizePt", "value": "12" }, { "path": "font.extra", "value": true },
+    { "path": "recovery.extra", "value": true }, { "path": "units", "value": null }
+  ]
+}

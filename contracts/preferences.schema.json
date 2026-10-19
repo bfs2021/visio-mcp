@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "preferences.schema.json",
+  "$ref": "#/$defs/AppPreferences",
+  "$defs": {
+    "PreferencesGrid": {
+      "type": "object", "additionalProperties": false, "required": ["spacingPt", "visible", "snap"],
+      "properties": { "spacingPt": { "type": "number", "minimum": 0.1, "maximum": 1440 }, "visible": { "type": "boolean" }, "snap": { "type": "boolean" } }
+    },
+    "PreferencesFont": {
+      "type": "object", "additionalProperties": false, "required": ["family", "sizePt"],
+      "properties": { "family": { "type": "string", "minLength": 1, "maxLength": 128 }, "sizePt": { "type": "number", "minimum": 1, "maximum": 1000 } }
+    },
+    "PreferencesRecovery": {
+      "type": "object", "additionalProperties": false, "required": ["checkpointSeconds"],
+      "properties": { "checkpointSeconds": { "type": "integer", "minimum": 10, "maximum": 3600 } }
+    },
+    "CapturedDocumentDefaults": {
+      "type": "object", "additionalProperties": false, "required": ["grid", "font"],
+      "properties": { "grid": { "$ref": "#/$defs/PreferencesGrid" }, "font": { "$ref": "#/$defs/PreferencesFont" } }
+    },
+    "AppPreferences": {
+      "type": "object", "additionalProperties": false, "required": ["schemaVersion", "units", "grid", "font", "recovery", "theme"],
+      "default": { "schemaVersion": 1, "units": "mm", "grid": { "spacingPt": 14.173228346456694, "visible": true, "snap": true }, "font": { "family": "Segoe UI", "sizePt": 12 }, "recovery": { "checkpointSeconds": 60 }, "theme": "light" },
+      "properties": {
+        "schemaVersion": { "const": 1 }, "units": { "enum": ["mm", "cm", "in", "pt", "px"] },
+        "grid": { "$ref": "#/$defs/PreferencesGrid" }, "font": { "$ref": "#/$defs/PreferencesFont" },
+        "recovery": { "$ref": "#/$defs/PreferencesRecovery" }, "theme": { "enum": ["light", "dark"] }
+      }
+    }
+  }
+}

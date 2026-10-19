@@ -951,3 +951,37 @@ public sealed record Origin
     [JsonPropertyName("connectionId")] public required string ConnectionId { get; init; }
 }
 
+public sealed record PreferencesGrid
+{
+    [JsonPropertyName("spacingPt")] public required double SpacingPt { get; init; }
+    [JsonPropertyName("visible")] public required bool Visible { get; init; }
+    [JsonPropertyName("snap")] public required bool Snap { get; init; }
+}
+
+public sealed record PreferencesFont
+{
+    [JsonPropertyName("family")] public required string Family { get; init; }
+    [JsonPropertyName("sizePt")] public required double SizePt { get; init; }
+}
+
+public sealed record PreferencesRecovery
+{
+    [JsonPropertyName("checkpointSeconds")] public required int CheckpointSeconds { get; init; }
+}
+
+public sealed record CapturedDocumentDefaults
+{
+    [JsonPropertyName("grid")] public required PreferencesGrid Grid { get; init; }
+    [JsonPropertyName("font")] public required PreferencesFont Font { get; init; }
+}
+
+public sealed record AppPreferences
+{
+    [JsonPropertyName("schemaVersion")] public int SchemaVersion { get; init; } = 1;
+    [JsonPropertyName("units")] public required string Units { get; init; }
+    [JsonPropertyName("grid")] public required PreferencesGrid Grid { get; init; }
+    [JsonPropertyName("font")] public required PreferencesFont Font { get; init; }
+    [JsonPropertyName("recovery")] public required PreferencesRecovery Recovery { get; init; }
+    [JsonPropertyName("theme")] public required string Theme { get; init; }
+}
+
