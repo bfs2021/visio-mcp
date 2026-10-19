@@ -9,7 +9,7 @@ namespace Diagram.App;
 /// </summary>
 public static class FileAssociations
 {
-    public const string ExeKey = "Agentic Diagram.exe";
+    public const string ExeKey = "Diagram.App.exe"; // must be the program file name: Windows matches Open with entries to the exe by it
     public static readonly string[] Extensions = [".json", ".vsdx"];
 
     /// <param name="classesRoot">Registry path that holds the per-user classes; tests pass a scratch path instead of Software\Classes.</param>
