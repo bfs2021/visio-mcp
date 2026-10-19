@@ -29,7 +29,7 @@ public sealed record ApprovedDestination(string Path, bool Existed, bool Consent
 public sealed class ExportPathPolicy
 {
     public static readonly TimeSpan ConsentTimeout = TimeSpan.FromSeconds(60);
-    static readonly Dictionary<string, string[]> Extensions = new() { ["vsdx"] = [".vsdx"], ["svg"] = [".svg"], ["png"] = [".png"], ["jpeg"] = [".jpg", ".jpeg"] };
+    static readonly Dictionary<string, string[]> Extensions = new() { ["vsdx"] = [".vsdx"], ["svg"] = [".svg"], ["png"] = [".png"], ["jpeg"] = [".jpg", ".jpeg"], ["pdf"] = [".pdf"], ["zip"] = [".zip"] };
     static readonly HashSet<string> Reserved = new(StringComparer.OrdinalIgnoreCase)
     {
         "CON", "PRN", "AUX", "NUL", "CONIN$", "CONOUT$", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "COM¹", "COM²", "COM³",
