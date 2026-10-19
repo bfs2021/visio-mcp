@@ -29,7 +29,9 @@ public sealed record ApprovedDestination(string Path, bool Existed, bool Consent
 public sealed class ExportPathPolicy
 {
     public static readonly TimeSpan ConsentTimeout = TimeSpan.FromSeconds(60);
-    static readonly Dictionary<string, string[]> Extensions = new() { ["vsdx"] = [".vsdx"], ["svg"] = [".svg"], ["png"] = [".png"], ["jpeg"] = [".jpg", ".jpeg"], ["pdf"] = [".pdf"], ["zip"] = [".zip"] };
+    static readonly Dictionary<string, string[]> Extensions = new() { ["vsdx"] = [".vsdx"], ["svg"] = [".svg"], ["png"] = [".png"], ["jpeg"] = [".jpg", ".jpeg"] };
+    static readonly Dictionary<string,string[]> EditorExtensions = new(Extensions) { ["pdf"]=[".pdf"], ["zip"]=[".zip"] };
+    readonly IReadOnlyDictionary<string,string[]> extensions;
     static readonly HashSet<string> Reserved = new(StringComparer.OrdinalIgnoreCase)
     {
         "CON", "PRN", "AUX", "NUL", "CONIN$", "CONOUT$", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "COM¹", "COM²", "COM³",
@@ -42,8 +44,9 @@ public sealed class ExportPathPolicy
     readonly IExportConsent consent;
     readonly TimeSpan timeout;
 
-    public ExportPathPolicy(string exportRoot, Func<IReadOnlyList<string>> savedDirectories, Func<Scope?> currentScope, IExportConsent? consent = null, TimeSpan? consentTimeout = null)
+    public ExportPathPolicy(string exportRoot, Func<IReadOnlyList<string>> savedDirectories, Func<Scope?> currentScope, IExportConsent? consent = null, TimeSpan? consentTimeout = null, bool editorFormats = false)
     {
+        extensions = editorFormats ? EditorExtensions : Extensions;
         this.exportRoot = System.IO.Path.GetFullPath(exportRoot);
         this.savedDirectories = savedDirectories;
         this.currentScope = currentScope;
@@ -110,7 +113,7 @@ public sealed class ExportPathPolicy
 
     public async Task<Result<ApprovedDestination>> ResolveAsync(string? requested, string format, string title, Scope scope, int revision, string clientLabel, CancellationToken ct)
     {
-        if (!Extensions.TryGetValue(format, out var exts)) return Result<ApprovedDestination>.Fail("invalid_request", "format must be vsdx, svg, png or jpeg");
+        if (!extensions.TryGetValue(format, out var exts)) return Result<ApprovedDestination>.Fail("invalid_request", "format must be vsdx, svg, png or jpeg");
         if (requested is not null && string.IsNullOrWhiteSpace(requested)) return Result<ApprovedDestination>.Fail("path_not_permitted", "the path is empty");
         var roots = ApprovedRoots();
         string full;

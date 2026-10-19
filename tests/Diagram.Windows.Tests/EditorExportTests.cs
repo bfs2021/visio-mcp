@@ -23,7 +23,7 @@ public class EditorExportTests
     [Fact] public async Task PdfPreservesMixedPageSizesAndZipHasOrderedImages()
     {
         await using var h=await Harness.StartAsync();
-        var second=Guid.NewGuid().ToString();var first=Harness.Shape("pdf-first",50,50);first["bounds"]!["width"]=600;first["bounds"]!["height"]=120;first["text"]=new JsonObject {["value"]="Landscape page — export verification"};
+        var second=Guid.NewGuid().ToString();var first=Harness.Shape("pdf-first",50,50);first["bounds"]!["width"]=600;first["bounds"]!["height"]=120;first["text"]=new JsonObject {["value"]="Landscape page — export verification"};first["geometry"]=new JsonObject {["preset"]="rectangle",["svgPath"]="M0 0 L100 0 L100 50 L50 100 L0 50 Z"};first["style"]=new JsonObject {["fill"]=new JsonObject {["kind"]="linear-gradient",["angleDeg"]=0,["stops"]=new JsonArray(new JsonObject {["offset"]=0,["colour"]="#ffffff",["opacity"]=1},new JsonObject {["offset"]=1,["colour"]="#38bdf8",["opacity"]=1})}};
         var last=Harness.Shape("pdf-second",25,220);last["pageId"]=second;last["bounds"]!["width"]=250;last["bounds"]!["height"]=120;last["geometry"]=new JsonObject {["preset"]="ellipse"};last["text"]=new JsonObject {["value"]="Portrait page — 300 × 600 pt"};
         Assert.Null((await h.Apply(0,null,first,new JsonObject {["op"]="addPage",["id"]=second,["name"]="Portrait",["widthPt"]=300,["heightPt"]=600},last)).Error);
         var p=Options(h,"pdf","all");p["expected"]!["baseRevision"]=1;

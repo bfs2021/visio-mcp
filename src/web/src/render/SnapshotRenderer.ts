@@ -199,14 +199,16 @@ export function createSnapshotRenderer(deps: RendererDeps) {
       svg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
       svg.setAttribute('width', String(dims.widthPx));
       svg.setAttribute('height', String(dims.heightPx));
+      // Fill the rounded pixel viewport exactly; default meet introduces translucent edge gutters.
+      if(params.scale!==undefined)svg.setAttribute('preserveAspectRatio', 'none');
       svg.setAttribute('viewBox', `${dims.crop.x + MARGIN_PT} ${dims.crop.y + MARGIN_PT} ${dims.crop.width} ${dims.crop.height}`);
       svg.setAttribute('style', 'overflow:hidden;background:none');
       await document.fonts.ready;
 
-      const paint=params.background==='white'?{kind:'solid' as const,colour:'#ffffff',opacity:1}:params.background==='transparent'?{kind:'none' as const}:page.background;
-      if(paint.kind!=='none'){
+      const paint=params.background===undefined?(page.background.kind==='solid'?{...page.background,opacity:1}:{kind:'none' as const}):params.background==='white'?{kind:'solid' as const,colour:'#ffffff',opacity:1}:params.background==='transparent'?{kind:'none' as const}:page.background;
+      if(paint.kind!=='none'&&(format==='svg'||params.background!==undefined)){
         const ns='http://www.w3.org/2000/svg',rect=document.createElementNS(ns,'rect');
-        const area=params.background==='white'?{x:dims.crop.x+MARGIN_PT,y:dims.crop.y+MARGIN_PT,width:dims.crop.width,height:dims.crop.height}:{x:MARGIN_PT,y:MARGIN_PT,width:page.widthPt,height:page.heightPt};
+        const area=params.background==='white'||params.background===undefined?{x:dims.crop.x+MARGIN_PT,y:dims.crop.y+MARGIN_PT,width:dims.crop.width,height:dims.crop.height}:{x:MARGIN_PT,y:MARGIN_PT,width:page.widthPt,height:page.heightPt};
         for(const [k,v] of Object.entries(area))rect.setAttribute(k,String(v));
         if(paint.kind==='solid'){rect.setAttribute('fill',paint.colour);rect.setAttribute('fill-opacity',String(paint.opacity));}
         else {
@@ -240,7 +242,8 @@ export function createSnapshotRenderer(deps: RendererDeps) {
       canvas.width = dims.widthPx;
       canvas.height = dims.heightPx;
       const g = canvas.getContext('2d')!;
-      if(format==='jpeg'){g.fillStyle='#ffffff';g.fillRect(0,0,canvas.width,canvas.height);}
+      const legacyBackground=params.background===undefined&&page.background.kind==='solid'?page.background.colour:format==='jpeg'?'#ffffff':null;
+      if(legacyBackground){g.fillStyle=legacyBackground;g.fillRect(0,0,canvas.width,canvas.height);}
       g.drawImage(image, 0, 0, dims.widthPx, dims.heightPx);
       if (mode === 'debug') drawDebug(g, snapshot, page, projection, dims);
 

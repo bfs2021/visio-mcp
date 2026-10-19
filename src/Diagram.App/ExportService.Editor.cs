@@ -60,7 +60,7 @@ public sealed partial class ExportService
                 });
                 if(path is null)return Ok(request,new JsonObject {["cancelled"]=true});
                 await CheckExportAsync(expected,ct);
-                policy=new ExportPathPolicy(ExportRoot,ApprovedRoots,()=>window.Router.CurrentScope,new ChosenDestination(path));
+                policy=new ExportPathPolicy(ExportRoot,ApprovedRoots,()=>window.Router.CurrentScope,new ChosenDestination(path),editorFormats:true);
                 var chosen=await policy.ResolveAsync(path,destinationFormat,snap.Document.Title,scope,snap.Revision,"Editor",ct);if(!chosen.IsOk)throw new ExportRejected(chosen.Error!);destination=chosen.Value;
             }
             var images=new List<(Page Page,byte[] Bytes)>();long total=0;
