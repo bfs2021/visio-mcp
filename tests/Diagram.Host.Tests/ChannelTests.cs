@@ -50,6 +50,25 @@ public class ChannelTests
 
     static RequestEnvelope Req(string method, string? doc, string? session, string id = "r") => new() { RequestId = id, Method = method, DocumentId = doc, SessionId = session, Params = new JsonObject() };
 
+    [Theory]
+    [InlineData("host.preferences.get", true)]
+    [InlineData("host.preferences.save", false)]
+    [InlineData("host.openJson", false)]
+    public void BeforeReadyAgentCanOnlyReadPreferences(string method, bool allowed)
+    {
+        var calls = new List<string>();
+        var (router, user, agent) = Make((request, _) => {
+            calls.Add(request.Method);
+            return Task.FromResult(new ResponseEnvelope { RequestId = request.RequestId, Result = JsonSerializer.SerializeToElement(new { preferences = "loaded" }) });
+        });
+        router.OnMessage(Origin, JsonSerializer.Serialize(Req(method, null, null), ContractJson.Options), true, BridgeRouter.Agent);
+        Assert.False(router.IsReady);
+        Assert.Empty(router.Documents);
+        Assert.Equal(allowed ? new[] { method } : Array.Empty<string>(), calls);
+        Assert.Single(agent.Replies);
+        Assert.Equal(allowed, agent.Replies[0]["error"] is null);
+        Assert.Empty(user.Replies);
+    }
     [Fact]
     public async Task ARequestGoesToThePageThatHoldsTheDocument()
     {

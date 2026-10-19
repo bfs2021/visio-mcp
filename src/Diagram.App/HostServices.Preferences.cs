@@ -36,16 +36,18 @@ public sealed partial class HostServices
         if (saved.Status == PreferencesSaveStatus.Success) return Ok(request, PreferencePayload(saved.Snapshot));
         var code = saved.Status switch
         {
-            PreferencesSaveStatus.Conflict => "conflict",
+            PreferencesSaveStatus.Conflict => "revision_conflict",
             PreferencesSaveStatus.IoError => "io_error",
             _ => "invalid_request",
         };
+        var details = PreferencePayload(saved.Snapshot);
+        if (saved.Status == PreferencesSaveStatus.Conflict) details["reason"] = "preferences_changed";
         return Err(request, new AppError
         {
             Code = code,
             Message = saved.Error ?? "Preferences could not be saved.",
             Retryable = saved.Status == PreferencesSaveStatus.Conflict,
-            Details = PreferencePayload(saved.Snapshot),
+            Details = details,
         });
     }
 }

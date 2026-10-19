@@ -1,3 +1,4 @@
+import { initializePreferences } from './bridge/initializePreferences';
 import type { ComponentProposal } from './layout/components';
 import '@maxgraph/core/css/common.css';
 import './styles.css';
@@ -50,7 +51,9 @@ const assetUrl = (snapshot: { document: { assets: Array<{ id: string; sha256: st
 };
 const renderer = createSnapshotRenderer({ assetUrl: assetUrl as never });
 let ws: WorkspaceModel | null = null;
+const initialPreferences = await initializePreferences(window.chrome?.webview);
 const app = startApp(window.chrome?.webview, null, {
+  ...initialPreferences,
   onSessionChanged: state => (state.ui as EditorModel | null)?.sessionReplaced(),
   render: renderer.render, rasterise: renderer.rasterise, layoutContext: createBrowserLayoutContext(assetUrl as never),
   beforeClose: async () => ws!.beginClose(),
@@ -85,6 +88,7 @@ ws.host = hostApi(host);
 if (host) ws.protectNew = scope => host.call('host.protectNewDocument', { ...scope });
 configure(firstModel, workspace.active!);
 const model = firstModel;
+if (app.preferences.diagnostic) firstModel.say(app.preferences.diagnostic, 'warning');
 void ws.restoreWorkspace(model).then(() => ws!.refreshAgentDocs()); // the last run's tabs come back; unfinished work no tab owns is offered
 
 // A read-only window onto the editor for automated tests. It is compiled out of production builds, and nothing here edits the document.

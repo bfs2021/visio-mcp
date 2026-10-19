@@ -81,6 +81,7 @@ export class WorkspaceModel {
     model.untitledNo = ++this.untitled;
     model.host = this.hostApi;
     model.closeTabNow = discard => this.closeNow(model, discard);
+    model.newDocument.snapshotDefaults = this.app.preferences.snapshotDefaults;
     model.newDocument.replacesCurrent = false;
     model.newDocument.create = async document => {
       const target = this.newTab({ document });
