@@ -12,6 +12,7 @@ import { applyDiff, type DiffBody } from './diff';
 import { History } from './history';
 import { settleAttachments } from './attachments';
 import { planPatch } from './planPatch';
+import { readDocumentDefaults } from '../model/documentDefaults';
 
 export type Projector = (snapshot: Snapshot, diff: ResolvedDiff) => Result<void>;
 export type SnapshotProjector = (snapshot: Snapshot) => Result<Projection>;
@@ -227,11 +228,12 @@ export class CommandEngine {
   }
 
   private resultOf(transactionId: string, previousRevision: number, revision: number, plan: ReturnType<typeof emptyPlan>, projectionStatus: 'applied' | 'failed'): TransactionResult {
+    const diagnostic = readDocumentDefaults(this.store.snapshot().document).diagnostic;
     return {
       transactionId, previousRevision, revision, noChange: previousRevision === revision,
       created: plan.created, changed: plan.changed, deleted: plan.deleted, changedPageIds: plan.changedPageIds,
       changedLayerIds: plan.changedLayerIds, changedAssetIds: plan.changedAssetIds, visuallyAffectedIds: plan.visuallyAffectedIds,
-      warnings: [], projectionStatus,
+      warnings: diagnostic ? [{ severity: 'warning', code: 'DOCUMENT_DEFAULTS_INVALID', message: diagnostic }] : [], projectionStatus,
     };
   }
 
