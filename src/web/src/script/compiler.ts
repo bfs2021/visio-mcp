@@ -364,9 +364,13 @@ class Compiler {
     take('valign', n => this.enumValue(n, ['top', 'middle', 'bottom'] as const), 'verticalAlign');
     take('wrap', n => this.bool(n), 'wrap');
     take('padding', n => this.dim(n), 'paddingPt');
+    take('textDir', n => this.enumValue(n, ['horizontal', 'vertical'] as const), 'orientation');
+    const sides: Record<string, number> = {};
+    for (const side of ['Top', 'Right', 'Bottom', 'Left']) { const key = `inset${side}`; const n = this.raw(key); if (n) { sides[side.toLowerCase()] = this.dim(n); known.add(key); } }
+    if (Object.keys(sides).length) t.insetsPt = sides;
     return t as Partial<TextBlock>;
   }
-  private static readonly TEXT_KEYS = ['text', 'font', 'fontSize', 'bold', 'italic', 'underline', 'textColor', 'align', 'valign', 'wrap', 'padding'];
+  private static readonly TEXT_KEYS = ['text', 'font', 'fontSize', 'bold', 'italic', 'underline', 'textColor', 'align', 'valign', 'wrap', 'padding', 'textDir', 'insetTop', 'insetRight', 'insetBottom', 'insetLeft'];
 
   private bounds(): Bounds {
     const x = this.dim(this.need('x')), y = this.dim(this.need('y')), width = this.dim(this.need('w')), height = this.dim(this.need('h'));

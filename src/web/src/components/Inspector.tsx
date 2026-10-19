@@ -170,6 +170,13 @@ export function Inspector({ model }: { model: EditorModel }) {
               <label key={k}><input type="checkbox" checked={text[k]} data-testid={`field-${k}`} onChange={e => setText({ [k]: e.target.checked })} /> {k[0]!.toUpperCase() + k.slice(1)}</label>
             ))}
             <label><input type="checkbox" checked={text.wrap} data-testid="field-wrap" onChange={e => setText({ wrap: e.target.checked })} /> Wrap</label>
+            <label><input type="checkbox" checked={text.orientation === 'vertical'} data-testid="field-vertical" onChange={e => setText({ orientation: e.target.checked ? 'vertical' : 'horizontal' })} /> Vertical</label>
+          </div>
+          <div className="grid2">
+            {(['top', 'right', 'bottom', 'left'] as const).map(side => (
+              <NumberField key={side} label={`Margin ${side} pt`} testId={`field-margin-${side}`} value={(text.insetsPt ?? { top: text.paddingPt, right: text.paddingPt, bottom: text.paddingPt, left: text.paddingPt })[side]} min={0}
+                onCommit={v => set({ text: { insetsPt: { [side]: v } } })} />
+            ))}
           </div>
           <div className="grid2">
             <label className="field"><span>Align</span>

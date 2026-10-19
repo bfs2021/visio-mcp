@@ -145,7 +145,9 @@ function textStyle(style: CellStyle, t: TextBlock): void {
   style.fontStyle = (t.bold ? 1 : 0) | (t.italic ? 2 : 0) | (t.underline ? 4 : 0);
   style.align = t.horizontalAlign;
   style.verticalAlign = t.verticalAlign;
-  style.spacing = t.paddingPt;
+  const m = t.insetsPt ?? { top: t.paddingPt, right: t.paddingPt, bottom: t.paddingPt, left: t.paddingPt };
+  style.spacing = 0; style.spacingTop = m.top; style.spacingRight = m.right; style.spacingBottom = m.bottom; style.spacingLeft = m.left;
+  if (t.orientation === 'vertical') style.horizontal = false;
   if (t.wrap) style.whiteSpace = 'wrap';
 }
 

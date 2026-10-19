@@ -100,7 +100,16 @@
         "horizontalAlign": { "enum": ["left", "center", "right"] },
         "verticalAlign": { "enum": ["top", "middle", "bottom"] },
         "wrap": { "type": "boolean" },
-        "paddingPt": { "type": "number", "minimum": 0 }
+        "paddingPt": { "type": "number", "minimum": 0 },
+        "insetsPt": { "$ref": "#/$defs/TextInsets", "description": "per-side text margins; when present they replace paddingPt" },
+        "orientation": { "enum": ["horizontal", "vertical"], "description": "vertical reads bottom to top; absent means horizontal" }
+      }
+    },
+    "TextInsets": {
+      "type": "object", "additionalProperties": false, "required": ["top", "right", "bottom", "left"],
+      "properties": {
+        "top": { "type": "number", "minimum": 0, "maximum": 2000 }, "right": { "type": "number", "minimum": 0, "maximum": 2000 },
+        "bottom": { "type": "number", "minimum": 0, "maximum": 2000 }, "left": { "type": "number", "minimum": 0, "maximum": 2000 }
       }
     },
     "ShapeStyle": {

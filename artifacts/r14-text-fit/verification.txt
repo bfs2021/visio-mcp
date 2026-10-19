@@ -1,0 +1,4 @@
+Visio laid out each vertical lane title inside its turned text block (measured with TEXTWIDTH/TEXTHEIGHT):
+Corona Sensical: text 81.1x14.4pt in 114.0x24.0pt
+Data lake: text 49.7x14.4pt in 74.0x24.0pt
+Reporting: text 51.9x14.4pt in 74.0x24.0pt

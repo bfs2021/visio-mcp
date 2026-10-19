@@ -108,6 +108,16 @@ public sealed record TextBlock
     [JsonPropertyName("verticalAlign")] public required string VerticalAlign { get; init; }
     [JsonPropertyName("wrap")] public required bool Wrap { get; init; }
     [JsonPropertyName("paddingPt")] public required double PaddingPt { get; init; }
+    [JsonPropertyName("insetsPt")] public TextInsets? InsetsPt { get; init; }
+    [JsonPropertyName("orientation")] public string? Orientation { get; init; }
+}
+
+public sealed record TextInsets
+{
+    [JsonPropertyName("top")] public required double Top { get; init; }
+    [JsonPropertyName("right")] public required double Right { get; init; }
+    [JsonPropertyName("bottom")] public required double Bottom { get; init; }
+    [JsonPropertyName("left")] public required double Left { get; init; }
 }
 
 public sealed record ShapeStyle
@@ -327,6 +337,8 @@ public sealed record TextBlockPatch
     [JsonPropertyName("verticalAlign")] public string? VerticalAlign { get; init; }
     [JsonPropertyName("wrap")] public bool? Wrap { get; init; }
     [JsonPropertyName("paddingPt")] public double? PaddingPt { get; init; }
+    [JsonPropertyName("insetsPt")] public JsonElement? InsetsPt { get; init; }
+    [JsonPropertyName("orientation")] public string? Orientation { get; init; }
 }
 
 public sealed record StylePatch

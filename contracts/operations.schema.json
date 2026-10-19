@@ -113,6 +113,22 @@
         "paddingPt": {
           "type": "number",
           "minimum": 0
+        },
+        "insetsPt": {
+          "description": "per-side text margins in points; a missing side keeps its current value; null returns to the uniform paddingPt",
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object", "additionalProperties": false, "minProperties": 1,
+              "properties": {
+                "top": { "type": "number", "minimum": 0, "maximum": 2000 }, "right": { "type": "number", "minimum": 0, "maximum": 2000 },
+                "bottom": { "type": "number", "minimum": 0, "maximum": 2000 }, "left": { "type": "number", "minimum": 0, "maximum": 2000 }
+              }
+            }
+          ]
+        },
+        "orientation": {
+          "enum": ["horizontal", "vertical"]
         }
       }
     },

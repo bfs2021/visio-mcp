@@ -19,7 +19,7 @@ const known = (o: Record<string, unknown>, keys: string[]) => { if (Object.keys(
 function contentValue(value: unknown, template: TemplateId): Content {
   if (value === undefined) return structuredClone(samples[template]);
   if (!record(value)) throw new Error('content must be an object');
-  known(value, template === 'swimlane' ? ['title', 'lanes', 'phases', 'laneHeaderWidthPt'] : ['title', 'subtitle', 'iconId', ...(template === 'environment-columns' ? ['columns'] : template === 'pipeline' ? ['steps'] : ['items', 'footer'])]);
+  known(value, template === 'swimlane' ? ['title', 'lanes', 'phases', 'laneHeaderWidthPt', 'laneTitles'] : ['title', 'subtitle', 'iconId', ...(template === 'environment-columns' ? ['columns'] : template === 'pipeline' ? ['steps'] : ['items', 'footer'])]);
   const str = (v: unknown): string => { if (typeof v !== 'string' || v.length > 512) throw new Error('Text fields must be strings of at most 512 characters'); return v; };
   const icon = (v: unknown): string => { const s = str(v); if (!iconCatalog.icons.some(i => i.id === s)) throw new Error('Unknown iconId; use search_icons'); return s; };
   const items = (v: unknown): string[] => { if (!Array.isArray(v) || v.length > 8) throw new Error('items must be at most 8 strings'); return v.map(str); };
@@ -51,6 +51,10 @@ function contentValue(value: unknown, template: TemplateId): Content {
     if (value.laneHeaderWidthPt !== undefined) {
       const w = value.laneHeaderWidthPt; if (typeof w !== 'number' || !Number.isFinite(w) || w < 40 || w > 300) throw new Error('laneHeaderWidthPt must be 40–300 points');
       c.laneHeaderWidthPt = w;
+    }
+    if (value.laneTitles !== undefined) {
+      if (value.laneTitles !== 'horizontal' && value.laneTitles !== 'vertical') throw new Error('laneTitles must be horizontal or vertical');
+      c.laneTitles = value.laneTitles;
     }
   }
   if (JSON.stringify(c).length > 16384) throw new Error('Component content exceeds 16384 characters');

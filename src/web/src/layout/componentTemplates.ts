@@ -6,7 +6,7 @@ import { STRUCTURE_KEY } from './swimlane';
 export type TemplateId = 'repository-card' | 'labelled-container' | 'environment-columns' | 'pipeline' | 'swimlane';
 export interface Content { title: string; subtitle?: string; items?: string[]; footer?: string; iconId?: string; columns?: { title: string; items?: string[]; iconId?: string }[]; steps?: { title: string; detail?: string }[];
   /** swimlane: the rows (top to bottom) and the columns (left to right). */
-  lanes?: { title: string; heightPt?: number; colour?: string }[]; phases?: { title: string }[]; laneHeaderWidthPt?: number }
+  lanes?: { title: string; heightPt?: number; colour?: string }[]; phases?: { title: string }[]; laneHeaderWidthPt?: number; laneTitles?: 'horizontal' | 'vertical' }
 export interface Settings { widthPt: number; paddingPt: number; gapPt: number; align: 'left' | 'center' | 'right'; target: 'editor' | 'visio' }
 export interface Part { role: string; kind: 'shape' | 'text'; bounds: Bounds; text?: TextBlock; geometry?: { preset?: 'rounded-rectangle' | 'rectangle'; cornerRadiusPt?: number; svgPath?: string }; style?: ShapeStyle; metadata?: Record<string, string> }
 const boxStyle = (colour = '#ffffff'): ShapeStyle => ({ fill: { kind: 'solid', colour, opacity: 1 }, stroke: { kind: 'solid', colour: '#cbd5e1', opacity: 1 }, strokeWidthPt: 1, dash: 'solid', lineCap: 'round', lineJoin: 'round' });
@@ -31,6 +31,7 @@ export const componentCatalog = {
       lanes: { type: 'array', minItems: 1, maxItems: 10, items: { type: 'object', required: ['title'], additionalProperties: false, properties: { title: stringSchema, heightPt: { type: 'number', minimum: 30, maximum: 600, default: 90 }, colour: { type: 'string', pattern: '^#[0-9a-fA-F]{6}$', description: 'Lane header fill. Defaults to a palette colour.' } } } },
       phases: { type: 'array', maxItems: 8, items: { type: 'object', required: ['title'], additionalProperties: false, properties: { title: stringSchema } }, description: 'Optional columns across all lanes (days, stages). Omit for lanes only.' },
       laneHeaderWidthPt: { type: 'number', minimum: 40, maximum: 300, default: 96 },
+      laneTitles: { enum: ['horizontal', 'vertical'], default: 'horizontal', description: 'vertical turns each lane title to read bottom to top in its header, as swim-lane diagrams usually draw them.' },
     } : {}),
     ...(id === 'pipeline' ? { steps: { type: 'array', minItems: 1, maxItems: 10, items: { type: 'object', required: ['title'], additionalProperties: false, properties: { title: stringSchema, detail: stringSchema } } } } : {}),
   } } })),
@@ -115,10 +116,20 @@ function swimlaneParts(content: Content, settings: Settings, x: number, y: numbe
   const parts: Part[] = [], texts: Part[] = [];
   const rect = (role: string, bx: number, by: number, w: number, h: number, fill: string, stroke: string | null = '#94a3b8') =>
     parts.push({ role, kind: 'shape', bounds: { x: bx, y: by, width: w, height: h }, geometry: { preset: 'rectangle' }, style: { ...boxStyle(fill), stroke: stroke ? { kind: 'solid', colour: stroke, opacity: 1 } : { kind: 'none' } }, metadata: { [STRUCTURE_KEY]: '1' } });
-  const label = (role: string, value: string, bx: number, by: number, w: number, h: number, colour: string, bold: boolean, size: number, align: 'left' | 'center') => {
+  const vertical = content.laneTitles === 'vertical';
+  const label = (role: string, value: string, bx: number, by: number, w: number, h: number, colour: string, bold: boolean, size: number, align: 'left' | 'center', turn = false) => {
     const old = existing.get(role)?.text;
-    const tb: TextBlock = old ?? { value, fontFamily: 'Arial', fontSizePt: size, bold, italic: false, underline: false, colour, horizontalAlign: align, verticalAlign: 'middle', wrap: true, paddingPt: 0 };
+    const base: TextBlock = old ?? { value, fontFamily: 'Arial', fontSizePt: size, bold, italic: false, underline: false, colour, horizontalAlign: align, verticalAlign: 'middle', wrap: true, paddingPt: 0 };
+    const tb: TextBlock = turn && content.laneTitles ? (vertical ? { ...base, orientation: 'vertical' } : (({ orientation: _o, ...rest }) => rest)(base)) : base;
     const iw = w - 2 * cellPad;
+    if (tb.orientation === 'vertical') {
+      // the title runs up the header: the cell's height is its line length and its width holds the stacked lines
+      const m = measureTextBox(tb, iw, h - 2 * cellPad, measureWidth, settings.target);
+      if (m.requiredHeightPt > h - 2 * cellPad + .01) throw new Error(`${role}: text cannot fit this lane height without changing its font; make the lane taller or shorten the text`);
+      if (m.requiredWidthPt > iw + .01) throw new Error(`${role}: text needs more width than its header has; widen the lane header`);
+      texts.push({ role, kind: 'text', bounds: { x: bx + cellPad, y: by + cellPad, width: iw, height: h - 2 * cellPad }, text: tb });
+      return;
+    }
     const m = measureTextBox(tb, iw, 10000, measureWidth, settings.target);
     if (m.requiredWidthPt > iw + .01) throw new Error(`${role}: text cannot fit this cell width without changing its font; widen the cell or shorten the text`);
     if (m.requiredHeightPt > h + .01) throw new Error(`${role}: text needs more height than its cell has; make the lane taller or the header wider`);
@@ -146,7 +157,7 @@ function swimlaneParts(content: Content, settings: Settings, x: number, y: numbe
   label('title', content.title, x, y, W, TITLE_H, '#ffffff', true, 14, 'left');
   phases.forEach((p, i) => label(`phase.${i}.title`, p.title, x + headerW + i * colW, y + TITLE_H, colW, PHASE_H, '#1e293b', true, 12, 'center'));
   top = bodyTop;
-  lanes.forEach((l, i) => { label(`lane.${i}.title`, l.title, x, top, headerW, heights[i]!, '#ffffff', true, 12, 'center'); top += heights[i]!; });
+  lanes.forEach((l, i) => { label(`lane.${i}.title`, l.title, x, top, headerW, heights[i]!, '#ffffff', true, 12, 'center', true); top += heights[i]!; });
 
   const all = [...parts, ...texts];
   if (all.length > 120 || total > 10000 || all.some(p => Object.values(p.bounds).some(n => !Number.isFinite(n)) || p.bounds.width <= 0 || p.bounds.height <= 0)) throw new Error('Component exceeds finite geometry limits');

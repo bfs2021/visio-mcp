@@ -7,14 +7,14 @@
     }
   ],
   "status": "PASS",
-  "ran": "2026-10-19T01:09:17.4596774Z",
+  "ran": "2026-10-19T07:56:50.3439451Z",
   "facts": {
     "identity": {
       "Preserved": 16,
       "Generated": 0,
       "Repaired": 1,
       "Notes": [
-        "shape at page0/shape13 repeats the id f6f2372b-6753-4568-bfb5-15f9d68c10d1 (a copied shape); it was given a new id."
+        "shape at page0/shape13 repeats the id 91dd9d7c-46ce-45e2-ac5a-6346b5ab85e6 (a copied shape); it was given a new id."
       ]
     },
     "diagnostics": [
@@ -22,8 +22,8 @@
         "severity": "warning",
         "code": "alias_repeated",
         "message": "The alias \u0022crm\u0022 is already used on this page; the later shape lost it.",
-        "pageId": "aa26e371-85a5-4b56-ae62-9d0657bebde3",
-        "elementId": "b8a95738-01f4-5fe4-84fb-6277f26a44b6",
+        "pageId": "be7f8f33-d140-4fc0-acef-c37e783f4e74",
+        "elementId": "ca6eb1bb-af08-5e22-b780-4eb04f209562",
         "sourceShape": "13",
         "action": "alias dropped"
       }

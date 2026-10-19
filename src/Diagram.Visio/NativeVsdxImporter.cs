@@ -558,14 +558,22 @@ public sealed class NativeVsdxImporter : IVsdxImporter
                 var style = (int)D(C("Style"), 0);
                 var size = D(C("Size"), 12.0 / PtPerInch) * PtPerInch;
                 var font = C("Font");
-                var margin = D(Own(s, "LeftMargin"), 4.0 / PtPerInch) * PtPerInch;
-                return new JsonObject
+                double Margin(string name) => Math.Max(0, D(Own(s, name), 4.0 / PtPerInch) * PtPerInch);
+                var margin = Margin("LeftMargin");
+                double top = Margin("TopMargin"), right = Margin("RightMargin"), bottom = Margin("BottomMargin");
+                var txtAngle = D(Own(s, "TxtAngle"), 0);
+                var turned = Math.Abs(((txtAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI) - Math.PI / 2) < 0.01;
+                var text = new JsonObject
                 {
                     ["value"] = value, ["fontFamily"] = font is not null && rd.faces.TryGetValue(font, out var face) ? Trim(face, 128) : "Segoe UI", ["fontSizePt"] = Math.Clamp(size, 1, 1000),
                     ["bold"] = (style & 1) != 0, ["italic"] = (style & 2) != 0, ["underline"] = (style & 4) != 0, ["colour"] = rd.Colour(C("Color"), "#000000", elementId, pageId),
                     ["horizontalAlign"] = para switch { "0" => "left", "2" => "right", _ => "center" }, ["verticalAlign"] = D(Own(s, "VerticalAlign"), 1) switch { 0 => "top", 2 => "bottom", _ => "middle" },
-                    ["wrap"] = u.GetValueOrDefault("AgentNoWrap") != "1", ["paddingPt"] = Math.Max(0, margin),
+                    ["wrap"] = u.GetValueOrDefault("AgentNoWrap") != "1", ["paddingPt"] = margin,
                 };
+                if (Math.Abs(top - margin) > 1e-6 || Math.Abs(right - margin) > 1e-6 || Math.Abs(bottom - margin) > 1e-6)
+                    text["insetsPt"] = new JsonObject { ["top"] = top, ["right"] = right, ["bottom"] = bottom, ["left"] = margin };
+                if (turned) text["orientation"] = "vertical";
+                return text;
             }
 
             // ------------------------------------------------------------ geometry

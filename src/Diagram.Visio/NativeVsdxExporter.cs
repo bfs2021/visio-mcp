@@ -463,7 +463,7 @@ public sealed class NativeVsdxExporter : IVsdxExporter
                     if (GeometryMap.IsApproximated(preset)) Warn("preset_approximated", $"The {preset} outline is an approximation of the editor's shape.", s.Id, "approximated", "info");
                 }
                 if (s.Hidden) foreach (var g2 in new[] { "NoShow" }) shape.Add(Cell("HideText", 1));
-                AddText(shape, s.Text, s.Id);
+                AddText(shape, s.Text, s.Id, s.Bounds);
                 var extra = new List<XElement> { UserRow("AgentPreset", preset), UserRow("AgentGeomSig", GeometryMap.Signature(geo, s.Bounds.Width, s.Bounds.Height)) };
                 if (s.Text is { } tb) { extra.Add(UserRow("AgentTextBlock", "1")); if (!tb.Wrap) extra.Add(UserRow("AgentNoWrap", "1")); }
                 if (s.Style.Stroke is NonePaint) extra.Add(UserRow("AgentStrokeWidthPt", N(s.Style.StrokeWidthPt)));
@@ -487,7 +487,7 @@ public sealed class NativeVsdxExporter : IVsdxExporter
                 LayerCell(shape, t.LayerIds, t.Id);
                 Flags(shape, t.Locked);
                 if (t.Hidden) shape.Add(Cell("HideText", 1));
-                AddText(shape, t.Text, t.Id);
+                AddText(shape, t.Text, t.Id, t.Bounds);
                 var geo = GeometryMap.ForPreset("rectangle");
                 var extra = new List<XElement> { UserRow("AgentPreset", "text"), UserRow("AgentGeomSig", GeometryMap.Signature(geo)), UserRow("AgentTextBlock", "1") };
                 if (!t.Text.Wrap) extra.Add(UserRow("AgentNoWrap", "1"));
@@ -498,12 +498,19 @@ public sealed class NativeVsdxExporter : IVsdxExporter
                 return shape;
             }
 
-            void AddText(XElement shape, TextBlock? t, string elementId)
+            void AddText(XElement shape, TextBlock? t, string elementId, Bounds? box = null)
             {
                 if (t is null) return;
                 var colour = Colour(t.Colour);
                 shape.Add(Cell("VerticalAlign", t.VerticalAlign switch { "top" => 0, "bottom" => 2, _ => 1 }),
-                    Cell("TopMargin", t.PaddingPt / PtPerInch), Cell("BottomMargin", t.PaddingPt / PtPerInch), Cell("LeftMargin", t.PaddingPt / PtPerInch), Cell("RightMargin", t.PaddingPt / PtPerInch));
+                    Cell("TopMargin", (t.InsetsPt?.Top ?? t.PaddingPt) / PtPerInch), Cell("BottomMargin", (t.InsetsPt?.Bottom ?? t.PaddingPt) / PtPerInch),
+                    Cell("LeftMargin", (t.InsetsPt?.Left ?? t.PaddingPt) / PtPerInch), Cell("RightMargin", (t.InsetsPt?.Right ?? t.PaddingPt) / PtPerInch));
+                if (t.Orientation == "vertical" && box is not null)
+                {
+                    // the text block is the shape turned a quarter (reads bottom to top): as wide as the shape is tall, pinned at the middle
+                    double w = box.Width / PtPerInch, h = box.Height / PtPerInch;
+                    shape.Add(Cell("TxtPinX", w / 2), Cell("TxtPinY", h / 2), Cell("TxtLocPinX", h / 2), Cell("TxtLocPinY", w / 2), Cell("TxtWidth", h), Cell("TxtHeight", w), Cell("TxtAngle", Math.PI / 2));
+                }
                 shape.Add(new XElement(V + "Section", new XAttribute("N", "Character"), new XElement(V + "Row", new XAttribute("IX", "0"),
                     Cell("Font", run.Face(t.FontFamily)), CellS("Color", colour), Cell("Style", (t.Bold ? 1 : 0) | (t.Italic ? 2 : 0) | (t.Underline ? 4 : 0)), Cell("Size", t.FontSizePt / PtPerInch))));
                 shape.Add(new XElement(V + "Section", new XAttribute("N", "Paragraph"), new XElement(V + "Row", new XAttribute("IX", "0"),

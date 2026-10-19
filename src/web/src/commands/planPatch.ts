@@ -65,6 +65,15 @@ function refuse(reason: string, message: string, details: Record<string, unknown
 }
 
 const merge = <T extends object>(base: T, patch: PatchObj): T => ({ ...base, ...(patch as Partial<T>) });
+/** Text patches: `insetsPt` merges per side, null (or a new uniform paddingPt) returns to the uniform margin. */
+function mergeText(base: TextBlock, patch: PatchObj): TextBlock {
+  const { insetsPt, ...rest } = patch;
+  const next: TextBlock = { ...base, ...(rest as Partial<TextBlock>) };
+  if (insetsPt === null || (insetsPt === undefined && 'paddingPt' in rest)) delete next.insetsPt;
+  else if (insetsPt !== undefined) { const pad = base.paddingPt; next.insetsPt = { top: pad, right: pad, bottom: pad, left: pad, ...base.insetsPt, ...(insetsPt as object) }; }
+  if (next.orientation === 'horizontal') delete next.orientation;
+  return next;
+}
 const plusZero = (n: number): number => n + 0; // turns -0 into 0, so right-angle maths never leaves a negative zero behind
 const sameBounds = (a: Bounds, b: Bounds): boolean => a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height;
 
@@ -431,7 +440,7 @@ class Planner {
         const bad = paintProblem(el.style.fill, 'fill') ?? paintProblem(el.style.stroke, 'stroke'); if (bad) stop('invalid_request', bad);
         if (op.alias) el.alias = op.alias;
         if (op.name !== undefined) el.name = op.name;
-        if (op.text) el.text = merge(DEFAULT_TEXT, op.text as PatchObj);
+        if (op.text) el.text = mergeText(DEFAULT_TEXT, op.text as PatchObj);
         if (op.attachment) el.attachment = this.resolveAttachment(op.attachment, page.id, id);
         if (op.ports) el.ports = op.ports.map(p => ({ ...p }));
         else if (isOutlinePreset(el.geometry.preset)) el.ports = PRESET_PORTS[el.geometry.preset].map(p => ({ ...p })); // a flowchart symbol starts with its own connection points
@@ -450,7 +459,7 @@ class Planner {
         this.assertLayers(page, layerIds);
         const el: TextElement = {
           id, kind: 'text', layerIds: [...layerIds], zIndex: this.nextZ(page), locked: false, hidden: false,
-          bounds: { ...op.bounds }, rotationDeg: op.rotationDeg ?? 0, metadata: {}, text: merge(DEFAULT_TEXT, op.text as PatchObj),
+          bounds: { ...op.bounds }, rotationDeg: op.rotationDeg ?? 0, metadata: {}, text: mergeText(DEFAULT_TEXT, op.text as PatchObj),
         };
         if (op.alias) el.alias = op.alias;
         if (op.name !== undefined) el.name = op.name;
@@ -499,7 +508,7 @@ class Planner {
         };
         if (op.alias) el.alias = op.alias;
         if (op.name !== undefined) el.name = op.name;
-        if (op.label) el.label = merge(DEFAULT_TEXT, op.label as PatchObj);
+        if (op.label) el.label = mergeText(DEFAULT_TEXT, op.label as PatchObj);
         if (op.labelAnchor) el.labelAnchor = this.anchorOf(op.labelAnchor);
         this.addElement(pageIdx, el);
         return;
@@ -903,9 +912,9 @@ class Planner {
         }
         case 'text': {
           need(element.kind === 'shape' || element.kind === 'text' || element.kind === 'connector', key);
-          if (element.kind === 'connector') { next.label = merge(element.label ?? DEFAULT_TEXT, value as PatchObj); break; } // a connector's text is its label
+          if (element.kind === 'connector') { next.label = mergeText(element.label ?? DEFAULT_TEXT, value as PatchObj); break; } // a connector's text is its label
           const base = (element as ShapeElement | TextElement).text ?? DEFAULT_TEXT;
-          next.text = merge(base, value as PatchObj);
+          next.text = mergeText(base, value as PatchObj);
           break;
         }
         case 'geometry': {

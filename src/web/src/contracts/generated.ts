@@ -85,6 +85,15 @@ export interface TextBlock {
   verticalAlign: "top" | "middle" | "bottom";
   wrap: boolean;
   paddingPt: number;
+  insetsPt?: TextInsets;
+  orientation?: "horizontal" | "vertical";
+}
+
+export interface TextInsets {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
 }
 
 export interface ShapeStyle {
@@ -286,6 +295,8 @@ export interface TextBlockPatch {
   verticalAlign?: "top" | "middle" | "bottom";
   wrap?: boolean;
   paddingPt?: number;
+  insetsPt?: unknown;
+  orientation?: "horizontal" | "vertical";
 }
 
 export interface StylePatch {
