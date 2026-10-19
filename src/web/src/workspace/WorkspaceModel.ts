@@ -3,6 +3,7 @@ import type { AgentDocument } from '../bridge/engineHandlers';
 import type { DiagramDocument, Scope } from '../contracts/generated';
 import { fail, ok, type Result } from '../model/result';
 import type { DocumentState } from './Workspace';
+import { HelpState } from './HelpState';
 import type { startApp } from '../bridge/bootstrap';
 
 type App = ReturnType<typeof startApp>;
@@ -24,6 +25,8 @@ export class WorkspaceModel {
   private version = 0;
   private untitled = 0;
   private hostApi: HostApi = noHost;
+  /** The Help panels (shortcut list, About, command palette). */
+  readonly help = new HelpState(() => this.hostApi.appAbout(), () => this.bump());
   private readonly unsubscribe = new Map<EditorModel, () => void>();
   /** Set by the page: gives a new tab its editor wiring (component previews, renderer, recovery hooks). */
   configure: (model: EditorModel, state: DocumentState) => void = () => {};

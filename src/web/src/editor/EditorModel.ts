@@ -20,6 +20,7 @@ import { drawScriptCompiler, validateScript, type ValidationReport } from '../sc
 import { toPoints, type Unit } from '../model/validate';
 import { iconOperations } from '../icons/catalog';
 import type { AgentDocument } from '../bridge/engineHandlers';
+import type { AboutInfo } from '../workspace/HelpState';
 
 /** What the page needs from the host. In a plain browser (tests, dev) a stub stands in. */
 export interface HostApi extends FileHost {
@@ -48,6 +49,8 @@ export interface HostApi extends FileHost {
   appClose(discard: boolean): Promise<Result<{ closing: true }>>;
   /** The person cancelled the close prompt: the window stays open and may ask again. */
   appCloseCancelled(): Promise<Result<{ cancelled: true }>>;
+  /** The About box: this build, the connected MCP companions and where data lives. */
+  appAbout(): Promise<Result<AboutInfo>>;
   openVsdx(): Promise<Result<NativeOutcome>>;
   /** `path` repeats a choice the person already made when they agree to a lossy export. */
   exportVsdx(opts: { acceptLoss?: boolean; path?: string }): Promise<Result<NativeOutcome>>;
@@ -83,6 +86,7 @@ export const noHost: HostApi = {
   recoveryFinish: async () => fail('not_running', 'there is no host'),
   appClose: async () => fail('not_running', 'there is no host'),
   appCloseCancelled: async () => fail('not_running', 'there is no host'),
+  appAbout: async () => fail('not_running', 'there is no host to report its version'),
   libraryList: async () => fail('not_running', 'there is no host to read the picture library'),
   libraryImport: async () => fail('not_running', 'there is no host to add pictures'),
   libraryUse: async () => fail('not_running', 'there is no host to read the picture library'),
