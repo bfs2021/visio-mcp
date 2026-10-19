@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="068bcc78-6488-403b-aa4c-cd906dc45bf9" name="claude@W11-TEMPLATE 2026-10-18 23:03:16" runUser="W11-TEMPLATE\claude" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-18T23:03:16.7864717+01:00" queuing="2026-10-18T23:03:16.7864719+01:00" start="2026-10-18T23:03:12.6305939+01:00" finish="2026-10-18T23:03:28.0736327+01:00" />
+  <TestSettings name="default" id="69a98fe7-61c7-40b1-98e0-d614a79820e2">
+    <Deployment runDeploymentRoot="claude_W11-TEMPLATE_2026-10-18_23_03_16" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="6361e105-7153-4694-9f0e-a4f51dc122ce" testId="9efadb57-7fcb-1b8c-eba0-d1566c0f68aa" testName="Diagram.Windows.Tests.FileConflictTests.SecondExternalChangeRefreshesConsentAndOverwriteCannotReplayOldOffer" computerName="W11-TEMPLATE" duration="00:00:01.5625743" startTime="2026-10-18T23:03:24.7559601+01:00" endTime="2026-10-18T23:03:26.3413230+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6361e105-7153-4694-9f0e-a4f51dc122ce" />
+    <UnitTestResult executionId="16033975-7842-4c5f-8b1c-5a9341b2b31b" testId="d8476d23-ce70-9599-417f-debad134b94c" testName="Diagram.Windows.Tests.FileConflictTests.ExternalWriteBeforeSaveLeavesDiskAndLocalWorkIntact" computerName="W11-TEMPLATE" duration="00:00:01.6666070" startTime="2026-10-18T23:03:26.3415936+01:00" endTime="2026-10-18T23:03:28.0090043+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="16033975-7842-4c5f-8b1c-5a9341b2b31b" />
+    <UnitTestResult executionId="8d452d77-6d97-449e-b8f6-79909fa8b8eb" testId="1ebcf98f-21a8-4db4-9d54-a5698316aced" testName="Diagram.Windows.Tests.FileConflictTests.FinalWriteGuardAndUnreadableOrDeletedFilesAreSafe" computerName="W11-TEMPLATE" duration="00:00:01.5954950" startTime="2026-10-18T23:03:16.7748724+01:00" endTime="2026-10-18T23:03:18.3603369+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8d452d77-6d97-449e-b8f6-79909fa8b8eb" />
+    <UnitTestResult executionId="fc1bf061-de19-4772-803f-696248865f2e" testId="52ec86c4-9fca-6d08-c6a7-a3b476e67af8" testName="Diagram.Windows.Tests.FileConflictTests.FileChoiceTargetsItsOriginalTabAfterTheActiveTabChanges" computerName="W11-TEMPLATE" duration="00:00:01.7277680" startTime="2026-10-18T23:03:15.0258319+01:00" endTime="2026-10-18T23:03:16.7623112+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="fc1bf061-de19-4772-803f-696248865f2e" />
+    <UnitTestResult executionId="9634e411-f2b9-43ee-9a05-27ca6024ff49" testId="3ef28bdc-2cb6-0ec8-cf16-89d9c0111319" testName="Diagram.Windows.Tests.FileConflictTests.RealPageConflictSaveAsPreservesExternalFileAndLocalDrawing" computerName="W11-TEMPLATE" duration="00:00:01.5557211" startTime="2026-10-18T23:03:23.1995709+01:00" endTime="2026-10-18T23:03:24.7558009+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9634e411-f2b9-43ee-9a05-27ca6024ff49" />
+    <UnitTestResult executionId="d4baff38-3f14-4e60-bd98-62570e453057" testId="099eb9bf-ad5c-db3c-f758-e6c963ad692f" testName="Diagram.Windows.Tests.FileConflictTests.ReloadRetainsOldRecoveryWhenTheNewCheckpointCannotBeCreated" computerName="W11-TEMPLATE" duration="00:00:01.5993760" startTime="2026-10-18T23:03:20.2904705+01:00" endTime="2026-10-18T23:03:21.8896823+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d4baff38-3f14-4e60-bd98-62570e453057" />
+    <UnitTestResult executionId="2ccffa0a-45ae-460c-bbe4-200590270115" testId="4b5d6a1d-5cec-de25-add2-60312760e28d" testName="Diagram.Windows.Tests.FileConflictTests.SaveAsCancelOrSamePathCannotBypassConflictAndDifferentPathPreservesExternalVersion" computerName="W11-TEMPLATE" duration="00:00:01.3068542" startTime="2026-10-18T23:03:21.8930649+01:00" endTime="2026-10-18T23:03:23.1993994+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2ccffa0a-45ae-460c-bbe4-200590270115" />
+    <UnitTestResult executionId="b3dac5f1-44b8-4fe0-9b0c-a308d53f31ef" testId="b50f4531-7d71-c9d1-b4df-85143c3b002b" testName="Diagram.Windows.Tests.FileConflictTests.ReloadRequiresDiscardAndLeavesWorkUntouchedForInvalidFileOrStaleRevision" computerName="W11-TEMPLATE" duration="00:00:01.9287398" startTime="2026-10-18T23:03:18.3631032+01:00" endTime="2026-10-18T23:03:20.2897609+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b3dac5f1-44b8-4fe0-9b0c-a308d53f31ef" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Diagram.Windows.Tests.FileConflictTests.ExternalWriteBeforeSaveLeavesDiskAndLocalWorkIntact" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="d8476d23-ce70-9599-417f-debad134b94c">
+      <Execution id="16033975-7842-4c5f-8b1c-5a9341b2b31b" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.FileConflictTests" name="ExternalWriteBeforeSaveLeavesDiskAndLocalWorkIntact" />
+    </UnitTest>
+    <UnitTest name="Diagram.Windows.Tests.FileConflictTests.FinalWriteGuardAndUnreadableOrDeletedFilesAreSafe" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="1ebcf98f-21a8-4db4-9d54-a5698316aced">
+      <Execution id="8d452d77-6d97-449e-b8f6-79909fa8b8eb" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.FileConflictTests" name="FinalWriteGuardAndUnreadableOrDeletedFilesAreSafe" />
+    </UnitTest>
+    <UnitTest name="Diagram.Windows.Tests.FileConflictTests.SaveAsCancelOrSamePathCannotBypassConflictAndDifferentPathPreservesExternalVersion" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="4b5d6a1d-5cec-de25-add2-60312760e28d">
+      <Execution id="2ccffa0a-45ae-460c-bbe4-200590270115" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.FileConflictTests" name="SaveAsCancelOrSamePathCannotBypassConflictAndDifferentPathPreservesExternalVersion" />
+    </UnitTest>
+    <UnitTest name="Diagram.Windows.Tests.FileConflictTests.RealPageConflictSaveAsPreservesExternalFileAndLocalDrawing" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="3ef28bdc-2cb6-0ec8-cf16-89d9c0111319">
+      <Execution id="9634e411-f2b9-43ee-9a05-27ca6024ff49" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.FileConflictTests" name="RealPageConflictSaveAsPreservesExternalFileAndLocalDrawing" />
+    </UnitTest>
+    <UnitTest name="Diagram.Windows.Tests.FileConflictTests.ReloadRequiresDiscardAndLeavesWorkUntouchedForInvalidFileOrStaleRevision" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="b50f4531-7d71-c9d1-b4df-85143c3b002b">
+      <Execution id="b3dac5f1-44b8-4fe0-9b0c-a308d53f31ef" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.FileConflictTests" name="ReloadRequiresDiscardAndLeavesWorkUntouchedForInvalidFileOrStaleRevision" />
+    </UnitTest>
+    <UnitTest name="Diagram.Windows.Tests.FileConflictTests.SecondExternalChangeRefreshesConsentAndOverwriteCannotReplayOldOffer" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="9efadb57-7fcb-1b8c-eba0-d1566c0f68aa">
+      <Execution id="6361e105-7153-4694-9f0e-a4f51dc122ce" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.FileConflictTests" name="SecondExternalChangeRefreshesConsentAndOverwriteCannotReplayOldOffer" />
+    </UnitTest>
+    <UnitTest name="Diagram.Windows.Tests.FileConflictTests.FileChoiceTargetsItsOriginalTabAfterTheActiveTabChanges" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="52ec86c4-9fca-6d08-c6a7-a3b476e67af8">
+      <Execution id="fc1bf061-de19-4772-803f-696248865f2e" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.FileConflictTests" name="FileChoiceTargetsItsOriginalTabAfterTheActiveTabChanges" />
+    </UnitTest>
+    <UnitTest name="Diagram.Windows.Tests.FileConflictTests.ReloadRetainsOldRecoveryWhenTheNewCheckpointCannotBeCreated" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="099eb9bf-ad5c-db3c-f758-e6c963ad692f">
+      <Execution id="d4baff38-3f14-4e60-bd98-62570e453057" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.FileConflictTests" name="ReloadRetainsOldRecoveryWhenTheNewCheckpointCannotBeCreated" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="9efadb57-7fcb-1b8c-eba0-d1566c0f68aa" executionId="6361e105-7153-4694-9f0e-a4f51dc122ce" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d8476d23-ce70-9599-417f-debad134b94c" executionId="16033975-7842-4c5f-8b1c-5a9341b2b31b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1ebcf98f-21a8-4db4-9d54-a5698316aced" executionId="8d452d77-6d97-449e-b8f6-79909fa8b8eb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="52ec86c4-9fca-6d08-c6a7-a3b476e67af8" executionId="fc1bf061-de19-4772-803f-696248865f2e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3ef28bdc-2cb6-0ec8-cf16-89d9c0111319" executionId="9634e411-f2b9-43ee-9a05-27ca6024ff49" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="099eb9bf-ad5c-db3c-f758-e6c963ad692f" executionId="d4baff38-3f14-4e60-bd98-62570e453057" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4b5d6a1d-5cec-de25-add2-60312760e28d" executionId="2ccffa0a-45ae-460c-bbe4-200590270115" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b50f4531-7d71-c9d1-b4df-85143c3b002b" executionId="b3dac5f1-44b8-4fe0-9b0c-a308d53f31ef" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="8" executed="8" passed="8" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v4.0.1+0f7d528729 (64-bit .NET 10.0.13)&#xD;
+[xUnit.net 00:00:00.21]   Discovering: Diagram.Windows.Tests&#xD;
+[xUnit.net 00:00:01.87]   Discovered:  Diagram.Windows.Tests&#xD;
+[xUnit.net 00:00:01.90]   Starting:    Diagram.Windows.Tests&#xD;
+[xUnit.net 00:00:14.91]   Finished:    Diagram.Windows.Tests&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

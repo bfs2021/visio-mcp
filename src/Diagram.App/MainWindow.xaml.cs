@@ -69,6 +69,9 @@ public partial class MainWindow : Window
     public AgentView Agents { get; private set; } = null!;
     public DocumentService Documents { get; private set; } = null!;
 
+    readonly TaskCompletionSource shutdownCompleted = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    public Task ShutdownCompleted => shutdownCompleted.Task;
+
     public async Task InitializeAsync()
     {
         var env = webEnvironment = await CoreWebView2Environment.CreateAsync(userDataFolder: options.UserDataDir);
@@ -81,7 +84,7 @@ public partial class MainWindow : Window
         services.Attach(host.Router);
         Native = new NativeFileCoordinator(host.Router, host.Router, Blobs, Writer, new NativeVsdxImporter(), new NativeVsdxExporter(), host.Router);
         Exports = new ExportService(this, options.ExportRoot ?? Path.Combine(Path.GetTempPath(), "AgenticDiagramExports"), options.Offscreen ? null : new ExportConsentWindow(this));
-        RecoveryMgr = new RecoveryManager(host.Router, Recovery, Blobs, () => Services.CurrentPath);
+        RecoveryMgr = new RecoveryManager(host.Router, Recovery, Blobs, () => Services.CurrentPath, documentPath: Services.PathOf);
         RecoveryMgr.Start();
         Agents = new AgentView(() => Dispatcher, () => Task.FromResult(webEnvironment!), () => host!.Router, options.ContentRoot, Blobs);
         Documents = new DocumentService(this);
@@ -89,10 +92,14 @@ public partial class MainWindow : Window
         if (options.PipeName is { } pipe) Live = new LiveControl(pipe, host.Router, Exports.HandleAsync, Library, Resolver, Comparisons.HandleAsync, Documents); // fails on a name collision rather than attaching to another owner
         Closed += async (_, _) =>
         {
-            if (Live is not null) await Live.DisposeAsync();
-            await Agents.DisposeAsync();
-            try { await RecoveryMgr.CloseCleanlyAsync(); await Workspace.MarkCleanExitAsync(); } catch (Exception e) when (e is IOException or UnauthorizedAccessException) { } // leaving recovery files behind is the safe failure
-            await RecoveryMgr.DisposeAsync();
+            try
+            {
+                if (Live is not null) await Live.DisposeAsync();
+                await Agents.DisposeAsync();
+                try { await RecoveryMgr.CloseCleanlyAsync(); await Workspace.MarkCleanExitAsync(); } catch (Exception e) when (e is IOException or UnauthorizedAccessException) { } // leaving recovery files behind is the safe failure
+                await RecoveryMgr.DisposeAsync();
+            }
+            finally { shutdownCompleted.TrySetResult(); }
         };
     }
 

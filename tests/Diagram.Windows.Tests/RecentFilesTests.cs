@@ -57,5 +57,15 @@ public class RecentFilesTests
   var opening=h.Window.Services.HandleAsync(Request(method),default);
   try{await waiting.Task.WaitAsync(TimeSpan.FromSeconds(10));Assert.Null((await h.Apply(1,null,Harness.Shape("late",120,20))).Error);var before=(await h.Send("doc.snapshot")).Result!.Value.GetRawText();release.Set();Assert.Equal("revision_conflict",(await opening).Error?.Code);Assert.Equal(before,(await h.Send("doc.snapshot")).Result!.Value.GetRawText());}finally{release.Set();}
  }
+ [Fact] public async Task HistoryRecordsOnlySuccessfulConflictResolutions()
+ {
+  await using var h=await Harness.StartAsync();await h.Window.RecoveryMgr.WhenSessionReadyAsync();var file=Path.Combine(h.Root,"shared.diagram.json");h.Window.Services.DialogOverride=_=>file;
+  Assert.Null((await h.Window.Services.HandleAsync(Request("host.saveJson"),default)).Error);await h.Window.Recents.ClearAsync();await File.AppendAllTextAsync(file," ");
+  var offer=await h.Window.Services.HandleAsync(Request("host.saveJson"),default);var token=offer.Result!.Value.GetProperty("conflict").GetProperty("token").GetString();Assert.Empty((await h.Window.Recents.ReadAsync()).Entries);
+  h.Window.Services.DialogOverride=_=>null;var cancelled=await h.Window.Services.HandleAsync(Request("host.fileConflict.resolve",new(){["token"]=token,["action"]="saveAs"}),default);Assert.True(cancelled.Result!.Value.GetProperty("cancelled").GetBoolean());Assert.Empty((await h.Window.Recents.ReadAsync()).Entries);
+  var overwrite=await h.Window.Services.HandleAsync(Request("host.fileConflict.resolve",new(){["token"]=token,["action"]="overwrite"}),default);Assert.Null(overwrite.Error);Assert.Equal(file,Assert.Single((await h.Window.Recents.ReadAsync()).Entries).Path);
+  await File.AppendAllTextAsync(file," ");offer=await h.Window.Services.HandleAsync(Request("host.saveJson"),default);token=offer.Result!.Value.GetProperty("conflict").GetProperty("token").GetString();var alternate=Path.Combine(h.Root,"kept.diagram.json");h.Window.Services.DialogOverride=_=>alternate;
+  Assert.Null((await h.Window.Services.HandleAsync(Request("host.fileConflict.resolve",new(){["token"]=token,["action"]="saveAs"}),default)).Error);Assert.Equal(alternate,(await h.Window.Recents.ReadAsync()).Entries[0].Path);
+ }
  static async Task WaitFor(Harness h,string expression){var end=DateTime.UtcNow.AddSeconds(15);while(await h.Eval(expression)!="true"){if(DateTime.UtcNow>end)throw new TimeoutException(expression);await Task.Delay(50);}}
 }

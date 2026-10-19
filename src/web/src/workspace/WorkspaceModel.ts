@@ -15,6 +15,11 @@ export const TAB_LIMIT = 20;
  * document: which tab is active, opening, closing and switching, and the two ways a close can be asked (a tab, or the whole window).
  */
 export class WorkspaceModel {
+  private checkingFiles = false;
+  async checkFiles(): Promise<void> {
+    if(this.checkingFiles)return;this.checkingFiles=true;
+    try{for(const tab of [...this.tabs]) if(this.tabs.includes(tab)) await tab.files.check();}finally{this.checkingFiles=false;}
+  }
   private readonly listeners = new Set<() => void>();
   private version = 0;
   private untitled = 0;
@@ -84,6 +89,8 @@ export class WorkspaceModel {
     model.untitledNo = ++this.untitled;
     model.host = this.hostApi;
     model.closeTabNow = discard => this.closeNow(model, discard);
+    const canPresentFileChoice = model.files.canPresent;
+    model.files.canPresent = () => !this.recentPrompt && canPresentFileChoice();
     model.newDocument.replacesCurrent = false;
     model.newDocument.create = async document => {
       const target = this.newTab({ document });

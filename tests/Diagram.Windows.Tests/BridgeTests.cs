@@ -82,7 +82,12 @@ sealed class Harness : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        try { await Ui.InvokeAsync(() => Window.Close()).Task; } catch { }
+        try
+        {
+            var closed = await Ui.InvokeAsync(() => { Window.Close(); return !Window.IsVisible; }).Task;
+            if (closed) await Window.ShutdownCompleted.WaitAsync(TimeSpan.FromSeconds(30));
+        }
+        catch { }
         Ui.InvokeShutdown();
         thread.Join(5000);
         if (!sharedRoot) { try { Directory.Delete(Root, true); } catch { } }

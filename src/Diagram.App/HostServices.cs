@@ -22,8 +22,8 @@ public sealed partial class HostServices(MainWindow window)
     /// <summary>Listens for documents being closed or replaced so each one's file follows it. Called once the router exists.</summary>
     internal void Attach(BridgeRouter router)
     {
-        router.DocumentReplaced += (old, next) => { lock (pathGate) { successors[old.DocumentId] = next.DocumentId; if (paths.Remove(old.DocumentId, out var p)) paths[next.DocumentId] = p; } };
-        router.DocumentClosed += s => { lock (pathGate) paths.Remove(s.DocumentId); };
+        router.DocumentReplaced += (old, next) => { lock (pathGate) { successors[old.DocumentId] = next.DocumentId; if (paths.Remove(old.DocumentId, out var p)) paths[next.DocumentId] = p; if (diskVersions.Remove(old.DocumentId, out var v)) diskVersions[next.DocumentId] = v; fileOffers.Remove(old.DocumentId); } };
+        router.DocumentClosed += s => { lock (pathGate) { paths.Remove(s.DocumentId); diskVersions.Remove(s.DocumentId); fileOffers.Remove(s.DocumentId); } };
     }
 
     /// <summary>Path of the active document's last successful open or save (informational; the editor tracks the saved revision).</summary>
@@ -38,7 +38,7 @@ public sealed partial class HostServices(MainWindow window)
         lock (pathGate)
         {
             for (var i = 0; i < 8 && successors.TryGetValue(documentId, out var next); i++) documentId = next;
-            if (path is null) paths.Remove(documentId); else paths[documentId] = path;
+            if (path is null) { paths.Remove(documentId); diskVersions.Remove(documentId); fileOffers.Remove(documentId); } else paths[documentId] = path;
         }
     }
 
@@ -60,6 +60,7 @@ public sealed partial class HostServices(MainWindow window)
             openExpected = new ExpectedState { DocumentId = target.DocumentId, SessionId = target.SessionId, BaseRevision = status.Result!.Value.GetProperty("revision").GetInt32() };
         }
         var fileAction = request.Method is "host.newDocument" or "host.openJson" or "host.openVsdx" or "host.saveJson";
+        fileAction = fileAction || request.Method.StartsWith("host.fileConflict.", StringComparison.Ordinal);
         if (fileAction) await newDocumentGate.WaitAsync(ct);
         try
         {
@@ -71,6 +72,8 @@ public sealed partial class HostServices(MainWindow window)
                 "host.openJson" => await OpenAsync(request, openExpected!, ct),
                 "host.saveJson" => await SaveAsync(request, ct),
                 var m when m.StartsWith("host.recent.", StringComparison.Ordinal) => await RecentAsync(request, ct),
+                "host.fileConflict.check" => await CheckFileAsync(request, ct),
+                "host.fileConflict.resolve" => await ResolveFileAsync(request, ct),
                 "host.pickImage" => await PickImageAsync(request, ct),
                 "host.openVsdx" => await OpenVsdxAsync(request, openExpected!, ct),
                 "host.exportVsdx" => await ExportVsdxAsync(request, ct),
@@ -151,6 +154,7 @@ public sealed partial class HostServices(MainWindow window)
         SetPath(expected.DocumentId, path);
         // what was just read from the file is, by definition, what is on disk: the document is saved at this revision
         var now = opened.Value.Snapshot;
+        RecordDisk(now.DocumentId, opened.Value.Version!);
         await window.Router.MarkSavedAsync(new Scope { DocumentId = now.DocumentId, SessionId = now.SessionId }, now.Revision, path, ct);
         var notes = opened.Value.Notes.ToList();
         if (!restored && await RecordRecentAsync(path, "json", true) is { } warning) notes.Add(warning);
@@ -199,25 +203,9 @@ public sealed partial class HostServices(MainWindow window)
 
     async Task<ResponseEnvelope> SaveAsync(RequestEnvelope request, CancellationToken ct)
     {
-        var saveAs = request.Params["saveAs"]?.GetValue<bool>() ?? false;
-        var target = window.Router.CurrentScope;
-        var known = target is null ? null : PathOf(target.DocumentId);
-        var path = saveAs || known is null
-            ? Ask("save", () =>
-            {
-                var d = new SaveFileDialog { Title = "Save diagram", Filter = "Diagram JSON (*.diagram.json)|*.diagram.json", DefaultExt = ".diagram.json", AddExtension = true };
-                return d.ShowDialog(window) == true ? d.FileName : null;
-            })
-            : known;
-        if (path is null) return Ok(request, new JsonObject { ["cancelled"] = true });
-        var scope = target;
-        if (scope is null) return Err(request, "not_ready", "the editor is not ready", retryable: true);
-
-        var saved = await window.Coordinator.SaveJsonAsync(path, scope, ct);
-        if (!saved.IsOk) return Err(request, saved.Error!);
-        SetPath(scope.DocumentId, saved.Value.Path);
-        await window.RecoveryMgr.OnSavedAsync(scope.SessionId, saved.Value.Revision, saved.Value.Path); // work saved up to here needs no recovery
-        return Ok(request, new JsonObject { ["path"] = saved.Value.Path, ["revision"] = saved.Value.Revision, ["warning"] = await RecordRecentAsync(saved.Value.Path, "json", false) });
+        var expected = await FileExpectedAsync(request, ct);
+        if (!expected.IsOk) return Err(request, expected.Error!);
+        return await SaveFileAsync(request, expected.Value, request.Params["saveAs"]?.GetValue<bool>() ?? false, ct);
     }
 
     async Task<ResponseEnvelope> PickImageAsync(RequestEnvelope request, CancellationToken ct)
