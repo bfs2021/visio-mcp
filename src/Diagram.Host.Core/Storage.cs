@@ -11,7 +11,7 @@ public sealed class AtomicFileWriter
     /// <summary>Fault-injection hook, run after the temp file is durable and before it replaces the target.</summary>
     public Action? BeforeReplace { get; set; }
 
-    public async Task WriteAsync(string path, ReadOnlyMemory<byte> bytes, CancellationToken ct)
+    public async Task WriteAsync(string path, ReadOnlyMemory<byte> bytes, CancellationToken ct, Func<CancellationToken, Task>? beforeReplace = null)
     {
         var full = Path.GetFullPath(path);
         var dir = Path.GetDirectoryName(full) ?? throw new IOException("the path has no directory");
@@ -25,6 +25,7 @@ public sealed class AtomicFileWriter
                 fs.Flush(flushToDisk: true);
             }
             BeforeReplace?.Invoke();
+            if (beforeReplace is not null) await beforeReplace(ct).ConfigureAwait(false);
             if (File.Exists(full)) File.Replace(temp, full, destinationBackupFileName: null, ignoreMetadataErrors: true);
             else File.Move(temp, full);
         }

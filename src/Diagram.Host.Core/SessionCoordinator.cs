@@ -11,8 +11,8 @@ public sealed record ExpectedState
     public required int BaseRevision { get; init; }
 }
 
-public sealed record SavedFile(Scope Scope, int Revision, string Path);
-public sealed record OpenedFile(Snapshot Snapshot, IReadOnlyList<string> Notes);
+public sealed record SavedFile(Scope Scope, int Revision, string Path, DiskVersion? Version = null);
+public sealed record OpenedFile(Snapshot Snapshot, IReadOnlyList<string> Notes, DiskVersion? Version = null);
 
 /// <summary>
 /// The host's view of the editor. The editor (the frontend engine) owns the document and every check on scope and revision;
@@ -45,7 +45,7 @@ public sealed class SessionCoordinator(IEditorChannel editor, BlobStore blobs, A
 {
     public const string Format = "native-json";
 
-    public async Task<Result<OpenedFile>> OpenJsonAsync(string path, ExpectedState expected, CancellationToken ct)
+    public async Task<Result<OpenedFile>> OpenJsonAsync(string path, ExpectedState expected, CancellationToken ct, DiskVersion? expectedDisk = null)
     {
         var safe = PathPolicy.Validate(path);
         if (!safe.IsOk) return Result<OpenedFile>.Fail(safe.Error!);
@@ -63,6 +63,8 @@ public sealed class SessionCoordinator(IEditorChannel editor, BlobStore blobs, A
             return Result<OpenedFile>.Fail("io_error", "the file could not be read", retryable: true);
         }
 
+        var version = DiskVersion.FromBytes(safe.Value, bytes);
+        if (expectedDisk is not null && expectedDisk != version) throw new DiskChangedException(version);
         var budget = JsonBudget.Check(bytes);
         if (!budget.IsOk) return Result<OpenedFile>.Fail(budget.Error!);
 
@@ -110,10 +112,10 @@ public sealed class SessionCoordinator(IEditorChannel editor, BlobStore blobs, A
             Source = new DocumentSource { Format = Format, Path = safe.Value },
         };
         var replaced = await editor.ReplaceAsync(candidate, expected, ct);
-        return replaced.IsOk ? Result<OpenedFile>.Ok(new OpenedFile(replaced.Value, notes)) : Result<OpenedFile>.Fail(replaced.Error!);
+        return replaced.IsOk ? Result<OpenedFile>.Ok(new OpenedFile(replaced.Value, notes, version)) : Result<OpenedFile>.Fail(replaced.Error!);
     }
 
-    public async Task<Result<SavedFile>> SaveJsonAsync(string path, Scope scope, CancellationToken ct)
+    public async Task<Result<SavedFile>> SaveJsonAsync(string path, Scope scope, CancellationToken ct, DiskVersion? expectedDisk = null, int? expectedRevision = null)
     {
         var safe = PathPolicy.Validate(path);
         if (!safe.IsOk) return Result<SavedFile>.Fail(safe.Error!);
@@ -122,6 +124,7 @@ public sealed class SessionCoordinator(IEditorChannel editor, BlobStore blobs, A
         var snap = await editor.SnapshotAsync(scope, ct);
         if (!snap.IsOk) return Result<SavedFile>.Fail(snap.Error!);
         var snapshot = snap.Value;
+        if (expectedRevision is not null && snapshot.Revision != expectedRevision) return Result<SavedFile>.Fail("revision_conflict", "The drawing changed while the file choice was open. Save again.");
 
         var blobMap = new JsonObject();
         try
@@ -148,15 +151,21 @@ public sealed class SessionCoordinator(IEditorChannel editor, BlobStore blobs, A
         var bytes = JsonSerializer.SerializeToUtf8Bytes(file);
         if (bytes.Length > InputLimits.NativeJsonBytes) return Result<SavedFile>.Fail("limit_exceeded", "the document is too large to save as JSON");
 
-        try { await writer.WriteAsync(safe.Value, bytes, ct); }
+        try { await writer.WriteAsync(safe.Value, bytes, ct, expectedDisk is null ? null : async token =>
+        {
+            var observed = await DiskVersion.ReadAsync(safe.Value, token);
+            if (observed != expectedDisk) throw new DiskChangedException(observed);
+        }); }
+        catch (DiskChangedException) { throw; }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
             return Result<SavedFile>.Fail("io_error", $"the file could not be written; the previous file is unchanged: {e.Message}", retryable: true);
         }
 
+        var writtenVersion = DiskVersion.FromBytes(safe.Value, bytes);
         // Only the revision actually written is marked saved, and only if the session is still the one we snapshotted.
         var marked = await editor.MarkSavedAsync(new Scope { DocumentId = snapshot.DocumentId, SessionId = snapshot.SessionId }, snapshot.Revision, safe.Value, ct);
         if (!marked.IsOk) return Result<SavedFile>.Fail(marked.Error!);
-        return Result<SavedFile>.Ok(new SavedFile(new Scope { DocumentId = snapshot.DocumentId, SessionId = snapshot.SessionId }, snapshot.Revision, safe.Value));
+        return Result<SavedFile>.Ok(new SavedFile(new Scope { DocumentId = snapshot.DocumentId, SessionId = snapshot.SessionId }, snapshot.Revision, safe.Value, writtenVersion));
     }
 }

@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="7ba4acde-49fa-4124-9df8-e7b1b24ec73a" name="claude@W11-TEMPLATE 2026-10-18 23:02:11" runUser="W11-TEMPLATE\claude" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-18T23:02:11.2439470+01:00" queuing="2026-10-18T23:02:11.2439476+01:00" start="2026-10-18T23:02:06.8033001+01:00" finish="2026-10-18T23:02:11.2472000+01:00" />
+  <TestSettings name="default" id="d97d41c9-ddc6-4ac0-9b81-d0e1e7496bbc">
+    <Deployment runDeploymentRoot="claude_W11-TEMPLATE_2026-10-18_23_02_11" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="2e595d05-84bf-498f-9438-427377b3fc7b" testId="099eb9bf-ad5c-db3c-f758-e6c963ad692f" testName="Diagram.Windows.Tests.FileConflictTests.ReloadRetainsOldRecoveryWhenTheNewCheckpointCannotBeCreated" computerName="W11-TEMPLATE" duration="00:00:01.9405143" startTime="2026-10-18T23:02:09.2288905+01:00" endTime="2026-10-18T23:02:11.1611182+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2e595d05-84bf-498f-9438-427377b3fc7b" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Diagram.Windows.Tests.FileConflictTests.ReloadRetainsOldRecoveryWhenTheNewCheckpointCannotBeCreated" storage="c:\users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="099eb9bf-ad5c-db3c-f758-e6c963ad692f">
+      <Execution id="2e595d05-84bf-498f-9438-427377b3fc7b" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\w03-new-document\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.FileConflictTests" name="ReloadRetainsOldRecoveryWhenTheNewCheckpointCannotBeCreated" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="099eb9bf-ad5c-db3c-f758-e6c963ad692f" executionId="2e595d05-84bf-498f-9438-427377b3fc7b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="1" executed="1" passed="1" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v4.0.1+0f7d528729 (64-bit .NET 10.0.13)&#xD;
+[xUnit.net 00:00:00.09]   Discovering: Diagram.Windows.Tests&#xD;
+[xUnit.net 00:00:01.88]   Discovered:  Diagram.Windows.Tests&#xD;
+[xUnit.net 00:00:01.90]   Starting:    Diagram.Windows.Tests&#xD;
+[xUnit.net 00:00:03.88]   Finished:    Diagram.Windows.Tests&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

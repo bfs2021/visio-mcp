@@ -34,6 +34,7 @@ public sealed class RecoveryManager : IAsyncDisposable
     readonly RecoveryStore store;
     readonly BlobStore blobs;
     readonly Func<string?> currentPath;
+    readonly Func<string, string?>? documentPath;
     readonly RecoveryOptions options;
     readonly Channel<Func<Task>> work = Channel.CreateUnbounded<Func<Task>>(new UnboundedChannelOptions { SingleReader = true });
     readonly Task worker;
@@ -43,9 +44,9 @@ public sealed class RecoveryManager : IAsyncDisposable
     readonly Dictionary<string, Track> tracks = new(); // by session id
     TaskCompletionSource ready = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-    public RecoveryManager(BridgeRouter router, RecoveryStore store, BlobStore blobs, Func<string?> currentPath, RecoveryOptions? options = null)
+    public RecoveryManager(BridgeRouter router, RecoveryStore store, BlobStore blobs, Func<string?> currentPath, RecoveryOptions? options = null, Func<string, string?>? documentPath = null)
     {
-        this.router = router; this.store = store; this.blobs = blobs; this.currentPath = currentPath; this.options = options ?? new RecoveryOptions();
+        this.router = router; this.store = store; this.blobs = blobs; this.currentPath = currentPath; this.documentPath = documentPath; this.options = options ?? new RecoveryOptions();
         worker = Task.Run(RunAsync);
         timer = new Timer(_ => { if (HasPending()) Post(CheckpointAllAsync); }, null, this.options.CheckpointEvery ?? TimeSpan.FromSeconds(60), this.options.CheckpointEvery ?? TimeSpan.FromSeconds(60));
     }
@@ -118,7 +119,7 @@ public sealed class RecoveryManager : IAsyncDisposable
         var snap = await router.SnapshotAsync(scope, stop.Token).ConfigureAwait(false);
         if (!snap.IsOk) return; // the scope moved on already; the next announcement will begin its own session
         var doc = JsonSerializer.SerializeToNode(snap.Value.Document, ContractJson.Options)!;
-        var next = await store.BeginSessionAsync(snap.Value.DocumentId, snap.Value.SessionId, doc, snap.Value.Revision, currentPath(), Shas(snap.Value.Document), stop.Token, options.FlushDelay).ConfigureAwait(false);
+        var next = await store.BeginSessionAsync(snap.Value.DocumentId, snap.Value.SessionId, doc, snap.Value.Revision, documentPath is null ? currentPath() : documentPath(snap.Value.DocumentId), Shas(snap.Value.Document), stop.Token, options.FlushDelay).ConfigureAwait(false);
         var track = new Track { Session = next, DocumentId = snap.Value.DocumentId, LastCommitted = snap.Value.Revision, StartRevision = snap.Value.Revision };
         List<Track> superseded;
         lock (gate)
