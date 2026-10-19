@@ -85,4 +85,3 @@ No installer, association changes, new font assets, user-defined CSS, automatic 
 ## Review gate
 
 The approach is approved. Approval of this written specification permits preparation of W13's implementation plan. That plan will be provided for review with an execution-method choice before product implementation begins.
-

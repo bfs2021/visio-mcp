@@ -1,6 +1,6 @@
 # W14 — file drops and clipboard pictures
 
-Status: written design for review. Approach approved in Codex chat, 2026-10-19; product implementation has not started.
+Status: written design approved in Codex chat, 2026-10-19; product implementation has not started.
 Issue: https://github.com/rp2839/visio-mcp/issues/36
 Planned branch: codex/w14-file-drop, after W13. Design published on codex/w13-preferences for review.
 

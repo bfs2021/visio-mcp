@@ -139,4 +139,3 @@ A failing check blocks the push until resolved or specifically documented as an 
 Self-review completed: contract bounds, file failure/reset/conflict cases, defaults/legacy behavior, all startup factories, view-only application, recovery races and coordination map to Tasks 1–7. Review Focus cases are explicitly assigned tests. Interfaces above are the names subsequent tasks consume; generated definitions own wire data.
 
 This document is for review, not implementation authorization. Recommended execution: Native, because the seven tasks share startup/host/default interfaces and sequential integration will avoid duplicate wiring; one fresh whole-branch reviewer remains required. User chooses execution method after reviewing this plan.
-
