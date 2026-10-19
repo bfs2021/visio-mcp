@@ -1,0 +1,51 @@
+{
+  "frontendPassed": 371,
+  "dotnet": [
+    {
+      "file": "w07-final_net10.0_20261018230919.trx",
+      "total": 24,
+      "passed": 24,
+      "failed": 0,
+      "notExecuted": 0
+    },
+    {
+      "file": "w07-final_net10.0_20261018230944.trx",
+      "total": 145,
+      "passed": 145,
+      "failed": 0,
+      "notExecuted": 0
+    },
+    {
+      "file": "w07-final_net10.0_20261018231122.trx",
+      "total": 14,
+      "passed": 14,
+      "failed": 0,
+      "notExecuted": 0
+    },
+    {
+      "file": "w07-final_net10.0_20261018231136.trx",
+      "total": 134,
+      "passed": 134,
+      "failed": 0,
+      "notExecuted": 0
+    },
+    {
+      "file": "w07-final_net10.0_20261018231141.trx",
+      "total": 17,
+      "passed": 17,
+      "failed": 0,
+      "notExecuted": 0
+    },
+    {
+      "file": "w07-final_net10.0_20261018231643.trx",
+      "total": 77,
+      "passed": 77,
+      "failed": 0,
+      "notExecuted": 0
+    }
+  ],
+  "productCommit": "3c9e515",
+  "browserPassed": 104,
+  "dotnetPassed": 411.0,
+  "manualAcceptance": "NOT RUN"
+}

@@ -1,4 +1,5 @@
 import { ExportImageDialog } from './components/ExportImageDialog';
+import { FileConflictDialog } from './components/FileConflictDialog';
 import { NewDocumentDialog } from './components/NewDocumentDialog';
 import { useEffect } from 'react';
 import type { EditorModel } from './editor/EditorModel';
@@ -27,8 +28,8 @@ function useShortcuts(ws: WorkspaceModel) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const model = ws.active;
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') { e.preventDefault(); if (!ws.tabs.some(t => t.newDocument.prompt || t.closePrompt || t.exportPrompt)) model.newDocument.begin(); return; }
-      if (ws.tabs.some(t => t.newDocument.prompt || t.closePrompt || t.exportPrompt)) return;
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') { e.preventDefault(); if (!ws.tabs.some(t => t.newDocument.prompt || t.closePrompt || t.exportPrompt || t.files.prompt)) model.newDocument.begin(); return; }
+      if (ws.tabs.some(t => t.newDocument.prompt || t.closePrompt || t.exportPrompt || t.files.prompt)) return;
       if (e.ctrlKey && e.key === 'Tab') { e.preventDefault(); ws.cycle(e.shiftKey ? -1 : 1); return; } // most recently used first; works while typing too, like a browser
       if (e.ctrlKey && (e.key === 'PageDown' || e.key === 'PageUp')) { e.preventDefault(); ws.step(e.key === 'PageDown' ? 1 : -1); return; } // in tab order
       if (typing(e.target)) return;
@@ -72,6 +73,8 @@ export function App({ ws }: { ws: WorkspaceModel }) {
   useShortcuts(ws);
   const model = ws.active;
   const asking = ws.tabs.find(t => t.closePrompt);
+  useEffect(()=>{const focus=()=>void ws.checkFiles();window.addEventListener('focus',focus);return()=>window.removeEventListener('focus',focus);},[ws]);
+  useEffect(()=>{if(!ws.isBusy()&&!ws.tabs.some(t=>t.newDocument.prompt||t.closePrompt||t.recoveryOffers.length||t.recoveryReport))model.files.presentNotice();});
   const holder = ws.tabs.find(t => t.recoveryOffers.length > 0 || t.recoveryReport) ?? model; // the tab that holds the recovery question
   return (
     <div className="app">
@@ -87,10 +90,11 @@ export function App({ ws }: { ws: WorkspaceModel }) {
       <PageTabs model={model} />
       <Drawer model={model} />
       <CompatibilityDialog model={model} />
-      <RecoveryDialog model={holder} onRecover={id => void ws.restoreOrphan(holder, id)} />
-      {asking && <CloseDialog model={asking} />}
+      {!ws.tabs.some(t=>t.files.prompt) && <RecoveryDialog model={holder} onRecover={id => void ws.restoreOrphan(holder, id)} />}
+      {asking && !ws.tabs.some(t=>t.files.prompt) && <CloseDialog model={asking} />}
+      <FileConflictDialog model={ws.tabs.find(t=>t.files.prompt?.source==='save') ?? ws.tabs.find(t=>t.files.prompt) ?? model} />
       {ws.tabs.filter(t => t.newDocument.prompt).map(t => <NewDocumentDialog key={t.tabId} model={t} />)}
-      {ws.tabs.filter(t=>t.exportPrompt && !asking && !holder.recoveryReport && !holder.recoveryOffers.length && !ws.tabs.some(x=>x.newDocument.prompt)).slice(0,1).map(t=><ExportImageDialog key={t.tabId} model={t}/>)}
+      {ws.tabs.filter(t=>t.exportPrompt && !ws.tabs.some(x=>x.files.prompt) && !asking && !holder.recoveryReport && !holder.recoveryOffers.length && !ws.tabs.some(x=>x.newDocument.prompt)).slice(0,1).map(t=><ExportImageDialog key={t.tabId} model={t}/>)}
       <DocumentTitle model={model} />
       <StatusBar model={model} />
     </div>

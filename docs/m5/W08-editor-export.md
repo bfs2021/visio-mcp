@@ -19,3 +19,9 @@ Targeted automated Windows tests verify real PNG/JPEG/SVG outputs, the actual ed
 Evidence: [artifacts/w08-editor-export](../../artifacts/w08-editor-export), including raw TRX/logs, actual WebView2 dialog, image output, ZIP, PDF and rendered PDF pages. Automated Office/WebView2 interaction is not manual human acceptance.
 
 Manual human acceptance: **NOT RUN**. No public MCP export formats, canonical drawing-schema changes, physical printing/preview, installation changes or new product dependencies. As with the existing export policy, the final check is best effort rather than a filesystem compare-and-swap with unrelated writers.
+
+## PR conflict resolution against main e67f2e7
+
+Preserved W07 conflict-aware saves, export/file-conflict host routes, the shared file-action gate, atomic publication guard and both modal/shortcut protections. Focus conflict presentation waits during export. Read-only review found no substantive integration regressions.
+
+Fresh checks: 399 frontend tests passed; final complete browser rerun 115 passed; typecheck, generated check, web build and .NET build passed. Non-desktop .NET projects passed all 348 tests. Desktop run passed 87/88; one native clipboard read returned null after successful publication. A focused rerun of all 16 export/file-conflict tests passed unchanged. Initial browser timeout and MSBuild memory failure, successful low-worker retry and all raw results are retained in artifacts/w08-editor-export/merge-e67f2e7. These are successful retries, not a clean first run. Manual human acceptance remains NOT RUN.
