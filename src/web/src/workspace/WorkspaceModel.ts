@@ -29,6 +29,8 @@ export class WorkspaceModel {
   configure: (model: EditorModel, state: DocumentState) => void = () => {};
   /** A short message the strip shows (for example, the tab limit). */
   notice: string | null = null;
+  /** Window-wide settings warning, independent of tab status and restore notices. */
+  get preferencesDiagnostic(): string | null { return this.app.preferences.diagnostic; }
   protectNew: (scope: Scope) => Promise<Result<unknown>> = async () => ok({});
   /** Said once after a start that brought documents back; stays until dismissed. */
   banner: { text: string; lines: string[] } | null = null;

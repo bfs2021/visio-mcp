@@ -88,7 +88,6 @@ ws.host = hostApi(host);
 if (host) ws.protectNew = scope => host.call('host.protectNewDocument', { ...scope });
 configure(firstModel, workspace.active!);
 const model = firstModel;
-if (app.preferences.diagnostic) firstModel.say(app.preferences.diagnostic, 'warning');
 void ws.restoreWorkspace(model).then(() => ws!.refreshAgentDocs()); // the last run's tabs come back; unfinished work no tab owns is offered
 
 // A read-only window onto the editor for automated tests. It is compiled out of production builds, and nothing here edits the document.
