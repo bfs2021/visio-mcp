@@ -7,6 +7,7 @@ Newest first. `tools/installer/package.ps1` refuses to build a version that has 
 - Install, update and uninstall scripts for a per-user install (`tools/installer`). An update keeps your library, recovery files and settings.
 - `import_visio` opens a Visio drawing as a background reference document.
 - Help menu with a keyboard shortcut list, About and a command palette (Ctrl+Shift+P).
+- Branches that join a connector (drag a connector end onto a line, or use the Inspector) and stay on it when it moves, and connectors that hop over the ones they cross. Both are saved to Visio and read back.
 
 ## 0.1.0
 
