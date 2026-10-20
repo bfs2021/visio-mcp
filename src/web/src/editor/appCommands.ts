@@ -66,6 +66,7 @@ export function appCommands(model: EditorModel, ws: WorkspaceModel): AppCommand[
     { id: 'select-style', label: 'Select same style', group: 'Edit', run: () => model.selectMatching('style'), disabled: model.targets.length !== 1 },
     { id: 'select-layers', label: 'Select same layer membership', group: 'Edit', run: () => model.selectMatching('layers'), disabled: model.targets.length !== 1 },
     { id: 'select-all', label: 'Select all', group: 'Edit', shortcut: 'Ctrl+A', run: () => model.selectAll() },
+    { id: 'connect', label: 'Connect objects…', group: 'Edit', sepBefore: true, run: () => model.beginConnect() },
 
     ...arrange,
 

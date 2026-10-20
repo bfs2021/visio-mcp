@@ -518,6 +518,12 @@ export class MaxGraphAdapter implements CanvasAdapter {
     return { x: r.left, y: r.top, width: r.width, height: r.height };
   }
 
+  /** Scrolls so the object is in view (without recentring, unlike reveal; used when the keyboard moves to an object that is off screen). */
+  ensureVisible(id: string): void {
+    const cell = this.graph.getDataModel().getCell(id);
+    if (cell) this.graph.scrollCellToVisible(cell, false);
+  }
+
   startTextEdit(id: string): void {
     const cell = this.graph.getDataModel().getCell(id);
     if (cell) this.graph.startEditingAtCell(cell);

@@ -3,6 +3,7 @@ import type { EditorModel } from '../editor/EditorModel';
 import type { Guide } from '../contracts/generated';
 import type { GestureToken } from '../canvas/GestureController';
 import { ContextMenu } from './ContextMenu';
+import { ObjectList } from './ObjectList';
 import { Ruler, RULER_SIZE } from './Ruler';
 import { useModel } from './useModel';
 
@@ -91,6 +92,7 @@ export function PageCanvas({ model }: { model: EditorModel }) {
         className="canvas-host" data-testid="canvas" ref={host}
         onDragOver={e => { if (e.dataTransfer.types.includes('application/x-diagram-shape') || e.dataTransfer.types.includes('application/x-diagram-asset')) e.preventDefault(); }}
         onDrop={onDrop}
+        onMouseDown={() => setTimeout(() => frame.current?.querySelector<HTMLElement>('[data-testid=object-list]')?.focus({ preventScroll: true }), 0)} // keys go to the object list after a click, so the keyboard carries on from the clicked object
         onContextMenu={e => { e.preventDefault(); setMenuAt({ x: e.clientX, y: e.clientY }); }}
       />
       {model.showGuides && model.viewport && <div style={{position:'absolute',left:RULER_SIZE,top:RULER_SIZE,right:0,bottom:0,pointerEvents:'none',overflow:'hidden',zIndex:4}} data-testid="guides-overlay">
@@ -100,6 +102,7 @@ export function PageCanvas({ model }: { model: EditorModel }) {
           return <div key={g.id} data-testid={'guide-'+g.id} role="separator" aria-label={g.orientation+' guide'} aria-orientation={g.orientation} style={{position:'absolute',pointerEvents:'auto',cursor:horizontal?'ns-resize':'ew-resize',...(horizontal?{left:0,right:0,top:pos-3,height:7,borderTop:'1px dashed #0284c7',transform:'translateY(3px)'}:{top:0,bottom:0,left:pos-3,width:7,borderLeft:'1px dashed #0284c7',transform:'translateX(3px)'})}} />;
         })}
       </div>}
+      <ObjectList model={model} />
       {menuAt && <ContextMenu model={model} at={menuAt} onClose={() => setMenuAt(null)} />}
     </div>
   );
