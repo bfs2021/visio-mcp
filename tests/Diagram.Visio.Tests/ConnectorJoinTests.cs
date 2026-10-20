@@ -76,4 +76,21 @@ public class ConnectorJoinTests
         Assert.Equal("arc", RT.El(back.Document, Doc.Id(10))["hops"]!.GetValue<string>());
         Assert.Null(RT.El(back.Document, Doc.Id(11))["hops"]);
     }
+
+    [Fact]
+    public void AHoppingConnectorHasTheArcDrawnIntoItsGeometryOnlyWhereItCrossesAnother()
+    {
+        var snapshot = Doc.Snapshot(Doc.Make([Doc.Page(new object[]
+        {
+            Doc.Shape(1, 40, 200, 40, 40), Doc.Shape(2, 440, 200, 40, 40), Doc.Shape(3, 240, 40, 40, 40), Doc.Shape(4, 240, 380, 40, 40),
+            Doc.Connector(10, Doc.Glue(1), Doc.Glue(2)),
+            Doc.Connector(11, Doc.Glue(3), Doc.Glue(4), "straight", new { hops = "arc" }),
+        })]));
+        var (exported, _) = RT.Trip(snapshot);
+        var xml = Fx.Part(exported.Package, "visio/pages/page1.xml");
+        int Arcs(string agentRoute, int index) => xml.Descendants().Where(e => e.Name.LocalName == "Shape" && e.Elements().Any(c => (string?)c.Attribute("N") == "ConLineJumpCode"))
+            .OrderBy(e => (string?)e.Attribute("ID")).ElementAt(index).Descendants().Count(r => r.Name.LocalName == "Row" && (string?)r.Attribute("T") == "ArcTo");
+        Assert.Equal(0, Arcs("", 0));  // the one that is crossed is straight
+        Assert.Equal(1, Arcs("", 1));  // the hopper arcs once, where it crosses
+    }
 }

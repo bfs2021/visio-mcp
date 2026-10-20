@@ -57,7 +57,7 @@ export class HopConnectorShape extends ConnectorShape {
         if (cell === state.cell || !other.cell.isEdge() || !other.cell.isVisible()) continue;
         if (ignore.has(other.cell.getId() ?? '')) continue;
         const o = (other.style ?? {}) as HopStyle;
-        if (o.hopSize !== undefined && (o.hopOrder ?? 0) < (style.hopOrder ?? 0)) continue;       // two hoppers at one crossing: the one on top hops, the other stays straight
+        if (o.hopSize !== undefined && (o.hopOrder ?? 0) > (style.hopOrder ?? 0)) continue;       // two hoppers at one crossing: the one on top hops, the other stays straight
         const route = (other.absolutePoints ?? []).filter((p): p is Point => !!p);
         if (route.length > 1) others.push(route);
       }
