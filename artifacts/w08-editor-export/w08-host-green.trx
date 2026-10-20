@@ -1,0 +1,88 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="8333a00e-10b5-4128-aa66-ec8c4c1d63c6" name="claude@W11-TEMPLATE 2026-10-19 01:57:06" runUser="W11-TEMPLATE\claude" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-19T01:57:06.2036050+01:00" queuing="2026-10-19T01:57:06.2036053+01:00" start="2026-10-19T01:57:02.4185228+01:00" finish="2026-10-19T01:57:07.4874871+01:00" />
+  <TestSettings name="default" id="07be5cbd-f70d-4b9b-9e36-4c2457ca625d">
+    <Deployment runDeploymentRoot="claude_W11-TEMPLATE_2026-10-19_01_57_06" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="c5f62df7-5434-4097-b838-265afebe8779" testId="d8b865f7-e2ab-627d-b3c8-87f31899a298" testName="Diagram.Windows.Tests.EditorExportTests.InvalidOrStaleOptionsNeverOpenADestinationOrPublish" computerName="W11-TEMPLATE" duration="00:00:01.5769368" startTime="2026-10-19T01:57:05.7586799+01:00" endTime="2026-10-19T01:57:07.3614914+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c5f62df7-5434-4097-b838-265afebe8779">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Strings differ&#xD;
+           ↓ (pos 0)&#xD;
+Expected: "revision_conflict"&#xD;
+Actual:   "invalid_request"&#xD;
+           ↑ (pos 0)</Message>
+          <StackTrace>   at Diagram.Windows.Tests.EditorExportTests.InvalidOrStaleOptionsNeverOpenADestinationOrPublish() in C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\EditorExportTests.cs:line 25&#xD;
+   at Diagram.Windows.Tests.EditorExportTests.InvalidOrStaleOptionsNeverOpenADestinationOrPublish() in C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\EditorExportTests.cs:line 25&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="483b4bbf-21cc-4dd8-98cf-22cb474e26cd" testId="08e7d194-7d02-9b10-473e-5ea62f929c5a" testName="Diagram.Windows.Tests.EditorExportTests.ImageExportCreatesRealPngAndPreservesSnapshot" computerName="W11-TEMPLATE" duration="00:00:01.7269362" startTime="2026-10-19T01:57:03.9832604+01:00" endTime="2026-10-19T01:57:05.7472307+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="483b4bbf-21cc-4dd8-98cf-22cb474e26cd">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Null() Failure: Value is not null&#xD;
+Expected: null&#xD;
+Actual:   AppError { Code = invalid_request, Message = A value of type 'System.Int32' cannot be converted to a 'System.Double'., Retryable = False, Details = , Outcome =  }</Message>
+          <StackTrace>   at Diagram.Windows.Tests.EditorExportTests.ImageExportCreatesRealPngAndPreservesSnapshot() in C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\EditorExportTests.cs:line 17&#xD;
+   at Diagram.Windows.Tests.EditorExportTests.ImageExportCreatesRealPngAndPreservesSnapshot() in C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\EditorExportTests.cs:line 19&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Diagram.Windows.Tests.EditorExportTests.InvalidOrStaleOptionsNeverOpenADestinationOrPublish" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="d8b865f7-e2ab-627d-b3c8-87f31899a298">
+      <Execution id="c5f62df7-5434-4097-b838-265afebe8779" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.EditorExportTests" name="InvalidOrStaleOptionsNeverOpenADestinationOrPublish" />
+    </UnitTest>
+    <UnitTest name="Diagram.Windows.Tests.EditorExportTests.ImageExportCreatesRealPngAndPreservesSnapshot" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="08e7d194-7d02-9b10-473e-5ea62f929c5a">
+      <Execution id="483b4bbf-21cc-4dd8-98cf-22cb474e26cd" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.EditorExportTests" name="ImageExportCreatesRealPngAndPreservesSnapshot" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="d8b865f7-e2ab-627d-b3c8-87f31899a298" executionId="c5f62df7-5434-4097-b838-265afebe8779" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="08e7d194-7d02-9b10-473e-5ea62f929c5a" executionId="483b4bbf-21cc-4dd8-98cf-22cb474e26cd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="2" executed="2" passed="0" failed="2" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v4.0.1+0f7d528729 (64-bit .NET 10.0.13)&#xD;
+[xUnit.net 00:00:00.28]   Discovering: Diagram.Windows.Tests&#xD;
+[xUnit.net 00:00:00.84]   Discovered:  Diagram.Windows.Tests&#xD;
+[xUnit.net 00:00:00.86]   Starting:    Diagram.Windows.Tests&#xD;
+[xUnit.net 00:00:02.65]       Assert.Null() Failure: Value is not null&#xD;
+[xUnit.net 00:00:02.65]       Expected: null&#xD;
+[xUnit.net 00:00:02.65]       Actual:   AppError { Code = invalid_request, Message = A value of type 'System.Int32' cannot be converted to a 'System.Double'., Retryable = False, Details = , Outcome =  }&#xD;
+[xUnit.net 00:00:02.65]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.65]         C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\EditorExportTests.cs(17,0): at Diagram.Windows.Tests.EditorExportTests.ImageExportCreatesRealPngAndPreservesSnapshot()&#xD;
+[xUnit.net 00:00:02.65]         C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\EditorExportTests.cs(19,0): at Diagram.Windows.Tests.EditorExportTests.ImageExportCreatesRealPngAndPreservesSnapshot()&#xD;
+[xUnit.net 00:00:02.65]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:04.26]       Assert.Equal() Failure: Strings differ&#xD;
+[xUnit.net 00:00:04.26]                  ↓ (pos 0)&#xD;
+[xUnit.net 00:00:04.26]       Expected: "revision_conflict"&#xD;
+[xUnit.net 00:00:04.26]       Actual:   "invalid_request"&#xD;
+[xUnit.net 00:00:04.26]                  ↑ (pos 0)&#xD;
+[xUnit.net 00:00:04.26]       Stack Trace:&#xD;
+[xUnit.net 00:00:04.26]         C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\EditorExportTests.cs(25,0): at Diagram.Windows.Tests.EditorExportTests.InvalidOrStaleOptionsNeverOpenADestinationOrPublish()&#xD;
+[xUnit.net 00:00:04.26]         C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\EditorExportTests.cs(25,0): at Diagram.Windows.Tests.EditorExportTests.InvalidOrStaleOptionsNeverOpenADestinationOrPublish()&#xD;
+[xUnit.net 00:00:04.26]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:04.27]   Finished:    Diagram.Windows.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="W11-TEMPLATE" outcome="Error" timestamp="2026-10-19T01:57:05.7507181+01:00">
+        <Text>[xUnit.net 00:00:02.65]     Diagram.Windows.Tests.EditorExportTests.ImageExportCreatesRealPngAndPreservesSnapshot [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="W11-TEMPLATE" outcome="Error" timestamp="2026-10-19T01:57:07.3624995+01:00">
+        <Text>[xUnit.net 00:00:04.26]     Diagram.Windows.Tests.EditorExportTests.InvalidOrStaleOptionsNeverOpenADestinationOrPublish [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>
