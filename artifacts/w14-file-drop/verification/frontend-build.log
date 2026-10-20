@@ -18,13 +18,13 @@ dist/app/browserContext-Cph0h397.js  1,235.61 kB │ gzip: 243.66 kB
     ╭─[ ../../../../../../../../Dev/diagram-app/src/web/node_modules/@maxgraph/core/lib/esm/internal/utils.js:23:12 ]
     │
  23 │     return eval(expression);
-    │            ──┬─  
+    │            ──┬─
     │              ╰─── Use of direct `eval` here.
-    │ 
+    │
     │ Help: Consider using indirect eval. For more information, check the documentation: https://rolldown.rs/guide/troubleshooting#avoiding-direct-eval
 ────╯
 
-[plugin builtin:vite-reporter] 
+[plugin builtin:vite-reporter]
 (!) Some chunks are larger than 500 kB after minification. Consider:
 - Using dynamic import() to code-split the application
 - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting

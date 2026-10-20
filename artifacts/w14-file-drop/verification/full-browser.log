@@ -177,7 +177,7 @@ Running 166 tests using 2 workers
   ok 158 tests\browser\visio.spec.ts:42:1 › visio_cancel_export_writes_nothing (1.0s)
   ok 159 tests\browser\tabs.spec.ts:213:1 › past the limit a new tab is refused with a message (1.6s)
 [WebServer] 00:28:45 [vite] (client) [Unhandled rejection] TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:5373/src/main.tsx
-[WebServer] 
+[WebServer]
   ok 160 tests\browser\workspace.spec.ts:42:1 › the last run comes back: unsaved work and saved files, in order, with the active tab, and a notice after a crash (1.7s)
   x  161 tests\browser\tabs.spec.ts:220:1 › copy in one tab pastes into another (1.0m)
   x  162 tests\browser\workspace.spec.ts:72:1 › Recover on an orphan session opens it as a tab beside the others (1.1m)
@@ -189,11 +189,11 @@ Running 166 tests using 2 workers
   ok 166 tests\browser\workspace.spec.ts:128:1 › preferences read warning remains visible after restoring and activating other tabs (900ms)
 
 
-  1) tests\browser\recovery.spec.ts:103:1 › recovery: not now keeps it for later, discard lets it go, and a restore after new edits opens beside them 
+  1) tests\browser\recovery.spec.ts:103:1 › recovery: not now keeps it for later, discard lets it go, and a restore after new edits opens beside them
 
     Error: worker process exited unexpectedly (code=3221226505, signal=null)
 
-  2) tests\browser\render.spec.ts:82:1 › the picture shows the revision that was committed when it was asked for, not the live one 
+  2) tests\browser\render.spec.ts:82:1 › the picture shows the revision that was committed when it was asked for, not the live one
 
     Error: page.goto: net::ERR_INSUFFICIENT_RESOURCES at http://127.0.0.1:5373/
     Call log:
@@ -234,7 +234,7 @@ Running 166 tests using 2 workers
 
     Error Context: test-results\tabs-copy-in-one-tab-pastes-into-another\error-context.md
 
-  4) tests\browser\workspace.spec.ts:72:1 › Recover on an orphan session opens it as a tab beside the others 
+  4) tests\browser\workspace.spec.ts:72:1 › Recover on an orphan session opens it as a tab beside the others
 
     Test timeout of 60000ms exceeded.
 
@@ -255,8 +255,8 @@ Running 166 tests using 2 workers
     Error Context: test-results\workspace-Recover-on-an-or-e6bb7--as-a-tab-beside-the-others\error-context.md
 
   4 failed
-    tests\browser\recovery.spec.ts:103:1 › recovery: not now keeps it for later, discard lets it go, and a restore after new edits opens beside them 
-    tests\browser\render.spec.ts:82:1 › the picture shows the revision that was committed when it was asked for, not the live one 
+    tests\browser\recovery.spec.ts:103:1 › recovery: not now keeps it for later, discard lets it go, and a restore after new edits opens beside them
+    tests\browser\render.spec.ts:82:1 › the picture shows the revision that was committed when it was asked for, not the live one
     tests\browser\tabs.spec.ts:220:1 › copy in one tab pastes into another ─────────────────────────
-    tests\browser\workspace.spec.ts:72:1 › Recover on an orphan session opens it as a tab beside the others 
+    tests\browser\workspace.spec.ts:72:1 › Recover on an orphan session opens it as a tab beside the others
   162 passed (3.2m)

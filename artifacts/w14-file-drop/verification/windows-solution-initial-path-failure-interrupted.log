@@ -760,4 +760,3 @@ operable program or batch file.
    at Diagram.Windows.Tests.FlowchartVisioTests.SymbolsDrawnInTheEditorAreNativeVisioOutlinesThatVisioDrawsAndTheyComeBackAsPresets() in C:\Users\claude\.codex\worktrees\w14-file-drop-plan\diagram-app\tests\Diagram.Windows.Tests\FlowchartVisioTests.cs:line 99
 --- End of stack trace from previous location ---
 ----- Inner Stack Trace -----
-
