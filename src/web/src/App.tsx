@@ -21,6 +21,7 @@ import { PageCanvas } from './components/PageCanvas';
 import { ShapesPanel } from './components/ShapesPanel';
 import { StatusBar } from './components/StatusBar';
 import { Toolbar } from './components/Toolbar';
+import { HelpDialogs } from './components/HelpDialogs';
 
 const typing = (t: EventTarget | null) =>
   t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement || (t instanceof HTMLElement && t.isContentEditable);
@@ -30,6 +31,8 @@ function useShortcuts(ws: WorkspaceModel) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const model = ws.active;
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'p') { e.preventDefault(); if (!ws.recentPrompt && !ws.tabs.some(t => t.newDocument.prompt || t.closePrompt || t.exportPrompt || t.files.prompt)) ws.help.toggle('palette'); return; }
+      if (ws.help.panel) return; // a Help panel is up: it takes the keys
       if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase()==='f') {
         e.preventDefault();
         if(!ws.tabs.some(t=>t.newDocument.prompt||t.closePrompt||t.files.prompt||t.report||t.recoveryOffers.length||t.recoveryReport))model.find.open();
@@ -104,6 +107,7 @@ export function App({ ws }: { ws: WorkspaceModel }) {
       {ws.tabs.filter(t => t.newDocument.prompt).map(t => <NewDocumentDialog key={t.tabId} model={t} />)}
       {ws.tabs.filter(t=>t.exportPrompt && !ws.tabs.some(x=>x.files.prompt) && !asking && !holder.recoveryReport && !holder.recoveryOffers.length && !ws.tabs.some(x=>x.newDocument.prompt)).slice(0,1).map(t=><ExportImageDialog key={t.tabId} model={t}/>)}
       {ws.recentPrompt && !ws.tabs.some(t=>t.files.prompt) && !asking && !holder.recoveryReport && !holder.recoveryOffers.length && !ws.tabs.some(t=>t.newDocument.prompt) && <RecentFilesDialog ws={ws} />}
+      <HelpDialogs ws={ws} model={model} />
       <DocumentTitle model={model} />
       <StatusBar model={model} />
     </div>

@@ -32,6 +32,7 @@ function hostApi(host: HostServices | null): HostApi {
     recoveryFinish: (sessionId, originalPath) => host.call('host.recovery.finish', { sessionId, originalPath }),
     appClose: discard => host.call('host.app.close', { discard }),
     appCloseCancelled: () => host.call('host.app.closeCancelled'),
+    appAbout: () => host.call('host.app.about'),
     libraryList: (query, tags) => host.call('host.library.list', { query, tags }),
     libraryImport: () => host.call('host.library.import'),
     libraryUse: (id, hash) => host.call('host.library.use', { id, hash }),

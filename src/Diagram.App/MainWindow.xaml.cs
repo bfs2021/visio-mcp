@@ -47,6 +47,7 @@ public partial class MainWindow : Window
         Recovery = new RecoveryStore(options.RecoveryDir ?? Path.GetFullPath(Path.Combine(options.BlobDir, "..", "recovery")), Blobs);
     }
 
+    public AppOptions Options => options;
     public BlobStore Blobs { get; }
     public AtomicFileWriter Writer { get; }
     public RecentFilesStore Recents { get; }

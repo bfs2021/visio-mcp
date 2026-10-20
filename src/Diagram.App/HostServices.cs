@@ -42,6 +42,37 @@ public sealed partial class HostServices(MainWindow window)
         }
     }
 
+    /// <summary>What the About box shows: this build, the MCP companions connected now (with the version each reported), and where data lives.</summary>
+    JsonObject About()
+    {
+        var asm = typeof(HostServices).Assembly;
+        var informational = asm.GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false)
+            .OfType<System.Reflection.AssemblyInformationalVersionAttribute>().FirstOrDefault()?.InformationalVersion ?? asm.GetName().Version?.ToString() ?? "unknown";
+        var plus = informational.IndexOf('+');
+        var companions = new JsonArray();
+        foreach (var c in window.Live?.Server.Companions ?? []) companions.Add(new JsonObject { ["label"] = c.Label, ["version"] = c.Version });
+        var o = window.Options;
+        string Dir(string? p) => p is null ? "" : Path.GetFullPath(p);
+        var recovery = Dir(o.RecoveryDir ?? Path.Combine(o.BlobDir, "..", "recovery"));
+        return new JsonObject
+        {
+            ["name"] = "Agentic Diagram",
+            ["version"] = plus < 0 ? informational : informational[..plus],
+            ["build"] = plus < 0 ? "" : informational[(plus + 1)..],
+            ["runtime"] = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription,
+            ["protocolVersion"] = Diagram.Ipc.Wire.ProtocolVersion,
+            ["companions"] = companions,
+            ["folders"] = new JsonArray(
+                Folder("Application data", Dir(Path.Combine(o.BlobDir, ".."))),
+                Folder("Picture bytes", Dir(o.BlobDir)),
+                Folder("Asset library", Dir(o.LibraryDir ?? Path.Combine(o.BlobDir, "..", "library"))),
+                Folder("Recovery", recovery),
+                Folder("Browser profile", Dir(o.UserDataDir)),
+                Folder("Exports", Dir(o.ExportRoot))),
+        };
+        static JsonObject Folder(string label, string path) => new() { ["label"] = label, ["path"] = path };
+    }
+
     internal void SetCurrentPath(string? path) { if (window.Router.CurrentScope is { } s) SetPath(s.DocumentId, path); }
 
     /// <summary>Test seam: replaces the native dialogs so automated tests can drive open, save and insert without UI.</summary>
@@ -79,6 +110,7 @@ public sealed partial class HostServices(MainWindow window)
                 "host.exportImage" => await window.Exports.HandleEditorAsync(request, ct),
                 "host.exportVsdx" => await ExportVsdxAsync(request, ct),
                 var m when m.StartsWith("host.library.", StringComparison.Ordinal) => await LibraryAsync(request, ct),
+                "host.app.about" => Ok(request, About()),
                 "host.app.close" => await window.ApproveCloseAsync(request.Params["discard"]?.GetValue<bool>() == true) ? Ok(request, new JsonObject { ["closing"] = true }) : Err(request, "invalid_request", "the window is not waiting to close"),
                 "host.app.closeCancelled" => Ok(request, new JsonObject { ["cancelled"] = window.CancelClose() }),
                 var m when m.StartsWith("host.recovery.", StringComparison.Ordinal) => await RecoveryAsync(request, ct),

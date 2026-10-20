@@ -11,6 +11,9 @@ namespace Diagram.Ipc;
 /// <summary>Who is calling. The label is assigned by the server and is never text a client supplied.</summary>
 public sealed record ConnectionInfo(string ConnectionId, string ClientLabel);
 
+/// <summary>A connected client as the About box lists it.</summary>
+public sealed record Companion(string Label, string? Version);
+
 public delegate Task<ResponseEnvelope> RequestHandler(ConnectionInfo connection, RequestEnvelope request, CancellationToken ct);
 
 /// <summary>
@@ -28,10 +31,13 @@ public sealed class PipeServer : IAsyncDisposable
     NamedPipeServerStream? listening;
     Task? acceptLoop;
     int connections, peerChecksPassed;
+    readonly Dictionary<NamedPipeServerStream, Companion> companions = new();
 
     PipeServer(string pipeName, RequestHandler handler) { this.pipeName = pipeName; this.handler = handler; }
 
     public int PeerChecksPassed => Volatile.Read(ref peerChecksPassed);
+    /// <summary>The clients connected now, with the version each reported about itself (null when it sent none).</summary>
+    public IReadOnlyList<Companion> Companions { get { lock (gate) return companions.Values.ToList(); } }
     public int ClientCount { get { lock (gate) return live.Count; } }
 
     /// <summary>Creates the first pipe instance synchronously: a name collision throws instead of attaching to another owner.</summary>
@@ -118,6 +124,8 @@ public sealed class PipeServer : IAsyncDisposable
                 }
                 var ordinal = Interlocked.Increment(ref connections);
                 info = new ConnectionInfo(Guid.NewGuid().ToString(), $"Client {ordinal}"); // server-assigned; caller text is never echoed
+                var reported = root.TryGetProperty("params", out var hp) && hp.TryGetProperty("clientVersion", out var cv) && cv.ValueKind == JsonValueKind.String ? Wire.CleanVersion(cv.GetString()) : null;
+                lock (gate) companions[pipe] = new Companion(info.ClientLabel, reported);
                 await FrameCodec.WriteAsync(pipe, Wire.ToDocument(Wire.Ok(id ?? "hello", new JsonObject
                 {
                     ["protocolVersion"] = Wire.ProtocolVersion, ["connectionId"] = info.ConnectionId, ["clientLabel"] = info.ClientLabel,
@@ -169,7 +177,7 @@ public sealed class PipeServer : IAsyncDisposable
         {
             outbound.Writer.TryComplete();
             if (writer is not null) { try { await writer.WaitAsync(TimeSpan.FromSeconds(2)); } catch { } }
-            lock (gate) live.Remove(pipe);
+            lock (gate) { live.Remove(pipe); companions.Remove(pipe); }
             try { pipe.Dispose(); } catch { }
         }
     }
