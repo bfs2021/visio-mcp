@@ -23,11 +23,21 @@ public sealed partial class HostServices
         var consumed = IngressTickets.Consume(IngressWindowId, BridgeRouter.User, input.TicketId);
         if (!consumed.IsOk) return Err(request, consumed.Error!);
         var ticket = consumed.Value;
-        if (ticket.Kind != IngressKind.Image || ticket.FilePath is null)
+        if (ticket.Kind != IngressKind.Image || ticket.FilePath is null && ticket.ImageBytes is null)
             return Err(request, "invalid_request", "This ticket is not a dropped picture.");
-        var safe = PathPolicy.Validate(ticket.FilePath);
-        if (!safe.IsOk) return Err(request, safe.Error!);
-        var prepared = await PrepareFile(safe.Value, ct);
+        Result<PreparedUpload> prepared;
+        if (ticket.FilePath is { } filePath)
+        {
+            var safe = PathPolicy.Validate(filePath);
+            if (!safe.IsOk) return Err(request, safe.Error!);
+            prepared = await PrepareFile(safe.Value, ct);
+        }
+        else if (ticket.ImageBytes is { Length: > 0 } bytes && ticket.MimeType is { } mime)
+        {
+            await using var stream = new MemoryStream(bytes, writable: false);
+            prepared = await window.Preparer.PrepareAsync(stream, mime, ticket.DisplayName, ct);
+        }
+        else return Err(request, "invalid_request", "The picture ticket has no approved image source.");
         if (!prepared.IsOk) return Err(request, prepared.Error!);
         var imported = await window.Library.ImportAsync(prepared.Value, null, ct);
         if (!imported.IsOk) return Err(request, imported.Error!);

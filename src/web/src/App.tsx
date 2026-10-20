@@ -55,7 +55,7 @@ function useShortcuts(ws: WorkspaceModel) {
       else if (mod && e.shiftKey && key === 'f') { e.preventDefault(); void model.reorder('front'); }
       else if (mod && e.shiftKey && key === 'b') { e.preventDefault(); void model.reorder('back'); }
       else if (mod && key === 'c') { e.preventDefault(); model.copy(); }
-      else if (mod && key === 'v') { e.preventDefault(); void model.paste(); }
+      else if (mod && key === 'v') { e.preventDefault(); void model.pasteFromClipboard(); }
       else if (mod && key === 'd') { e.preventDefault(); void model.duplicate(); }
       else if (mod && key === 'a') { e.preventDefault(); model.selectAll(); }
       else if (mod && key === 's') { e.preventDefault(); void model.save(e.shiftKey); }

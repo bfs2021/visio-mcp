@@ -21,4 +21,4 @@ internal sealed record IngressImageImportRequest(string TicketId, string Documen
 internal sealed record IngressDismissRequest(IReadOnlyList<string> TicketIds);
 internal sealed record ClipboardDescriptor(long Sequence, string? InternalCopyId, bool HasBitmap, bool HasText);
 internal sealed record ClipboardMarkInternalCopyRequest(string CopyId);
-internal sealed record ClipboardImportImageRequest(long ExpectedSequence);
+internal sealed record ClipboardImportImageRequest(long ExpectedSequence, string DocumentId, string SessionId);

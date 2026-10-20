@@ -7,6 +7,7 @@ import { HelpState } from './HelpState';
 import type { startApp } from '../bridge/bootstrap';
 import { FileIngressModel, type IngressBatch, type IngressQueueItem, type IngressTarget } from './FileIngressModel';
 import { mapIngressDropPoint } from './ingressGeometry';
+import { clipboardPasteAction } from '../commands/clipboardPaste';
 
 type App = ReturnType<typeof startApp>;
 
@@ -100,6 +101,31 @@ export class WorkspaceModel {
   get host(): HostApi { return this.hostApi; }
   set host(h: HostApi) { this.hostApi = h; for (const m of this.tabs) m.host = h; }
 
+  async pasteFromClipboard(): Promise<void> {
+    const target = this.active;
+    await target.waitForInternalCopyMarker();
+    const described = await this.hostApi.clipboardDescribe();
+    if (!described.ok && target.hasInternalCopy) {
+      target.say('The system clipboard is busy; using the in-memory diagram copy.', 'info');
+      await target.paste();
+      return;
+    }
+    const descriptor = described.ok ? described.value : null;
+    const action = clipboardPasteAction(descriptor, target.internalCopyId, target.hasInternalCopy);
+    if (action === 'internal') { await target.paste(); return; }
+    if (action === 'text') { target.say('Text from the system clipboard cannot be pasted as a diagram object.', 'info'); return; }
+    if (action === 'none') { target.say('Nothing to paste.', 'info'); return; }
+    if (!descriptor) return;
+    const scope = target.engine.scope();
+    const imported = await this.hostApi.importClipboardImage(descriptor.sequence, scope);
+    if (!imported.ok) { target.say(imported.error.message, 'warning'); return; }
+    this.ingress.enqueue({ batchId: imported.value.batchId, items: [imported.value.item], rejections: [] }, {
+      ...scope, baseRevision: target.engine.revision,
+      placement: { pageId: target.currentPage.id, x: target.currentPage.widthPt / 2, y: target.currentPage.heightPt / 2 },
+    });
+    void this.processIngress();
+  }
+
   /** Tabs in order. */
   get tabs(): EditorModel[] { return this.app.workspace.documents.map(d => d.ui as EditorModel).filter(Boolean); }
   get active(): EditorModel { return this.app.workspace.active!.ui as EditorModel; }
@@ -108,6 +134,7 @@ export class WorkspaceModel {
     state.ui = model;
     model.untitledNo = ++this.untitled;
     model.host = this.hostApi;
+    model.pasteFromClipboard = () => this.pasteFromClipboard();
     model.unit = this.preferences.current.units;
     model.closeTabNow = discard => this.closeNow(model, discard);
     model.newDocument.snapshotDefaults = this.app.preferences.snapshotDefaults;

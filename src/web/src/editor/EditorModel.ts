@@ -7,6 +7,7 @@ import type { ComponentProposal } from '../layout/components';
 import type { DiagramDocument, Element, Operation, PreparedAssetRef, Scope, Snapshot, TransactionResult } from '../contracts/generated';
 import { CommandEngine } from '../commands/CommandEngine';
 import { copyElements, pasteOperations, type ClipboardData } from '../commands/clipboard';
+import type { ClipboardDescriptor } from '../commands/clipboardPaste';
 import { MaxGraphAdapter, DEFAULT_SCALE } from '../canvas/MaxGraphAdapter';
 import type { GestureNotice, Tool, ViewportInfo } from '../canvas/CanvasAdapter';
 import { GestureController, type GestureKind, type GestureToken } from '../canvas/GestureController';
@@ -38,6 +39,9 @@ export interface HostApi extends FileHost {
   openJson(path?: string, recentId?: string, scope?: Scope): Promise<Result<{ cancelled?: true; path?: string; notes?: string[] }>>;
   openIngress(ticketId: string, expected: Scope & { baseRevision: number }): Promise<Result<{ path?: string; existingDocumentId?: string; warning?: string | null; summary?: string; diagnostics?: DiagnosticItem[]; lossy?: boolean; notes?: string[] }>>;
   importIngressImage(ticketId: string, scope: Scope): Promise<Result<{ asset: LibraryEntry; created: boolean; idWasTaken: boolean; notes: string[]; width: number; height: number }>>;
+  clipboardDescribe(): Promise<Result<ClipboardDescriptor>>;
+  markInternalCopy(copyId: string): Promise<Result<{ sequence: number }>>;
+  importClipboardImage(expectedSequence: number, scope: Scope): Promise<Result<{ batchId: string; item: { ticketId: string; displayName: string; kind: 'image' } }>>;
   dismissIngress(ticketIds: string[]): Promise<Result<{ dismissed: number }>>;
   /** Records the open tabs so the next start can reopen them. */
   workspaceSave(tabs: Array<{ documentId: string; sessionId: string; title: string; unsaved: boolean }>, activeDocumentId: string | null): Promise<Result<{ saved: number }>>;
@@ -117,6 +121,9 @@ export const noHost: HostApi = {
   openJson: async () => fail('not_running', 'there is no host to open files'),
   openIngress: async () => fail('not_running', 'there is no host to open files'),
   importIngressImage: async () => fail('not_running', 'there is no host to import a dropped picture'),
+  clipboardDescribe: async () => fail('not_running', 'there is no host clipboard'),
+  markInternalCopy: async () => fail('not_running', 'there is no host clipboard'),
+  importClipboardImage: async () => fail('not_running', 'there is no host clipboard'),
   dismissIngress: async () => fail('not_running', 'there is no host to dismiss pending files'),
   workspaceSave: async () => fail('not_running', 'there is no host'),
   documentShow: async () => fail('not_running', 'there is no host'),
@@ -135,7 +142,7 @@ const DEFAULT_SIZE: Record<string, { w: number; h: number }> = {
   hexagon: { w: 108, h: 72 }, terminator: { w: 120, h: 48 }, 'stored-data': { w: 108, h: 60 }, document: { w: 108, h: 72 }, 'lined-document': { w: 108, h: 72 }, parallelogram: { w: 120, h: 60 }, cylinder: { w: 72, h: 96 }, cloud: { w: 120, h: 80 }, callout: { w: 120, h: 80 },
 };
 
-const sharedClipboard: { data: ClipboardData | null } = { data: null };
+const sharedClipboard: { data: ClipboardData | null; copyId: string | null; marking: Promise<Result<{ sequence: number }>> | null } = { data: null, copyId: null, marking: null };
 
 export type ScriptReport =
   | ({ ok: true; source: string } & ValidationReport)
@@ -179,6 +186,9 @@ export class EditorModel {
   /** Copy in one tab, paste in another: the clipboard belongs to the window, not the document. */
   private get clipboard(): ClipboardData | null { return sharedClipboard.data; }
   private set clipboard(v: ClipboardData | null) { sharedClipboard.data = v; }
+  get internalCopyId(): string | null { return sharedClipboard.copyId; }
+  get hasInternalCopy(): boolean { return this.clipboard !== null; }
+  async waitForInternalCopyMarker(): Promise<void> { if (sharedClipboard.marking) await sharedClipboard.marking; }
   /** Stable for the life of the tab (the document id changes when a file is opened into it). */
   readonly tabId = crypto.randomUUID();
   /** The number in "Untitled N", given when the tab is made. */
@@ -196,6 +206,8 @@ export class EditorModel {
   readonly scriptSources = new Map<string, string>();
 
   host: HostApi = noHost;
+  /** Workspace installs the shared host-aware paste route used by menu and keyboard actions. */
+  pasteFromClipboard: () => Promise<void> = () => this.paste();
   readonly files: FileConflictFlow;
   /** The compatibility report dialog, when one is showing. */
   report: CompatibilityView | null = null;
@@ -458,6 +470,12 @@ export class EditorModel {
     const clip = copyElements(this.snapshot, this.selection);
     if (!clip) { this.say('Select something to copy.', 'info'); return; }
     this.clipboard = clip;
+    const copyId = crypto.randomUUID();
+    sharedClipboard.copyId = copyId;
+    sharedClipboard.marking = this.host.markInternalCopy(copyId);
+    void sharedClipboard.marking.then(result => {
+      if (!result.ok) this.say('The internal copy is ready in memory, but the system clipboard could not be marked.', 'info');
+    });
     this.pastes = 0;
     this.say(`Copied ${clip.elements.length} object${clip.elements.length === 1 ? '' : 's'}.`, 'info');
   }

@@ -22,6 +22,9 @@ function hostApi(host: HostServices | null): HostApi {
     openJson: (path, recentId, scope) => host.call('host.openJson', { ...(recentId ? { recentId } : path ? { path } : {}), ...(scope ? { documentId: scope.documentId, sessionId: scope.sessionId } : {}) }),
     openIngress: (ticketId, expected) => host.call('host.ingress.open', { ticketId, ...expected }),
     importIngressImage: (ticketId, scope) => host.call('host.ingress.importImage', { ticketId, ...scope }),
+    clipboardDescribe: () => host.call('host.clipboard.describe', {}),
+    markInternalCopy: copyId => host.call('host.clipboard.markInternalCopy', { copyId }),
+    importClipboardImage: (expectedSequence, scope) => host.call('host.clipboard.importImage', { expectedSequence, ...scope }),
     dismissIngress: ticketIds => host.call('host.ingress.dismiss', { ticketIds }),
     recentList: () => host.call('host.recent.list'),
     recentRemove: id => host.call('host.recent.remove', { id }),
@@ -142,8 +145,13 @@ if (import.meta.env.VITE_TEST_API === '1') {
       if (text !== null) ed.textarea.innerText = text;
       g.stopEditing(text === null);
     },
+    startTextEditing: (id: string) => {
+      const g = cur().canvas!.graph;
+      g.startEditingAtCell(g.getDataModel().getCell(id)!);
+    },
     callTool: (method: string, params: Record<string, unknown>) => router!.dispatch({ protocolVersion: 1, kind: 'request', requestId: crypto.randomUUID(), method, ...cur().engine.scope(), params } as never),
     setHost: (h: Partial<HostApi>) => { shell.host = { ...noHost, ...h }; },
+    pasteFromClipboard: () => shell.pasteFromClipboard(),
     exportSnapshot: async () => { const m = cur(); const r = await m.engine.exportSnapshot(m.engine.scope()); return r.ok ? JSON.parse(JSON.stringify(r.value)) : { error: r.error }; },
     changesSince: async (revision: number) => { const m = cur(); const r = await m.engine.getChanges(m.engine.scope(), revision); return r.ok ? JSON.parse(JSON.stringify(r.value)) : { error: r.error }; },
     targets: () => [...cur().targets],

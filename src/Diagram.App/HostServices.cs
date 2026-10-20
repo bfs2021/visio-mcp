@@ -96,7 +96,7 @@ public sealed partial class HostServices(MainWindow window)
             openExpected = new ExpectedState { DocumentId = target.DocumentId, SessionId = target.SessionId, BaseRevision = status.Result!.Value.GetProperty("revision").GetInt32() };
         }
         var fileAction = request.Method is "host.newDocument" or "host.openJson" or "host.openVsdx" or "host.ingress.open" or "host.saveJson" or "host.exportImage";
-        fileAction = fileAction || request.Method.StartsWith("host.fileConflict.", StringComparison.Ordinal);
+        fileAction = fileAction || request.Method.StartsWith("host.fileConflict.", StringComparison.Ordinal) || request.Method == IngressHostMethods.ClipboardImportImage;
         if (fileAction) await newDocumentGate.WaitAsync(ct);
         try
         {
@@ -109,6 +109,9 @@ public sealed partial class HostServices(MainWindow window)
                 IngressHostMethods.Open => await OpenIngressAsync(request, ct),
                 IngressHostMethods.ImportImage => await ImportIngressImageAsync(request, ct),
                 IngressHostMethods.Dismiss => DismissIngress(request),
+                IngressHostMethods.ClipboardDescribe => DescribeClipboard(request),
+                IngressHostMethods.ClipboardMarkInternalCopy => MarkInternalClipboardCopy(request),
+                IngressHostMethods.ClipboardImportImage => await ImportClipboardImageAsync(request, ct),
                 "host.saveJson" => await SaveAsync(request, ct),
                 var m when m.StartsWith("host.recent.", StringComparison.Ordinal) => await RecentAsync(request, ct),
                 "host.fileConflict.check" => await CheckFileAsync(request, ct),
