@@ -50,7 +50,7 @@ describe('FileIngressModel', () => {
       return { opened: true, ...(item.ticketId === 'ticket-a' ? { nextTarget: replacement } : {}) };
     });
 
-    expect(seen).toEqual(['session-1', 'session-2', 'session-2']);
+    expect(seen).toEqual(['session-1', 'session-2', 'session-1']);
   });
 
   it('leaves the remaining items pending when a guard becomes active between opens', async () => {
@@ -96,5 +96,27 @@ describe('FileIngressModel', () => {
 
     expect(model.items.map(item => item.status)).toEqual(['opened', 'failed', 'opened']);
     expect(model.items[1]?.message).toBe('invalid file');
+  });
+
+  it('turns an imported picture into an explicit library-backed placement offer', async () => {
+    const model = new FileIngressModel();
+    const image = { asset: { id: 'asset:diagram', name: 'diagram.png', mimeType: 'image/png', sha256: 'a'.repeat(64), width: 24, height: 12 }, width: 24, height: 12, notes: [] };
+    model.enqueue({ batchId: 'pictures', items: [{ ticketId: 'image-ticket', displayName: 'diagram.png', kind: 'image' }], rejections: [] }, target);
+    await model.drain(() => null, async () => ({ opened: true, image }));
+
+    expect(model.items[0]).toMatchObject({ status: 'offered', image, target });
+    model.markImage('image-ticket', 'kept', 'Kept in library');
+    expect(model.items[0]).toMatchObject({ status: 'kept', image, message: 'Kept in library' });
+  });
+
+  it('retargets only after an explicit fresh-placement choice', async () => {
+    const model = new FileIngressModel();
+    model.enqueue({ batchId: 'pictures', items: [{ ticketId: 'image-ticket', displayName: 'diagram.png', kind: 'image' }], rejections: [] }, target);
+    const image = { asset: { id: 'asset:diagram', name: 'diagram.png', mimeType: 'image/png', sha256: 'a'.repeat(64), width: 24, height: 12 }, width: 24, height: 12, notes: [] };
+    await model.drain(() => null, async () => ({ opened: true, image }));
+    const fresh = { ...target, documentId: 'new-doc', placement: { pageId: 'new-page', x: 30, y: 40 } };
+    model.retargetImage('image-ticket', fresh);
+    expect(model.items[0]?.target).toEqual(fresh);
+    expect(model.items[0]?.message).toBeUndefined();
   });
 });

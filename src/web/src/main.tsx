@@ -12,6 +12,7 @@ import { createSnapshotRenderer } from './render/SnapshotRenderer';
 import { createBrowserLayoutContext } from './layout/browserContext';
 import { WorkspaceModel } from './workspace/WorkspaceModel';
 import type { DocumentState } from './workspace/Workspace';
+import { fail } from './model/result';
 
 function hostApi(host: HostServices | null): HostApi {
   if (!host) return noHost;
@@ -20,6 +21,7 @@ function hostApi(host: HostServices | null): HostApi {
     pickImage: () => host.call('host.pickImage'),
     openJson: (path, recentId, scope) => host.call('host.openJson', { ...(recentId ? { recentId } : path ? { path } : {}), ...(scope ? { documentId: scope.documentId, sessionId: scope.sessionId } : {}) }),
     openIngress: (ticketId, expected) => host.call('host.ingress.open', { ticketId, ...expected }),
+    importIngressImage: (ticketId, scope) => host.call('host.ingress.importImage', { ticketId, ...scope }),
     dismissIngress: ticketIds => host.call('host.ingress.dismiss', { ticketIds }),
     recentList: () => host.call('host.recent.list'),
     recentRemove: id => host.call('host.recent.remove', { id }),
@@ -67,6 +69,10 @@ const app = startApp(window.chrome?.webview, null, {
   render: renderer.render, rasterise: renderer.rasterise, layoutContext: createBrowserLayoutContext(assetUrl as never),
   beforeClose: async () => ws!.beginClose(),
   app: {
+    captureIngressTarget: point => {
+      const captured = ws?.captureIngressTarget(point);
+      return captured ? { ok: true, value: captured } : fail('not_ready', 'The canvas is not ready to receive a picture.', { retryable: true });
+    },
     adoptDocument: (document, activate) => ws!.adoptDocument(document, activate),
     activateDocument: documentId => ws!.activateById(documentId),
     agentDocuments: list => ws!.setAgentDocs(list),
@@ -151,6 +157,7 @@ if (import.meta.env.VITE_TEST_API === '1') {
     newTab: () => { shell.newTab(); },
     openFile: (kind?: 'json' | 'vsdx') => shell.openFile(kind),
     enqueueIngress: (batch: import('./workspace/FileIngressModel').IngressBatch) => shell.enqueueIngress(batch),
+    captureIngressTarget: (clientX: number, clientY: number) => shell.captureIngressTarget({ clientX, clientY }),
     cancelIngress: (batchId: string) => shell.cancelIngress(batchId),
     processIngress: () => shell.processIngress(),
     closeTab: (index?: number) => shell.closeTab(index === undefined ? shell.active : shell.tabs[index]!),

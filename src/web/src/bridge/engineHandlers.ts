@@ -34,7 +34,8 @@ export interface AppHandlers {
   /** The person's page: the shell asked for these files to be opened (a double-click, Open with, or a second launch). */
   openFiles?: (files: Array<{ path: string; kind: 'json' | 'vsdx' }>) => Promise<Result<{ opened: number }>>;
   /** The visible editor: a native drop admitted by the host as bounded one-use tickets. */
-  ingressAvailable?: (batch: { batchId: string; items: Array<{ ticketId: string; displayName: string; kind: 'json' | 'vsdx' | 'image' }>; rejections: string[]; target?: { documentId: string; sessionId: string; baseRevision: number; clientX: number; clientY: number } }) => void;
+  captureIngressTarget?: (point: { clientX: number; clientY: number }) => Result<{ documentId: string; sessionId: string; baseRevision: number; pageId: string; x: number; y: number }>;
+  ingressAvailable?: (batch: { batchId: string; items: Array<{ ticketId: string; displayName: string; kind: 'json' | 'vsdx' | 'image' }>; rejections: string[]; target?: { documentId: string; sessionId: string; baseRevision: number; pageId: string; x: number; y: number } }) => void;
 }
 
 /** Finds the engine of the document a request names; with no document named, the active one. */
@@ -82,13 +83,20 @@ export function createEngineHandler(source: CommandEngine | EngineResolver, opts
         if (!appHandler?.openFiles || files.length !== list.length) return respond(fail('invalid_request', 'app.openFiles needs a list of {path, kind}'));
         return respond(await appHandler.openFiles(files));
       }
+      case 'app.captureIngressTarget': {
+        const hasOnlyKeys = (value: object, keys: string[]) => Object.keys(value).every(key => keys.includes(key));
+        if (!hasOnlyKeys(p, ['clientX', 'clientY']) || typeof p.clientX !== 'number' || !Number.isFinite(p.clientX) || p.clientX < 0 || typeof p.clientY !== 'number' || !Number.isFinite(p.clientY) || p.clientY < 0)
+          return respond(fail('invalid_request', 'app.captureIngressTarget needs a finite native drop point'));
+        return respond(appHandler?.captureIngressTarget?.({ clientX: p.clientX, clientY: p.clientY }) ?? fail('not_ready', 'the visible editor is not ready'));
+      }
       case 'app.ingressAvailable': {
         const batch = p as { batchId?: unknown; items?: unknown; rejections?: unknown; target?: unknown };
         const hasOnlyKeys = (value: object, keys: string[]) => Object.keys(value).every(key => keys.includes(key));
         const target = batch.target as Record<string, unknown> | undefined;
-        const validTarget = target === undefined || (!!target && typeof target === 'object' && hasOnlyKeys(target, ['documentId', 'sessionId', 'baseRevision', 'clientX', 'clientY']) &&
+        const validTarget = target === undefined || (!!target && typeof target === 'object' && hasOnlyKeys(target, ['documentId', 'sessionId', 'baseRevision', 'pageId', 'x', 'y']) &&
           typeof target.documentId === 'string' && target.documentId.length > 0 && target.documentId.length <= 128 && typeof target.sessionId === 'string' && target.sessionId.length > 0 && target.sessionId.length <= 128 &&
-          Number.isSafeInteger(target.baseRevision) && Number(target.baseRevision) >= 0 && typeof target.clientX === 'number' && Number.isFinite(target.clientX) && target.clientX >= 0 && typeof target.clientY === 'number' && Number.isFinite(target.clientY) && target.clientY >= 0);
+          Number.isSafeInteger(target.baseRevision) && Number(target.baseRevision) >= 0 && typeof target.pageId === 'string' && target.pageId.length > 0 && target.pageId.length <= 128 &&
+          typeof target.x === 'number' && Number.isFinite(target.x) && typeof target.y === 'number' && Number.isFinite(target.y));
         if (!hasOnlyKeys(p, ['batchId', 'items', 'rejections', 'target']) || !validTarget || typeof batch.batchId !== 'string' || batch.batchId.length < 1 || batch.batchId.length > 128 || !Array.isArray(batch.items) || batch.items.length > 32 || !Array.isArray(batch.rejections) || batch.rejections.length > 32)
           return respond(fail('invalid_request', 'app.ingressAvailable needs a bounded ticket batch'));
         const items = batch.items.filter((item): item is { ticketId: string; displayName: string; kind: 'json' | 'vsdx' | 'image' } =>
@@ -97,7 +105,7 @@ export function createEngineHandler(source: CommandEngine | EngineResolver, opts
           ['json', 'vsdx', 'image'].includes(String((item as { kind?: unknown }).kind)));
         if (items.length !== batch.items.length || !batch.rejections.every(x => typeof x === 'string' && x.length <= 256))
           return respond(fail('invalid_request', 'app.ingressAvailable contains invalid ticket metadata'));
-        appHandler?.ingressAvailable?.({ batchId: batch.batchId, items, rejections: batch.rejections, ...(target ? { target: target as { documentId: string; sessionId: string; baseRevision: number; clientX: number; clientY: number } } : {}) });
+        appHandler?.ingressAvailable?.({ batchId: batch.batchId, items, rejections: batch.rejections, ...(target ? { target: target as { documentId: string; sessionId: string; baseRevision: number; pageId: string; x: number; y: number } } : {}) });
         return respond(ok({ received: true }));
       }
       case 'app.agentDocuments':

@@ -108,11 +108,11 @@ describe('startApp', () => {
     expect(received).toHaveLength(1);
   });
 
-  it('pins native drops to a bounded visible editor target and finite client point', async () => {
+  it('pins native drops to a bounded visible editor target and finite page point', async () => {
     const f = fakeWebView();
     const received: unknown[] = [];
     startApp(f.wv, null, { app: { ingressAvailable: batch => received.push(batch) } });
-    const target = { documentId: 'doc', sessionId: 'session', baseRevision: 4, clientX: 120.5, clientY: 220 };
+    const target = { documentId: 'doc', sessionId: 'session', baseRevision: 4, pageId: 'page', x: 120.5, y: 220 };
     f.fromHost({ protocolVersion: 1, kind: 'request', requestId: 'ingress-target', method: 'app.ingressAvailable', params: {
       batchId: 'batch-target', items: [{ ticketId: 'opaque', displayName: 'image.png', kind: 'image' }], rejections: [], target,
     } });
@@ -120,11 +120,27 @@ describe('startApp', () => {
     expect(received).toEqual([{ batchId: 'batch-target', items: [{ ticketId: 'opaque', displayName: 'image.png', kind: 'image' }], rejections: [], target }]);
 
     f.fromHost({ protocolVersion: 1, kind: 'request', requestId: 'ingress-target-bad', method: 'app.ingressAvailable', params: {
-      batchId: 'batch-bad', items: [], rejections: [], target: { ...target, clientX: Number.NaN },
+      batchId: 'batch-bad', items: [], rejections: [], target: { ...target, x: Number.NaN },
     } });
     await flush();
     expect(f.toHost.at(-1)).toMatchObject({ error: { code: 'invalid_request' } });
     expect(received).toHaveLength(1);
+  });
+
+  it('captures a finite native point into the active page target through a bounded request', async () => {
+    const f = fakeWebView();
+    const points: unknown[] = [];
+    const target = { documentId: 'doc', sessionId: 'session', baseRevision: 8, pageId: 'page-2', x: 45, y: 80 };
+    startApp(f.wv, null, { app: { captureIngressTarget: point => { points.push(point); return { ok: true, value: target }; } } });
+    f.fromHost({ protocolVersion: 1, kind: 'request', requestId: 'capture-1', method: 'app.captureIngressTarget', params: { clientX: 320, clientY: 400 } });
+    await flush();
+    expect(points).toEqual([{ clientX: 320, clientY: 400 }]);
+    expect(f.toHost.at(-1)).toMatchObject({ result: target, requestId: 'capture-1' });
+
+    f.fromHost({ protocolVersion: 1, kind: 'request', requestId: 'capture-bad', method: 'app.captureIngressTarget', params: { clientX: Number.NaN, clientY: 400 } });
+    await flush();
+    expect(points).toHaveLength(1);
+    expect(f.toHost.at(-1)).toMatchObject({ error: { code: 'invalid_request' }, requestId: 'capture-bad' });
   });
 
   it('AppStartsReadyWithA4Snapshot', async () => {

@@ -2,17 +2,22 @@ import type { Scope } from '../contracts/generated';
 
 export type IngressKind = 'json' | 'vsdx' | 'image';
 export interface IngressItem { ticketId: string; displayName: string; kind: IngressKind }
-export interface IngressDropTarget extends Scope { baseRevision: number; clientX: number; clientY: number }
+export interface IngressImage {
+  asset: { id: string; name: string; mimeType: string; sha256: string; width: number; height: number };
+  width: number; height: number; notes: string[];
+}
+export interface IngressDropTarget extends Scope { baseRevision: number; pageId: string; x: number; y: number }
 export interface IngressBatch { batchId: string; items: IngressItem[]; rejections: string[]; target?: IngressDropTarget }
 export interface IngressTarget extends Scope { baseRevision: number; placement?: { pageId: string; x: number; y: number } }
-export type IngressStatus = 'pending' | 'opening' | 'opened' | 'failed' | 'cancelled';
+export type IngressStatus = 'pending' | 'opening' | 'offered' | 'opened' | 'placed' | 'kept' | 'failed' | 'cancelled';
 export interface IngressQueueItem extends IngressItem {
   batchId: string;
   target: IngressTarget;
   status: IngressStatus;
+  image?: IngressImage;
   message?: string;
 }
-export type IngressOpenResult = { opened: true; path?: string; existingDocumentId?: string; nextTarget?: IngressTarget } | { opened: false; error: string };
+export type IngressOpenResult = { opened: true; path?: string; existingDocumentId?: string; nextTarget?: IngressTarget; image?: IngressImage } | { opened: false; error: string };
 
 /** Ordered, visible state for native file tickets. It never accepts or retains file paths. */
 export class FileIngressModel {
@@ -56,8 +61,10 @@ export class FileIngressModel {
             const result = await open(item, item.target);
             if (this.isCancelled(item)) continue;
             if (result.opened) {
-              item.status = 'opened'; item.message = result.existingDocumentId ? 'Already open; activated the existing drawing.' : undefined;
-              if (result.nextTarget) for (const pending of this.queue) if (pending.batchId === item.batchId && pending.status === 'pending') pending.target = result.nextTarget;
+              item.status = result.image ? 'offered' : 'opened';
+              item.image = result.image;
+              item.message = result.existingDocumentId ? 'Already open; activated the existing drawing.' : undefined;
+              if (result.nextTarget) for (const pending of this.queue) if (pending.batchId === item.batchId && pending.status === 'pending' && pending.kind !== 'image') pending.target = result.nextTarget;
             }
             else { item.status = 'failed'; item.message = result.error; }
           } catch (error) {
@@ -75,6 +82,25 @@ export class FileIngressModel {
     for (const item of pending) item.status = 'cancelled';
     if (pending.length) dismiss(pending.map(item => item.ticketId));
     this.changed();
+  }
+
+  markImage(ticketId: string, status: 'placed' | 'kept', message?: string): void {
+    const item = this.queue.find(candidate => candidate.ticketId === ticketId && candidate.status === 'offered');
+    if (!item) return;
+    item.status = status; item.message = message; this.changed();
+  }
+
+  setImageMessage(ticketId: string, message: string): void {
+    const item = this.queue.find(candidate => candidate.ticketId === ticketId && candidate.status === 'offered');
+    if (!item) return;
+    item.message = message; this.changed();
+  }
+
+  retargetImage(ticketId: string, target: IngressTarget): void {
+    const item = this.queue.find(candidate => candidate.ticketId === ticketId && candidate.status === 'offered');
+    if (!item) return;
+    item.target = { ...target, ...(target.placement ? { placement: { ...target.placement } } : {}) };
+    item.message = undefined; this.changed();
   }
 
   dismissBatch(batchId: string, dismiss: (ticketIds: string[]) => void): void {

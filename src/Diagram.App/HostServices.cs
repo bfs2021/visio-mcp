@@ -107,6 +107,7 @@ public sealed partial class HostServices(MainWindow window)
                 "host.protectNewDocument" => await ProtectNewDocumentAsync(request, ct),
                 "host.openJson" => await OpenAsync(request, openExpected!, ct),
                 IngressHostMethods.Open => await OpenIngressAsync(request, ct),
+                IngressHostMethods.ImportImage => await ImportIngressImageAsync(request, ct),
                 IngressHostMethods.Dismiss => DismissIngress(request),
                 "host.saveJson" => await SaveAsync(request, ct),
                 var m when m.StartsWith("host.recent.", StringComparison.Ordinal) => await RecentAsync(request, ct),

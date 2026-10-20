@@ -1,4 +1,6 @@
 using System.IO;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Windows;
 using Diagram.Core.Contracts;
 using Diagram.Host.Core;
@@ -210,13 +212,18 @@ public partial class MainWindow : Window
     {
         var scope = Router.CurrentScope;
         if (scope is null || Router.ChannelOf(scope.DocumentId) != BridgeRouter.User) return false;
-        var status = await Router.SendAsync(new RequestEnvelope
+        var captured = await Router.SendAsync(new RequestEnvelope
         {
-            RequestId = Guid.NewGuid().ToString(), Method = "doc.status", DocumentId = scope.DocumentId, SessionId = scope.SessionId, Params = new(),
+            RequestId = Guid.NewGuid().ToString(), Method = "app.captureIngressTarget", DocumentId = scope.DocumentId, SessionId = scope.SessionId,
+            Params = new JsonObject { ["clientX"] = point.X, ["clientY"] = point.Y },
         }, ct, BridgeRouter.User);
-        if (status.Error is not null || Router.CurrentScope != scope) return false;
-        var revision = status.Result!.Value.GetProperty("revision").GetInt32();
-        return await NotifyIngressAvailableAsync(batch, ct, new IngressDropTarget(scope.DocumentId, scope.SessionId, revision, point.X, point.Y));
+        if (captured.Error is not null || captured.Result is null || Router.CurrentScope != scope) return false;
+        IngressDropTarget? target;
+        try { target = captured.Result.Value.Deserialize<IngressDropTarget>(ContractJson.Options); }
+        catch (JsonException) { return false; }
+        if (target is null || target.DocumentId != scope.DocumentId || target.SessionId != scope.SessionId || target.BaseRevision < 0 ||
+            string.IsNullOrWhiteSpace(target.PageId) || target.PageId.Length > 128 || !double.IsFinite(target.X) || !double.IsFinite(target.Y)) return false;
+        return await NotifyIngressAvailableAsync(batch, ct, target);
     }
 
     void OnNativeDragEnter(object sender, DragEventArgs e) => SetNativeDropEffect(e);

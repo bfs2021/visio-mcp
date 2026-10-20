@@ -195,6 +195,7 @@ textarea { width: 100%; resize: vertical; }
 .object-list { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .canvas-frame:has(.object-list:focus-visible) { outline: 3px solid #2563eb; outline-offset: -3px; }
 .file-ingress-queue { position: fixed; z-index: 40; right: 1rem; top: 1rem; width: min(26rem, calc(100vw - 2rem)); max-height: 45vh; overflow: auto; padding: .75rem; border: 1px solid var(--border, #cbd5e1); border-radius: .75rem; background: var(--panel, #fff); color: var(--text, #0f172a); box-shadow: 0 8px 32px #0f172a22; }
+.file-ingress-preview { display: block; max-width: 10rem; max-height: 6rem; object-fit: contain; margin: .35rem 0; border: 1px solid var(--border, #cbd5e1); border-radius: .25rem; }
 .file-ingress-heading, .file-ingress-actions { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
 .file-ingress-heading { margin-bottom: .5rem; }
 .file-ingress-heading [role=status] { color: var(--muted, #475569); font-size: .85rem; }

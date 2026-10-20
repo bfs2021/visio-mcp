@@ -8,6 +8,38 @@ namespace Diagram.App;
 
 public sealed partial class HostServices
 {
+    async Task<ResponseEnvelope> ImportIngressImageAsync(RequestEnvelope request, CancellationToken ct)
+    {
+        IngressImageImportRequest? input;
+        try { input = request.Params.Deserialize<IngressImageImportRequest>(ContractJson.Options); }
+        catch (JsonException) { return Err(request, "invalid_request", "The picture ingress request is invalid."); }
+        if (input is null || string.IsNullOrWhiteSpace(input.TicketId) || input.TicketId.Length > 128 ||
+            string.IsNullOrWhiteSpace(input.DocumentId) || string.IsNullOrWhiteSpace(input.SessionId))
+            return Err(request, "invalid_request", "A picture ingress ticket and target editor are required.");
+        if (window.Router.ChannelOf(input.DocumentId) != BridgeRouter.User ||
+            !window.Router.DocumentList.Any(document => document.Scope.DocumentId == input.DocumentId && document.Scope.SessionId == input.SessionId))
+            return Err(request, "document_mismatch", "The visible editor session is no longer open.");
+
+        var consumed = IngressTickets.Consume(IngressWindowId, BridgeRouter.User, input.TicketId);
+        if (!consumed.IsOk) return Err(request, consumed.Error!);
+        var ticket = consumed.Value;
+        if (ticket.Kind != IngressKind.Image || ticket.FilePath is null)
+            return Err(request, "invalid_request", "This ticket is not a dropped picture.");
+        var safe = PathPolicy.Validate(ticket.FilePath);
+        if (!safe.IsOk) return Err(request, safe.Error!);
+        var prepared = await PrepareFile(safe.Value, ct);
+        if (!prepared.IsOk) return Err(request, prepared.Error!);
+        var imported = await window.Library.ImportAsync(prepared.Value, null, ct);
+        if (!imported.IsOk) return Err(request, imported.Error!);
+        var result = imported.Value;
+        return Ok(request, new JsonObject
+        {
+            ["asset"] = Entry(result.Asset), ["created"] = result.Created, ["idWasTaken"] = result.IdWasTaken,
+            ["notes"] = new JsonArray(result.Notes.Select(note => (JsonNode)note).ToArray()),
+            ["width"] = prepared.Value.Width, ["height"] = prepared.Value.Height,
+        });
+    }
+
     ResponseEnvelope DismissIngress(RequestEnvelope request)
     {
         IngressDismissRequest? input;

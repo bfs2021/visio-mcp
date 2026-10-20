@@ -14,10 +14,10 @@ internal static class IngressHostMethods
     public const string ClipboardImportImage = "host.clipboard.importImage";
 }
 
-internal sealed record IngressDropTarget(string DocumentId, string SessionId, int BaseRevision, double ClientX, double ClientY);
+internal sealed record IngressDropTarget(string DocumentId, string SessionId, int BaseRevision, string PageId, double X, double Y);
 internal sealed record IngressAvailableEvent(string BatchId, IReadOnlyList<IngressItemDescriptor> Items, IReadOnlyList<string> Rejections, IngressDropTarget? Target = null);
 internal sealed record IngressOpenRequest(string TicketId, string DocumentId, string SessionId, int BaseRevision);
-internal sealed record IngressImageImportRequest(string TicketId);
+internal sealed record IngressImageImportRequest(string TicketId, string DocumentId, string SessionId);
 internal sealed record IngressDismissRequest(IReadOnlyList<string> TicketIds);
 internal sealed record ClipboardDescriptor(long Sequence, string? InternalCopyId, bool HasBitmap, bool HasText);
 internal sealed record ClipboardMarkInternalCopyRequest(string CopyId);

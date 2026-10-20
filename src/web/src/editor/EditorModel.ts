@@ -37,6 +37,7 @@ export interface HostApi extends FileHost {
   /** Without a path the person chooses a file; with one (from the last session's tabs) it is reopened without asking. */
   openJson(path?: string, recentId?: string, scope?: Scope): Promise<Result<{ cancelled?: true; path?: string; notes?: string[] }>>;
   openIngress(ticketId: string, expected: Scope & { baseRevision: number }): Promise<Result<{ path?: string; existingDocumentId?: string; warning?: string | null; summary?: string; diagnostics?: DiagnosticItem[]; lossy?: boolean; notes?: string[] }>>;
+  importIngressImage(ticketId: string, scope: Scope): Promise<Result<{ asset: LibraryEntry; created: boolean; idWasTaken: boolean; notes: string[]; width: number; height: number }>>;
   dismissIngress(ticketIds: string[]): Promise<Result<{ dismissed: number }>>;
   /** Records the open tabs so the next start can reopen them. */
   workspaceSave(tabs: Array<{ documentId: string; sessionId: string; title: string; unsaved: boolean }>, activeDocumentId: string | null): Promise<Result<{ saved: number }>>;
@@ -115,6 +116,7 @@ export const noHost: HostApi = {
   pickImage: async () => fail('not_running', 'there is no host to choose a picture'),
   openJson: async () => fail('not_running', 'there is no host to open files'),
   openIngress: async () => fail('not_running', 'there is no host to open files'),
+  importIngressImage: async () => fail('not_running', 'there is no host to import a dropped picture'),
   dismissIngress: async () => fail('not_running', 'there is no host to dismiss pending files'),
   workspaceSave: async () => fail('not_running', 'there is no host'),
   documentShow: async () => fail('not_running', 'there is no host'),
@@ -1123,6 +1125,25 @@ export class EditorModel {
     const w = natW * k, h = natH * k;
     const r = await this.apply('create', [...plan.operations, snapCreation({ op: 'createImage', assetId: plan.resolvedAssetId, name: p.value.ref.asset.name, bounds: { x: (at?.x ?? page.widthPt / 2) - w / 2, y: (at?.y ?? page.heightPt / 2) - h / 2, width: w, height: h }, fit: 'contain', preserveAspectRatio: true }, page, {enabled:this.showGuides && this.snapToGuides,scale:this.viewport?.scale??1})]);
     if (r.ok && r.value.created.length) { this.selection = [r.value.created[r.value.created.length - 1]!]; this.canvas?.setSelection(this.selection); this.bump(); }
+  }
+
+  /** Places a dropped library picture only if its original drawing, page and revision are still current. */
+  async placeIngressImage(asset: { id: string; sha256: string }, expected: { documentId: string; sessionId: string; pageId: string; baseRevision: number; x: number; y: number }): Promise<Result<TransactionResult>> {
+    const matches = () => this.engine.scope().documentId === expected.documentId && this.engine.scope().sessionId === expected.sessionId &&
+      this.currentPage.id === expected.pageId && this.engine.revision === expected.baseRevision;
+    if (!matches()) return fail('revision_conflict', 'The drawing, page, or revision changed after the picture was dropped. Choose a fresh placement.');
+    const p = await this.prepared({ scope: 'library', id: asset.id, hash: asset.sha256 });
+    if (!p.ok) return p;
+    if (!matches()) return fail('revision_conflict', 'The drawing, page, or revision changed while the picture was being prepared. Choose a fresh placement.');
+    const plan = prepareDocumentAsset(this.snapshot, p.value.ref);
+    const page = this.currentPage;
+    const natW = p.value.width ? toPoints(p.value.width, 'px') : 96, natH = p.value.height ? toPoints(p.value.height, 'px') : 96;
+    const k = Math.min(1, page.widthPt / 2 / natW, page.heightPt / 2 / natH);
+    const w = natW * k, h = natH * k;
+    const image = snapCreation({ op: 'createImage', pageId: expected.pageId, assetId: plan.resolvedAssetId, name: p.value.ref.asset.name,
+      bounds: { x: expected.x - w / 2, y: expected.y - h / 2, width: w, height: h }, fit: 'contain', preserveAspectRatio: true }, page,
+      { enabled: this.showGuides && this.snapToGuides, scale: this.viewport?.scale ?? 1 });
+    return this.apply('create', [...plan.operations, image]);
   }
 
   /** Changes the picture of the selected image only. Its twins that share the old picture keep it. */
