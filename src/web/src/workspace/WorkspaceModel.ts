@@ -214,7 +214,31 @@ export class WorkspaceModel {
 
   enqueueIngress(batch: IngressBatch): void {
     const target = this.active;
-    this.ingress.enqueue(batch, { ...target.engine.scope(), baseRevision: target.engine.revision });
+    let pinned: IngressTarget = { ...target.engine.scope(), baseRevision: target.engine.revision };
+    if (batch.target) {
+      const received = batch.target;
+      const source = this.tabs.find(tab => tab.engine.scope().documentId === received.documentId && tab.engine.scope().sessionId === received.sessionId);
+      if (source !== target || source.engine.revision !== received.baseRevision) {
+        void this.hostApi.dismissIngress(batch.items.map(item => item.ticketId));
+        return;
+      }
+      const canvas = document.querySelector<HTMLElement>('[data-testid="canvas"]');
+      const rect = canvas?.getBoundingClientRect();
+      const viewport = source.viewport;
+      if (!rect || !viewport) {
+        void this.hostApi.dismissIngress(batch.items.map(item => item.ticketId));
+        return;
+      }
+      pinned = {
+        documentId: received.documentId, sessionId: received.sessionId, baseRevision: received.baseRevision,
+        placement: {
+          pageId: source.currentPage.id,
+          x: (received.clientX - rect.left + viewport.scrollLeft) / viewport.scale - viewport.marginPt,
+          y: (received.clientY - rect.top + viewport.scrollTop) / viewport.scale - viewport.marginPt,
+        },
+      };
+    }
+    this.ingress.enqueue(batch, pinned);
     void this.processIngress();
   }
 

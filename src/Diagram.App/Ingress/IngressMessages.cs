@@ -14,7 +14,8 @@ internal static class IngressHostMethods
     public const string ClipboardImportImage = "host.clipboard.importImage";
 }
 
-internal sealed record IngressAvailableEvent(string BatchId, IReadOnlyList<IngressItemDescriptor> Items, IReadOnlyList<string> Rejections);
+internal sealed record IngressDropTarget(string DocumentId, string SessionId, int BaseRevision, double ClientX, double ClientY);
+internal sealed record IngressAvailableEvent(string BatchId, IReadOnlyList<IngressItemDescriptor> Items, IReadOnlyList<string> Rejections, IngressDropTarget? Target = null);
 internal sealed record IngressOpenRequest(string TicketId, string DocumentId, string SessionId, int BaseRevision);
 internal sealed record IngressImageImportRequest(string TicketId);
 internal sealed record IngressDismissRequest(IReadOnlyList<string> TicketIds);

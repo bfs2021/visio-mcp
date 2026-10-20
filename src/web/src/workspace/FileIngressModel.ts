@@ -2,8 +2,9 @@ import type { Scope } from '../contracts/generated';
 
 export type IngressKind = 'json' | 'vsdx' | 'image';
 export interface IngressItem { ticketId: string; displayName: string; kind: IngressKind }
-export interface IngressBatch { batchId: string; items: IngressItem[]; rejections: string[] }
-export interface IngressTarget extends Scope { baseRevision: number }
+export interface IngressDropTarget extends Scope { baseRevision: number; clientX: number; clientY: number }
+export interface IngressBatch { batchId: string; items: IngressItem[]; rejections: string[]; target?: IngressDropTarget }
+export interface IngressTarget extends Scope { baseRevision: number; placement?: { pageId: string; x: number; y: number } }
 export type IngressStatus = 'pending' | 'opening' | 'opened' | 'failed' | 'cancelled';
 export interface IngressQueueItem extends IngressItem {
   batchId: string;
@@ -28,7 +29,7 @@ export class FileIngressModel {
   enqueue(batch: IngressBatch, target: IngressTarget): void {
     if (!batch || typeof batch.batchId !== 'string' || !batch.batchId || !Array.isArray(batch.items)) return;
     if (this.queue.some(item => item.batchId === batch.batchId)) return;
-    const safeTarget = { documentId: target.documentId, sessionId: target.sessionId, baseRevision: target.baseRevision };
+    const safeTarget = { ...target, ...(target.placement ? { placement: { ...target.placement } } : {}) };
     for (const item of batch.items) {
       if (!item || typeof item.ticketId !== 'string' || !item.ticketId || !['json', 'vsdx', 'image'].includes(item.kind)) continue;
       this.queue.push({ ...item, batchId: batch.batchId, target: safeTarget, status: 'pending' });

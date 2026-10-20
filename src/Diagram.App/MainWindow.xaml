@@ -4,6 +4,7 @@
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         Title="Diagram" Width="1280" Height="800" MinWidth="640" MinHeight="400">
     <Grid>
-        <wv2:WebView2 x:Name="Web" />
+        <wv2:WebView2 x:Name="Web" AllowDrop="True" AllowExternalDrop="False"
+                     PreviewDragEnter="OnNativeDragEnter" PreviewDragOver="OnNativeDragOver" PreviewDrop="OnNativeDrop" />
     </Grid>
 </Window>

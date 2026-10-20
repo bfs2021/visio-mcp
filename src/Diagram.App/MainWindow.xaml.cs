@@ -45,6 +45,7 @@ public partial class MainWindow : Window
     }
     readonly AppOptions options;
     WebViewHost? host;
+    NativeFileDropAdapter? nativeDropAdapter;
 
     public MainWindow(AppOptions options)
     {
@@ -104,6 +105,9 @@ public partial class MainWindow : Window
         host = new WebViewHost(Web.CoreWebView2, Dispatcher, options.ContentRoot, Blobs, services.HandleAsync);
         Coordinator = new SessionCoordinator(host.Router, Blobs, Preparer, Writer);
         Services = services;
+        nativeDropAdapter = new NativeFileDropAdapter(services.IngressTickets, services.IngressWindowId,
+            () => Router.CurrentScope is { } scope && Router.ChannelOf(scope.DocumentId) == BridgeRouter.User ? BridgeRouter.User : null,
+            NotifyNativeIngressAsync);
         services.Attach(host.Router);
         Native = new NativeFileCoordinator(host.Router, host.Router, Blobs, Writer, new NativeVsdxImporter(), new NativeVsdxExporter(), host.Router);
         Exports = new ExportService(this, options.ExportRoot ?? Path.Combine(Path.GetTempPath(), "AgenticDiagramExports"), options.Offscreen ? null : new ExportConsentWindow(this));
@@ -191,15 +195,53 @@ public partial class MainWindow : Window
         return r.Error is { } e ? [.. launch.Skipped, e.Message] : launch.Skipped;
     }
 
-    internal async Task<bool> NotifyIngressAvailableAsync(IngressDropBatch batch, CancellationToken ct = default)
+    internal async Task<bool> NotifyIngressAvailableAsync(IngressDropBatch batch, CancellationToken ct = default, IngressDropTarget? target = null)
     {
-        var message = new IngressAvailableEvent(batch.BatchId, batch.Items, batch.Rejections);
+        var message = new IngressAvailableEvent(batch.BatchId, batch.Items, batch.Rejections, target);
         var response = await Router.SendAsync(new RequestEnvelope
         {
             RequestId = Guid.NewGuid().ToString(), Method = "app.ingressAvailable",
             Params = System.Text.Json.JsonSerializer.SerializeToNode(message, ContractJson.Options)!.AsObject(),
         }, ct, BridgeRouter.User);
         return response.Error is null;
+    }
+
+    async Task<bool> NotifyNativeIngressAsync(IngressDropBatch batch, System.Windows.Point point, CancellationToken ct)
+    {
+        var scope = Router.CurrentScope;
+        if (scope is null || Router.ChannelOf(scope.DocumentId) != BridgeRouter.User) return false;
+        var status = await Router.SendAsync(new RequestEnvelope
+        {
+            RequestId = Guid.NewGuid().ToString(), Method = "doc.status", DocumentId = scope.DocumentId, SessionId = scope.SessionId, Params = new(),
+        }, ct, BridgeRouter.User);
+        if (status.Error is not null || Router.CurrentScope != scope) return false;
+        var revision = status.Result!.Value.GetProperty("revision").GetInt32();
+        return await NotifyIngressAvailableAsync(batch, ct, new IngressDropTarget(scope.DocumentId, scope.SessionId, revision, point.X, point.Y));
+    }
+
+    void OnNativeDragEnter(object sender, DragEventArgs e) => SetNativeDropEffect(e);
+    void OnNativeDragOver(object sender, DragEventArgs e) => SetNativeDropEffect(e);
+
+    void SetNativeDropEffect(DragEventArgs e)
+    {
+        var canDrop = e.Data.GetDataPresent(DataFormats.FileDrop, autoConvert: false) && nativeDropAdapter is not null;
+        if (!canDrop) return; // app-owned HTML palette/asset drags continue through WebView2
+        e.Effects = canDrop ? DragDropEffects.Copy : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    void OnNativeDrop(object sender, DragEventArgs e)
+    {
+        if (nativeDropAdapter is null || !e.Data.GetDataPresent(DataFormats.FileDrop, autoConvert: false)) return;
+        e.Handled = true;
+        e.Effects = DragDropEffects.Copy;
+        _ = ProcessNativeDropAsync(e.Data, e.GetPosition(Web));
+    }
+
+    async Task ProcessNativeDropAsync(IDataObject data, System.Windows.Point point)
+    {
+        try { if (nativeDropAdapter is { } adapter) await adapter.HandleDropAsync(data, point); }
+        catch (Exception ex) when (ex is InvalidOperationException or IOException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException) { }
     }
 
     void BringToFront()

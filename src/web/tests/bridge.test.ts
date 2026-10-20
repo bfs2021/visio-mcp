@@ -108,6 +108,25 @@ describe('startApp', () => {
     expect(received).toHaveLength(1);
   });
 
+  it('pins native drops to a bounded visible editor target and finite client point', async () => {
+    const f = fakeWebView();
+    const received: unknown[] = [];
+    startApp(f.wv, null, { app: { ingressAvailable: batch => received.push(batch) } });
+    const target = { documentId: 'doc', sessionId: 'session', baseRevision: 4, clientX: 120.5, clientY: 220 };
+    f.fromHost({ protocolVersion: 1, kind: 'request', requestId: 'ingress-target', method: 'app.ingressAvailable', params: {
+      batchId: 'batch-target', items: [{ ticketId: 'opaque', displayName: 'image.png', kind: 'image' }], rejections: [], target,
+    } });
+    await flush();
+    expect(received).toEqual([{ batchId: 'batch-target', items: [{ ticketId: 'opaque', displayName: 'image.png', kind: 'image' }], rejections: [], target }]);
+
+    f.fromHost({ protocolVersion: 1, kind: 'request', requestId: 'ingress-target-bad', method: 'app.ingressAvailable', params: {
+      batchId: 'batch-bad', items: [], rejections: [], target: { ...target, clientX: Number.NaN },
+    } });
+    await flush();
+    expect(f.toHost.at(-1)).toMatchObject({ error: { code: 'invalid_request' } });
+    expect(received).toHaveLength(1);
+  });
+
   it('AppStartsReadyWithA4Snapshot', async () => {
     const { ready, ask, toHost } = boot();
     expect(ready).toMatchObject({ kind: 'event', method: 'editor.ready', params: { protocolVersion: 1, revision: 0 } });
