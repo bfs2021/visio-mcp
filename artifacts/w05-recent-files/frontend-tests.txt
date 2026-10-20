@@ -1,0 +1,17 @@
+
+> test
+> vitest run
+
+
+ RUN  v5.0.3 C:/Users/claude/.codex/worktrees/r03-icons/diagram-app/src/web
+
+
+ Test Files  42 passed (42)
+      Tests  391 passed (391)
+   Start at  09:42:27
+   Duration  16.40s (import 59%, tests 26%, transform 14%, worker 1%)
+
+     Import  110 modules were evaluated 145 times · 6.64s total, 59% of tracked time
+             ~1.60s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+

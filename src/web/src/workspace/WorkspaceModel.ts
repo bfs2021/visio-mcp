@@ -1,4 +1,4 @@
-import { EditorModel, noHost, type HostApi } from '../editor/EditorModel';
+import { EditorModel, noHost, type HostApi, type RecentEntry } from '../editor/EditorModel';
 import type { AgentDocument } from '../bridge/engineHandlers';
 import type { DiagramDocument, Scope } from '../contracts/generated';
 import { fail, ok, type Result } from '../model/result';
@@ -29,6 +29,14 @@ export class WorkspaceModel {
   configure: (model: EditorModel, state: DocumentState) => void = () => {};
   /** A short message the strip shows (for example, the tab limit). */
   notice: string | null = null;
+  recentPrompt = false;
+  showRecent(): void { this.recentPrompt = true; this.bump(); }
+  closeRecent(): void { this.recentPrompt = false; this.bump(); }
+  async openRecent(entry: RecentEntry): Promise<{ opened: boolean; error?: string }> {
+    const existing = entry.kind === 'json' ? this.tabs.find(t => sameFile(t.engine.status().savedPath, entry.path)) : undefined;
+    if (existing) { this.activate(existing); return { opened: true }; }
+    return this.openFile(entry.kind, entry.id);
+  }
   protectNew: (scope: Scope) => Promise<Result<unknown>> = async () => ok({});
   /** Said once after a start that brought documents back; stays until dismissed. */
   banner: { text: string; lines: string[] } | null = null;
@@ -81,6 +89,8 @@ export class WorkspaceModel {
     model.untitledNo = ++this.untitled;
     model.host = this.hostApi;
     model.closeTabNow = discard => this.closeNow(model, discard);
+    const canPresentFileChoice = model.files.canPresent;
+    model.files.canPresent = () => !this.recentPrompt && canPresentFileChoice();
     model.newDocument.replacesCurrent = false;
     model.newDocument.create = async document => {
       const target = this.newTab({ document });
@@ -158,18 +168,21 @@ export class WorkspaceModel {
   }
 
   /** Opens a file in a tab: an untouched blank tab is used up first; opening a file that is already open shows that tab instead. */
-  async openFile(kind: 'json' | 'vsdx' = 'json'): Promise<void> {
+  async openFile(kind: 'json' | 'vsdx' = 'json', recentId?: string): Promise<{ opened: boolean; error?: string }> {
     const reuse = this.active.isBlank ? this.active : null;
     const target = reuse ?? this.newTab();
-    if (!target) return;
-    const outcome: { opened: boolean; path?: string } = kind === 'json' ? await target.open() : await target.openVsdx();
-    if (!outcome.opened) { if (!reuse) await this.closeNow(target, true); return; }
+    if (!target) return { opened: false, error: this.notice ?? 'Cannot open another tab' };
+    let outcome: { opened: boolean; path?: string; error?: string };
+    try { outcome = kind === 'json' ? await target.open(undefined, recentId) : await target.openVsdx(recentId); }
+    catch (error) { outcome = { opened: false, error: String(error) }; }
+    if (!outcome.opened) { if (!reuse) await this.closeNow(target, true); return outcome; }
     const path = outcome.path;
     if (path) {
       const existing = this.tabs.find(t => t !== target && sameFile(t.engine.status().savedPath, path));
       if (existing) { await this.closeNow(target, true); this.activate(existing); existing.say(`${path} is already open.`, 'info'); }
     }
     this.bump();
+    return { opened: true };
   }
 
   /** The person asked to close a tab. Unsaved work asks first. Resolves true once it is closed, false if they chose Cancel. */

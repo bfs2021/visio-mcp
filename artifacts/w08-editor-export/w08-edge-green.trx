@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="84b9fa2a-8e20-47d8-a258-195d0f621c21" name="claude@W11-TEMPLATE 2026-10-19 09:00:39" runUser="W11-TEMPLATE\claude" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-19T09:00:39.4122051+01:00" queuing="2026-10-19T09:00:39.4122057+01:00" start="2026-10-19T09:00:35.8828950+01:00" finish="2026-10-19T09:00:44.4779472+01:00" />
+  <TestSettings name="default" id="6afcc1b5-5f36-4988-aa0b-12bedea57977">
+    <Deployment runDeploymentRoot="claude_W11-TEMPLATE_2026-10-19_09_00_39" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="093463d1-7e93-4d70-baf5-240ada652daf" testId="52dcc0db-a4af-52fc-e384-a09c7da2ea25" testName="Diagram.Windows.Tests.EditorExportTests.ASelectionOnALargePageCanBeCopiedAsNativeBitmapAndPng" computerName="W11-TEMPLATE" duration="00:00:01.6111629" startTime="2026-10-19T09:00:37.7725441+01:00" endTime="2026-10-19T09:00:39.3799593+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="093463d1-7e93-4d70-baf5-240ada652daf" />
+    <UnitTestResult executionId="c6e92612-967f-4052-bc7a-93e0fa5451f4" testId="e3ffbe93-9773-b2d3-4663-533624085b19" testName="Diagram.Windows.Tests.EditorExportTests.PdfPreservesMixedPageSizesAndZipHasOrderedImages" computerName="W11-TEMPLATE" duration="00:00:01.4876309" startTime="2026-10-19T09:00:40.7182234+01:00" endTime="2026-10-19T09:00:42.2045740+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c6e92612-967f-4052-bc7a-93e0fa5451f4" />
+    <UnitTestResult executionId="55678d16-557f-4b05-ab9f-8fb255b27830" testId="08e7d194-7d02-9b10-473e-5ea62f929c5a" testName="Diagram.Windows.Tests.EditorExportTests.ImageExportCreatesRealPngAndPreservesSnapshot" computerName="W11-TEMPLATE" duration="00:00:01.3056388" startTime="2026-10-19T09:00:39.3915488+01:00" endTime="2026-10-19T09:00:40.7161535+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="55678d16-557f-4b05-ab9f-8fb255b27830" />
+    <UnitTestResult executionId="117dde36-313e-4f32-b576-b7faff70add4" testId="84ec2821-ef06-e065-5daa-f0c2e45c87eb" testName="Diagram.Windows.Tests.EditorExportTests.CancelAndDestinationChangesLeaveEveryVersionIntact" computerName="W11-TEMPLATE" duration="00:00:01.1520957" startTime="2026-10-19T09:00:42.2047841+01:00" endTime="2026-10-19T09:00:43.3573787+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="117dde36-313e-4f32-b576-b7faff70add4" />
+    <UnitTestResult executionId="ce06c598-0af2-4320-a910-8d01ce329976" testId="d8b865f7-e2ab-627d-b3c8-87f31899a298" testName="Diagram.Windows.Tests.EditorExportTests.InvalidOrStaleOptionsNeverOpenADestinationOrPublish" computerName="W11-TEMPLATE" duration="00:00:01.0272279" startTime="2026-10-19T09:00:43.3575646+01:00" endTime="2026-10-19T09:00:44.3859444+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ce06c598-0af2-4320-a910-8d01ce329976" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Diagram.Windows.Tests.EditorExportTests.InvalidOrStaleOptionsNeverOpenADestinationOrPublish" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="d8b865f7-e2ab-627d-b3c8-87f31899a298">
+      <Execution id="ce06c598-0af2-4320-a910-8d01ce329976" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.EditorExportTests" name="InvalidOrStaleOptionsNeverOpenADestinationOrPublish" />
+    </UnitTest>
+    <UnitTest name="Diagram.Windows.Tests.EditorExportTests.ImageExportCreatesRealPngAndPreservesSnapshot" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="08e7d194-7d02-9b10-473e-5ea62f929c5a">
+      <Execution id="55678d16-557f-4b05-ab9f-8fb255b27830" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.EditorExportTests" name="ImageExportCreatesRealPngAndPreservesSnapshot" />
+    </UnitTest>
+    <UnitTest name="Diagram.Windows.Tests.EditorExportTests.ASelectionOnALargePageCanBeCopiedAsNativeBitmapAndPng" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="52dcc0db-a4af-52fc-e384-a09c7da2ea25">
+      <Execution id="093463d1-7e93-4d70-baf5-240ada652daf" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.EditorExportTests" name="ASelectionOnALargePageCanBeCopiedAsNativeBitmapAndPng" />
+    </UnitTest>
+    <UnitTest name="Diagram.Windows.Tests.EditorExportTests.CancelAndDestinationChangesLeaveEveryVersionIntact" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="84ec2821-ef06-e065-5daa-f0c2e45c87eb">
+      <Execution id="117dde36-313e-4f32-b576-b7faff70add4" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.EditorExportTests" name="CancelAndDestinationChangesLeaveEveryVersionIntact" />
+    </UnitTest>
+    <UnitTest name="Diagram.Windows.Tests.EditorExportTests.PdfPreservesMixedPageSizesAndZipHasOrderedImages" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="e3ffbe93-9773-b2d3-4663-533624085b19">
+      <Execution id="c6e92612-967f-4052-bc7a-93e0fa5451f4" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.EditorExportTests" name="PdfPreservesMixedPageSizesAndZipHasOrderedImages" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="52dcc0db-a4af-52fc-e384-a09c7da2ea25" executionId="093463d1-7e93-4d70-baf5-240ada652daf" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e3ffbe93-9773-b2d3-4663-533624085b19" executionId="c6e92612-967f-4052-bc7a-93e0fa5451f4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="08e7d194-7d02-9b10-473e-5ea62f929c5a" executionId="55678d16-557f-4b05-ab9f-8fb255b27830" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="84ec2821-ef06-e065-5daa-f0c2e45c87eb" executionId="117dde36-313e-4f32-b576-b7faff70add4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d8b865f7-e2ab-627d-b3c8-87f31899a298" executionId="ce06c598-0af2-4320-a910-8d01ce329976" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="5" executed="5" passed="5" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v4.0.1+0f7d528729 (64-bit .NET 10.0.13)&#xD;
+[xUnit.net 00:00:00.08]   Discovering: Diagram.Windows.Tests&#xD;
+[xUnit.net 00:00:01.38]   Discovered:  Diagram.Windows.Tests&#xD;
+[xUnit.net 00:00:01.40]   Starting:    Diagram.Windows.Tests&#xD;
+[xUnit.net 00:00:08.06]   Finished:    Diagram.Windows.Tests&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

@@ -398,6 +398,10 @@ export class MaxGraphAdapter implements CanvasAdapter {
   }
 
   setSelection(ids: string[]): void { this.restoreSelection(ids); }
+  reveal(id: string): void {
+    const cell=this.graph.getDataModel().getCell(id);
+    if(cell)this.graph.scrollCellToVisible(cell,true);
+  }
 
   setTool(tool: Tool): void {
     this.tool = tool;

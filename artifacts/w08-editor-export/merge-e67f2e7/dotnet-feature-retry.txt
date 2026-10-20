@@ -1,0 +1,5 @@
+Test run for C:\Users\claude\.codex\worktrees\w08-merge-main\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\claude\.codex\worktrees\w08-merge-main\diagram-app\artifacts\w08-editor-export\merge-e67f2e7\verified-trx\w08-feature-retry_net10.0_20261019182717.trx
+
+Passed!  - Failed:     0, Passed:    16, Skipped:     0, Total:    16, Duration: 22 s - Diagram.Windows.Tests.dll (net10.0)
