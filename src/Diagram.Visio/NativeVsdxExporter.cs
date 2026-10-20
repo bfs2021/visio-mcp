@@ -752,6 +752,17 @@ public sealed class NativeVsdxExporter : IVsdxExporter
                         Warn("label_position_fixed", "The label is placed at its position along the line; Visio keeps it there as a fixed offset, so it may drift if the line is rerouted in Visio.", c.Id, "label placed", "info");
                     }
                 }
+                // R16: Visio cannot glue a connector end to a point along another connector, so a branch is written as an end placed on the line, with the join kept
+                // in a user cell so reopening it in the editor joins it again
+                foreach (var (name, ep) in new[] { ("AgentJoinFrom", c.From), ("AgentJoinTo", c.To) })
+                {
+                    if (ep.Join is not { } join) continue;
+                    cx.Add(UserRow(name, JsonSerializer.Serialize(new { connectorId = join.ConnectorId, position = join.Position })));
+                    Warn("join_not_native", "Visio cannot glue a connector to a point on another connector: the branch ends on the line but will not follow it if the line is moved in Visio. Reopened in the editor it follows again.", c.Id, "end placed on the line", "info");
+                }
+                // R16: a connector that hops is told to jump always, as an arc; the others are told never to, so Visio's page default does not add jumps the editor does not show
+                shape.Add(Cell("ConLineJumpCode", c.Hops == "arc" ? 2 : 1));
+                if (c.Hops == "arc") shape.Add(Cell("ConLineJumpStyle", 1));
                 if (c.Label is not null) cx.Add(UserRow("AgentTextBlock", "1"));
                 if (c.Waypoints.Count > 0) cx.Add(UserRow("AgentWaypoints", JsonSerializer.Serialize(c.Waypoints.Select(w => new { x = w.X, y = w.Y }))));
                 shape.Add(UserSection(c, cx.ToArray()));

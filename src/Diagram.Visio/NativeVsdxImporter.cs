@@ -382,6 +382,7 @@ public sealed class NativeVsdxImporter : IVsdxImporter
                 // a connector's fallback box needs the shapes it is glued to, which may come later in the file
                 foreach (var c in connectorEls) c["bounds"] = ConnectorBounds(c);
                 RestoreAttachments();
+                RestoreJoins();
                 foreach (var (group, shape, connMembers) in groups)
                 {
                     var members = (JsonArray)group["childIds"]!;
@@ -967,9 +968,54 @@ public sealed class NativeVsdxImporter : IVsdxImporter
                     try { var n = JsonNode.Parse(la)!; el["labelAnchor"] = new JsonObject { ["position"] = Math.Clamp(n["position"]!.GetValue<double>(), 0, 1), ["offsetPt"] = Math.Clamp(n["offsetPt"]!.GetValue<double>(), -2000, 2000) }; }
                     catch (Exception e) when (e is JsonException or InvalidOperationException or NullReferenceException or FormatException) { }
                 }
+                if (D(Own(s, "ConLineJumpCode"), 0) == 2 && (int)D(Own(s, "ConLineJumpStyle"), 0) <= 1) el["hops"] = "arc"; // always, as an arc (the only style the editor draws)
                 el["bounds"] = ConnectorBounds(el);
                 connectorEls.Add(el);
                 Add(el);
+            }
+
+            /// <summary>Branches the editor joined to another connector come back joined, when that connector is still on the page and the join would not loop.</summary>
+            void RestoreJoins()
+            {
+                var resolvedByAgentId = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var (sid, u) in userByShape) if (u.GetValueOrDefault("AgentId") is { } aid && idByShape.TryGetValue(sid, out var rid)) resolvedByAgentId[aid] = rid;
+                var joinedTo = new Dictionary<string, HashSet<string>>(); // connector id -> the connectors its ends join
+                bool Loops(string from, string to)
+                {
+                    var seen = new HashSet<string>();
+                    for (var queue = new Queue<string>(new[] { to }); queue.Count > 0;)
+                    {
+                        var at = queue.Dequeue();
+                        if (at == from) return true;
+                        if (seen.Add(at) && joinedTo.TryGetValue(at, out var next)) foreach (var n in next) queue.Enqueue(n);
+                    }
+                    return false;
+                }
+                foreach (var (sid, u) in userByShape)
+                {
+                    if (!idByShape.TryGetValue(sid, out var elId) || !elementById.TryGetValue(elId, out var el) || el["kind"]!.GetValue<string>() != "connector") continue;
+                    foreach (var (row, end) in new[] { ("AgentJoinFrom", "from"), ("AgentJoinTo", "to") })
+                    {
+                        if (!u.TryGetValue(row, out var json)) continue;
+                        try
+                        {
+                            var n = JsonNode.Parse(json)!;
+                            var cid = n["connectorId"]!.GetValue<string>();
+                            var target = resolvedByAgentId.GetValueOrDefault(cid) ?? cid;
+                            var ep = (JsonObject)el[end]!;
+                            if (ep["glue"]!.GetValue<string>() != "none" || ep["point"] is null) continue; // the end was reattached to a shape in Visio: that wins
+                            if (target == elId || !elementById.TryGetValue(target, out var c) || c["kind"]!.GetValue<string>() != "connector" || Loops(elId, target))
+                            {
+                                Note("join_connector_missing", "A branch was joined to a connector that is no longer in the file (or would loop); its end stays where it is.", elId, sid, "join dropped", "info");
+                                continue;
+                            }
+                            ep["join"] = new JsonObject { ["connectorId"] = target, ["position"] = Math.Clamp(n["position"]!.GetValue<double>(), 0, 1) };
+                            if (!joinedTo.TryGetValue(elId, out var set)) joinedTo[elId] = set = new HashSet<string>();
+                            set.Add(target);
+                        }
+                        catch (Exception e) when (e is JsonException or InvalidOperationException or NullReferenceException or FormatException) { }
+                    }
+                }
             }
 
             /// <summary>Shapes and text boxes the editor pinned to a connector come back pinned, when that connector is still on the page.</summary>
