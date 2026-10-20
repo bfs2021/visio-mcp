@@ -1,0 +1,130 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="39256cde-20d3-438a-a474-d04ddc53db70" name="claude@W11-TEMPLATE 2026-10-19 11:45:50" runUser="W11-TEMPLATE\claude" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-19T11:45:50.9734527+01:00" queuing="2026-10-19T11:45:50.9734532+01:00" start="2026-10-19T11:45:43.8504814+01:00" finish="2026-10-19T11:45:57.6597291+01:00" />
+  <TestSettings name="default" id="2f1006b2-7d14-4d75-b29c-b482eec98900">
+    <Deployment runDeploymentRoot="claude_W11-TEMPLATE_2026-10-19_11_45_50" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="59c4e3e0-08b6-41b9-8ea8-ea78d081cf91" testId="41d99433-f396-a395-0844-cb984e45daaa" testName="PeerTests.UnknownMutationTimeout" computerName="W11-TEMPLATE" duration="00:00:00.6117164" startTime="2026-10-19T11:45:55.7135883+01:00" endTime="2026-10-19T11:45:56.4458192+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="59c4e3e0-08b6-41b9-8ea8-ea78d081cf91" />
+    <UnitTestResult executionId="c46326a5-968c-4dd5-a957-7a2aed533d5f" testId="e4f18bcc-31ec-6b36-97ac-cce2fffca356" testName="PeerTests.FirstFrameHandshake" computerName="W11-TEMPLATE" duration="00:00:00.0638082" startTime="2026-10-19T11:45:54.9041346+01:00" endTime="2026-10-19T11:45:54.9850645+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c46326a5-968c-4dd5-a957-7a2aed533d5f" />
+    <UnitTestResult executionId="a2d54bf8-be6d-4038-80ac-5a446afb7c41" testId="128ac524-9d66-52e3-9f49-c97c3f015a5f" testName="FrameTests.DeeplyNestedFramesAreRefusedBeforeAnythingWalksThem" computerName="W11-TEMPLATE" duration="00:00:00.0203897" startTime="2026-10-19T11:45:50.9454614+01:00" endTime="2026-10-19T11:45:50.9656968+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a2d54bf8-be6d-4038-80ac-5a446afb7c41" />
+    <UnitTestResult executionId="ba794159-7398-46e5-a728-ef36333df19d" testId="05c2e385-4370-9e25-41b1-64484520ea7a" testName="FrameTests.OutgoingFramesOverTheCapAreRefused" computerName="W11-TEMPLATE" duration="00:00:00.1450365" startTime="2026-10-19T11:45:47.9948445+01:00" endTime="2026-10-19T11:45:48.0626760+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ba794159-7398-46e5-a728-ef36333df19d" />
+    <UnitTestResult executionId="4a2f523a-336d-4658-8dda-5ab22908895d" testId="c3cae5d2-394c-04c2-58ca-bdc5b85c3a19" testName="PeerTests.OriginIsStampedByTheHostAndAnyCallerOriginIsDiscarded" computerName="W11-TEMPLATE" duration="00:00:00.1055936" startTime="2026-10-19T11:45:57.2286995+01:00" endTime="2026-10-19T11:45:57.3853430+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4a2f523a-336d-4658-8dda-5ab22908895d" />
+    <UnitTestResult executionId="c536c096-01e2-4833-85de-bf29f798ad08" testId="83d082f1-cab1-b197-64fb-9a6d8b3e5bde" testName="PeerTests.HandlerFailureIsInternalError" computerName="W11-TEMPLATE" duration="00:00:00.0998096" startTime="2026-10-19T11:45:57.0804216+01:00" endTime="2026-10-19T11:45:57.2282934+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c536c096-01e2-4833-85de-bf29f798ad08" />
+    <UnitTestResult executionId="7f8ee6c2-6b4a-4106-84f2-9e1f03960439" testId="6c0e3b81-4feb-57e8-50fd-f7f0e6fce1db" testName="PeerTests.OverlappingCallsCorrelateEvenWithTheSameCallerId" computerName="W11-TEMPLATE" duration="00:00:00.4322751" startTime="2026-10-19T11:45:56.6382193+01:00" endTime="2026-10-19T11:45:57.0802483+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7f8ee6c2-6b4a-4106-84f2-9e1f03960439" />
+    <UnitTestResult executionId="4cf66ec1-0e85-4b74-98f4-96c28f945ed6" testId="b1b8d94b-6d85-23c3-f0ce-16e4a96f1c74" testName="FrameTests.MalformedJsonIsInvalidRequest" computerName="W11-TEMPLATE" duration="00:00:00.0028555" startTime="2026-10-19T11:45:50.9451317+01:00" endTime="2026-10-19T11:45:50.9452355+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4cf66ec1-0e85-4b74-98f4-96c28f945ed6" />
+    <UnitTestResult executionId="19961e2a-61ba-43ba-aff8-93d40e264332" testId="dc30a466-4406-bbbe-9964-547488670085" testName="FrameTests.ThirtyTwoMiBCap" computerName="W11-TEMPLATE" duration="00:00:00.0155826" startTime="2026-10-19T11:45:47.9112807+01:00" endTime="2026-10-19T11:45:47.9125192+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="19961e2a-61ba-43ba-aff8-93d40e264332" />
+    <UnitTestResult executionId="f5e190a0-009b-48f9-95c4-ca685d6efab2" testId="c4bc1318-a3fe-334f-ace7-e640caecb09e" testName="PeerTests.OnlyOneApplicationOwnsAPipeName" computerName="W11-TEMPLATE" duration="00:00:00.1626783" startTime="2026-10-19T11:45:56.4462779+01:00" endTime="2026-10-19T11:45:56.6379458+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f5e190a0-009b-48f9-95c4-ca685d6efab2" />
+    <UnitTestResult executionId="669d19e6-260b-4bcb-a9e4-c2fc542337bc" testId="54676806-bb03-cca1-2fce-7b659dcc7acf" testName="FrameTests.PartialFrames" computerName="W11-TEMPLATE" duration="00:00:02.8674434" startTime="2026-10-19T11:45:48.0634421+01:00" endTime="2026-10-19T11:45:50.9303138+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="669d19e6-260b-4bcb-a9e4-c2fc542337bc" />
+    <UnitTestResult executionId="e01f94b6-899b-44d6-bcb0-925f0a011de0" testId="9ffd7f99-da81-2246-47b7-21d547c91e42" testName="PeerTests.SameUserSessionOnly" computerName="W11-TEMPLATE" duration="00:00:00.0563094" startTime="2026-10-19T11:45:57.5241745+01:00" endTime="2026-10-19T11:45:57.5861989+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e01f94b6-899b-44d6-bcb0-925f0a011de0" />
+    <UnitTestResult executionId="a9f875ba-4b53-4d13-a3a7-00174d566719" testId="6caef08b-54cf-edad-de7d-1eb8bb4e0762" testName="PeerTests.EightClientsSixteenPendingLimit" computerName="W11-TEMPLATE" duration="00:00:00.7142028" startTime="2026-10-19T11:45:54.9937724+01:00" endTime="2026-10-19T11:45:55.7132812+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a9f875ba-4b53-4d13-a3a7-00174d566719" />
+    <UnitTestResult executionId="b83bcd57-37a1-4ee1-9101-9037864124bb" testId="78331a28-ee31-47be-7b99-5f3bc6707faf" testName="PeerTests.LargeFramesRoundTrip" computerName="W11-TEMPLATE" duration="00:00:00.1160774" startTime="2026-10-19T11:45:57.3857448+01:00" endTime="2026-10-19T11:45:57.5238960+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b83bcd57-37a1-4ee1-9101-9037864124bb" />
+    <UnitTestResult executionId="dad8511d-ac10-45cc-8c22-478cb8cb5091" testId="0af98d2e-84fe-4fe8-3487-fe96a5807367" testName="PeerTests.MissingApplicationIsNotRunningAndTheClientRecovers" computerName="W11-TEMPLATE" duration="00:00:03.6882311" startTime="2026-10-19T11:45:50.9673960+01:00" endTime="2026-10-19T11:45:54.6837003+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="dad8511d-ac10-45cc-8c22-478cb8cb5091" />
+    <UnitTestResult executionId="7e6c6d08-8b33-4e58-ac91-35ef132b6e4c" testId="65bffedc-c1d9-c476-c7e7-20651eb962c4" testName="FrameTests.EveryMalformedShapeOfFrameIsAFrameErrorNeverAnotherException" computerName="W11-TEMPLATE" duration="00:00:00.0018642" startTime="2026-10-19T11:45:50.9453801+01:00" endTime="2026-10-19T11:45:50.9454053+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7e6c6d08-8b33-4e58-ac91-35ef132b6e4c" />
+    <UnitTestResult executionId="baf8dd8f-df87-4301-bb18-f1cf255e7a62" testId="c3030633-7d9a-094d-d2ad-eb45fbd0e146" testName="PeerTests.MalformedRequestGetsInvalidRequestAndTheConnectionSurvives" computerName="W11-TEMPLATE" duration="00:00:00.1668742" startTime="2026-10-19T11:45:54.7067730+01:00" endTime="2026-10-19T11:45:54.9038480+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="baf8dd8f-df87-4301-bb18-f1cf255e7a62" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="PeerTests.OverlappingCallsCorrelateEvenWithTheSameCallerId" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.ipc.tests\bin\debug\net10.0\diagram.ipc.tests.dll" id="6c0e3b81-4feb-57e8-50fd-f7f0e6fce1db">
+      <Execution id="7f8ee6c2-6b4a-4106-84f2-9e1f03960439" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Ipc.Tests\bin\Debug\net10.0\Diagram.Ipc.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="PeerTests" name="OverlappingCallsCorrelateEvenWithTheSameCallerId" />
+    </UnitTest>
+    <UnitTest name="PeerTests.MissingApplicationIsNotRunningAndTheClientRecovers" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.ipc.tests\bin\debug\net10.0\diagram.ipc.tests.dll" id="0af98d2e-84fe-4fe8-3487-fe96a5807367">
+      <Execution id="dad8511d-ac10-45cc-8c22-478cb8cb5091" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Ipc.Tests\bin\Debug\net10.0\Diagram.Ipc.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="PeerTests" name="MissingApplicationIsNotRunningAndTheClientRecovers" />
+    </UnitTest>
+    <UnitTest name="FrameTests.ThirtyTwoMiBCap" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.ipc.tests\bin\debug\net10.0\diagram.ipc.tests.dll" id="dc30a466-4406-bbbe-9964-547488670085">
+      <Execution id="19961e2a-61ba-43ba-aff8-93d40e264332" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Ipc.Tests\bin\Debug\net10.0\Diagram.Ipc.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="FrameTests" name="ThirtyTwoMiBCap" />
+    </UnitTest>
+    <UnitTest name="PeerTests.SameUserSessionOnly" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.ipc.tests\bin\debug\net10.0\diagram.ipc.tests.dll" id="9ffd7f99-da81-2246-47b7-21d547c91e42">
+      <Execution id="e01f94b6-899b-44d6-bcb0-925f0a011de0" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Ipc.Tests\bin\Debug\net10.0\Diagram.Ipc.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="PeerTests" name="SameUserSessionOnly" />
+    </UnitTest>
+    <UnitTest name="PeerTests.LargeFramesRoundTrip" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.ipc.tests\bin\debug\net10.0\diagram.ipc.tests.dll" id="78331a28-ee31-47be-7b99-5f3bc6707faf">
+      <Execution id="b83bcd57-37a1-4ee1-9101-9037864124bb" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Ipc.Tests\bin\Debug\net10.0\Diagram.Ipc.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="PeerTests" name="LargeFramesRoundTrip" />
+    </UnitTest>
+    <UnitTest name="FrameTests.DeeplyNestedFramesAreRefusedBeforeAnythingWalksThem" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.ipc.tests\bin\debug\net10.0\diagram.ipc.tests.dll" id="128ac524-9d66-52e3-9f49-c97c3f015a5f">
+      <Execution id="a2d54bf8-be6d-4038-80ac-5a446afb7c41" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Ipc.Tests\bin\Debug\net10.0\Diagram.Ipc.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="FrameTests" name="DeeplyNestedFramesAreRefusedBeforeAnythingWalksThem" />
+    </UnitTest>
+    <UnitTest name="FrameTests.MalformedJsonIsInvalidRequest" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.ipc.tests\bin\debug\net10.0\diagram.ipc.tests.dll" id="b1b8d94b-6d85-23c3-f0ce-16e4a96f1c74">
+      <Execution id="4cf66ec1-0e85-4b74-98f4-96c28f945ed6" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Ipc.Tests\bin\Debug\net10.0\Diagram.Ipc.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="FrameTests" name="MalformedJsonIsInvalidRequest" />
+    </UnitTest>
+    <UnitTest name="PeerTests.OriginIsStampedByTheHostAndAnyCallerOriginIsDiscarded" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.ipc.tests\bin\debug\net10.0\diagram.ipc.tests.dll" id="c3cae5d2-394c-04c2-58ca-bdc5b85c3a19">
+      <Execution id="4a2f523a-336d-4658-8dda-5ab22908895d" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Ipc.Tests\bin\Debug\net10.0\Diagram.Ipc.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="PeerTests" name="OriginIsStampedByTheHostAndAnyCallerOriginIsDiscarded" />
+    </UnitTest>
+    <UnitTest name="PeerTests.OnlyOneApplicationOwnsAPipeName" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.ipc.tests\bin\debug\net10.0\diagram.ipc.tests.dll" id="c4bc1318-a3fe-334f-ace7-e640caecb09e">
+      <Execution id="f5e190a0-009b-48f9-95c4-ca685d6efab2" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Ipc.Tests\bin\Debug\net10.0\Diagram.Ipc.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="PeerTests" name="OnlyOneApplicationOwnsAPipeName" />
+    </UnitTest>
+    <UnitTest name="PeerTests.EightClientsSixteenPendingLimit" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.ipc.tests\bin\debug\net10.0\diagram.ipc.tests.dll" id="6caef08b-54cf-edad-de7d-1eb8bb4e0762">
+      <Execution id="a9f875ba-4b53-4d13-a3a7-00174d566719" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Ipc.Tests\bin\Debug\net10.0\Diagram.Ipc.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="PeerTests" name="EightClientsSixteenPendingLimit" />
+    </UnitTest>
+    <UnitTest name="PeerTests.UnknownMutationTimeout" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.ipc.tests\bin\debug\net10.0\diagram.ipc.tests.dll" id="41d99433-f396-a395-0844-cb984e45daaa">
+      <Execution id="59c4e3e0-08b6-41b9-8ea8-ea78d081cf91" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Ipc.Tests\bin\Debug\net10.0\Diagram.Ipc.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="PeerTests" name="UnknownMutationTimeout" />
+    </UnitTest>
+    <UnitTest name="PeerTests.HandlerFailureIsInternalError" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.ipc.tests\bin\debug\net10.0\diagram.ipc.tests.dll" id="83d082f1-cab1-b197-64fb-9a6d8b3e5bde">
+      <Execution id="c536c096-01e2-4833-85de-bf29f798ad08" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Ipc.Tests\bin\Debug\net10.0\Diagram.Ipc.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="PeerTests" name="HandlerFailureIsInternalError" />
+    </UnitTest>
+    <UnitTest name="FrameTests.OutgoingFramesOverTheCapAreRefused" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.ipc.tests\bin\debug\net10.0\diagram.ipc.tests.dll" id="05c2e385-4370-9e25-41b1-64484520ea7a">
+      <Execution id="ba794159-7398-46e5-a728-ef36333df19d" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Ipc.Tests\bin\Debug\net10.0\Diagram.Ipc.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="FrameTests" name="OutgoingFramesOverTheCapAreRefused" />
+    </UnitTest>
+    <UnitTest name="PeerTests.FirstFrameHandshake" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.ipc.tests\bin\debug\net10.0\diagram.ipc.tests.dll" id="e4f18bcc-31ec-6b36-97ac-cce2fffca356">
+      <Execution id="c46326a5-968c-4dd5-a957-7a2aed533d5f" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Ipc.Tests\bin\Debug\net10.0\Diagram.Ipc.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="PeerTests" name="FirstFrameHandshake" />
+    </UnitTest>
+    <UnitTest name="PeerTests.MalformedRequestGetsInvalidRequestAndTheConnectionSurvives" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.ipc.tests\bin\debug\net10.0\diagram.ipc.tests.dll" id="c3030633-7d9a-094d-d2ad-eb45fbd0e146">
+      <Execution id="baf8dd8f-df87-4301-bb18-f1cf255e7a62" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Ipc.Tests\bin\Debug\net10.0\Diagram.Ipc.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="PeerTests" name="MalformedRequestGetsInvalidRequestAndTheConnectionSurvives" />
+    </UnitTest>
+    <UnitTest name="FrameTests.EveryMalformedShapeOfFrameIsAFrameErrorNeverAnotherException" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.ipc.tests\bin\debug\net10.0\diagram.ipc.tests.dll" id="65bffedc-c1d9-c476-c7e7-20651eb962c4">
+      <Execution id="7e6c6d08-8b33-4e58-ac91-35ef132b6e4c" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Ipc.Tests\bin\Debug\net10.0\Diagram.Ipc.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="FrameTests" name="EveryMalformedShapeOfFrameIsAFrameErrorNeverAnotherException" />
+    </UnitTest>
+    <UnitTest name="FrameTests.PartialFrames" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.ipc.tests\bin\debug\net10.0\diagram.ipc.tests.dll" id="54676806-bb03-cca1-2fce-7b659dcc7acf">
+      <Execution id="669d19e6-260b-4bcb-a9e4-c2fc542337bc" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Ipc.Tests\bin\Debug\net10.0\Diagram.Ipc.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="FrameTests" name="PartialFrames" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="41d99433-f396-a395-0844-cb984e45daaa" executionId="59c4e3e0-08b6-41b9-8ea8-ea78d081cf91" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e4f18bcc-31ec-6b36-97ac-cce2fffca356" executionId="c46326a5-968c-4dd5-a957-7a2aed533d5f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="128ac524-9d66-52e3-9f49-c97c3f015a5f" executionId="a2d54bf8-be6d-4038-80ac-5a446afb7c41" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="05c2e385-4370-9e25-41b1-64484520ea7a" executionId="ba794159-7398-46e5-a728-ef36333df19d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c3cae5d2-394c-04c2-58ca-bdc5b85c3a19" executionId="4a2f523a-336d-4658-8dda-5ab22908895d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="83d082f1-cab1-b197-64fb-9a6d8b3e5bde" executionId="c536c096-01e2-4833-85de-bf29f798ad08" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6c0e3b81-4feb-57e8-50fd-f7f0e6fce1db" executionId="7f8ee6c2-6b4a-4106-84f2-9e1f03960439" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b1b8d94b-6d85-23c3-f0ce-16e4a96f1c74" executionId="4cf66ec1-0e85-4b74-98f4-96c28f945ed6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="dc30a466-4406-bbbe-9964-547488670085" executionId="19961e2a-61ba-43ba-aff8-93d40e264332" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c4bc1318-a3fe-334f-ace7-e640caecb09e" executionId="f5e190a0-009b-48f9-95c4-ca685d6efab2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="54676806-bb03-cca1-2fce-7b659dcc7acf" executionId="669d19e6-260b-4bcb-a9e4-c2fc542337bc" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9ffd7f99-da81-2246-47b7-21d547c91e42" executionId="e01f94b6-899b-44d6-bcb0-925f0a011de0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6caef08b-54cf-edad-de7d-1eb8bb4e0762" executionId="a9f875ba-4b53-4d13-a3a7-00174d566719" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="78331a28-ee31-47be-7b99-5f3bc6707faf" executionId="b83bcd57-37a1-4ee1-9101-9037864124bb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0af98d2e-84fe-4fe8-3487-fe96a5807367" executionId="dad8511d-ac10-45cc-8c22-478cb8cb5091" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="65bffedc-c1d9-c476-c7e7-20651eb962c4" executionId="7e6c6d08-8b33-4e58-ac91-35ef132b6e4c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c3030633-7d9a-094d-d2ad-eb45fbd0e146" executionId="baf8dd8f-df87-4301-bb18-f1cf255e7a62" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="17" executed="17" passed="17" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v4.0.1+0f7d528729 (64-bit .NET 10.0.13)&#xD;
+[xUnit.net 00:00:00.39]   Discovering: Diagram.Ipc.Tests&#xD;
+[xUnit.net 00:00:02.59]   Discovered:  Diagram.Ipc.Tests&#xD;
+[xUnit.net 00:00:02.66]   Starting:    Diagram.Ipc.Tests&#xD;
+[xUnit.net 00:00:12.38]   Finished:    Diagram.Ipc.Tests&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

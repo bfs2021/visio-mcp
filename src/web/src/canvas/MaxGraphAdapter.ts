@@ -1,7 +1,7 @@
 import { WrappedSvgText } from './WrappedSvgText';
 import {
   Cell, EdgeHandler, Geometry, Graph, InternalEvent, Point, RubberBandHandler, VertexHandler, VertexHandlerConfig, getDefaultPlugins,
-  type EventSource, type InternalMouseEvent, type SelectionCellsHandler,
+  type EventSource, type InternalMouseEvent, type SelectionCellsHandler, type SelectionHandler,
 } from '@maxgraph/core';
 import type { Element, Snapshot } from '../contracts/generated';
 import { canonicalSerialize } from '../model/canonical';
@@ -77,7 +77,7 @@ export class MaxGraphAdapter implements CanvasAdapter {
     g.setAllowDanglingEdges(true);
     g.setDisconnectOnMove(false);
     g.setHtmlLabels(false);
-    g.setGridEnabled(true);
+    g.setGridEnabled(false);
     g.setEnterStopsCellEditing(false);
     g.view.setTranslate(MARGIN_PT, MARGIN_PT);
     g.view.scale = DEFAULT_SCALE;
@@ -86,8 +86,18 @@ export class MaxGraphAdapter implements CanvasAdapter {
 
     for (const type of ['pointerdown', 'mousedown'] as const) container.addEventListener(type, e => { this.toggleHeld = e.ctrlKey || e.metaKey; }, true);
 
-    const selectionHandler = g.getPlugin('SelectionHandler') as unknown as { guidesEnabled: boolean } | undefined;
-    if (selectionHandler) selectionHandler.guidesEnabled = true; // alignment guides while moving
+    const selectionHandler = g.getPlugin<SelectionHandler>('SelectionHandler');
+    if (selectionHandler) {
+      selectionHandler.guidesEnabled = true;
+      const createGuide = selectionHandler.createGuide.bind(selectionHandler);
+      selectionHandler.createGuide = () => {
+        const guide = createGuide(); const paint = guide.move.bind(guide);
+        guide.move = (bounds, delta, gridEnabled, clone) => {
+          const raw = delta.clone(); paint(bounds, delta, gridEnabled, clone); return raw;
+        };
+        return guide;
+      };
+    }
     this.installEditRedirects();
     const uninstallGestures = installGestureHooks(g, n => { if (!this.projecting) cb.onGesture(n); });
     this.cleanups.push(uninstallGestures);
@@ -182,7 +192,7 @@ export class MaxGraphAdapter implements CanvasAdapter {
       this.pageWidth = page.widthPt;
       this.pageHeight = page.heightPt;
       this.graph.setGridSize(page.grid.spacingPt);
-      this.graph.setGridEnabled(page.grid.snap); // the preview snaps like the committed result: the planner owns the final value
+      this.graph.setGridEnabled(false); // preserve raw pointer deltas for canonical guide precedence and layer settings
       this.paintSheet(page.background, page.grid);
 
       const wanted = new Map<string, Element>();
@@ -388,6 +398,10 @@ export class MaxGraphAdapter implements CanvasAdapter {
   }
 
   setSelection(ids: string[]): void { this.restoreSelection(ids); }
+  reveal(id: string): void {
+    const cell=this.graph.getDataModel().getCell(id);
+    if(cell)this.graph.scrollCellToVisible(cell,true);
+  }
 
   setTool(tool: Tool): void {
     this.tool = tool;

@@ -71,6 +71,51 @@ public class PeerTests
     }
 
     [Fact]
+    public async Task AClientsReportedVersionIsListedForAboutAndDroppedWhenItIsNotAPlainVersion()
+    {
+        var pipe = NewPipe();
+        await using var server = PipeServer.Start(pipe, Echo());
+        Assert.Empty(server.Companions);
+
+        await using var good = await RawConnect(pipe);
+        await FrameCodec.WriteAsync(good, Raw("app.hello", "h", new { protocolVersion = 1, clientLabel = "Diagram.Mcp", clientVersion = "1.4.0.0" }), Ct());
+        using (await FrameCodec.ReadAsync(good, Ct())) { }
+
+        await using var odd = await RawConnect(pipe);
+        await FrameCodec.WriteAsync(odd, Raw("app.hello", "h", new { protocolVersion = 1, clientLabel = "x", clientVersion = "<b>9</b>" }), Ct());
+        using (await FrameCodec.ReadAsync(odd, Ct())) { }
+
+        await using var silent = await RawConnect(pipe);
+        await FrameCodec.WriteAsync(silent, Raw("app.hello", "h", new { protocolVersion = 1, clientLabel = "x" }), Ct());
+        using (await FrameCodec.ReadAsync(silent, Ct())) { }
+
+        var versions = server.Companions.Select(c => c.Version).OrderBy(v => v).ToList();
+        Assert.Equal(new string?[] { null, null, "1.4.0.0" }, versions);
+        Assert.All(server.Companions, c => Assert.StartsWith("Client ", c.Label)); // the label is the server's, never the caller's text
+
+        await good.DisposeAsync();
+        for (var i = 0; i < 100 && server.Companions.Count != 2; i++) await Task.Delay(50);
+        Assert.Equal(2, server.Companions.Count);
+    }
+
+    [Theory]
+    [InlineData("1.4.0.0", "1.4.0.0")]
+    [InlineData("1.4.0-rc.1+abc", "1.4.0-rc.1+abc")]
+    [InlineData("", null)]
+    [InlineData(null, null)]
+    [InlineData("1 4", null)]
+    [InlineData("<script>", null)]
+    public void OnlyAShortRunOfVersionCharactersIsKept(string? reported, string? kept) => Assert.Equal(kept, Wire.CleanVersion(reported));
+
+    [Fact]
+    public void TheBuiltInClientSendsItsAssemblyVersion()
+    {
+        var hello = Wire.Hello("Diagram.Mcp", "1.2.3.4");
+        Assert.Equal("1.2.3.4", hello.Params!["clientVersion"]!.GetValue<string>());
+        Assert.False(Wire.Hello("Diagram.Mcp").Params!.ContainsKey("clientVersion"));
+    }
+
+    [Fact]
     public async Task OriginIsStampedByTheHostAndAnyCallerOriginIsDiscarded()
     {
         var pipe = NewPipe();

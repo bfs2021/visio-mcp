@@ -1,0 +1,36 @@
+
+> test:browser
+> playwright test tests/browser/guides.spec.ts tests/browser/editor.spec.ts tests/browser/pages-layers-assets.spec.ts
+
+[WebServer] (node:16296) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:6804) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 21 tests using 1 worker
+
+(node:17624) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 tests\browser\editor.spec.ts:11:1 › manual_edit_without_llm (3.6s)
+  ok  2 tests\browser\editor.spec.ts:210:1 › each picture format becomes an independent image object with its own hash (1.2s)
+  ok  3 tests\browser\editor.spec.ts:239:1 › grid toggle, snapping and alignment guides (2.0s)
+  ok  4 tests\browser\editor.spec.ts:285:1 › long_text_edit_and_drag_stale_backstop (1.1s)
+  ok  5 tests\browser\editor.spec.ts:332:1 › export during a drag uses committed geometry (856ms)
+  ok  6 tests\browser\editor.spec.ts:347:1 › projection does not emit edits and cell types do not escape (824ms)
+  ok  7 tests\browser\editor.spec.ts:371:1 › connector glue follows a moved shape and survives projection rebuilds (993ms)
+  ok  8 tests\browser\editor.spec.ts:390:1 › evidence: a small diagram built by hand (1.5s)
+  ok  9 tests\browser\editor.spec.ts:413:1 › real double-click text editing, keyboard nudges and duplicate (928ms)
+  ok 10 tests\browser\guides.spec.ts:3:1 › ruler guides create, move, cancel, delete and undo without altering shapes (1.4s)
+  ok 11 tests\browser\guides.spec.ts:27:1 › authored guides win over a coarse grid in a real canvas drag (781ms)
+  ok 12 tests\browser\guides.spec.ts:38:1 › picture placement uses page guides without changing its natural dimensions (642ms)
+  ok 13 tests\browser\guides.spec.ts:50:1 › vector icon placement snaps to a guide and retains the chosen size (778ms)
+  ok 14 tests\browser\pages-layers-assets.spec.ts:12:1 › pages: add, rename, reorder, duplicate, delete, size presets and custom size (1.6s)
+  ok 15 tests\browser\pages-layers-assets.spec.ts:78:1 › pages: undo brings back a deleted page and the tabs follow (714ms)
+  ok 16 tests\browser\pages-layers-assets.spec.ts:90:1 › pages: a connector on the second page is routed (derived routes cover every page) (570ms)
+  ok 17 tests\browser\pages-layers-assets.spec.ts:114:1 › layers: add, rename, assign, visible, locked, print, delete, and the flags really change what can be done (1.7s)
+  ok 18 tests\browser\pages-layers-assets.spec.ts:241:1 › pictures: library list with thumbnails, import, tags, rename, place, and the document pins what it uses (816ms)
+  ok 19 tests\browser\pages-layers-assets.spec.ts:279:1 › pictures: single replacement changes one image, global replacement changes all and reports how many (1.2s)
+  ok 20 tests\browser\pages-layers-assets.spec.ts:336:1 › pictures: a newer library version of an id the document already pins becomes a separate version; old images stay (904ms)
+  ok 21 tests\browser\pages-layers-assets.spec.ts:365:1 › pictures: drag a picture from the panel onto the page, rename and tag a document asset, copy its id, delete a library entry (1.3s)
+
+  21 passed (28.9s)

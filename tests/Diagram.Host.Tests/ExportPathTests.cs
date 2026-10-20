@@ -210,4 +210,67 @@ public class ExportPathTests
         var forged = approved with { Path = Path.Combine(env.Elsewhere, "other.vsdx"), Consented = false };
         Assert.Equal("path_not_permitted", env.Policy.Revalidate(forged, env.Scope).Error!.Code);
     }
+
+    // ---- reading (import_visio) ----------------------------------------------------------------
+
+    [Fact]
+    public async Task AFileInAnApprovedFolderIsReadWithoutAQuestionAndARelativeNameMeansTheExportFolder()
+    {
+        using var env = new Env();
+        File.WriteAllText(Path.Combine(env.Saved, "ref.vsdx"), "x");
+        File.WriteAllText(Path.Combine(env.Exports, "made.vsdx"), "x");
+        var a = await env.Policy.ResolveReadAsync(Path.Combine(env.Saved, "ref.vsdx"), ".vsdx", "MCP client", default);
+        Assert.True(a.IsOk, a.Error?.Message);
+        Assert.False(a.Value.Consented);
+        Assert.True((await env.Policy.ResolveReadAsync("made.vsdx", ".vsdx", "MCP client", default)).IsOk);
+        Assert.Empty(env.Consent.Asked);
+    }
+
+    [Fact]
+    public async Task AFileElsewhereNeedsTheirYesAndIsRefusedOtherwise()
+    {
+        using var env = new Env();
+        var file = Path.Combine(env.Elsewhere, "ref.vsdx");
+        File.WriteAllText(file, "x");
+        var denied = await env.Policy.ResolveReadAsync(file, ".vsdx", "MCP client", default);
+        Assert.Equal("path_not_permitted", denied.Error!.Code);
+        Assert.Contains("read a file outside", Assert.Single(env.Consent.Asked).Action);
+        env.Consent.Answer = true;
+        Assert.True((await env.Policy.ResolveReadAsync(file, ".vsdx", "MCP client", default)).Value.Consented);
+        // traversal out of the export folder is the same question
+        env.Consent.Answer = false;
+        Assert.Equal("path_not_permitted", (await env.Policy.ResolveReadAsync(@"..\elsewhere\ref.vsdx", ".vsdx", "MCP client", default)).Error!.Code);
+    }
+
+    [Theory]
+    [InlineData(@"\\server\share\a.vsdx")]
+    [InlineData(@"C:\temp\a.vsdx:stream")]
+    [InlineData(@"C:\temp\CON.vsdx")]
+    [InlineData("")]
+    public async Task NeverAllowedPathsAreRefusedEvenIfTheyWouldBeApproved(string path)
+    {
+        using var env = new Env();
+        env.Consent.Answer = true;
+        var r = await env.Policy.ResolveReadAsync(path, ".vsdx", "MCP client", default);
+        Assert.Equal("path_not_permitted", r.Error!.Code);
+        Assert.Empty(env.Consent.Asked);
+    }
+
+    [Fact]
+    public async Task OnlyAnExistingFileOfTheRightKindIsReadAndItIsCheckedAgainBeforeTheBytesAreTaken()
+    {
+        using var env = new Env();
+        Assert.Equal("not_found", (await env.Policy.ResolveReadAsync("none.vsdx", ".vsdx", "MCP client", default)).Error!.Code);
+        File.WriteAllText(Path.Combine(env.Exports, "a.txt"), "x");
+        Assert.Equal("invalid_request", (await env.Policy.ResolveReadAsync("a.txt", ".vsdx", "MCP client", default)).Error!.Code);
+        Directory.CreateDirectory(Path.Combine(env.Exports, "dir.vsdx"));
+        Assert.Equal("path_not_permitted", (await env.Policy.ResolveReadAsync("dir.vsdx", ".vsdx", "MCP client", default)).Error!.Code);
+
+        var file = Path.Combine(env.Exports, "b.vsdx");
+        File.WriteAllText(file, "x");
+        var ok = (await env.Policy.ResolveReadAsync(file, ".vsdx", "MCP client", default)).Value;
+        Assert.True(env.Policy.RevalidateRead(ok).IsOk);
+        File.Delete(file);
+        Assert.Equal("not_found", env.Policy.RevalidateRead(ok).Error!.Code);
+    }
 }

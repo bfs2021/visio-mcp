@@ -1,8 +1,9 @@
-import { EditorModel, noHost, type HostApi } from '../editor/EditorModel';
+import { EditorModel, noHost, type HostApi, type RecentEntry } from '../editor/EditorModel';
 import type { AgentDocument } from '../bridge/engineHandlers';
 import type { DiagramDocument, Scope } from '../contracts/generated';
 import { fail, ok, type Result } from '../model/result';
 import type { DocumentState } from './Workspace';
+import { HelpState } from './HelpState';
 import type { startApp } from '../bridge/bootstrap';
 
 type App = ReturnType<typeof startApp>;
@@ -24,11 +25,21 @@ export class WorkspaceModel {
   private version = 0;
   private untitled = 0;
   private hostApi: HostApi = noHost;
+  /** The Help panels (shortcut list, About, command palette). */
+  readonly help = new HelpState(() => this.hostApi.appAbout(), () => this.bump());
   private readonly unsubscribe = new Map<EditorModel, () => void>();
   /** Set by the page: gives a new tab its editor wiring (component previews, renderer, recovery hooks). */
   configure: (model: EditorModel, state: DocumentState) => void = () => {};
   /** A short message the strip shows (for example, the tab limit). */
   notice: string | null = null;
+  recentPrompt = false;
+  showRecent(): void { this.recentPrompt = true; this.bump(); }
+  closeRecent(): void { this.recentPrompt = false; this.bump(); }
+  async openRecent(entry: RecentEntry): Promise<{ opened: boolean; error?: string }> {
+    const existing = entry.kind === 'json' ? this.tabs.find(t => sameFile(t.engine.status().savedPath, entry.path)) : undefined;
+    if (existing) { this.activate(existing); return { opened: true }; }
+    return this.openFile(entry.kind, entry.id);
+  }
   protectNew: (scope: Scope) => Promise<Result<unknown>> = async () => ok({});
   /** Said once after a start that brought documents back; stays until dismissed. */
   banner: { text: string; lines: string[] } | null = null;
@@ -81,6 +92,8 @@ export class WorkspaceModel {
     model.untitledNo = ++this.untitled;
     model.host = this.hostApi;
     model.closeTabNow = discard => this.closeNow(model, discard);
+    const canPresentFileChoice = model.files.canPresent;
+    model.files.canPresent = () => !this.recentPrompt && canPresentFileChoice();
     model.newDocument.replacesCurrent = false;
     model.newDocument.create = async document => {
       const target = this.newTab({ document });
@@ -158,18 +171,21 @@ export class WorkspaceModel {
   }
 
   /** Opens a file in a tab: an untouched blank tab is used up first; opening a file that is already open shows that tab instead. */
-  async openFile(kind: 'json' | 'vsdx' = 'json', file?: string): Promise<void> {
+  async openFile(kind: 'json' | 'vsdx' = 'json', recentId?: string, file?: string): Promise<{ opened: boolean; error?: string }> {
     const reuse = this.active.isBlank ? this.active : null;
     const target = reuse ?? this.newTab();
-    if (!target) return;
-    const outcome: { opened: boolean; path?: string } = kind === 'json' ? await target.open(file) : await target.openVsdx(file);
-    if (!outcome.opened) { if (!reuse) await this.closeNow(target, true); return; }
+    if (!target) return { opened: false, error: this.notice ?? 'Cannot open another tab' };
+    let outcome: { opened: boolean; path?: string; error?: string };
+    try { outcome = kind === 'json' ? await target.open(file, recentId) : await target.openVsdx(recentId, file); }
+    catch (error) { outcome = { opened: false, error: String(error) }; }
+    if (!outcome.opened) { if (!reuse) await this.closeNow(target, true); return outcome; }
     const path = outcome.path;
     if (path) {
       const existing = this.tabs.find(t => t !== target && sameFile(t.engine.status().savedPath, path));
       if (existing) { await this.closeNow(target, true); this.activate(existing); existing.say(`${path} is already open.`, 'info'); }
     }
     this.bump();
+    return { opened: true };
   }
 
   /** Resolves once the last session's tabs are back; files the shell names are opened after that, so they land beside them. */
@@ -179,7 +195,7 @@ export class WorkspaceModel {
   async openFromShell(files: Array<{ path: string; kind: 'json' | 'vsdx' }>): Promise<Result<{ opened: number }>> {
     await this.restored;
     const before = this.tabs.length;
-    for (const f of files) await this.openFile(f.kind, f.path);
+    for (const f of files) await this.openFile(f.kind, undefined, f.path);
     return ok({ opened: Math.max(0, this.tabs.length - before) });
   }
 

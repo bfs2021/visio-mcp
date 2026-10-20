@@ -1,3 +1,6 @@
+import { ExportImageDialog } from './components/ExportImageDialog';
+import { RecentFilesDialog } from './components/RecentFilesDialog';
+import { FindPanel } from './components/FindPanel';
 import { FileConflictDialog } from './components/FileConflictDialog';
 import { NewDocumentDialog } from './components/NewDocumentDialog';
 import { useEffect } from 'react';
@@ -18,6 +21,7 @@ import { PageCanvas } from './components/PageCanvas';
 import { ShapesPanel } from './components/ShapesPanel';
 import { StatusBar } from './components/StatusBar';
 import { Toolbar } from './components/Toolbar';
+import { HelpDialogs } from './components/HelpDialogs';
 
 const typing = (t: EventTarget | null) =>
   t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement || (t instanceof HTMLElement && t.isContentEditable);
@@ -27,8 +31,15 @@ function useShortcuts(ws: WorkspaceModel) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const model = ws.active;
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') { e.preventDefault(); if (!ws.tabs.some(t => t.newDocument.prompt || t.closePrompt || t.files.prompt)) model.newDocument.begin(); return; }
-      if (ws.tabs.some(t => t.newDocument.prompt || t.closePrompt)) return;
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'p') { e.preventDefault(); if (!ws.recentPrompt && !ws.tabs.some(t => t.newDocument.prompt || t.closePrompt || t.exportPrompt || t.files.prompt)) ws.help.toggle('palette'); return; }
+      if (ws.help.panel) return; // a Help panel is up: it takes the keys
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase()==='f') {
+        e.preventDefault();
+        if(!ws.tabs.some(t=>t.newDocument.prompt||t.closePrompt||t.files.prompt||t.report||t.recoveryOffers.length||t.recoveryReport))model.find.open();
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') { e.preventDefault(); if (!ws.recentPrompt && !ws.tabs.some(t => t.newDocument.prompt || t.closePrompt || t.exportPrompt || t.files.prompt)) model.newDocument.begin(); return; }
+      if (ws.recentPrompt || ws.tabs.some(t => t.newDocument.prompt || t.closePrompt || t.exportPrompt || t.files.prompt)) return;
       if (e.ctrlKey && e.key === 'Tab') { e.preventDefault(); ws.cycle(e.shiftKey ? -1 : 1); return; } // most recently used first; works while typing too, like a browser
       if (e.ctrlKey && (e.key === 'PageDown' || e.key === 'PageUp')) { e.preventDefault(); ws.step(e.key === 'PageDown' ? 1 : -1); return; } // in tab order
       if (typing(e.target)) return;
@@ -88,11 +99,15 @@ export function App({ ws }: { ws: WorkspaceModel }) {
       <Inspector key={`i${model.tabId}`} model={model} />
       <PageTabs model={model} />
       <Drawer model={model} />
+      {!ws.tabs.some(t=>t.newDocument.prompt||t.closePrompt||t.files.prompt||t.report||t.recoveryOffers.length||t.recoveryReport)&&<FindPanel key={model.tabId} model={model} />}
       <CompatibilityDialog model={model} />
       {!ws.tabs.some(t=>t.files.prompt) && <RecoveryDialog model={holder} onRecover={id => void ws.restoreOrphan(holder, id)} />}
       {asking && !ws.tabs.some(t=>t.files.prompt) && <CloseDialog model={asking} />}
       <FileConflictDialog model={ws.tabs.find(t=>t.files.prompt?.source==='save') ?? ws.tabs.find(t=>t.files.prompt) ?? model} />
       {ws.tabs.filter(t => t.newDocument.prompt).map(t => <NewDocumentDialog key={t.tabId} model={t} />)}
+      {ws.tabs.filter(t=>t.exportPrompt && !ws.tabs.some(x=>x.files.prompt) && !asking && !holder.recoveryReport && !holder.recoveryOffers.length && !ws.tabs.some(x=>x.newDocument.prompt)).slice(0,1).map(t=><ExportImageDialog key={t.tabId} model={t}/>)}
+      {ws.recentPrompt && !ws.tabs.some(t=>t.files.prompt) && !asking && !holder.recoveryReport && !holder.recoveryOffers.length && !ws.tabs.some(t=>t.newDocument.prompt) && <RecentFilesDialog ws={ws} />}
+      <HelpDialogs ws={ws} model={model} />
       <DocumentTitle model={model} />
       <StatusBar model={model} />
     </div>

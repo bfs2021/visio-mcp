@@ -1,0 +1,56 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Diagram.Core.Contracts -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Core.Contracts\bin\Debug\net10.0\Diagram.Core.Contracts.dll
+C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\SchemaParityTests.cs(112,34): warning CS8620: Argument of type 'Dictionary<string, JsonNode>' cannot be used for parameter 'properties' of type 'IEnumerable<KeyValuePair<string, JsonNode?>>' in 'JsonObject.JsonObject(IEnumerable<KeyValuePair<string, JsonNode?>> properties, JsonNodeOptions? options = null)' due to differences in the nullability of reference types. [C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\Diagram.Contracts.Tests.csproj]
+C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\SchemaParityTests.cs(127,37): warning CS8620: Argument of type 'Dictionary<string, JsonNode>' cannot be used for parameter 'properties' of type 'IEnumerable<KeyValuePair<string, JsonNode?>>' in 'JsonObject.JsonObject(IEnumerable<KeyValuePair<string, JsonNode?>> properties, JsonNodeOptions? options = null)' due to differences in the nullability of reference types. [C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\Diagram.Contracts.Tests.csproj]
+  Diagram.Contracts.Tests -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll
+Test run for C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+  Diagram.Ipc -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Ipc\bin\Debug\net10.0\Diagram.Ipc.dll
+  Diagram.Host.Core -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Host.Core\bin\Debug\net10.0\Diagram.Host.Core.dll
+C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\MultiDocumentTests.cs(190,68): warning xUnit1031: Test methods should not use blocking task operations, as they can cause deadlocks. Use an async test method and await instead. (https://xunit.net/xunit.analyzers/rules/xUnit1031) [C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\Diagram.Host.Tests.csproj]
+C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\MultiDocumentTests.cs(192,74): warning xUnit1031: Test methods should not use blocking task operations, as they can cause deadlocks. Use an async test method and await instead. (https://xunit.net/xunit.analyzers/rules/xUnit1031) [C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\Diagram.Host.Tests.csproj]
+C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\MultiDocumentTests.cs(193,68): warning xUnit1031: Test methods should not use blocking task operations, as they can cause deadlocks. Use an async test method and await instead. (https://xunit.net/xunit.analyzers/rules/xUnit1031) [C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\Diagram.Host.Tests.csproj]
+C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\MultiDocumentTests.cs(200,74): warning xUnit1031: Test methods should not use blocking task operations, as they can cause deadlocks. Use an async test method and await instead. (https://xunit.net/xunit.analyzers/rules/xUnit1031) [C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\Diagram.Host.Tests.csproj]
+Results File: C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\artifacts\w05-recent-files\verified-results\w05-final_net10.0_20261019095055.trx
+
+Passed!  - Failed:     0, Passed:    24, Skipped:     0, Total:    24, Duration: 236 ms - Diagram.Contracts.Tests.dll (net10.0)
+  Diagram.Host.Tests -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\bin\Debug\net10.0\Diagram.Host.Tests.dll
+Test run for C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\bin\Debug\net10.0\Diagram.Host.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\artifacts\w05-recent-files\verified-results\w05-final_net10.0_20261019095102.trx
+
+Passed!  - Failed:     0, Passed:   149, Skipped:     0, Total:   149, Duration: 3 s - Diagram.Host.Tests.dll (net10.0)
+  Diagram.Ipc.Tests -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Ipc.Tests\bin\Debug\net10.0\Diagram.Ipc.Tests.dll
+Test run for C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Ipc.Tests\bin\Debug\net10.0\Diagram.Ipc.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\artifacts\w05-recent-files\verified-results\w05-final_net10.0_20261019095108.trx
+
+Passed!  - Failed:     0, Passed:    17, Skipped:     0, Total:    17, Duration: 2 s - Diagram.Ipc.Tests.dll (net10.0)
+  Diagram.Mcp -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Mcp\bin\Debug\net10.0\Diagram.Mcp.dll
+  Diagram.Visio.Abstractions -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Visio.Abstractions\bin\Debug\net10.0\Diagram.Visio.Abstractions.dll
+  Diagram.Mcp.Tests -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Mcp.Tests\bin\Debug\net10.0\Diagram.Mcp.Tests.dll
+Test run for C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Mcp.Tests\bin\Debug\net10.0\Diagram.Mcp.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\artifacts\w05-recent-files\verified-results\w05-final_net10.0_20261019095218.trx
+
+Passed!  - Failed:     0, Passed:    14, Skipped:     0, Total:    14, Duration: 1 m 6 s - Diagram.Mcp.Tests.dll (net10.0)
+  Diagram.Visio -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Visio\bin\Debug\net10.0\Diagram.Visio.dll
+  Diagram.App -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.App\bin\Debug\net10.0-windows\Diagram.App.dll
+C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Visio.Tests\ImageTests.cs(194,124): warning xUnit1031: Test methods should not use blocking task operations, as they can cause deadlocks. Use an async test method and await instead. (https://xunit.net/xunit.analyzers/rules/xUnit1031) [C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Visio.Tests\Diagram.Visio.Tests.csproj]
+C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Visio.Tests\ImageTests.cs(199,118): warning xUnit1031: Test methods should not use blocking task operations, as they can cause deadlocks. Use an async test method and await instead. (https://xunit.net/xunit.analyzers/rules/xUnit1031) [C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Visio.Tests\Diagram.Visio.Tests.csproj]
+C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Visio.Tests\StructuralTests.cs(361,119): warning xUnit1031: Test methods should not use blocking task operations, as they can cause deadlocks. Use an async test method and await instead. (https://xunit.net/xunit.analyzers/rules/xUnit1031) [C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Visio.Tests\Diagram.Visio.Tests.csproj]
+C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Visio.Tests\StructuralTests.cs(365,124): warning xUnit1031: Test methods should not use blocking task operations, as they can cause deadlocks. Use an async test method and await instead. (https://xunit.net/xunit.analyzers/rules/xUnit1031) [C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Visio.Tests\Diagram.Visio.Tests.csproj]
+  Diagram.Visio.Tests -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Visio.Tests\bin\Debug\net10.0\Diagram.Visio.Tests.dll
+Test run for C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Visio.Tests\bin\Debug\net10.0\Diagram.Visio.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\artifacts\w05-recent-files\verified-results\w05-final_net10.0_20261019095232.trx
+
+Passed!  - Failed:     0, Passed:   148, Skipped:     0, Total:   148, Duration: 9 s - Diagram.Visio.Tests.dll (net10.0)
+C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\CrashRecoveryTests.cs(86,9): warning CS8631: The type 'string?' cannot be used as type parameter 'T' in the generic type or method 'Assert.Equal<T>(ReadOnlySpan<T>, T[])'. Nullability of type argument 'string?' doesn't match constraint type 'System.IEquatable<string?>'. [C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\Diagram.Windows.Tests.csproj]
+  Diagram.Windows.Tests -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll
+Test run for C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\artifacts\w05-recent-files\verified-results\w05-final_net10.0_20261019095814.trx
+
+Passed!  - Failed:     0, Passed:    77, Skipped:     0, Total:    77, Duration: 5 m 39 s - Diagram.Windows.Tests.dll (net10.0)

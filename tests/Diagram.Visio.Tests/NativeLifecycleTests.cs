@@ -71,6 +71,50 @@ public class NativeLifecycleTests : IDisposable
 
     sealed class FakeRaster : IRasteriser { public Task<Result<byte[]>> RasteriseAsync(string sha, CancellationToken ct) => Task.FromResult(Result<byte[]>.Ok(Fx.Png(10, 10))); }
 
+    // ---- import without opening (import_visio) ------------------------------------------------------
+
+    [Fact]
+    public async Task ImportingAFileReturnsTheDocumentAndTouchesNoEditor()
+    {
+        var editor = new FakeEditor(Plain());
+        var path = P("ref.vsdx");
+        File.WriteAllBytes(path, SamplePackage());
+        var r = await Coordinator(editor).ImportFileAsync(path, default);
+        Assert.True(r.IsOk, r.Error?.Message);
+        Assert.Equal(2, r.Value.Document.Pages.Sum(pg => pg.Elements.Count(e => System.Text.Json.JsonSerializer.SerializeToNode(e, ContractJson.Options)!["kind"]!.GetValue<string>() == "shape")));
+        Assert.Equal(0, editor.ReplaceCalls);
+        Assert.Equal(Plain().Id, editor.Document.Id);
+    }
+
+    [Fact]
+    public async Task AnImportedPictureIsDurableBeforeTheResultIsReturned()
+    {
+        var png = Fx.Png(12, 12);
+        var sha = await store.PutDurableAsync(png, default);
+        var doc = Doc.Make([Doc.Page([ImageNode(1, "asset:logo")])], [new { id = "asset:logo", name = "logo.png", mimeType = "image/png", sha256 = sha, tags = Array.Empty<string>() }]);
+        var path = P("pic.vsdx");
+        File.WriteAllBytes(path, RT.Export(Doc.Snapshot(doc), new Blobs { Bytes = { [sha] = png } }).Package);
+        var fresh = new BlobStore(Path.Combine(dir, "blobs-fresh"));
+        var r = await Coordinator(new FakeEditor(Plain()), s: fresh).ImportFileAsync(path, default);
+        Assert.True(r.IsOk, r.Error?.Message);
+        Assert.All(r.Value.Document.Assets, a => Assert.True(fresh.Contains(a.Sha256)));
+    }
+
+    [Fact]
+    public async Task ARevalidationFailureStopsTheReadAndTheOtherRefusalsAreStable()
+    {
+        var c = Coordinator(new FakeEditor(Plain()));
+        var path = P("ref.vsdx");
+        File.WriteAllBytes(path, SamplePackage());
+        var stale = await c.ImportFileAsync(path, default, () => Result<Unit>.Fail("path_not_permitted", "no longer approved"));
+        Assert.Equal("path_not_permitted", stale.Error!.Code);
+        Assert.Equal("not_found", (await c.ImportFileAsync(P("missing.vsdx"), default)).Error!.Code);
+        File.WriteAllText(P("bad.vsdx"), "this is not a zip");
+        Assert.False((await c.ImportFileAsync(P("bad.vsdx"), default)).IsOk); // hostile or damaged input is an error, never a crash
+        File.WriteAllBytes(P("a.png"), [1, 2, 3]);
+        Assert.Equal("invalid_request", (await c.ImportFileAsync(P("a.png"), default)).Error!.Code);
+    }
+
     // ---- export ----------------------------------------------------------------------------------
 
     [Fact]

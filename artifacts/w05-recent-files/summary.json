@@ -1,0 +1,23 @@
+{
+  "productCommit": "70106b9",
+  "mainAnchor": "e34999e",
+  "dotnet": {
+    "passed": 429,
+    "failed": 0,
+    "skipped": 0,
+    "contracts": 24,
+    "host": 149,
+    "ipc": 17,
+    "mcp": 14,
+    "visio": 148,
+    "windows": 77
+  },
+  "frontend": 391,
+  "browser": 107,
+  "typecheck": "PASS",
+  "generatedCheck": "PASS",
+  "build": "PASS",
+  "readOnlyReview": "All substantive findings fixed and re-reviewed",
+  "manualHumanAcceptance": "NOT RUN",
+  "jumpList": "NOT IMPLEMENTED — pending W15 #37 under approved conditional design"
+}

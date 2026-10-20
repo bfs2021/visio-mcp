@@ -1,0 +1,18 @@
+Test run for C:\Users\claude\.codex\worktrees\w08-merge-main\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:02:57.97]     Diagram.Windows.Tests.EditorExportTests.ASelectionOnALargePageCanBeCopiedAsNativeBitmapAndPng [FAIL]
+  Failed Diagram.Windows.Tests.EditorExportTests.ASelectionOnALargePageCanBeCopiedAsNativeBitmapAndPng [1 s]
+  Error Message:
+   System.NullReferenceException : Object reference not set to an instance of an object.
+  Stack Trace:
+     at Diagram.Windows.Tests.EditorExportTests.<>c.<ASelectionOnALargePageCanBeCopiedAsNativeBitmapAndPng>b__7_2() in C:\Users\claude\.codex\worktrees\w08-merge-main\diagram-app\tests\Diagram.Windows.Tests\EditorExportTests.cs:line 58
+   at System.Windows.Threading.DispatcherOperation.InvokeDelegateCore()
+   at System.Windows.Threading.DispatcherOperation.InvokeImpl()
+--- End of stack trace from previous location ---
+   at Diagram.Windows.Tests.EditorExportTests.ASelectionOnALargePageCanBeCopiedAsNativeBitmapAndPng() in C:\Users\claude\.codex\worktrees\w08-merge-main\diagram-app\tests\Diagram.Windows.Tests\EditorExportTests.cs:line 58
+   at Diagram.Windows.Tests.EditorExportTests.ASelectionOnALargePageCanBeCopiedAsNativeBitmapAndPng() in C:\Users\claude\.codex\worktrees\w08-merge-main\diagram-app\tests\Diagram.Windows.Tests\EditorExportTests.cs:line 59
+   at Diagram.Windows.Tests.EditorExportTests.ASelectionOnALargePageCanBeCopiedAsNativeBitmapAndPng() in C:\Users\claude\.codex\worktrees\w08-merge-main\diagram-app\tests\Diagram.Windows.Tests\EditorExportTests.cs:line 59
+--- End of stack trace from previous location ---
+Results File: C:\Users\claude\.codex\worktrees\w08-merge-main\diagram-app\artifacts\w08-editor-export\merge-e67f2e7\verified-trx\w08-native-merge_net10.0_20261019182619.trx
+
+Failed!  - Failed:     1, Passed:    87, Skipped:     0, Total:    88, Duration: 6 m 8 s - Diagram.Windows.Tests.dll (net10.0)

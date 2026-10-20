@@ -1,0 +1,16 @@
+{
+  "pages": [
+    {
+      "widthPt": 841.91998,
+      "heightPt": 594.95996
+    },
+    {
+      "widthPt": 300.0,
+      "heightPt": 600.0
+    }
+  ],
+  "asciiLabelsPresent": true,
+  "gradientPixelCount": 50160,
+  "visualInspection": "PASS by Codex; this is not manual human acceptance",
+  "unicodeExtraction": "Some punctuation maps to replacement characters although rendered glyphs are correct."
+}
