@@ -37,7 +37,7 @@ public class ConnectorJoinTests
     }
 
     [Fact]
-    public void AJoinToAConnectorThatIsGoneOrWouldLoopIsDroppedAndReported()
+    public void AJoinToAConnectorThatIsGoneIsReportedAndFoundAgainByWhereTheEndLiesAndOneThatWouldLoopIsDropped()
     {
         var (exported, _) = RT.Trip(Scene());
         var gone = Fx.Edit(exported.Package, "visio/pages/page1.xml", d =>
@@ -47,8 +47,10 @@ public class ConnectorJoinTests
         });
         var again = new NativeVsdxImporter().Import(new MemoryStream(gone), new ImportOptions());
         Assert.True(again.IsOk, again.Error?.Message);
-        Assert.Null(RT.El(again.Value.Document, Doc.Id(11))["to"]!["join"]);
         Assert.Contains(again.Value.Diagnostics, d => d.Code == "join_connector_missing");
+        // the end still lies on the line it was on, so it is found there instead of by the lost reference
+        Assert.Equal(Doc.Id(10), RT.El(again.Value.Document, Doc.Id(11))["to"]!["join"]!["connectorId"]!.GetValue<string>());
+        Assert.Contains(again.Value.Diagnostics, d => d.Code == "join_inferred");
 
         // the bus joined to the branch that joins the bus: a loop, so the second join is refused
         var loop = Fx.Edit(exported.Package, "visio/pages/page1.xml", d =>
@@ -61,7 +63,7 @@ public class ConnectorJoinTests
         });
         var looped = new NativeVsdxImporter().Import(new MemoryStream(loop), new ImportOptions());
         Assert.True(looped.IsOk, looped.Error?.Message);
-        Assert.Null(RT.El(looped.Value.Document, Doc.Id(10))["to"]!["join"]);
+        Assert.Null(RT.El(looped.Value.Document, Doc.Id(10))["to"]!["join"]); // glued to b: nothing to join, and the join that would loop was refused
     }
 
     [Fact]
@@ -92,5 +94,30 @@ public class ConnectorJoinTests
             .OrderBy(e => (string?)e.Attribute("ID")).ElementAt(index).Descendants().Count(r => r.Name.LocalName == "Row" && (string?)r.Attribute("T") == "ArcTo");
         Assert.Equal(0, Arcs("", 0));  // the one that is crossed is straight
         Assert.Equal(1, Arcs("", 1));  // the hopper arcs once, where it crosses
+    }
+
+    [Fact]
+    public void AFreeEndDrawnOnTheMiddleOfAnotherLineIsJoinedThereEvenWithoutOurCells()
+    {
+        // a file Visio drew itself: no user cells, a branch whose end happens to lie on a line
+        var snapshot = Doc.Snapshot(Doc.Make([Doc.Page(new object[]
+        {
+            Doc.Shape(1, 40, 100, 60, 40), Doc.Shape(2, 340, 100, 60, 40), Doc.Shape(3, 190, 300, 60, 40),
+            Doc.Connector(10, Doc.Glue(1), Doc.Glue(2)),
+            Doc.Connector(11, Doc.Glue(3), Doc.Free(220, 120)),   // ends on the bus (which runs 100..340 at y 120)
+            Doc.Connector(12, Doc.Glue(3), Doc.Free(300, 200)),   // ends in open space
+        })]));
+        var (exported, _) = RT.Trip(snapshot);
+        var bare = Fx.Edit(exported.Package, "visio/pages/page1.xml", d =>
+        {
+            foreach (var row in d.Descendants().Where(e => e.Name.LocalName == "Row" && ((string?)e.Attribute("N"))?.StartsWith("Agent") == true && (string?)e.Attribute("N") != "AgentId").ToList()) row.Remove();
+        });
+        var back = new NativeVsdxImporter().Import(new MemoryStream(bare), new ImportOptions());
+        Assert.True(back.IsOk, back.Error?.Message);
+        var doc = back.Value.Document;
+        Assert.Equal(0.5, RT.El(doc, Doc.Id(11))["to"]!["join"]!["position"]!.GetValue<double>(), 2);
+        Assert.Equal(Doc.Id(10), RT.El(doc, Doc.Id(11))["to"]!["join"]!["connectorId"]!.GetValue<string>());
+        Assert.Null(RT.El(doc, Doc.Id(12))["to"]!["join"]);
+        Assert.Null(RT.El(doc, Doc.Id(10))["from"]!["join"]);
     }
 }

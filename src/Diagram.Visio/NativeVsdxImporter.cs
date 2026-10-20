@@ -327,6 +327,8 @@ public sealed class NativeVsdxImporter : IVsdxImporter
             static string Trim(string s, int max) => s.Length > max ? s[..max] : s.Length == 0 ? "Untitled" : s;
             readonly JsonArray guides = new();
             readonly List<JsonObject> connectorEls = new();
+            /// <summary>Where Visio drew each connector's two ends, whether or not they are glued: what a T-junction is measured against.</summary>
+            readonly Dictionary<string, ((double X, double Y) From, (double X, double Y) To)> drawnEnds = new();
 
             JsonArray ReadLayers(XElement sheet, Dictionary<string, string> user)
             {
@@ -383,6 +385,7 @@ public sealed class NativeVsdxImporter : IVsdxImporter
                 foreach (var c in connectorEls) c["bounds"] = ConnectorBounds(c);
                 RestoreAttachments();
                 RestoreJoins();
+                InferJoins();
                 foreach (var (group, shape, connMembers) in groups)
                 {
                     var members = (JsonArray)group["childIds"]!;
@@ -923,11 +926,13 @@ public sealed class NativeVsdxImporter : IVsdxImporter
                 var el = Base(s, sid, u, "connector", xf);
                 el["rotationDeg"] = 0.0;
                 var mine = connects.Where(c => (string?)c.Attribute("FromSheet") == sid).ToList();
+                (double X, double Y) drawnFrom = default, drawnTo = default;
                 JsonObject End(bool begin)
                 {
                     var cx = begin ? "BeginX" : "EndX"; var cy = begin ? "BeginY" : "EndY";
                     var pagePt = PagePt(ToPage(xf.Parent ?? new Xf(0, 0, 0, 0, 0, 0, 0, null), D(Own(s, cx)), D(Own(s, cy))));
                     if (xf.Parent is null) pagePt = PagePt((D(Own(s, cx)), D(Own(s, cy))));
+                    if (begin) drawnFrom = pagePt; else drawnTo = pagePt;
                     var c = mine.FirstOrDefault(x => (string?)x.Attribute("FromCell") == cx);
                     var to = (string?)c?.Attribute("ToSheet");
                     if (c is null || to is null || !idByShape.TryGetValue(to, out var targetId) || !elementKnownLater(to))
@@ -948,6 +953,7 @@ public sealed class NativeVsdxImporter : IVsdxImporter
                     return new JsonObject { ["elementId"] = targetId, ["glue"] = "dynamic" };
                 }
                 el["from"] = End(true); el["to"] = End(false);
+                drawnEnds[id] = (drawnFrom, drawnTo);
                 var ext = (int)D(Own(s, "ConLineRouteExt"), 0); var style = (int)D(Own(s, "ShapeRouteStyle"), 1);
                 el["route"] = ext == 2 ? "curved" : ext == 1 || style == 2 ? "straight" : "orthogonal";
                 var way = new JsonArray();
@@ -972,6 +978,76 @@ public sealed class NativeVsdxImporter : IVsdxImporter
                 el["bounds"] = ConnectorBounds(el);
                 connectorEls.Add(el);
                 Add(el);
+            }
+
+            /// <summary>
+            /// A free end that Visio drew on the middle of another connector's line is a T-junction, so it is joined there and follows that line. Only lines whose
+            /// drawn path is certain are used: a straight connector, one with its waypoints, or an elbow that is axis-aligned and so cannot bend.
+            /// </summary>
+            void InferJoins()
+            {
+                const double Tolerance = 0.75; // pt
+                var lines = new Dictionary<string, List<(double X, double Y)>>();
+                foreach (var c in connectorEls)
+                {
+                    var cid = c["id"]!.GetValue<string>();
+                    if (!drawnEnds.TryGetValue(cid, out var ends)) continue;
+                    var route = c["route"]!.GetValue<string>();
+                    var way = c["waypoints"]!.AsArray().Select(w => (w!["x"]!.GetValue<double>(), w["y"]!.GetValue<double>())).ToList();
+                    var line = new List<(double X, double Y)> { ends.From }; line.AddRange(way); line.Add(ends.To);
+                    var axisAligned = way.Count == 0 && (Math.Abs(ends.From.X - ends.To.X) < 0.01 || Math.Abs(ends.From.Y - ends.To.Y) < 0.01);
+                    if (route == "straight" || way.Count > 0 && route != "curved" || route == "orthogonal" && axisAligned) lines[cid] = line;
+                }
+                if (lines.Count == 0) return;
+                var joinedTo = new Dictionary<string, HashSet<string>>();
+                foreach (var c in connectorEls) foreach (var key in new[] { "from", "to" }) if (c[key]!["join"]?["connectorId"]?.GetValue<string>() is { } j) { var me = c["id"]!.GetValue<string>(); if (!joinedTo.TryGetValue(me, out var set)) joinedTo[me] = set = []; set.Add(j); }
+                bool Loops(string from, string to)
+                {
+                    var seen = new HashSet<string>();
+                    for (var queue = new Queue<string>(new[] { to }); queue.Count > 0;)
+                    {
+                        var at = queue.Dequeue();
+                        if (at == from) return true;
+                        if (seen.Add(at) && joinedTo.TryGetValue(at, out var next)) foreach (var n in next) queue.Enqueue(n);
+                    }
+                    return false;
+                }
+                foreach (var c in connectorEls)
+                {
+                    var me = c["id"]!.GetValue<string>();
+                    foreach (var key in new[] { "from", "to" })
+                    {
+                        var ep = (JsonObject)c[key]!;
+                        if (ep["glue"]!.GetValue<string>() != "none" || ep["join"] is not null || !drawnEnds.TryGetValue(me, out var mine)) continue;
+                        var p = key == "from" ? mine.From : mine.To;
+                        string? bestId = null; double bestAt = 0, bestD = Tolerance;
+                        foreach (var (otherId, line) in lines)
+                        {
+                            if (otherId == me) continue;
+                            double total = 0; var lens = new double[line.Count - 1];
+                            for (var i = 1; i < line.Count; i++) { lens[i - 1] = Math.Sqrt(Math.Pow(line[i].X - line[i - 1].X, 2) + Math.Pow(line[i].Y - line[i - 1].Y, 2)); total += lens[i - 1]; }
+                            if (total < 1e-6) continue;
+                            double before = 0;
+                            for (var i = 1; i < line.Count; i++)
+                            {
+                                double dx = line[i].X - line[i - 1].X, dy = line[i].Y - line[i - 1].Y, l2 = dx * dx + dy * dy;
+                                if (l2 > 1e-9)
+                                {
+                                    var t = Math.Clamp(((p.X - line[i - 1].X) * dx + (p.Y - line[i - 1].Y) * dy) / l2, 0, 1);
+                                    var d = Math.Sqrt(Math.Pow(line[i - 1].X + t * dx - p.X, 2) + Math.Pow(line[i - 1].Y + t * dy - p.Y, 2));
+                                    var at = (before + t * lens[i - 1]) / total;
+                                    if (d < bestD && at > 0.02 && at < 0.98) { bestD = d; bestId = otherId; bestAt = at; }
+                                }
+                                before += lens[i - 1];
+                            }
+                        }
+                        if (bestId is null || Loops(me, bestId)) continue;
+                        ep["join"] = new JsonObject { ["connectorId"] = bestId, ["position"] = Math.Round(bestAt, 4) };
+                        if (!joinedTo.TryGetValue(me, out var set)) joinedTo[me] = set = [];
+                        set.Add(bestId);
+                        Note("join_inferred", "A connector end that Visio drew on another connector's line is joined to it, so it follows that line.", me, null, "end joined", "info");
+                    }
+                }
             }
 
             /// <summary>Branches the editor joined to another connector come back joined, when that connector is still on the page and the join would not loop.</summary>
