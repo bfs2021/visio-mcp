@@ -19,6 +19,8 @@ import { effectiveState } from '../canvas/cellMapping';
 import { restoreRecovery, type RecoveryPayload } from '../commands/recovery';
 import { drawScriptCompiler, validateScript, type ValidationReport } from '../script/compiler';
 import { toPoints, type Unit } from '../model/validate';
+import { FindReplaceFlow } from './FindReplaceFlow';
+import { matchingSelection, findSelection } from './findReplace';
 import { snapCreation } from '../canvas/guideSnapping';
 import { iconOperations } from '../icons/catalog';
 import type { AgentDocument } from '../bridge/engineHandlers';
@@ -158,6 +160,7 @@ export class EditorModel {
   readonly engine: CommandEngine;
   readonly newDocument: NewDocumentFlow;
   readonly controller: GestureController;
+  readonly find: FindReplaceFlow;
   private adapter: MaxGraphAdapter | null = null;
   private readonly projector = createSnapshotProjector((snapshot, assetId) => this.assetUrlIn(snapshot, assetId));
   private listeners = new Set<() => void>();
@@ -223,6 +226,14 @@ export class EditorModel {
   constructor(engine: CommandEngine) {
     this.engine = engine;
     this.controller = new GestureController(engine);
+    this.find = new FindReplaceFlow(engine, () => this.bump(), hit => {
+      this.setCurrentPage(hit.pageId);
+      if(hit.hidden){this.find.message='This result is hidden; it was not unhidden or selected.';return;}
+      const ids=findSelection(this.currentPage,hit.id);
+      this.selection=ids;this.canvas?.setSelection(ids);
+      queueMicrotask(()=>this.adapter?.reveal(ids[0]??hit.id));
+    });
+    this.find.canStart=()=>!this.controller.isActive()&&!this.closePrompt&&!this.files?.prompt&&!this.newDocument?.prompt&&!this.report&&!this.recoveryOffers.length&&!this.recoveryReport;
     this.newDocument = new NewDocumentFlow(engine, () => this.bump());
     this.files = new FileConflictFlow(engine, () => this.host, () => this.bump());
     this.files.canPresent = () => !this.exportPrompt && !this.controller.isActive() && !this.closePrompt && !this.newDocument.prompt && !this.recoveryOffers.length && !this.recoveryReport;
@@ -565,6 +576,13 @@ export class EditorModel {
 
 
   async nudge(dx: number, dy: number): Promise<void> { await this.apply('nudge', nudgeOperations(this.snapshot, this.selection, dx, dy)); }
+
+  selectMatching(mode: 'style' | 'layers'): void {
+    if(this.targets.length!==1){this.say('Select one object first.','info');return;}
+    const result=matchingSelection(this.currentPage,this.targets[0]!,mode);
+    if(result.limitation){this.say(result.limitation,'info');return;}
+    this.selection=result.ids;this.canvas?.setSelection(result.ids);this.bump();
+  }
 
   selectAll(): void {
     const page = this.currentPage;
