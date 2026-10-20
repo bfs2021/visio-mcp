@@ -1,0 +1,17 @@
+
+> test
+> vitest run
+
+
+ RUN  v5.0.3 C:/Users/claude/.codex/worktrees/w14-file-drop-plan/diagram-app/src/web
+
+
+ Test Files  56 passed (56)
+      Tests  516 passed (516)
+   Start at  00:26:19
+   Duration  15.74s (import 65%, tests 23%, transform 10%, worker 2%)
+
+     Import  145 modules were evaluated 192 times · 6.89s total, 65% of tracked time
+             ~1.69s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+

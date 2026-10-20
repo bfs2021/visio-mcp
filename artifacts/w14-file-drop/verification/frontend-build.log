@@ -1,0 +1,32 @@
+
+> build
+> vite build
+
+vite v8.3.2 building client environment for production...
+transforming...
+✓ 398 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                          0.30 kB │ gzip:   0.22 kB
+dist/app/main-DchB93vI.css              20.83 kB │ gzip:   5.49 kB
+dist/app/index-BrvxOlUL.js               2.45 kB │ gzip:   1.20 kB
+dist/app/agentMain-DPrH_J8S.js           2.46 kB │ gzip:   1.15 kB
+dist/app/main-BoeHd2cx.js              416.90 kB │ gzip: 120.85 kB
+dist/app/browserContext-Cph0h397.js  1,235.61 kB │ gzip: 243.66 kB
+
+[EVAL] Use of direct `eval` function is strongly discouraged as it poses security risks and may cause issues with minification.
+    ╭─[ ../../../../../../../../Dev/diagram-app/src/web/node_modules/@maxgraph/core/lib/esm/internal/utils.js:23:12 ]
+    │
+ 23 │     return eval(expression);
+    │            ──┬─  
+    │              ╰─── Use of direct `eval` here.
+    │ 
+    │ Help: Consider using indirect eval. For more information, check the documentation: https://rolldown.rs/guide/troubleshooting#avoiding-direct-eval
+────╯
+
+[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 638ms
