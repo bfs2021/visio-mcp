@@ -452,3 +452,37 @@ describe('compiler: things riding on a connector', () => {
     expect(bad(t, 'set p at=0.5').message).toMatch(/go with on=/);
   });
 });
+
+describe('compiler: branches that join a connector, and hops', () => {
+  async function bus() {
+    const t = await scene();
+    await run(t, [
+      { op: 'createShape', id: id(980), alias: 'p', bounds: { x: 0, y: 200, width: 10, height: 10 } },
+      { op: 'createShape', id: id(981), alias: 'q', bounds: { x: 200, y: 200, width: 10, height: 10 } },
+      { op: 'createShape', id: id(982), alias: 'r', bounds: { x: 100, y: 400, width: 10, height: 10 } },
+      { op: 'createConnector', id: id(983), alias: 'bus', from: { elementId: id(980), glue: 'dynamic' }, to: { elementId: id(981), glue: 'dynamic' } },
+    ]);
+    return t;
+  }
+
+  it('toJoin= toAt= make the end a branch on a connector, in connect and in set', async () => {
+    const t = await bus();
+    expect(ops(t, 'connect id=tap from=r toJoin=bus toAt=25% hops=arc')[0]).toMatchObject({
+      op: 'createConnector', to: { glue: 'none', join: { connector: id(983), position: 0.25 } }, hops: 'arc',
+    });
+    expect(ops(t, 'connect id=tap from=r toJoin=bus')[0]).toMatchObject({ to: { glue: 'none', join: { connector: id(983) } } });
+    expect(ops(t, 'connect id=tap fromJoin=bus to=r')[0]).toMatchObject({ from: { glue: 'none', join: { connector: id(983) } } });
+    await run(t, [{ op: 'createConnector', id: id(984), alias: 'tap', from: { elementId: id(982), glue: 'dynamic' }, to: { glue: 'none', point: { x: 5, y: 5 } } }]);
+    expect(ops(t, 'set tap toJoin=bus toAt=0.8')[0]).toMatchObject({ op: 'set', patch: { to: { glue: 'none', join: { connector: id(983), position: 0.8 } } } });
+    expect(ops(t, 'set tap hops=arc')[0]).toMatchObject({ patch: { hops: 'arc' } });
+  });
+
+  it('refuses a join to a shape, a join with another end form, a stray At=, and hops on a shape', async () => {
+    const t = await bus();
+    expect(bad(t, 'connect from=r toJoin=p').message).toMatch(/takes a connector/);
+    expect(bad(t, 'connect from=r to=q toJoin=bus').message).toMatch(/alternatives/);
+    expect(bad(t, 'connect from=r to=q toAt=0.5').message).toMatch(/goes with toJoin/);
+    expect(bad(t, 'set p hops=arc').message).toMatch(/applies to connectors/);
+    expect(bad(t, 'set bus toAt=0.5').message).toMatch(/goes with toJoin/);
+  });
+});
