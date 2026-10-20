@@ -7,7 +7,7 @@ using Xunit;
 
 namespace Diagram.Host.Tests;
 
-public class RecoveryTests
+public partial class RecoveryTests
 {
     [Fact]
     public async Task ExplicitUntitledMarkerSurvivesRecoveryMetadataRoundTrip()

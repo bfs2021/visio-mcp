@@ -13,7 +13,7 @@ namespace Diagram.App;
 /// <param name="Offscreen">Place the window out of sight (automated tests).</param>
 /// <param name="PipeName">Pipe the MCP shim connects to; null leaves live control off.</param>
 /// <param name="ExportRoot">Folder a client may export into (besides the open document's own folder).</param>
-public sealed record AppOptions(string ContentRoot, string UserDataDir, string BlobDir, bool Offscreen = false, string? PipeName = null, string? ExportRoot = null, string? LibraryDir = null, string? RecoveryDir = null, bool PromptOnClose = false)
+public sealed record AppOptions(string ContentRoot, string UserDataDir, string BlobDir, bool Offscreen = false, string? PipeName = null, string? ExportRoot = null, string? LibraryDir = null, string? RecoveryDir = null, bool PromptOnClose = false, TimeProvider? RecoveryTimeProvider = null)
 {
     public static AppOptions Default()
     {
@@ -84,7 +84,10 @@ public partial class MainWindow : Window
         services.Attach(host.Router);
         Native = new NativeFileCoordinator(host.Router, host.Router, Blobs, Writer, new NativeVsdxImporter(), new NativeVsdxExporter(), host.Router);
         Exports = new ExportService(this, options.ExportRoot ?? Path.Combine(Path.GetTempPath(), "AgenticDiagramExports"), options.Offscreen ? null : new ExportConsentWindow(this));
-        RecoveryMgr = new RecoveryManager(host.Router, Recovery, Blobs, () => Services.CurrentPath, documentPath: Services.PathOf);
+        var initialPreferences = await Preferences.ReadAsync();
+        RecoveryMgr = new RecoveryManager(host.Router, Recovery, Blobs, () => Services.CurrentPath,
+            new RecoveryOptions(CheckpointEvery: TimeSpan.FromSeconds(initialPreferences.Preferences.Recovery.CheckpointSeconds)),
+            documentPath: Services.PathOf, timeProvider: options.RecoveryTimeProvider);
         RecoveryMgr.Start();
         Agents = new AgentView(() => Dispatcher, () => Task.FromResult(webEnvironment!), () => host!.Router, options.ContentRoot, Blobs);
         Documents = new DocumentService(this);

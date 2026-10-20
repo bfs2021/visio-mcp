@@ -7,6 +7,7 @@ namespace Diagram.App;
 
 public sealed partial class HostServices
 {
+    readonly SemaphoreSlim preferenceSaveGate = new(1, 1);
     static JsonObject PreferencePayload(PreferencesSnapshot snapshot) => new()
     {
         ["preferences"] = JsonSerializer.SerializeToNode(snapshot.Preferences, ContractJson.Options),
@@ -32,8 +33,19 @@ public sealed partial class HostServices
                 return Err(request, "invalid_request", "resetInvalid must be a boolean");
         }
 
-        var saved = await window.Preferences.SaveAsync(validated.Value, tag, reset, ct);
-        if (saved.Status == PreferencesSaveStatus.Success) return Ok(request, PreferencePayload(saved.Snapshot));
+        await preferenceSaveGate.WaitAsync(ct);
+        PreferencesSaveResult saved;
+        try
+        {
+            saved = await window.Preferences.SaveAsync(validated.Value, tag, reset, ct);
+            if (saved.Status == PreferencesSaveStatus.Success)
+            {
+                // Once the file is durable, request cancellation must not leave this window on the old cadence.
+                await window.RecoveryMgr.UpdateCheckpointIntervalAsync(TimeSpan.FromSeconds(saved.Snapshot.Preferences.Recovery.CheckpointSeconds));
+                return Ok(request, PreferencePayload(saved.Snapshot));
+            }
+        }
+        finally { preferenceSaveGate.Release(); }
         var code = saved.Status switch
         {
             PreferencesSaveStatus.Conflict => "revision_conflict",
