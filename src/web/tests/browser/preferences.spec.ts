@@ -176,3 +176,46 @@ test('focus stays in Preferences and competing keyboard and lifecycle actions ar
   await page.keyboard.press('Escape');
   await expect(page.getByTestId('menu-edit')).toBeFocused();
 });
+
+test('dark diagnostic, sidebar, recovery and tab notice text meets normal-text contrast', async ({ page }) => {
+  await openEditor(page);
+  await open(page);
+  await page.getByLabel('Theme').selectOption('dark');
+  await page.getByRole('button', { name: 'Save preferences' }).click();
+  const contrast = async (locator: import('@playwright/test').Locator) => {
+    await locator.scrollIntoViewIfNeeded();
+    await expect(locator).toBeVisible();
+    return locator.evaluate(element => {
+      const luminance = (css: string) => {
+        const rgb = css.match(/[\d.]+/g)!.slice(0, 3).map(Number).map(c => c / 255).map(c => c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+        return rgb[0]! * .2126 + rgb[1]! * .7152 + rgb[2]! * .0722;
+      };
+      let parent: Element | null = element;
+      while (parent && getComputedStyle(parent).backgroundColor === 'rgba(0, 0, 0, 0)') parent = parent.parentElement;
+      const a = luminance(getComputedStyle(element).color), b = luminance(getComputedStyle(parent!).backgroundColor);
+      return (Math.max(a, b) + .05) / (Math.min(a, b) + .05);
+    });
+  };
+  expect.soft(await contrast(page.locator('.side-section h3').first()), 'sidebar heading').toBeGreaterThanOrEqual(4.5);
+  await open(page);
+  await page.getByLabel('Default font', { exact: true }).fill('');
+  await page.getByRole('button', { name: 'Save preferences' }).click();
+  expect.soft(await contrast(page.getByTestId('preferences-error-font')), 'validation error').toBeGreaterThanOrEqual(4.5);
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await page.evaluate(async () => {
+    const editor = (window as any).__editor;
+    editor.setHost({ recoveryList: async () => ({ ok: true, value: { auto: false, sessions: [{ sessionId: 'contrast-session', documentId: 'contrast-document', title: 'Recovered plan', originalPath: 'C:\\Work\\plan.diagram.json', pageCount: 1, objectCount: 0, checkpointRevision: 0, lastDurableRevision: 1, lastWrite: '2026-10-20T12:00:00Z', loss: { tornTailDiscarded: true, corruptionAfterRevision: null, messages: ['The incomplete final journal record was discarded.'] } }] } }) });
+    await editor.checkRecovery();
+  });
+  expect.soft(await contrast(page.getByTestId('recovery-path')), 'recovery secondary text').toBeGreaterThanOrEqual(4.5);
+  expect.soft(await contrast(page.locator('.recovery-info .diag-warning')), 'recovery warning').toBeGreaterThanOrEqual(4.5);
+  await page.getByTestId('recovery-later').click();
+  // Isolated representatives cover conditional status/notice classes against their real shell backgrounds.
+  await page.evaluate(() => {
+    for (const [parent, cls, label] of [['.statusbar', 'message warning', 'Warning'], ['.statusbar', 'message error', 'Error'], ['.tabstrip', 'tab-notice', 'Tab limit reached'], ['.tabstrip', 'tab-banner', 'Restored drawings']] as const) {
+      const element = document.createElement('span'); element.className = cls; element.textContent = label; element.dataset.contrast = cls;
+      document.querySelector(parent)!.append(element);
+    }
+  });
+  for (const cls of ['message warning', 'message error', 'tab-notice', 'tab-banner']) expect.soft(await contrast(page.locator(`[data-contrast="${cls}"]`)), cls).toBeGreaterThanOrEqual(4.5);
+});
