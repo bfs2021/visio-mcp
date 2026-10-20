@@ -18,13 +18,17 @@ public sealed partial class HostServices(MainWindow window)
     readonly object pathGate = new();
     readonly Dictionary<string, string> paths = new();         // the file each open document came from or was last saved to
     readonly Dictionary<string, string> successors = new();    // old document id -> the one that replaced it, for a reply that arrives after the swap
+    internal IngressTicketRegistry IngressTickets { get; } = new();
 
     /// <summary>Listens for documents being closed or replaced so each one's file follows it. Called once the router exists.</summary>
     internal void Attach(BridgeRouter router)
     {
+        router.ChannelReset += IngressTickets.ClearChannel;
         router.DocumentReplaced += (old, next) => { lock (pathGate) { successors[old.DocumentId] = next.DocumentId; if (paths.Remove(old.DocumentId, out var p)) paths[next.DocumentId] = p; if (diskVersions.Remove(old.DocumentId, out var v)) diskVersions[next.DocumentId] = v; fileOffers.Remove(old.DocumentId); } };
         router.DocumentClosed += s => { lock (pathGate) { paths.Remove(s.DocumentId); diskVersions.Remove(s.DocumentId); fileOffers.Remove(s.DocumentId); } };
     }
+
+    internal void ClearIngressOnShutdown() => IngressTickets.ClearOnShutdown();
 
     /// <summary>Path of the active document's last successful open or save (informational; the editor tracks the saved revision).</summary>
     public string? CurrentPath => window.Router.CurrentScope is { } s ? PathOf(s.DocumentId) : null;

@@ -121,6 +121,7 @@ public partial class MainWindow : Window
         {
             try
             {
+                Services.ClearIngressOnShutdown();
                 if (Live is not null) await Live.DisposeAsync();
                 await Agents.DisposeAsync();
                 try { await RecoveryMgr.CloseCleanlyAsync(); await Workspace.MarkCleanExitAsync(); } catch (Exception e) when (e is IOException or UnauthorizedAccessException) { } // leaving recovery files behind is the safe failure
