@@ -160,3 +160,15 @@ it('a silent host times out to defaults without waiting for editor readiness', a
   expect(sent.filter(message => message.kind === 'event').map(message => message.method)).toEqual(['editor.ready']);
  } finally { vi.useRealTimers(); }
 });
+
+it('does not open Preferences over a compatibility report, then opens after it closes', async () => {
+ const app = startApp(undefined, null);
+ const ws = new WorkspaceModel(app, new EditorModel(app.engine));
+ ws.active.report = { title: 'Compatibility', summary: 'Review required', diagnostics: [] };
+ await ws.openPreferences();
+ expect(ws.preferences.dialogOpen).toBe(false);
+ ws.active.closeReport();
+ await ws.openPreferences();
+ expect(ws.preferences.dialogOpen).toBe(true);
+ ws.preferences.cancel();
+});

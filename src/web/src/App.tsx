@@ -34,7 +34,7 @@ function useShortcuts(ws: WorkspaceModel) {
     const onKey = (e: KeyboardEvent) => {
       const model = ws.active;
       if (ws.preferences.dialogOpen) return;
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'p') { e.preventDefault(); if (!ws.recentPrompt && !ws.tabs.some(t => t.newDocument.prompt || t.closePrompt || t.exportPrompt || t.files.prompt || t.connectPrompt)) ws.help.toggle('palette'); return; }
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'p') { e.preventDefault(); if (!ws.recentPrompt && !ws.tabs.some(t => t.newDocument.prompt || t.closePrompt || t.exportPrompt || t.report || t.files.prompt || t.connectPrompt)) ws.help.toggle('palette'); return; }
       if (ws.help.panel) return; // a Help panel is up: it takes the keys
       if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase()==='f') {
         e.preventDefault();

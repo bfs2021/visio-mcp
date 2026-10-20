@@ -37,7 +37,7 @@ export class WorkspaceModel {
   get preferencesDiagnostic(): string | null { return this.app.preferences.diagnostic; }
   get preferences() { return this.app.preferences; }
   async openPreferences(): Promise<void> {
-    if (this.isBusy() || this.recentPrompt || this.help.panel || this.tabs.some(t => t.closePrompt || t.newDocument.prompt || t.exportPrompt || t.connectPrompt || t.files.prompt || t.recoveryOffers.length || t.recoveryReport)) return;
+    if (this.isBusy() || this.recentPrompt || this.help.panel || this.tabs.some(t => t.closePrompt || t.newDocument.prompt || t.exportPrompt || t.report || t.connectPrompt || t.files.prompt || t.recoveryOffers.length || t.recoveryReport)) return;
     await this.preferences.open();
   }
   applyPreferencesUnits(units: import('../model/validate').Unit): void {
