@@ -1,4 +1,6 @@
 import { test, expect } from '@playwright/test';
+import { mkdirSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import { elements, openEditor, placeShape, pngFixture, sha256, snapshot } from './support';
 
 test('Ctrl+V routes one external bitmap into the existing approved placement offer', async ({ page }) => {
@@ -25,6 +27,9 @@ test('Ctrl+V routes one external bitmap into the existing approved placement off
   await page.keyboard.press('Control+V');
   const queue = page.getByTestId('file-ingress-queue');
   await expect(queue).toContainText('Picture ready');
+  const evidence = resolve(process.cwd(), '../../artifacts/w14-file-drop/screenshots/clipboard-picture-offer.png');
+  mkdirSync(dirname(evidence), { recursive: true });
+  await queue.screenshot({ path: evidence });
   expect(await page.evaluate(() => (window as any).__clipboardTest.imports())).toBe(1);
   expect((await snapshot(page)).revision).toBe(before.revision);
   await queue.getByRole('button', { name: /Place in/ }).click();
