@@ -1,0 +1,42 @@
+  Diagram.Core.Contracts -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Core.Contracts\bin\Debug\net10.0\Diagram.Core.Contracts.dll
+  Diagram.Host.Core -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Host.Core\bin\Debug\net10.0\Diagram.Host.Core.dll
+  Diagram.Ipc -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Ipc\bin\Debug\net10.0\Diagram.Ipc.dll
+  Diagram.Visio.Abstractions -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Visio.Abstractions\bin\Debug\net10.0\Diagram.Visio.Abstractions.dll
+  Diagram.Visio -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Visio\bin\Debug\net10.0\Diagram.Visio.dll
+  Diagram.App -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.App\bin\Debug\net10.0-windows\Diagram.App.dll
+  Diagram.Mcp -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Mcp\bin\Debug\net10.0\Diagram.Mcp.dll
+C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\CrashRecoveryTests.cs(86,9): warning CS8631: The type 'string?' cannot be used as type parameter 'T' in the generic type or method 'Assert.Equal<T>(ReadOnlySpan<T>, T[])'. Nullability of type argument 'string?' doesn't match constraint type 'System.IEquatable<string?>'. [C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\Diagram.Windows.Tests.csproj]
+  Diagram.Windows.Tests -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll
+Test run for C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v4.0.1+0f7d528729 (64-bit .NET 10.0.13)
+[xUnit.net 00:00:00.28]   Discovering: Diagram.Windows.Tests
+[xUnit.net 00:00:02.38]   Discovered:  Diagram.Windows.Tests
+[xUnit.net 00:00:02.40]   Starting:    Diagram.Windows.Tests
+[xUnit.net 00:00:04.80]     Diagram.Windows.Tests.PreferencesVisioAcceptanceTests.ThemeAndUnitsSavePreservesAuthoredShapeInNativeVisioExport [FAIL]
+[xUnit.net 00:00:04.80]       Assert.Equal() Failure: Strings differ
+[xUnit.net 00:00:04.80]                     ↓ (pos 3)
+[xUnit.net 00:00:04.80]       Expected: "#22AA44"
+[xUnit.net 00:00:04.80]       Actual:   "#22aa44"
+[xUnit.net 00:00:04.80]                     ↑ (pos 3)
+[xUnit.net 00:00:04.80]       Stack Trace:
+[xUnit.net 00:00:04.81]         C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\PreferencesVisioAcceptanceTests.cs(59,0): at Diagram.Windows.Tests.PreferencesVisioAcceptanceTests.ThemeAndUnitsSavePreservesAuthoredShapeInNativeVisioExport()
+[xUnit.net 00:00:04.81]         C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\PreferencesVisioAcceptanceTests.cs(63,0): at Diagram.Windows.Tests.PreferencesVisioAcceptanceTests.ThemeAndUnitsSavePreservesAuthoredShapeInNativeVisioExport()
+[xUnit.net 00:00:04.81]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:04.81]   Finished:    Diagram.Windows.Tests
+  Failed Diagram.Windows.Tests.PreferencesVisioAcceptanceTests.ThemeAndUnitsSavePreservesAuthoredShapeInNativeVisioExport [2 s]
+  Error Message:
+   Assert.Equal() Failure: Strings differ
+              ↓ (pos 3)
+Expected: "#22AA44"
+Actual:   "#22aa44"
+              ↑ (pos 3)
+  Stack Trace:
+     at Diagram.Windows.Tests.PreferencesVisioAcceptanceTests.ThemeAndUnitsSavePreservesAuthoredShapeInNativeVisioExport() in C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\PreferencesVisioAcceptanceTests.cs:line 59
+   at Diagram.Windows.Tests.PreferencesVisioAcceptanceTests.ThemeAndUnitsSavePreservesAuthoredShapeInNativeVisioExport() in C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\PreferencesVisioAcceptanceTests.cs:line 63
+--- End of stack trace from previous location ---
+
+Test Run Failed.
+Total tests: 1
+     Failed: 1
+ Total time: 5.3427 Seconds

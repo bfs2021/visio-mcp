@@ -1,0 +1,39 @@
+
+> test:browser
+> playwright test tests/browser/preferencesReview.spec.ts tests/browser/preferences.spec.ts tests/browser/help.spec.ts tests/browser/visio.spec.ts --workers=2
+
+[WebServer] (node:16020) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:15016) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 22 tests using 2 workers
+
+(node:10364) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:19068) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 tests\browser\help.spec.ts:10:1 › Help > Keyboard shortcuts lists every menu command that has a key, plus the keys that are not menu commands (2.4s)
+  ok  2 tests\browser\preferences.spec.ts:13:1 › Cancel and Escape discard a draft and restore menu focus (2.7s)
+  ok  3 tests\browser\help.spec.ts:26:1 › Help > About shows the build, the connected MCP companion and the data folders from the host (1.1s)
+  ok  4 tests\browser\preferences.spec.ts:26:1 › Save applies theme and units to tab views without editing the drawing (1.4s)
+  ok  5 tests\browser\help.spec.ts:40:1 › About says when no companion is connected and when the host cannot answer (1.3s)
+  ok  6 tests\browser\preferences.spec.ts:49:1 › Reset changes only the draft until Save (1.2s)
+  ok  7 tests\browser\help.spec.ts:53:1 › Ctrl+Shift+P opens the command palette: type to filter, arrows and Enter run a command, Escape closes it (1.0s)
+  ok  9 tests\browser\help.spec.ts:80:1 › the palette ignores a disabled command and other shortcuts do nothing while a Help panel is open (1.1s)
+  ok  8 tests\browser\preferences.spec.ts:60:1 › invalid fields stay in the dialog and unavailable fonts remain allowed (1.7s)
+  ok 10 tests\browser\preferencesReview.spec.ts:6:5 › empty shape inspector uses captured font before first text materialization (1.4s)
+  ok 11 tests\browser\preferences.spec.ts:76:1 › stale settings offer Reload and a failed write leaves the draft visible (1.9s)
+  ok 12 tests\browser\preferencesReview.spec.ts:6:5 › empty shape inspector uses captured font before explicit legacy formatting (1.7s)
+  ok 13 tests\browser\preferences.spec.ts:95:1 › dark chrome preserves page pixels and document hash while toolbar unit override stays local (2.5s)
+  ok 14 tests\browser\preferencesReview.spec.ts:6:5 › empty connector inspector uses captured font before first text materialization (1.6s)
+  ok 15 tests\browser\preferences.spec.ts:157:1 › focus stays in Preferences and competing keyboard and lifecycle actions are blocked (1.5s)
+  ok 16 tests\browser\preferencesReview.spec.ts:6:5 › empty connector inspector uses captured font before explicit legacy formatting (2.5s)
+  ok 18 tests\browser\preferencesReview.spec.ts:45:1 › compatibility report blocks the keyboard palette route to Preferences (2.2s)
+  ok 17 tests\browser\preferences.spec.ts:180:1 › dark diagnostic, sidebar, recovery and tab notice text meets normal-text contrast (3.5s)
+  ok 19 tests\browser\visio.spec.ts:4:1 › visio_export_asks_before_losing_anything (1.8s)
+  ok 20 tests\browser\preferences.spec.ts:223:1 › saved grid and font are captured by File New, Ctrl+N, and the plus tab (3.3s)
+  ok 21 tests\browser\visio.spec.ts:42:1 › visio_cancel_export_writes_nothing (2.6s)
+  ok 22 tests\browser\preferences.spec.ts:258:1 › dark merged command, find, and recent chrome has readable text (1.6s)
+
+  22 passed (25.2s)

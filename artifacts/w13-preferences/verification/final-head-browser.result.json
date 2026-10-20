@@ -1,0 +1,14 @@
+{
+  "command": "npm.cmd",
+  "arguments": [
+    "run",
+    "test:browser",
+    "--",
+    "--workers=2"
+  ],
+  "head": "a74345513811c6e6be7b0d54bec69ba99af905ec",
+  "startedUtc": "2026-10-20T21:50:39.1137801Z",
+  "finishedUtc": "2026-10-20T21:52:54.0796074Z",
+  "exitCode": 0,
+  "log": "verification/final-head-browser.log"
+}

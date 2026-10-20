@@ -1,6 +1,6 @@
 # W13 — persisted preferences and new-document defaults
 
-Status: written design approved in Codex chat, 2026-10-19. Implementation plan is prepared for review; implementation is not approved yet.
+Status: design/plan approved and subagent-driven execution selected in Codex chat, 2026-10-19. Tasks 1–6, Task 7 implementation/evidence and fresh review fixes are complete. Final automated acceptance passes on a743455: unit497, browser157, Windows solution558, typecheck/generated/build. Human manual acceptance is NOT RUN; publication and intended integration remain pending. See [acceptance evidence](../m5/W13-preferences.md).
 Issue: https://github.com/rp2839/visio-mcp/issues/35
 Branch: codex/w13-preferences. Base: origin/main e67f2e7. Implement before W14.
 
@@ -84,4 +84,4 @@ No installer, association changes, new font assets, user-defined CSS, automatic 
 
 ## Review gate
 
-The approach is approved. Approval of this written specification permits preparation of W13's implementation plan. That plan will be provided for review with an execution-method choice before product implementation begins.
+The design and plan were approved on 2026-10-19, with subagent-driven execution selected; the execution ledger records that authorization. Implementation is complete. Independent review, automated acceptance, manual limits and publication are tracked in the plan and acceptance report; no automatic merge is authorized.
