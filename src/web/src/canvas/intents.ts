@@ -13,7 +13,7 @@ export type Intent =
   | { type: 'resize'; id: string; bounds: Bounds }
   | { type: 'rotate'; id: string; deltaDeg: number }
   | { type: 'bend'; id: string; waypoints: Point[] }
-  | { type: 'reconnect'; id: string; end: 'from' | 'to'; elementId?: string; point?: Point }
+  | { type: 'reconnect'; id: string; end: 'from' | 'to'; elementId?: string; point?: Point; join?: { connectorId: string; position: number } }
   | { type: 'text'; id: string; value: string }
   | { type: 'connect'; from: string; to: string };
 
@@ -121,6 +121,7 @@ export function intentOperations(snapshot: Snapshot, intent: Intent, guides?: Gu
     case 'rotate': return rotateOperations(snapshot, intent.id, intent.deltaDeg);
     case 'bend': return [{ op: 'set', target: intent.id, patch: { waypoints: intent.waypoints.map(p => ({ x: round(p.x, 3), y: round(p.y, 3) })) } }];
     case 'reconnect': {
+      if (intent.join) return [{ op: 'set', target: intent.id, patch: { [intent.end]: { glue: 'none', join: { connector: intent.join.connectorId, position: round(intent.join.position, 4) } } } }];
       const endpoint: Endpoint = intent.elementId ? { elementId: intent.elementId, glue: 'dynamic' } : { point: intent.point ?? { x: 0, y: 0 }, glue: 'none' };
       return [{ op: 'set', target: intent.id, patch: { [intent.end]: endpoint } }];
     }

@@ -7,6 +7,7 @@ import type { Element, Snapshot } from '../contracts/generated';
 import { canonicalSerialize } from '../model/canonical';
 import { ok, type Result } from '../model/result';
 import type { AdapterCallbacks, CanvasAdapter, Tool, ViewportInfo } from './CanvasAdapter';
+import { findJoinTarget, type DrawnRoute } from './joinTarget';
 import { edgeStyle, effectiveState, labelOf, registerCustomShapes, vertexStyle } from './cellMapping';
 import { centreOfTerminal, endFor, routeOrthogonal, type Terminal } from '../layout/orthogonalRoute';
 import { avoidObstacles, segmentsOf, type Segment } from '../layout/obstacleRoute';
@@ -166,9 +167,36 @@ export class MaxGraphAdapter implements CanvasAdapter {
       return edge;
     };
     edgeProto.changeTerminalPoint = function (this: object, edge: Cell, point: Point, isSource: boolean) {
-      if (adapter.activeFor(this)) emit({ type: 'reconnect', id: idOf(edge), end: isSource ? 'from' : 'to', point: { x: point.x, y: point.y } });
+      if (adapter.activeFor(this)) {
+        const join = adapter.joinTargetAt(idOf(edge), { x: point.x, y: point.y });
+        emit({ type: 'reconnect', id: idOf(edge), end: isSource ? 'from' : 'to', point: { x: point.x, y: point.y }, ...(join ? { join } : {}) });
+      }
       return edge;
     };
+  }
+
+  /** R16: a connector end dropped on another connector's line joins it there. Tolerance is a few screen pixels, whatever the zoom. */
+  joinTargetAt(selfId: string, at: { x: number; y: number }): { connectorId: string; position: number } | null {
+    const view = this.graph.view, s = view.scale, t = view.translate;
+    const routes: DrawnRoute[] = [];
+    for (const el of this.pageElements.values()) {
+      if (el.kind !== 'connector' || el.hidden) continue;
+      const cell = this.graph.getDataModel().getCell(el.id);
+      const state = cell && view.getState(cell);
+      const pts = ((state && state.absolutePoints) ?? []).filter((p): p is Point => !!p).map(p => ({ x: p.x / s - t.x, y: p.y / s - t.y }));
+      if (pts.length > 1) routes.push({ id: el.id, route: pts });
+    }
+    const loops = (candidate: string): boolean => {
+      const seen = new Set<string>();
+      for (let id: string | undefined = candidate; id && !seen.has(id); ) {
+        if (id === selfId) return true;
+        seen.add(id);
+        const c = this.pageElements.get(id);
+        id = c && c.kind === 'connector' ? [c.from, c.to].find(ep => ep.join)?.join?.connectorId : undefined;
+      }
+      return false;
+    };
+    return findJoinTarget(routes, selfId, at, 8 / s, loops);
   }
 
   private activeFor(handler: object): boolean {

@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { centre, drag, openEditor, snapshot } from './support';
+import { centre, drag, handle, openEditor, ptToClient, snapshot } from './support';
 
 const el = async (page: Page, alias: string) => (await snapshot(page)).document.pages[0]!.elements.find(e => e.alias === alias) as any;
 const apply = (page: Page, ops: object[]) => page.evaluate(o => (window as any).__editor.agentApply(o), ops);
@@ -64,5 +64,41 @@ test('hops are drawn where a connector crosses another, only when asked for, and
     { op: 'createConnector', alias: 'tap', from: { elementId: 'u', glue: 'dynamic' }, to: { glue: 'none', join: { connector: 'across', position: 0.8 } }, hops: 'arc' },
   ]);
   await expect.poll(() => hopCount(page)).toBe(1);
+  expect(errors).toEqual([]);
+});
+
+test('dragging a connector end onto another connector joins it there; the Inspector joins and releases without a pointer', async ({ page }) => {
+  const errors = await openEditor(page);
+  const r = await apply(page, [
+    { op: 'createShape', alias: 'a', bounds: { x: 40, y: 100, width: 60, height: 40 } },
+    { op: 'createShape', alias: 'b', bounds: { x: 400, y: 100, width: 60, height: 40 } },
+    { op: 'createShape', alias: 'c', bounds: { x: 200, y: 300, width: 60, height: 40 } },
+    { op: 'createConnector', alias: 'bus', from: { elementId: 'a', glue: 'dynamic' }, to: { elementId: 'b', glue: 'dynamic' } },
+    { op: 'createConnector', alias: 'tap', from: { elementId: 'c', glue: 'dynamic' }, to: { glue: 'none', point: { x: 330, y: 230 } } },
+  ]);
+  expect((r as any).ok).toBe(true);
+  const tap = await el(page, 'tap');
+  const onTap = await ptToClient(page, { x: 291, y: 265 });
+  await page.mouse.click(onTap.x, onTap.y);
+  expect(await page.evaluate(() => (window as any).__editor.selection())).toEqual([tap.id]);
+  const grip = await handle(page, tap.id, 'bend');
+  const bus = await ptToClient(page, { x: 300, y: 120 });
+  await drag(page, grip, bus);
+  await expect.poll(async () => (await el(page, 'tap')).to.join?.connectorId).toBe((await el(page, 'bus')).id);
+  const joined = await el(page, 'tap');
+  expect(joined.to.join.position).toBeGreaterThan(0.5);
+  expect(joined.to.join.position).toBeLessThan(0.7);
+  expect(joined.to.point.y).toBeCloseTo(120, 0);                   // the end is on the bus, not just near it
+
+  // from the Inspector: change the place, then release it where it stands
+  await page.getByTestId('field-join-to-at').fill('25');
+  await page.getByTestId('field-join-to-at').press('Enter');
+  await expect.poll(async () => (await el(page, 'tap')).to.join.position).toBe(0.25);
+  await page.getByTestId('join-to-release').click();
+  await expect.poll(async () => (await el(page, 'tap')).to.join).toBeUndefined();
+  expect((await el(page, 'tap')).to.point.x).toBeCloseTo(175, 0);   // the bus runs from a's right edge (100) to b's left edge (400): a quarter along
+  // and join again from the list
+  await page.getByTestId('field-join-to').selectOption({ label: 'bus' });
+  await expect.poll(async () => (await el(page, 'tap')).to.join?.position).toBe(0.5);
   expect(errors).toEqual([]);
 });
