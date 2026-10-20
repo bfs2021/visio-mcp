@@ -21,11 +21,16 @@ public static class Wire
 
     public static ResponseEnvelope Ok(string id, JsonNode result) => new() { RequestId = id, Result = JsonSerializer.SerializeToElement(result) };
 
-    public static RequestEnvelope Hello(string clientLabel) => new()
+    public static RequestEnvelope Hello(string clientLabel, string? clientVersion = null)
     {
-        RequestId = "hello", Method = "app.hello",
-        Params = new JsonObject { ["protocolVersion"] = ProtocolVersion, ["clientLabel"] = clientLabel },
-    };
+        var p = new JsonObject { ["protocolVersion"] = ProtocolVersion, ["clientLabel"] = clientLabel };
+        if (clientVersion is not null) p["clientVersion"] = clientVersion;
+        return new RequestEnvelope { RequestId = "hello", Method = "app.hello", Params = p };
+    }
+
+    /// <summary>A version a client reports about itself is shown to the user, so only a short run of version characters is kept.</summary>
+    public static string? CleanVersion(string? reported) =>
+        reported is { Length: > 0 and <= 64 } && reported.All(c => char.IsAsciiLetterOrDigit(c) || c is '.' or '-' or '+' or '_') ? reported : null;
 }
 
 /// <summary>Pipe name scoped by user SID, logon session and protocol version, so another user or session never shares it.</summary>
@@ -36,6 +41,10 @@ public static class PipeNames
         using var id = WindowsIdentity.GetCurrent();
         return $"agentic-diagram.v{protocolVersion}.{id.User!.Value}.{LogonSessionId(id.AccessToken.DangerousGetHandle()):x}";
     }
+
+    /// <summary>The pipe a second launch uses to reach the running window. Scoped like the MCP pipe: one per user and logon session.</summary>
+    public static string ForLaunch() { using var id = WindowsIdentity.GetCurrent(); return ForLaunch(id.User!.Value, LogonSessionId(id.AccessToken.DangerousGetHandle())); }
+    public static string ForLaunch(string sid, long logonSession) => $"agentic-diagram.launch.v1.{sid}.{logonSession:x}";
 
     public static long LogonSessionId() { using var id = WindowsIdentity.GetCurrent(); return LogonSessionId(id.AccessToken.DangerousGetHandle()); }
 

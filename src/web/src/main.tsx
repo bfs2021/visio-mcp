@@ -14,8 +14,12 @@ import type { DocumentState } from './workspace/Workspace';
 function hostApi(host: HostServices | null): HostApi {
   if (!host) return noHost;
   return {
+    editorExport: opts => host.call('host.exportImage', {...opts}),
     pickImage: () => host.call('host.pickImage'),
-    openJson: path => host.call('host.openJson', path ? { path } : {}),
+    openJson: (path, recentId, scope) => host.call('host.openJson', { ...(recentId ? { recentId } : path ? { path } : {}), ...(scope ? { documentId: scope.documentId, sessionId: scope.sessionId } : {}) }),
+    recentList: () => host.call('host.recent.list'),
+    recentRemove: id => host.call('host.recent.remove', { id }),
+    recentClear: () => host.call('host.recent.clear'),
     workspaceSave: (tabs, activeDocumentId) => host.call('host.workspace.save', { tabs, activeDocumentId }),
     workspaceLoad: () => host.call('host.workspace.load'),
     saveJson: (saveAs,expected) => host.call('host.saveJson', { saveAs, expected }),
@@ -28,13 +32,14 @@ function hostApi(host: HostServices | null): HostApi {
     recoveryFinish: (sessionId, originalPath) => host.call('host.recovery.finish', { sessionId, originalPath }),
     appClose: discard => host.call('host.app.close', { discard }),
     appCloseCancelled: () => host.call('host.app.closeCancelled'),
+    appAbout: () => host.call('host.app.about'),
     libraryList: (query, tags) => host.call('host.library.list', { query, tags }),
     libraryImport: () => host.call('host.library.import'),
     libraryUse: (id, hash) => host.call('host.library.use', { id, hash }),
     libraryReplaceSource: id => host.call('host.library.replaceSource', { id }),
     librarySetMetadata: (id, patch) => host.call('host.library.setMetadata', { id, ...patch }),
     libraryDelete: id => host.call('host.library.delete', { id }),
-    openVsdx: () => host.call('host.openVsdx'),
+    openVsdx: (recentId, path, scope) => host.call('host.openVsdx', { ...(recentId ? { recentId } : path ? { path } : {}), ...(scope ? { documentId: scope.documentId, sessionId: scope.sessionId } : {}) }),
     documentShow: documentId => host.call('host.documents.show', { documentId }),
     documentDiscard: documentId => host.call('host.documents.discard', { documentId }),
     agentDocuments: () => host.call('host.documents.agent'),
@@ -58,6 +63,7 @@ const app = startApp(window.chrome?.webview, null, {
     adoptDocument: (document, activate) => ws!.adoptDocument(document, activate),
     activateDocument: documentId => ws!.activateById(documentId),
     agentDocuments: list => ws!.setAgentDocs(list),
+    openFiles: files => ws!.openFromShell(files),
   },
 });
 const { engine, host, router, sessionChanged, workspace } = app;
@@ -85,7 +91,8 @@ ws.host = hostApi(host);
 if (host) ws.protectNew = scope => host.call('host.protectNewDocument', { ...scope });
 configure(firstModel, workspace.active!);
 const model = firstModel;
-void ws.restoreWorkspace(model).then(() => ws!.refreshAgentDocs()); // the last run's tabs come back; unfinished work no tab owns is offered
+ws.restored = ws.restoreWorkspace(model).then(() => ws!.refreshAgentDocs());
+void ws.restored; // the last run's tabs come back; unfinished work no tab owns is offered
 
 // A read-only window onto the editor for automated tests. It is compiled out of production builds, and nothing here edits the document.
 // It always points at the active tab, so a test sees what the person sees.

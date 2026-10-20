@@ -31,6 +31,8 @@ export interface AppHandlers {
   activateDocument?: (documentId: string) => Result<{ activated: string }>;
   /** The person's page: the background documents changed. */
   agentDocuments?: (documents: AgentDocument[]) => void;
+  /** The person's page: the shell asked for these files to be opened (a double-click, Open with, or a second launch). */
+  openFiles?: (files: Array<{ path: string; kind: 'json' | 'vsdx' }>) => Promise<Result<{ opened: number }>>;
 }
 
 /** Finds the engine of the document a request names; with no document named, the active one. */
@@ -72,6 +74,12 @@ export function createEngineHandler(source: CommandEngine | EngineResolver, opts
         return respond(doc.ok ? await appHandler.adoptDocument(doc.value as DiagramDocument, p.activate !== false) : doc);
       }
       case 'app.activateDocument': return respond(appHandler?.activateDocument && typeof p.documentId === 'string' ? appHandler.activateDocument(p.documentId) : fail('method_not_found', 'this page does not switch documents'));
+      case 'app.openFiles': {
+        const list = Array.isArray(p.files) ? p.files : [];
+        const files = list.filter((f): f is { path: string; kind: 'json' | 'vsdx' } => !!f && typeof f.path === 'string' && (f.kind === 'json' || f.kind === 'vsdx'));
+        if (!appHandler?.openFiles || files.length !== list.length) return respond(fail('invalid_request', 'app.openFiles needs a list of {path, kind}'));
+        return respond(await appHandler.openFiles(files));
+      }
       case 'app.agentDocuments':
         appHandler?.agentDocuments?.(Array.isArray(p.documents) ? (p.documents as AgentDocument[]) : []);
         return respond(ok({ received: true }));

@@ -1,0 +1,4 @@
+
+> generate:check
+> node ../../tools/generate-contracts.mjs --check
+

@@ -521,6 +521,7 @@ public sealed record PagePatch
     [JsonPropertyName("heightPt")] public double? HeightPt { get; init; }
     [JsonPropertyName("background")] public Paint? Background { get; init; }
     [JsonPropertyName("grid")] public GridPatch? Grid { get; init; }
+    [JsonPropertyName("guides")] public IReadOnlyList<Guide>? Guides { get; init; }
 }
 
 public sealed record SetPageOp : Operation

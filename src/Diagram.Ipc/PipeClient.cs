@@ -98,7 +98,7 @@ public sealed class PipeClient(string pipeName, TimeSpan connectTimeout, string 
 
             try
             {
-                using var hello = Wire.ToDocument(Wire.Hello(clientLabel));
+                using var hello = Wire.ToDocument(Wire.Hello(clientLabel, Wire.CleanVersion(System.Reflection.Assembly.GetEntryAssembly()?.GetName().Version?.ToString())));
                 await FrameCodec.WriteAsync(stream, hello, ct);
                 using var reply = await FrameCodec.ReadAsync(stream, ct);
                 if (reply.RootElement.TryGetProperty("error", out var err))

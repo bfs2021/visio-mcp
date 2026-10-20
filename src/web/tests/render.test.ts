@@ -75,3 +75,13 @@ describe('render planning', () => {
     expect(r.ok && r.value.dims.widthPx).toBe(80); // 8 pixels per point at most
   });
 });
+
+it('editor exports use an exact scale and reject oversized output instead of shrinking it', () => {
+  const t=createTestEngine();
+  const r=planRender(t.store.snapshot(),undefined,{scope:'page',scale:2,background:'transparent'} as never);
+  expect(r.ok && r.value.dims.widthPx).toBe(Math.round(t.store.snapshot().document.pages[0]!.widthPt*2));
+  expect(planRender(t.store.snapshot(),undefined,{scope:'page',scale:8} as never).ok).toBe(false);
+  expect(planRender(t.store.snapshot(),undefined,{scope:'page',scale:0} as never).ok).toBe(false);
+  expect(planRender(t.store.snapshot(),undefined,{scope:'page',background:'bad'} as never).ok).toBe(false);
+  expect(planRender(t.store.snapshot(),undefined,{scope:'page',format:'jpeg',background:'transparent'} as never).ok).toBe(false);
+});
