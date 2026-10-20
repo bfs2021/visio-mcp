@@ -18,6 +18,7 @@ import { PageCanvas } from './components/PageCanvas';
 import { ShapesPanel } from './components/ShapesPanel';
 import { StatusBar } from './components/StatusBar';
 import { Toolbar } from './components/Toolbar';
+import { PreferencesDialog } from './components/PreferencesDialog';
 
 const typing = (t: EventTarget | null) =>
   t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement || (t instanceof HTMLElement && t.isContentEditable);
@@ -27,6 +28,7 @@ function useShortcuts(ws: WorkspaceModel) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const model = ws.active;
+      if (ws.preferences.dialogOpen) return;
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') { e.preventDefault(); if (!ws.tabs.some(t => t.newDocument.prompt || t.closePrompt || t.files.prompt)) model.newDocument.begin(); return; }
       if (ws.tabs.some(t => t.newDocument.prompt || t.closePrompt)) return;
       if (e.ctrlKey && e.key === 'Tab') { e.preventDefault(); ws.cycle(e.shiftKey ? -1 : 1); return; } // most recently used first; works while typing too, like a browser
@@ -72,7 +74,7 @@ export function App({ ws }: { ws: WorkspaceModel }) {
   useShortcuts(ws);
   const model = ws.active;
   const asking = ws.tabs.find(t => t.closePrompt);
-  useEffect(()=>{const focus=()=>void ws.checkFiles();window.addEventListener('focus',focus);return()=>window.removeEventListener('focus',focus);},[ws]);
+  useEffect(()=>{const focus=()=>{if(!ws.preferences.dialogOpen)void ws.checkFiles();};window.addEventListener('focus',focus);return()=>window.removeEventListener('focus',focus);},[ws]);
   useEffect(()=>{if(!ws.isBusy()&&!ws.tabs.some(t=>t.newDocument.prompt||t.closePrompt||t.recoveryOffers.length||t.recoveryReport))model.files.presentNotice();});
   const holder = ws.tabs.find(t => t.recoveryOffers.length > 0 || t.recoveryReport) ?? model; // the tab that holds the recovery question
   return (
@@ -95,6 +97,7 @@ export function App({ ws }: { ws: WorkspaceModel }) {
       {ws.tabs.filter(t => t.newDocument.prompt).map(t => <NewDocumentDialog key={t.tabId} model={t} />)}
       <DocumentTitle model={model} />
       <StatusBar model={model} />
+      <PreferencesDialog ws={ws} />
     </div>
   );
 }

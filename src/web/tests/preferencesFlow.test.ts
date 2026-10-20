@@ -26,6 +26,20 @@ it('agent registry creates drawings with the same captured settings', async () =
  expect(r.error).toBeUndefined();
  expect(app.workspace.documents[0]!.engine.store.snapshot().document.pages[0]!.grid.spacingPt).toBe(42);
 });
+it('an initialized agent refreshes host defaults for its next drawing without editing an older one', async () => {
+ const service = memoryPreferencesService();
+ const app = startAgentApp(undefined, { preferencesService: service });
+ const create = async (id: string) => app.router.dispatch({ protocolVersion: 1, kind: 'request', requestId: id, method: 'app.createDocument', params: {} });
+ const first = await create('first'); expect(first.error).toBeUndefined();
+ const oldDoc = app.workspace.documents[0]!.engine.store.snapshot().document;
+ const current = await service.get(); if (!current.ok) throw new Error('get failed');
+ const changed = current.value.preferences; changed.grid.spacingPt = 91; changed.font.family = 'Consolas';
+ await service.save(changed, current.value.versionTag);
+ const second = await create('second'); expect(second.error).toBeUndefined();
+ expect(app.workspace.documents[1]!.engine.store.snapshot().document.pages[0]!.grid.spacingPt).toBe(91);
+ expect(app.workspace.documents[1]!.engine.store.snapshot().document.metadata['editor.defaults.v1']).toContain('Consolas');
+ expect(app.workspace.documents[0]!.engine.store.snapshot().document).toEqual(oldDoc);
+});
 
 import { initializePreferences } from '../src/bridge/initializePreferences';
 import type { WebViewLike } from '../src/bridge/BridgeClient';
@@ -52,7 +66,9 @@ it('read errors start with safe defaults and a nonblocking diagnostic', async ()
 });
 
 import { memoryPreferencesService } from '../src/bridge/initializePreferences';
+import type { PreferencesService } from '../src/bridge/initializePreferences';
 import { newDocument } from '../src/model/newDocument';
+import { PreferencesModel } from '../src/preferences/PreferencesModel';
 it('browser settings validate, detect conflicts and remain isolated in memory', async () => {
  const service = memoryPreferencesService(), other = memoryPreferencesService();
  const first = await service.get(); if (!first.ok) throw new Error('get failed');
@@ -62,6 +78,63 @@ it('browser settings validate, detect conflicts and remain isolated in memory', 
  expect(conflict).toMatchObject({ ok: false, error: { code: 'revision_conflict', details: { reason: 'preferences_changed' } } });
  expect(await other.get()).toMatchObject({ ok: true, value: { preferences: defaultPreferences() } });
  expect((await service.save({ ...p, font: { ...p.font, sizePt: 0 } }, 'memory:1')).ok).toBe(false);
+});
+it('keeps draft on failed writes and conflicts, then reloads disk explicitly', async () => {
+ const service = memoryPreferencesService();
+ const model = new PreferencesModel(defaultPreferences(), 'memory:0', null, service);
+ await model.open();
+ model.edit({ theme: 'dark', font: { family: 'Consolas', sizePt: 15 } });
+ const competing = defaultPreferences(); competing.units = 'in';
+ await service.save(competing, 'memory:0');
+ const conflict = await model.save();
+ expect(conflict.ok).toBe(false);
+ expect(model.draft?.theme).toBe('dark');
+ expect(model.current.theme).toBe('light');
+ expect(model.conflicted).toBe(true);
+ await model.reload();
+ expect(model.draft?.units).toBe('in');
+ expect(model.draft?.theme).toBe('light');
+ expect(model.conflicted).toBe(false);
+ model.edit({ font: { family: '   ', sizePt: 12 } });
+ expect((await model.save()).ok).toBe(false);
+ expect(model.errors.font).toBeTruthy();
+ model.resetDraft();
+ expect(model.draft).toEqual(defaultPreferences());
+ expect(model.current.units).toBe('in');
+ expect((await model.save()).ok).toBe(true);
+ expect(model.draft).toBeNull();
+});
+
+it('cancel drops edits without saving and successful save applies once', async () => {
+ const service = memoryPreferencesService();
+ const model = new PreferencesModel(defaultPreferences(), 'memory:0', null, service);
+ let applied = 0; model.subscribe(() => applied++);
+ await model.open(); model.edit({ units: 'cm' }); model.cancel();
+ expect(model.current.units).toBe('mm');
+ await model.open(); model.edit({ units: 'in' });
+ expect((await model.save()).ok).toBe(true);
+ expect(model.current.units).toBe('in');
+ expect(applied).toBeGreaterThan(0);
+ expect((await service.get())).toMatchObject({ ok: true, value: { preferences: { units: 'in' } } });
+});
+it('transport failures retain the open draft and expose an error for retry', async () => {
+ const underlying = memoryPreferencesService();
+ let breakRead = false, breakWrite = false;
+ const service: PreferencesService = {
+  get: () => breakRead ? Promise.reject(new Error('read disconnected')) : underlying.get(),
+  save: (preferences, tag, reset) => breakWrite ? Promise.reject(new Error('write disconnected')) : underlying.save(preferences, tag, reset),
+ };
+ const model = new PreferencesModel(defaultPreferences(), 'memory:0', null, service);
+ await model.open(); model.edit({ theme: 'dark' });
+ breakWrite = true;
+ expect((await model.save()).ok).toBe(false);
+ expect(model.draft?.theme).toBe('dark');
+ expect(model.errors.form).toContain('write disconnected');
+ expect(model.busy).toBe(false);
+ breakRead = true;
+ await model.reload();
+ expect(model.draft?.theme).toBe('dark');
+ expect(model.errors.form).toContain('read disconnected');
 });
 it('opening authored or legacy documents preserves their exact content', () => {
  const p = defaultPreferences(); p.grid.spacingPt = 42;

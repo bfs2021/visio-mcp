@@ -38,6 +38,7 @@ export function TabStrip({ ws }: { ws: WorkspaceModel }) {
 
   // ---- dragging to reorder (pointer events, so it works the same with mouse, pen and touch)
   const onPointerDown = (e: React.PointerEvent, tab: EditorModel) => {
+    if (ws.preferences.dialogOpen) return;
     if (e.button !== 0 || (e.target as HTMLElement).closest('.tab-close')) return;
     drag.current = { tab, startX: e.clientX, moved: false };
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);

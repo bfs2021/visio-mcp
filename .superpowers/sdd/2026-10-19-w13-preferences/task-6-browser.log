@@ -1,0 +1,22 @@
+
+> test:browser
+> playwright test tests/browser/preferences.spec.ts --workers=1
+
+[WebServer] (node:20804) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:17612) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 7 tests using 1 worker
+
+(node:1724) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 tests\browser\preferences.spec.ts:13:1 › Cancel and Escape discard a draft and restore menu focus (1.5s)
+  ok 2 tests\browser\preferences.spec.ts:26:1 › Save applies theme and units to tab views without editing the drawing (907ms)
+  ok 3 tests\browser\preferences.spec.ts:49:1 › Reset changes only the draft until Save (785ms)
+  ok 4 tests\browser\preferences.spec.ts:60:1 › invalid fields stay in the dialog and unavailable fonts remain allowed (962ms)
+  ok 5 tests\browser\preferences.spec.ts:76:1 › stale settings offer Reload and a failed write leaves the draft visible (864ms)
+  ok 6 tests\browser\preferences.spec.ts:95:1 › dark chrome preserves page pixels and document hash while toolbar unit override stays local (1.4s)
+  ok 7 tests\browser\preferences.spec.ts:157:1 › focus stays in Preferences and competing keyboard and lifecycle actions are blocked (774ms)
+
+  7 passed (9.9s)

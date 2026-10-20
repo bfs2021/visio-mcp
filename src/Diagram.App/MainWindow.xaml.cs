@@ -4,6 +4,9 @@ using Diagram.Core.Contracts;
 using Diagram.Host.Core;
 using Diagram.Visio;
 using Microsoft.Web.WebView2.Core;
+using System.Windows.Interop;
+using System.Windows.Media;
+using System.Runtime.InteropServices;
 
 namespace Diagram.App;
 
@@ -24,6 +27,22 @@ public sealed record AppOptions(string ContentRoot, string UserDataDir, string B
 
 public partial class MainWindow : Window
 {
+    [DllImport("dwmapi.dll", PreserveSig = true)]
+    static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
+    string chromeTheme = "light";
+    public void ApplyChromeTheme(string theme)
+    {
+        chromeTheme = theme;
+        var dark = theme == "dark";
+        Background = new SolidColorBrush(dark ? Color.FromRgb(0x11, 0x18, 0x27) : Color.FromRgb(0xf1, 0xf5, 0xf9));
+        Web.DefaultBackgroundColor = dark ? System.Drawing.Color.FromArgb(0x11, 0x18, 0x27) : System.Drawing.Color.FromArgb(0xf1, 0xf5, 0xf9);
+        var hwnd = new WindowInteropHelper(this).Handle;
+        if (hwnd != IntPtr.Zero)
+        {
+            var enabled = dark ? 1 : 0;
+            _ = DwmSetWindowAttribute(hwnd, 20, ref enabled, sizeof(int));
+        }
+    }
     readonly AppOptions options;
     WebViewHost? host;
 
@@ -31,6 +50,7 @@ public partial class MainWindow : Window
     {
         this.options = options;
         InitializeComponent();
+        SourceInitialized += (_, _) => ApplyChromeTheme(chromeTheme);
         if (options.Offscreen)
         {
             WindowStartupLocation = WindowStartupLocation.Manual;
@@ -85,6 +105,7 @@ public partial class MainWindow : Window
         Native = new NativeFileCoordinator(host.Router, host.Router, Blobs, Writer, new NativeVsdxImporter(), new NativeVsdxExporter(), host.Router);
         Exports = new ExportService(this, options.ExportRoot ?? Path.Combine(Path.GetTempPath(), "AgenticDiagramExports"), options.Offscreen ? null : new ExportConsentWindow(this));
         var initialPreferences = await Preferences.ReadAsync();
+        await Dispatcher.InvokeAsync(() => ApplyChromeTheme(initialPreferences.Preferences.Theme));
         RecoveryMgr = new RecoveryManager(host.Router, Recovery, Blobs, () => Services.CurrentPath,
             new RecoveryOptions(CheckpointEvery: TimeSpan.FromSeconds(initialPreferences.Preferences.Recovery.CheckpointSeconds)),
             documentPath: Services.PathOf, timeProvider: options.RecoveryTimeProvider);

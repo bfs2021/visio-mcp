@@ -47,6 +47,8 @@ export function Toolbar({ model, ws }: { model: EditorModel; ws: WorkspaceModel 
       { id: 'delete', label: 'Delete', shortcut: 'Del', run: () => void model.deleteSelection(), disabled: !hasSelection },
       'sep',
       { id: 'select-all', label: 'Select all', shortcut: 'Ctrl+A', run: () => model.selectAll() },
+      'sep',
+      { id: 'preferences', label: 'Preferences…', run: () => void ws.openPreferences() },
     ] },
     { name: 'Arrange', items: arrangeMenu(model) },
     { name: 'View', items: [

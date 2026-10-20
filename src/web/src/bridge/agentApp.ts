@@ -1,5 +1,7 @@
 import type { AppPreferences } from '../contracts/generated';
 import { PreferencesModel } from '../preferences/PreferencesModel';
+import type { PreferencesService } from './initializePreferences';
+import { validatePreferences } from '../model/preferences';
 import { CommandEngine } from '../commands/CommandEngine';
 import { fail, ok } from '../model/result';
 import { newDocument } from '../model/newDocument';
@@ -15,7 +17,7 @@ import type { EngineHandlerOptions } from './engineHandlers';
  * window is the host's doing; this page only answers `app.createDocument` and `app.dropDocument`.
  */
 export function startAgentApp(webview: WebViewLike | undefined, hooks: {
-  initialPreferences?: AppPreferences; preferences?: PreferencesModel; client?: BridgeClient;
+  initialPreferences?: AppPreferences; preferences?: PreferencesModel; preferencesService?: PreferencesService; client?: BridgeClient;
   render?: EngineHandlerOptions['render']; layoutContext?: EngineHandlerOptions['layoutContext']; rasterise?: EngineHandlerOptions['rasterise'];
   /** Gives a new engine what only the page can supply (the snapshot projector that resolves routes for exports). */
   configureEngine?: (engine: CommandEngine) => void;
@@ -23,7 +25,15 @@ export function startAgentApp(webview: WebViewLike | undefined, hooks: {
   const preferences = hooks.preferences ?? new PreferencesModel(hooks.initialPreferences);
   const workspace = new Workspace();
 
-  const createDocument: NonNullable<NonNullable<EngineHandlerOptions['app']>['createDocument']> = params => {
+  const createDocument: NonNullable<NonNullable<EngineHandlerOptions['app']>['createDocument']> = async params => {
+    // Agent views can outlive a visible-window Save. Refresh before capturing a new drawing.
+    if (hooks.preferencesService) {
+      const read = await hooks.preferencesService.get();
+      if (read.ok) {
+        const validated = validatePreferences(read.value.preferences);
+        if (validated.ok) preferences.apply(validated.value, read.value.versionTag);
+      }
+    }
     const doc = newDocument(undefined, undefined, preferences.snapshotDefaults());
     if (params.title !== undefined) {
       if (typeof params.title !== 'string' || params.title.length === 0 || params.title.length > 200) return fail('invalid_request', 'title must be 1 to 200 characters');

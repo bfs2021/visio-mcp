@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ViewportInfo } from '../canvas/CanvasAdapter';
 import { toPoints, type Unit } from '../model/validate';
 
@@ -7,6 +7,8 @@ const SIZE = 22;
 /** A unit-labelled ruler aligned to the page origin. `horizontal` rulers follow scrollLeft, vertical ones scrollTop. */
 export function Ruler({ horizontal, viewport, unit, length }: { horizontal: boolean; viewport: ViewportInfo | null; unit: Unit; length: number }) {
   const ref = useRef<HTMLCanvasElement>(null);
+  const [themeVersion, setThemeVersion] = useState(0);
+  useEffect(() => { const changed = () => setThemeVersion(v => v + 1); window.addEventListener('editor-theme-changed', changed); return () => window.removeEventListener('editor-theme-changed', changed); }, []);
   useEffect(() => {
     const canvas = ref.current;
     if (!canvas || !viewport) return;
@@ -18,10 +20,11 @@ export function Ruler({ horizontal, viewport, unit, length }: { horizontal: bool
     canvas.style.height = `${h}px`;
     const ctx = canvas.getContext('2d')!;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = '#f1f5f9';
+    const colours = getComputedStyle(document.documentElement);
+    ctx.fillStyle = colours.getPropertyValue('--ruler-bg').trim();
     ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = '#475569';
-    ctx.strokeStyle = '#94a3b8';
+    ctx.fillStyle = colours.getPropertyValue('--ruler-ink').trim();
+    ctx.strokeStyle = colours.getPropertyValue('--ruler-line').trim();
     ctx.font = '10px system-ui, sans-serif';
     ctx.textBaseline = 'top';
 
@@ -47,7 +50,7 @@ export function Ruler({ horizontal, viewport, unit, length }: { horizontal: bool
         ctx.stroke();
       }
     }
-  }, [horizontal, viewport, unit, length]);
+  }, [horizontal, viewport, unit, length, themeVersion]);
   return <canvas ref={ref} className={horizontal ? 'ruler ruler-h' : 'ruler ruler-v'} data-testid={horizontal ? 'ruler-h' : 'ruler-v'} data-unit={unit} />;
 }
 

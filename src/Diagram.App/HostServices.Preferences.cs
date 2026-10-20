@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Diagram.Core.Contracts;
 using Diagram.Host.Core;
+using System.Windows.Media;
 
 namespace Diagram.App;
 
@@ -13,6 +14,7 @@ public sealed partial class HostServices
         ["preferences"] = JsonSerializer.SerializeToNode(snapshot.Preferences, ContractJson.Options),
         ["versionTag"] = snapshot.VersionTag,
         ["diagnostic"] = snapshot.Diagnostic,
+        ["installedFonts"] = JsonSerializer.SerializeToNode(Fonts.SystemFontFamilies.Select(font => font.Source).OrderBy(name => name, StringComparer.OrdinalIgnoreCase).ToArray()),
     };
 
     async Task<ResponseEnvelope> PreferencesAsync(RequestEnvelope request, CancellationToken ct)
@@ -42,6 +44,7 @@ public sealed partial class HostServices
             {
                 // Once the file is durable, request cancellation must not leave this window on the old cadence.
                 await window.RecoveryMgr.UpdateCheckpointIntervalAsync(TimeSpan.FromSeconds(saved.Snapshot.Preferences.Recovery.CheckpointSeconds));
+                await window.Dispatcher.InvokeAsync(() => window.ApplyChromeTheme(saved.Snapshot.Preferences.Theme));
                 return Ok(request, PreferencePayload(saved.Snapshot));
             }
         }
