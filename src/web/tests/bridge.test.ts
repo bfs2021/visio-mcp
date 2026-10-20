@@ -88,6 +88,26 @@ describe('startApp', () => {
     return { ...f, app, ready, scope, ask };
   }
 
+  it('accepts bounded native ingress metadata without a path payload', async () => {
+    const f = fakeWebView();
+    const received: unknown[] = [];
+    startApp(f.wv, null, { app: { ingressAvailable: batch => received.push(batch) } });
+    f.fromHost({ protocolVersion: 1, kind: 'request', requestId: 'ingress-1', method: 'app.ingressAvailable', params: {
+      batchId: 'batch-1', items: [{ ticketId: 'opaque-ticket', displayName: 'diagram.diagram.json', kind: 'json' }], rejections: [],
+    } });
+    await flush();
+
+    expect(received).toEqual([{ batchId: 'batch-1', items: [{ ticketId: 'opaque-ticket', displayName: 'diagram.diagram.json', kind: 'json' }], rejections: [] }]);
+    expect(f.toHost.at(-1)).toMatchObject({ kind: 'response', requestId: 'ingress-1', result: { received: true } });
+
+    f.fromHost({ protocolVersion: 1, kind: 'request', requestId: 'ingress-2', method: 'app.ingressAvailable', params: {
+      batchId: 'batch-2', items: [{ ticketId: 'bad', displayName: 'file', kind: 'json', path: 'C:/private/file.diagram.json' }], rejections: [],
+    } });
+    await flush();
+    expect(f.toHost.at(-1)).toMatchObject({ kind: 'response', requestId: 'ingress-2', error: { code: 'invalid_request' } });
+    expect(received).toHaveLength(1);
+  });
+
   it('AppStartsReadyWithA4Snapshot', async () => {
     const { ready, ask, toHost } = boot();
     expect(ready).toMatchObject({ kind: 'event', method: 'editor.ready', params: { protocolVersion: 1, revision: 0 } });

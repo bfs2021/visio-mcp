@@ -24,6 +24,7 @@ import { Toolbar } from './components/Toolbar';
 import { PreferencesDialog } from './components/PreferencesDialog';
 import { HelpDialogs } from './components/HelpDialogs';
 import { ConnectDialog } from './components/ConnectDialog';
+import { FileIngressQueue } from './components/FileIngressQueue';
 
 const typing = (t: EventTarget | null) =>
   t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement || (t instanceof HTMLElement && t.isContentEditable);
@@ -82,8 +83,9 @@ function useShortcuts(ws: WorkspaceModel) {
 }
 
 export function App({ ws }: { ws: WorkspaceModel }) {
-  useWorkspace(ws);
+  const workspaceVersion = useWorkspace(ws);
   useShortcuts(ws);
+  useEffect(() => { void ws.processIngress(); }, [ws, workspaceVersion]);
   const model = ws.active;
   const asking = ws.tabs.find(t => t.closePrompt);
   useEffect(()=>{const focus=()=>{if(!ws.preferences.dialogOpen)void ws.checkFiles();};window.addEventListener('focus',focus);return()=>window.removeEventListener('focus',focus);},[ws]);
@@ -116,6 +118,7 @@ export function App({ ws }: { ws: WorkspaceModel }) {
       <DocumentTitle model={model} />
       <StatusBar model={model} />
       <PreferencesDialog ws={ws} />
+      <FileIngressQueue ws={ws} />
     </div>
   );
 }

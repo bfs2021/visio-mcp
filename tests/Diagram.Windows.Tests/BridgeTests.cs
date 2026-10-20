@@ -322,4 +322,162 @@ public class BridgeTests
         Assert.Equal("native-json", snap.Document.Source!.Format);
         Assert.Equal(path, snap.Document.Source.Path);
     }
+
+    [Fact]
+    public async Task IngressOpenRejectsFabricatedTicketWithoutChangingTheDrawing()
+    {
+        await using var h = await Harness.StartAsync();
+        var scope = h.Router.CurrentScope!;
+        var before = (await h.Send("doc.status", scope: scope)).Result!.Value.GetProperty("revision").GetInt32();
+
+        var response = await h.Window.Services.HandleAsync(new RequestEnvelope
+        {
+            RequestId = "ingress-fabricated",
+            Method = "host.ingress.open",
+            Params = new JsonObject
+            {
+                ["ticketId"] = "ingress-not-minted",
+                ["documentId"] = scope.DocumentId,
+                ["sessionId"] = scope.SessionId,
+                ["baseRevision"] = before,
+            },
+        }, Harness.Ct());
+
+        Assert.Equal("invalid_request", response.Error?.Code);
+        var after = (await h.Send("doc.status", scope: scope)).Result!.Value.GetProperty("revision").GetInt32();
+        Assert.Equal(before, after);
+    }
+
+    [Fact]
+    public async Task IngressOpenRefusesStaleRevisionBeforeConsumingTheTicket()
+    {
+        await using var h = await Harness.StartAsync();
+        var scope = h.Router.CurrentScope!;
+        var path = Path.Combine(h.Root, "stale.diagram.json");
+        var item = Assert.Single(h.Window.Services.IngressTickets.MintDropBatch(h.Window.Services.IngressWindowId, BridgeRouter.User, [new IngressFile(path)]).Items);
+
+        var response = await h.Window.Services.HandleAsync(new RequestEnvelope
+        {
+            RequestId = "ingress-stale-revision",
+            Method = "host.ingress.open",
+            Params = new JsonObject
+            {
+                ["ticketId"] = item.TicketId,
+                ["documentId"] = scope.DocumentId,
+                ["sessionId"] = scope.SessionId,
+                ["baseRevision"] = 1,
+            },
+        }, Harness.Ct());
+
+        Assert.Equal("revision_conflict", response.Error?.Code);
+        Assert.Contains(h.Window.Services.IngressTickets.DescribePending(h.Window.Services.IngressWindowId, BridgeRouter.User), pending => pending.TicketId == item.TicketId);
+        Assert.Equal(scope, h.Router.CurrentScope);
+    }
+
+    [Fact]
+    public async Task IngressTicketUsesTheGuardedJsonOpenCoreAndRecordsTheOpenedPath()
+    {
+        await using var h = await Harness.StartAsync();
+        var path = Path.Combine(h.Root, "ticket-open.diagram.json");
+        var scope = h.Router.CurrentScope!;
+        var saved = await h.Window.Coordinator.SaveJsonAsync(path, scope, Harness.Ct());
+        Assert.True(saved.IsOk);
+        var batch = h.Window.Services.IngressTickets.MintDropBatch(h.Window.Services.IngressWindowId, BridgeRouter.User, [new IngressFile(path)]);
+        var item = Assert.Single(batch.Items);
+
+        var response = await h.Window.Services.HandleAsync(new RequestEnvelope
+        {
+            RequestId = "ingress-valid",
+            Method = "host.ingress.open",
+            Params = new JsonObject
+            {
+                ["ticketId"] = item.TicketId,
+                ["documentId"] = scope.DocumentId,
+                ["sessionId"] = scope.SessionId,
+                ["baseRevision"] = 0,
+            },
+        }, Harness.Ct());
+
+        Assert.Null(response.Error);
+        Assert.Equal(path, h.Window.Services.CurrentPath);
+        var opened = (await h.Send("doc.snapshot")).Result!.Value.Deserialize<Snapshot>(ContractJson.Options)!;
+        Assert.Equal("native-json", opened.Document.Source!.Format);
+        Assert.Equal(path, opened.Document.Source.Path);
+        Assert.Equal("invalid_request", h.Window.Services.IngressTickets.Consume(h.Window.Services.IngressWindowId, BridgeRouter.User, item.TicketId).Error?.Code);
+
+        var existingScope = h.Router.CurrentScope!;
+        var duplicate = Assert.Single(h.Window.Services.IngressTickets.MintDropBatch(h.Window.Services.IngressWindowId, BridgeRouter.User, [new IngressFile(path)]).Items);
+        var duplicateResponse = await h.Window.Services.HandleAsync(new RequestEnvelope
+        {
+            RequestId = "ingress-duplicate",
+            Method = "host.ingress.open",
+            Params = new JsonObject
+            {
+                ["ticketId"] = duplicate.TicketId,
+                ["documentId"] = existingScope.DocumentId,
+                ["sessionId"] = existingScope.SessionId,
+                ["baseRevision"] = 0,
+            },
+        }, Harness.Ct());
+        Assert.Null(duplicateResponse.Error);
+        Assert.Equal(existingScope, h.Router.CurrentScope);
+        Assert.Equal(existingScope.DocumentId, duplicateResponse.Result!.Value.GetProperty("existingDocumentId").GetString());
+    }
+
+    [Fact]
+    public async Task MalformedIngressJsonDoesNotReplaceTheTargetDocument()
+    {
+        await using var h = await Harness.StartAsync();
+        var path = Path.Combine(h.Root, "malformed.diagram.json");
+        await File.WriteAllTextAsync(path, "not a diagram");
+        var scope = h.Router.CurrentScope!;
+        var batch = h.Window.Services.IngressTickets.MintDropBatch(h.Window.Services.IngressWindowId, BridgeRouter.User, [new IngressFile(path)]);
+        var item = Assert.Single(batch.Items);
+
+        var response = await h.Window.Services.HandleAsync(new RequestEnvelope
+        {
+            RequestId = "ingress-malformed",
+            Method = "host.ingress.open",
+            Params = new JsonObject
+            {
+                ["ticketId"] = item.TicketId,
+                ["documentId"] = scope.DocumentId,
+                ["sessionId"] = scope.SessionId,
+                ["baseRevision"] = 0,
+            },
+        }, Harness.Ct());
+
+        Assert.Equal("invalid_request", response.Error?.Code);
+        Assert.Equal(scope, h.Router.CurrentScope);
+        Assert.Null(h.Window.Services.CurrentPath);
+        Assert.Equal(0, (await h.Send("doc.status", scope: scope)).Result!.Value.GetProperty("revision").GetInt32());
+    }
+
+    [Fact]
+    public async Task IngressTicketRoutesVisioThroughTheNativeImporter()
+    {
+        await using var h = await Harness.StartAsync();
+        var path = Path.Combine(Harness.RepoRoot, "tests", "fixtures", "vsdx", "visio-saved", "m0-v7.vsdx");
+        var scope = h.Router.CurrentScope!;
+        var batch = h.Window.Services.IngressTickets.MintDropBatch(h.Window.Services.IngressWindowId, BridgeRouter.User, [new IngressFile(path)]);
+        var item = Assert.Single(batch.Items);
+
+        var response = await h.Window.Services.HandleAsync(new RequestEnvelope
+        {
+            RequestId = "ingress-visio",
+            Method = "host.ingress.open",
+            Params = new JsonObject
+            {
+                ["ticketId"] = item.TicketId,
+                ["documentId"] = scope.DocumentId,
+                ["sessionId"] = scope.SessionId,
+                ["baseRevision"] = 0,
+            },
+        }, Harness.Ct(60));
+
+        Assert.Null(response.Error);
+        var opened = (await h.Send("doc.snapshot", scope: h.Router.CurrentScope)).Result!.Value.Deserialize<Snapshot>(ContractJson.Options)!;
+        Assert.Equal("vsdx", opened.Document.Source!.Format);
+        Assert.Equal(path, opened.Document.Source.Path);
+    }
 }

@@ -191,6 +191,17 @@ public partial class MainWindow : Window
         return r.Error is { } e ? [.. launch.Skipped, e.Message] : launch.Skipped;
     }
 
+    internal async Task<bool> NotifyIngressAvailableAsync(IngressDropBatch batch, CancellationToken ct = default)
+    {
+        var message = new IngressAvailableEvent(batch.BatchId, batch.Items, batch.Rejections);
+        var response = await Router.SendAsync(new RequestEnvelope
+        {
+            RequestId = Guid.NewGuid().ToString(), Method = "app.ingressAvailable",
+            Params = System.Text.Json.JsonSerializer.SerializeToNode(message, ContractJson.Options)!.AsObject(),
+        }, ct, BridgeRouter.User);
+        return response.Error is null;
+    }
+
     void BringToFront()
     {
         if (options.Offscreen) return;

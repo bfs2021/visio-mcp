@@ -19,6 +19,8 @@ function hostApi(host: HostServices | null): HostApi {
     editorExport: opts => host.call('host.exportImage', {...opts}),
     pickImage: () => host.call('host.pickImage'),
     openJson: (path, recentId, scope) => host.call('host.openJson', { ...(recentId ? { recentId } : path ? { path } : {}), ...(scope ? { documentId: scope.documentId, sessionId: scope.sessionId } : {}) }),
+    openIngress: (ticketId, expected) => host.call('host.ingress.open', { ticketId, ...expected }),
+    dismissIngress: ticketIds => host.call('host.ingress.dismiss', { ticketIds }),
     recentList: () => host.call('host.recent.list'),
     recentRemove: id => host.call('host.recent.remove', { id }),
     recentClear: () => host.call('host.recent.clear'),
@@ -69,6 +71,7 @@ const app = startApp(window.chrome?.webview, null, {
     activateDocument: documentId => ws!.activateById(documentId),
     agentDocuments: list => ws!.setAgentDocs(list),
     openFiles: files => ws!.openFromShell(files),
+    ingressAvailable: batch => ws!.enqueueIngress(batch),
   },
 });
 const { engine, host, router, sessionChanged, workspace } = app;
@@ -147,6 +150,9 @@ if (import.meta.env.VITE_TEST_API === '1') {
     tabs: () => shell.tabs.map(t => ({ label: t.tabLabel, unsaved: t.engine.status().unsaved, documentId: t.engine.scope().documentId, active: t === shell.active })),
     newTab: () => { shell.newTab(); },
     openFile: (kind?: 'json' | 'vsdx') => shell.openFile(kind),
+    enqueueIngress: (batch: import('./workspace/FileIngressModel').IngressBatch) => shell.enqueueIngress(batch),
+    cancelIngress: (batchId: string) => shell.cancelIngress(batchId),
+    processIngress: () => shell.processIngress(),
     closeTab: (index?: number) => shell.closeTab(index === undefined ? shell.active : shell.tabs[index]!),
     activateTab: (index: number) => shell.activate(shell.tabs[index]!),
     moveTab: (from: number, to: number) => shell.moveTab(shell.tabs[from]!, to),

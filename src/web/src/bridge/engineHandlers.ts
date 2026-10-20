@@ -33,6 +33,8 @@ export interface AppHandlers {
   agentDocuments?: (documents: AgentDocument[]) => void;
   /** The person's page: the shell asked for these files to be opened (a double-click, Open with, or a second launch). */
   openFiles?: (files: Array<{ path: string; kind: 'json' | 'vsdx' }>) => Promise<Result<{ opened: number }>>;
+  /** The visible editor: a native drop admitted by the host as bounded one-use tickets. */
+  ingressAvailable?: (batch: { batchId: string; items: Array<{ ticketId: string; displayName: string; kind: 'json' | 'vsdx' | 'image' }>; rejections: string[] }) => void;
 }
 
 /** Finds the engine of the document a request names; with no document named, the active one. */
@@ -79,6 +81,20 @@ export function createEngineHandler(source: CommandEngine | EngineResolver, opts
         const files = list.filter((f): f is { path: string; kind: 'json' | 'vsdx' } => !!f && typeof f.path === 'string' && (f.kind === 'json' || f.kind === 'vsdx'));
         if (!appHandler?.openFiles || files.length !== list.length) return respond(fail('invalid_request', 'app.openFiles needs a list of {path, kind}'));
         return respond(await appHandler.openFiles(files));
+      }
+      case 'app.ingressAvailable': {
+        const batch = p as { batchId?: unknown; items?: unknown; rejections?: unknown };
+        const hasOnlyKeys = (value: object, keys: string[]) => Object.keys(value).every(key => keys.includes(key));
+        if (!hasOnlyKeys(p, ['batchId', 'items', 'rejections']) || typeof batch.batchId !== 'string' || batch.batchId.length < 1 || batch.batchId.length > 128 || !Array.isArray(batch.items) || batch.items.length > 32 || !Array.isArray(batch.rejections) || batch.rejections.length > 32)
+          return respond(fail('invalid_request', 'app.ingressAvailable needs a bounded ticket batch'));
+        const items = batch.items.filter((item): item is { ticketId: string; displayName: string; kind: 'json' | 'vsdx' | 'image' } =>
+          !!item && typeof item === 'object' && hasOnlyKeys(item, ['ticketId', 'displayName', 'kind']) && typeof (item as { ticketId?: unknown }).ticketId === 'string' &&
+          typeof (item as { displayName?: unknown }).displayName === 'string' && (item as { displayName: string }).displayName.length <= 128 &&
+          ['json', 'vsdx', 'image'].includes(String((item as { kind?: unknown }).kind)));
+        if (items.length !== batch.items.length || !batch.rejections.every(x => typeof x === 'string' && x.length <= 256))
+          return respond(fail('invalid_request', 'app.ingressAvailable contains invalid ticket metadata'));
+        appHandler?.ingressAvailable?.({ batchId: batch.batchId, items, rejections: batch.rejections });
+        return respond(ok({ received: true }));
       }
       case 'app.agentDocuments':
         appHandler?.agentDocuments?.(Array.isArray(p.documents) ? (p.documents as AgentDocument[]) : []);

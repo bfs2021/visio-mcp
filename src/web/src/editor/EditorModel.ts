@@ -36,6 +36,8 @@ export interface HostApi extends FileHost {
   pickImage(): Promise<Result<{ cancelled: true } | { ref: PreparedAssetRef; notes: string[]; width: number; height: number }>>;
   /** Without a path the person chooses a file; with one (from the last session's tabs) it is reopened without asking. */
   openJson(path?: string, recentId?: string, scope?: Scope): Promise<Result<{ cancelled?: true; path?: string; notes?: string[] }>>;
+  openIngress(ticketId: string, expected: Scope & { baseRevision: number }): Promise<Result<{ path?: string; existingDocumentId?: string; warning?: string | null; summary?: string; diagnostics?: DiagnosticItem[]; lossy?: boolean; notes?: string[] }>>;
+  dismissIngress(ticketIds: string[]): Promise<Result<{ dismissed: number }>>;
   /** Records the open tabs so the next start can reopen them. */
   workspaceSave(tabs: Array<{ documentId: string; sessionId: string; title: string; unsaved: boolean }>, activeDocumentId: string | null): Promise<Result<{ saved: number }>>;
   /** What the last run left open. */
@@ -112,6 +114,8 @@ export const noHost: HostApi = {
   exportVsdx: async () => fail('not_running', 'there is no host to save files'),
   pickImage: async () => fail('not_running', 'there is no host to choose a picture'),
   openJson: async () => fail('not_running', 'there is no host to open files'),
+  openIngress: async () => fail('not_running', 'there is no host to open files'),
+  dismissIngress: async () => fail('not_running', 'there is no host to dismiss pending files'),
   workspaceSave: async () => fail('not_running', 'there is no host'),
   documentShow: async () => fail('not_running', 'there is no host'),
   documentDiscard: async () => fail('not_running', 'there is no host'),
@@ -686,6 +690,19 @@ export class EditorModel {
     this.lastSavedAt = new Date();
     this.say(`Opened ${r.value.path ?? 'file'}.${r.value.notes?.length ? ' ' + r.value.notes.join('; ') : ''}`, 'info');
     return r.value.path ? { opened: true, path: r.value.path } : { opened: true };
+  }
+
+  async openIngress(ticketId: string): Promise<{ opened: boolean; path?: string; existingDocumentId?: string; error?: string }> {
+    const scope = this.engine.scope();
+    const r = await this.host.openIngress(ticketId, { ...scope, baseRevision: this.engine.revision });
+    if (!r.ok) { this.say(r.error.message, 'error'); return { opened: false, error: r.error.message }; }
+    if (r.value.existingDocumentId) return { opened: true, existingDocumentId: r.value.existingDocumentId, path: r.value.path };
+    this.selection = [];
+    this.showCommitted();
+    if (r.value.diagnostics?.length) this.report = { title: 'Opened a Visio drawing', summary: r.value.summary ?? '', diagnostics: r.value.diagnostics };
+    this.say(`Opened ${r.value.path ?? 'file'}. ${r.value.summary ?? ''} ${r.value.warning ?? ''} ${r.value.notes?.join('; ') ?? ''}`.trim(), r.value.lossy || r.value.warning ? 'warning' : 'info');
+    this.bump();
+    return { opened: true, path: r.value.path };
   }
 
   /** Nothing in it, never saved, never edited: a new tab can take its place. */

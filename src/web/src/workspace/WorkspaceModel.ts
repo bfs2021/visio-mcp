@@ -5,6 +5,7 @@ import { fail, ok, type Result } from '../model/result';
 import type { DocumentState } from './Workspace';
 import { HelpState } from './HelpState';
 import type { startApp } from '../bridge/bootstrap';
+import { FileIngressModel, type IngressBatch, type IngressQueueItem, type IngressTarget } from './FileIngressModel';
 
 type App = ReturnType<typeof startApp>;
 
@@ -16,6 +17,7 @@ export const TAB_LIMIT = 20;
  * document: which tab is active, opening, closing and switching, and the two ways a close can be asked (a tab, or the whole window).
  */
 export class WorkspaceModel {
+  readonly ingress = new FileIngressModel();
   private checkingFiles = false;
   async checkFiles(): Promise<void> {
     if (this.preferences.dialogOpen) return;
@@ -73,6 +75,7 @@ export class WorkspaceModel {
 
   constructor(private readonly app: App, first: EditorModel) {
     app.preferences.subscribe(() => this.bump());
+    this.ingress.subscribe(() => this.bump());
     this.adopt(first, app.workspace.active!);
     // every document that appears in the workspace gets an editor, whoever opened it (the person, or an agent in the background)
     this.touch(first);
@@ -207,6 +210,47 @@ export class WorkspaceModel {
     }
     this.bump();
     return { opened: true };
+  }
+
+  enqueueIngress(batch: IngressBatch): void {
+    const target = this.active;
+    this.ingress.enqueue(batch, { ...target.engine.scope(), baseRevision: target.engine.revision });
+    void this.processIngress();
+  }
+
+  cancelIngress(batchId: string): void {
+    this.ingress.cancel(batchId, ticketIds => { void this.hostApi.dismissIngress(ticketIds); });
+  }
+
+  processIngress(): Promise<void> {
+    return this.ingress.drain((item, expected) => {
+      if (this.preferences.dialogOpen) return 'Preferences is open.';
+      if (this.isBusy()) return 'Finish the current canvas gesture first.';
+      if (this.recentPrompt || this.help.panel) return 'Close the open panel before processing dropped files.';
+      const source = this.tabs.find(tab => tab.engine.scope().documentId === expected.documentId && tab.engine.scope().sessionId === expected.sessionId);
+      if (!source) return 'The drawing that received these files is no longer open. Cancel and drop them again.';
+      if (source.engine.revision !== expected.baseRevision) return 'The drawing changed after the drop. Cancel and drop the files again.';
+      if (this.tabs.some(tab => tab.closePrompt || tab.newDocument.prompt || tab.exportPrompt || tab.report || tab.connectPrompt || tab.files.prompt || tab.recoveryOffers.length || tab.recoveryReport || tab.controller.isActive()))
+        return 'Finish or close the open dialog before processing dropped files.';
+      return null;
+    }, async (item: IngressQueueItem, expected: IngressTarget) => {
+      const source = this.tabs.find(tab => tab.engine.scope().documentId === expected.documentId && tab.engine.scope().sessionId === expected.sessionId);
+      if (!source) return { opened: false, error: 'The drawing that received these files is no longer open.' };
+      if (item.kind === 'image') return { opened: false, error: 'Picture import is not available yet.' };
+      const reuse = source.isBlank ? source : null;
+      const target = reuse ?? this.newTab();
+      if (!target) return { opened: false, error: this.notice ?? 'Cannot open another tab.' };
+      const result = await target.openIngress(item.ticketId);
+      if (!result.opened) { if (!reuse) await this.closeNow(target, true); return { opened: false, error: result.error ?? 'The file was not opened.' }; }
+      if (result.existingDocumentId) {
+        if (!reuse) await this.closeNow(target, true);
+        const existing = this.tabs.find(tab => tab.engine.scope().documentId === result.existingDocumentId);
+        if (existing) this.activate(existing);
+        return { opened: true, path: result.path, existingDocumentId: result.existingDocumentId };
+      }
+      const nextTarget = reuse ? { ...target.engine.scope(), baseRevision: target.engine.revision } : undefined;
+      return { opened: true, path: result.path, ...(nextTarget ? { nextTarget } : {}) };
+    });
   }
 
   /** Resolves once the last session's tabs are back; files the shell names are opened after that, so they land beside them. */
