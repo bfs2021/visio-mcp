@@ -55,3 +55,10 @@ R23 and R22 touch `obstacles.ts` and the Layers panel and should not be built in
 2. **What "behind" means for layers** (R23): layer order, element z-index, or layer order then z-index (proposed)? And should old documents keep today's routing until they opt in (proposed)?
 3. **Treat existing connectors that have waypoints as Manual** on migration (R20)?
 4. **Keep the simple join model** from PR #57 for now and revisit junction entities only if it proves too limited (R28)?
+
+## Owner decisions (2026-10-20)
+
+1. **Persist the advisory route**: yes, for automatic orthogonal connectors. Routes edited manually by the user or by MCP are always preserved (R19 #58, R20 #59).
+2. **"Behind"** means the Visio notion, element order (send backward/forward), not layer order. Layers controlling rendering order is a separate feature, R29 #69. Caution recorded in R23 #62: z-order alone cannot mean pass-through, because connectors normally sit in front of everything; pass-through also needs an explicit or suggested background role.
+3. **Migration**: existing connectors with waypoints load as Manual (R20 #59).
+4. **Junction and manually added vertex**: included now, as R30 #70, built on the R16 join model (PR #57). Struck from the on-hold list in R28 #67.
