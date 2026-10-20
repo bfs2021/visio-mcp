@@ -124,6 +124,28 @@ describe('a branch joined to a connector', () => {
   });
 });
 
+describe('copies of a branch', () => {
+  it('join the copied connector when it is copied too, and are released where they land when it is not', async () => {
+    const { run, el, t } = await setup();
+    await run([branch('tap', 'bus', 0.5)]);
+    const all = t.store.snapshot().document.pages[0]!.elements.filter(e => e.kind === 'connector').map(e => e.id);
+    // both copied: the copy of the branch joins the copy of the bus
+    expect((await run([{ op: 'duplicate', targets: ['a', 'b', 'c', 'bus', 'tap'], offset: { xPt: 0, yPt: 400 }, keepAliases: true }])).ok).toBe(true);
+    const copies = t.store.snapshot().document.pages[0]!.elements.filter(e => e.kind === 'connector' && !all.includes(e.id)) as unknown as Array<Element & Record<string, any>>;
+    const tapCopy = copies.find(c => c.alias === 'tap-2' || c.to.join)!;
+    const busCopy = copies.find(c => c !== tapCopy)!;
+    expect(tapCopy.to.join.connectorId).toBe(busCopy.id);
+    expect(tapCopy.to.point.y).toBe(520);
+    // the branch copied alone is released and keeps the shifted point
+    expect((await run([{ op: 'duplicate', targets: ['tap'], offset: { xPt: 0, yPt: 40 }, keepExternalLinks: true }])).ok).toBe(true);
+    const alone = t.store.snapshot().document.pages[0]!.elements.filter(e => e.kind === 'connector' && !all.includes(e.id) && !copies.some(c => c.id === e.id)) as unknown as Array<Record<string, any>>;
+    expect(alone).toHaveLength(1);
+    expect(alone[0]!.to.join).toBeUndefined();
+    expect(alone[0]!.to.point).toEqual({ x: 170, y: 160 });
+    expect(el('tap').to.join).toBeDefined();
+  });
+});
+
 describe('hops', () => {
   it('are off unless asked for, can be turned on at creation or by patch, and turned off again', async () => {
     const { run, el } = await setup();

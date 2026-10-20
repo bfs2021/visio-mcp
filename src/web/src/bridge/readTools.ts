@@ -24,6 +24,7 @@ export interface ElementSummary {
   route?: string;
   /** a connector's label placement along its route; absent means the middle */
   labelAnchor?: unknown;
+  hops?: unknown;
   /** a shape or text pinned to a connector: which connector, how far along its route and how far to its right */
   attachedTo?: unknown;
   /** image */
@@ -49,7 +50,7 @@ export function summariseElement(el: Element, o: { includeGeometry: boolean; inc
   if (el.layerIds.length) s.layerIds = el.layerIds;
   s.zIndex = el.zIndex;
   if (o.includeStyle && (el.kind === 'shape' || el.kind === 'connector')) s.style = el.style;
-  if (el.kind === 'connector') { s.from = el.from; s.to = el.to; s.route = el.route; if (el.labelAnchor) s.labelAnchor = el.labelAnchor; }
+  if (el.kind === 'connector') { s.from = el.from; s.to = el.to; s.route = el.route; if (el.labelAnchor) s.labelAnchor = el.labelAnchor; if (el.hops) s.hops = el.hops; }
   if ((el.kind === 'shape' || el.kind === 'text') && el.attachment) s.attachedTo = el.attachment;
   if (el.kind === 'image') s.assetId = el.assetId;
   if (el.kind === 'group') s.childIds = el.childIds;

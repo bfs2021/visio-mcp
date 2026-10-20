@@ -842,6 +842,11 @@ class Planner {
     const idMap = new Map(source.map(e => [e.id, this.newElementId(e.id === ids[0] ? op.id : undefined)] as const));
     const shiftPoint: PointMap = p => ({ x: p.x + dx, y: p.y + dy });
     const remapEnd = (ep: Endpoint, connectorId: string): Endpoint => {
+      if (ep.join) { // joins the copied connector, or stays where it is put when that connector is not copied
+        const to = idMap.get(ep.join.connectorId);
+        const { join: _released, ...free } = ep;
+        return to ? { ...ep, join: { ...ep.join, connectorId: to }, point: shiftPoint(ep.point!) } : { ...free, point: shiftPoint(ep.point!) };
+      }
       if (ep.glue === 'none') return { ...ep, point: shiftPoint(ep.point!) };
       const copy = idMap.get(ep.elementId!);
       if (copy) return { ...ep, elementId: copy };
@@ -906,7 +911,7 @@ class Planner {
     if (this.pages.some(p => p.id === id)) stop('invalid_request', `page id ${id} already exists`, { id });
     const layerMap = new Map(src.layers.map(l => [l.id, this.ctx.newId()] as const));
     const idMap = new Map(src.elements.map(e => [e.id, this.newElementId(undefined)] as const));
-    const end = (ep: Endpoint): Endpoint => (ep.glue === 'none' ? ep : { ...ep, elementId: idMap.get(ep.elementId!)! });
+    const end = (ep: Endpoint): Endpoint => (ep.join ? { ...ep, join: { ...ep.join, connectorId: idMap.get(ep.join.connectorId) ?? ep.join.connectorId } } : ep.glue === 'none' ? ep : { ...ep, elementId: idMap.get(ep.elementId!)! });
     const elements = src.elements.map(e => {
       const copy: Record<string, unknown> = { ...e, id: idMap.get(e.id)!, layerIds: e.layerIds.map(l => layerMap.get(l)!) };
       if (e.kind === 'group') copy.childIds = e.childIds.map(c => idMap.get(c)!);
