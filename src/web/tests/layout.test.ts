@@ -79,6 +79,24 @@ describe('inspect layout', () => {
     expect(crossings[0]!.evidence.crossedElementIds).toEqual([id(3)]);
   });
 
+  it('R19: a route the planner could not resolve is listed, with the reason', async () => {
+    const t = await scene([
+      { op: 'createShape', id: id(1), alias: 'a', bounds: box(50, 100) },
+      { op: 'createShape', id: id(2), alias: 'b', bounds: box(450, 100) },
+      { op: 'createConnector', id: id(10), from: { elementId: 'a', glue: 'dynamic' }, to: { elementId: 'b', glue: 'dynamic' } },
+    ]);
+    const route = [{ x: 150, y: 120 }, { x: 450, y: 120 }];
+    const proj = (routeProvenance: 'unresolved' | 'kept'): Projection => ({
+      documentId: t.documentId, sessionId: t.sessionId, revision: 1, groupVisualBounds: {},
+      connectors: { [id(10)]: { routePoints: route, visualBounds: box(150, 120, 300, 0), routeProvenance, routeReason: 'no clear route was found' } },
+    });
+    const bad = found(t, ctx({ projection: proj('unresolved') })).filter(i => i.code === 'UNRESOLVED_ROUTE');
+    expect(bad).toHaveLength(1);
+    expect(bad[0]!.elementIds).toEqual([id(10)]);
+    expect(bad[0]!.evidence.reason).toBe('no clear route was found');
+    expect(found(t, ctx({ projection: proj('kept') })).some(i => i.code === 'UNRESOLVED_ROUTE')).toBe(false);
+  });
+
   it('a resolved route is judged instead of the straight line', async () => {
     const t = await scene([
       { op: 'createShape', id: id(1), alias: 'a', bounds: box(50, 100) },

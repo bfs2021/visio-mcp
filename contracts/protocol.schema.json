@@ -407,6 +407,14 @@
         },
         "visualBounds": {
           "$ref": "document.schema.json#/$defs/Bounds"
+        },
+        "routeProvenance": {
+          "description": "R19: how the router produced an automatic orthogonal route. 'unresolved' means no clear route was found and the best available one is shown.",
+          "enum": ["authored", "kept", "elastic", "repaired", "rerouted", "unresolved"]
+        },
+        "routeReason": {
+          "type": "string",
+          "description": "R19: why the route is not simply the previous one."
         }
       }
     },
