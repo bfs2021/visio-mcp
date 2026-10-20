@@ -572,6 +572,10 @@ class Planner {
         if (p.heightPt !== undefined) next.heightPt = p.heightPt;
         if (p.background !== undefined) { const bad = paintProblem(p.background, 'background'); if (bad) stop('invalid_request', bad); next.background = p.background; }
         if (p.grid) next.grid = { ...page.grid, ...p.grid };
+        if (p.guides !== undefined) {
+          if (new Set(p.guides.map(g => g.id)).size !== p.guides.length) stop('invalid_request', 'duplicate guide id');
+          next.guides = p.guides.map(g => ({ ...g }));
+        }
         this.assertFinite(next.widthPt, 'widthPt'); this.assertFinite(next.heightPt, 'heightPt');
         this.pages[idx] = next;
         return;

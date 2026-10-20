@@ -424,13 +424,13 @@ test('real double-click text editing, keyboard nudges and duplicate', async ({ p
   await expect.poll(async () => ((await byAlias(page, 'a')) as ShapeElement).text?.value).toBe('Typed by hand');
   expect(await revision(page)).toBe(r0 + 1);
 
-  // Arrow keys nudge the selection by 1 pt, shift by 10 pt: each press is its own transaction.
+  // Arrow keys nudge the selection by one grid step (5 mm), shift by 1 pt: each press is its own transaction.
   await page.mouse.click(c.x, c.y);
   const x0 = (await byAlias(page, 'a')).bounds.x;
   await page.keyboard.press('ArrowRight');
-  await expect.poll(async () => (await byAlias(page, 'a')).bounds.x).toBeCloseTo(x0 + 1, 4);
+  await expect.poll(async () => (await byAlias(page, 'a')).bounds.x).toBeCloseTo(x0 + 5 * 72 / 25.4, 4);
   await page.keyboard.press('Shift+ArrowRight');
-  await expect.poll(async () => (await byAlias(page, 'a')).bounds.x).toBeCloseTo(x0 + 11, 4);
+  await expect.poll(async () => (await byAlias(page, 'a')).bounds.x).toBeCloseTo(x0 + 5 * 72 / 25.4 + 1, 4);
 
   // Ctrl+D duplicates with a fresh identity and selects the copy.
   const before = (await elements(page)).length;

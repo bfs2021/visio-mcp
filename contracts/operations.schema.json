@@ -117,18 +117,43 @@
         "insetsPt": {
           "description": "per-side text margins in points; a missing side keeps its current value; null returns to the uniform paddingPt",
           "oneOf": [
-            { "type": "null" },
             {
-              "type": "object", "additionalProperties": false, "minProperties": 1,
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "minProperties": 1,
               "properties": {
-                "top": { "type": "number", "minimum": 0, "maximum": 2000 }, "right": { "type": "number", "minimum": 0, "maximum": 2000 },
-                "bottom": { "type": "number", "minimum": 0, "maximum": 2000 }, "left": { "type": "number", "minimum": 0, "maximum": 2000 }
+                "top": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 2000
+                },
+                "right": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 2000
+                },
+                "bottom": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 2000
+                },
+                "left": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 2000
+                }
               }
             }
           ]
         },
         "orientation": {
-          "enum": ["horizontal", "vertical"]
+          "enum": [
+            "horizontal",
+            "vertical"
+          ]
         }
       }
     },
@@ -196,10 +221,18 @@
           ]
         },
         "startArrowSize": {
-          "enum": ["small", "medium", "large"]
+          "enum": [
+            "small",
+            "medium",
+            "large"
+          ]
         },
         "endArrowSize": {
-          "enum": ["small", "medium", "large"]
+          "enum": [
+            "small",
+            "medium",
+            "large"
+          ]
         }
       }
     },
@@ -868,6 +901,13 @@
         },
         "grid": {
           "$ref": "#/$defs/GridPatch"
+        },
+        "guides": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "$ref": "document.schema.json#/$defs/Guide"
+          }
         }
       }
     },

@@ -16,7 +16,7 @@ public class ToolTests
         "get_document_summary", "get_objects", "apply_operations", "execute_script", "render_page", "render_region",
         "inspect_layout", "list_assets", "get_changes", "export_document", "get_operation_schema", "get_text_layout",
         "render_reference_region", "compare_reference", "search_icons", "get_icon", "list_layout_components", "get_layout_component",
-        "list_documents", "create_document", "show_document",
+        "list_documents", "create_document", "show_document", "import_visio",
     ];
 
     static string NewPipe() => $"mcp-test-{Guid.NewGuid():N}";
@@ -145,8 +145,9 @@ public class ToolTests
         Assert.Empty(Required(tools["get_operation_schema"]));
         Assert.Empty(Required(tools["list_documents"]));   // they hand out identities too
         Assert.Empty(Required(tools["create_document"]));
+        Assert.Equal(new[] { "path" }, Required(tools["import_visio"])); // it creates the document, so it has no identity to pass
         Assert.Equal(new[] { "documentId" }, Required(tools["show_document"])); // it names a document, and the session changes when it moves
-        foreach (var name in SourceTools.Where(n => n is not ("get_document_summary" or "get_operation_schema" or "list_documents" or "create_document" or "show_document")))
+        foreach (var name in SourceTools.Where(n => n is not ("get_document_summary" or "get_operation_schema" or "list_documents" or "create_document" or "show_document" or "import_visio")))
         {
             Assert.Contains("documentId", Required(tools[name]));
             Assert.Contains("sessionId", Required(tools[name]));

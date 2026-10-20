@@ -50,6 +50,31 @@ public class LiveControlTests
         new { op = "createShape", alias, bounds = new { x, y, width = 50, height = 30 }, text = new { value = alias } };
 
     [Fact]
+    public async Task AboutNamesTheBuildTheConnectedShimWithItsVersionAndTheDataFolders()
+    {
+        var pipe = NewPipe();
+        await using var h = await Harness.StartAsync(pipe: pipe);
+        JsonElement About() => JsonSerializer.SerializeToElement(h.Window.Services.HandleAsync(new RequestEnvelope { RequestId = "a", Method = "host.app.about", Params = new JsonObject() }, Ct()).GetAwaiter().GetResult().Result);
+
+        var before = About();
+        Assert.Equal(0, before.GetProperty("companions").GetArrayLength()); // nothing has connected yet
+        Assert.Equal(Wire.ProtocolVersion, before.GetProperty("protocolVersion").GetInt32());
+        Assert.False(string.IsNullOrWhiteSpace(before.GetProperty("version").GetString()));
+        var labels = before.GetProperty("folders").EnumerateArray().Select(f => f.GetProperty("label").GetString()).ToList();
+        Assert.Contains("Recovery", labels);
+        Assert.Contains("Asset library", labels);
+        Assert.Contains("Exports", labels);
+        Assert.All(before.GetProperty("folders").EnumerateArray(), f => Assert.True(Path.IsPathRooted(f.GetProperty("path").GetString()) || f.GetProperty("path").GetString() == ""));
+
+        await using var client = await Connect(pipe);
+        await Summary(client); // the shim connects on its first call
+        var after = About().GetProperty("companions");
+        Assert.Equal(1, after.GetArrayLength());
+        Assert.StartsWith("Client ", after[0].GetProperty("label").GetString());
+        Assert.Matches(@"^\d+\.\d+\.\d+\.\d+$", after[0].GetProperty("version").GetString()!);
+    }
+
+    [Fact]
     public async Task MeasuredTextFitIsReadOnlyAndItsProposalFixesOnlyTheRequestedLabel()
     {
         var pipe = NewPipe();

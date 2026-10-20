@@ -1,0 +1,31 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Diagram.Core.Contracts -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Core.Contracts\bin\Debug\net10.0\Diagram.Core.Contracts.dll
+C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\SchemaParityTests.cs(112,34): warning CS8620: Argument of type 'Dictionary<string, JsonNode>' cannot be used for parameter 'properties' of type 'IEnumerable<KeyValuePair<string, JsonNode?>>' in 'JsonObject.JsonObject(IEnumerable<KeyValuePair<string, JsonNode?>> properties, JsonNodeOptions? options = null)' due to differences in the nullability of reference types. [C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\Diagram.Contracts.Tests.csproj]
+C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\SchemaParityTests.cs(127,37): warning CS8620: Argument of type 'Dictionary<string, JsonNode>' cannot be used for parameter 'properties' of type 'IEnumerable<KeyValuePair<string, JsonNode?>>' in 'JsonObject.JsonObject(IEnumerable<KeyValuePair<string, JsonNode?>> properties, JsonNodeOptions? options = null)' due to differences in the nullability of reference types. [C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\Diagram.Contracts.Tests.csproj]
+  Diagram.Contracts.Tests -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll
+Test run for C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\artifacts\w05-recent-files\final-results\w05-final_net10.0_20261019094809.trx
+
+Passed!  - Failed:     0, Passed:    24, Skipped:     0, Total:    24, Duration: 659 ms - Diagram.Contracts.Tests.dll (net10.0)
+  Diagram.Host.Core -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Host.Core\bin\Debug\net10.0\Diagram.Host.Core.dll
+  Diagram.Ipc -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Ipc\bin\Debug\net10.0\Diagram.Ipc.dll
+  Diagram.Visio.Abstractions -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Visio.Abstractions\bin\Debug\net10.0\Diagram.Visio.Abstractions.dll
+  Diagram.Visio -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Visio\bin\Debug\net10.0\Diagram.Visio.dll
+C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\RecentFilesTests.cs(34,71): warning xUnit2031: Do not use a Where clause to filter before calling Assert.Single. Use the overload of Assert.Single that accepts a filtering function. (https://xunit.net/xunit.analyzers/rules/xUnit2031) [C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\Diagram.Host.Tests.csproj]
+C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\MultiDocumentTests.cs(190,68): warning xUnit1031: Test methods should not use blocking task operations, as they can cause deadlocks. Use an async test method and await instead. (https://xunit.net/xunit.analyzers/rules/xUnit1031) [C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\Diagram.Host.Tests.csproj]
+C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\MultiDocumentTests.cs(192,74): warning xUnit1031: Test methods should not use blocking task operations, as they can cause deadlocks. Use an async test method and await instead. (https://xunit.net/xunit.analyzers/rules/xUnit1031) [C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\Diagram.Host.Tests.csproj]
+C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\MultiDocumentTests.cs(193,68): warning xUnit1031: Test methods should not use blocking task operations, as they can cause deadlocks. Use an async test method and await instead. (https://xunit.net/xunit.analyzers/rules/xUnit1031) [C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\Diagram.Host.Tests.csproj]
+C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\MultiDocumentTests.cs(200,74): warning xUnit1031: Test methods should not use blocking task operations, as they can cause deadlocks. Use an async test method and await instead. (https://xunit.net/xunit.analyzers/rules/xUnit1031) [C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\Diagram.Host.Tests.csproj]
+  Diagram.Host.Tests -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\bin\Debug\net10.0\Diagram.Host.Tests.dll
+Test run for C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\bin\Debug\net10.0\Diagram.Host.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+  Diagram.Mcp -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Mcp\bin\Debug\net10.0\Diagram.Mcp.dll
+Results File: C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\artifacts\w05-recent-files\final-results\w05-final_net10.0_20261019094847.trx
+
+Passed!  - Failed:     0, Passed:   149, Skipped:     0, Total:   149, Duration: 17 s - Diagram.Host.Tests.dll (net10.0)
+  Diagram.Mcp.Tests -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Mcp.Tests\bin\Debug\net10.0\Diagram.Mcp.Tests.dll
+Test run for C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Mcp.Tests\bin\Debug\net10.0\Diagram.Mcp.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+MSBUILD : error MSB4166: Child node "2" exited prematurely. Shutting down. Diagnostic information may be found in files in "C:\Users\claude\AppData\Local\Temp\MSBuildTemp5mc1fi0t.h1t\" and will be named MSBuild_*.failure.txt. This location can be changed by setting the MSBUILDDEBUGPATH environment variable to a different directory.

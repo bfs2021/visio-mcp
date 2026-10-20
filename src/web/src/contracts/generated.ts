@@ -478,6 +478,7 @@ export interface PagePatch {
   heightPt?: number;
   background?: Paint;
   grid?: GridPatch;
+  guides?: Guide[];
 }
 
 export interface SetPageOp {

@@ -1,9 +1,10 @@
+import type { EditorExportOptions } from './EditorExportOptions';
 import { FileConflictFlow, type FileHost, type FileOutcome } from './FileConflictFlow';
 import type { ExpectedDocument } from './NewDocumentFlow';
 import { NewDocumentFlow } from './NewDocumentFlow';
 import { componentWarningText } from '../layout/componentTemplates';
 import type { ComponentProposal } from '../layout/components';
-import type { DiagramDocument, Element, Operation, PreparedAssetRef, Snapshot, TransactionResult } from '../contracts/generated';
+import type { DiagramDocument, Element, Operation, PreparedAssetRef, Scope, Snapshot, TransactionResult } from '../contracts/generated';
 import { CommandEngine } from '../commands/CommandEngine';
 import { copyElements, pasteOperations, type ClipboardData } from '../commands/clipboard';
 import { MaxGraphAdapter, DEFAULT_SCALE } from '../canvas/MaxGraphAdapter';
@@ -18,14 +19,23 @@ import { effectiveState } from '../canvas/cellMapping';
 import { restoreRecovery, type RecoveryPayload } from '../commands/recovery';
 import { drawScriptCompiler, validateScript, type ValidationReport } from '../script/compiler';
 import { toPoints, type Unit } from '../model/validate';
+import { FindReplaceFlow } from './FindReplaceFlow';
+import { matchingSelection, findSelection } from './findReplace';
+import { snapCreation } from '../canvas/guideSnapping';
+import { connectable, navigableObjects, nearestIn, stepFrom, type Direction } from './objectNav';
 import { iconOperations } from '../icons/catalog';
 import type { AgentDocument } from '../bridge/engineHandlers';
+import type { AboutInfo } from '../workspace/HelpState';
 
 /** What the page needs from the host. In a plain browser (tests, dev) a stub stands in. */
 export interface HostApi extends FileHost {
+  editorExport(options: EditorExportOptions): Promise<Result<{cancelled?:true;path?:string;copied?:boolean;pages?:number}>>;
+  recentList(): Promise<Result<RecentList>>;
+  recentRemove(id: string): Promise<Result<RecentList>>;
+  recentClear(): Promise<Result<RecentList>>;
   pickImage(): Promise<Result<{ cancelled: true } | { ref: PreparedAssetRef; notes: string[]; width: number; height: number }>>;
   /** Without a path the person chooses a file; with one (from the last session's tabs) it is reopened without asking. */
-  openJson(path?: string): Promise<Result<{ cancelled?: true; path?: string; notes?: string[] }>>;
+  openJson(path?: string, recentId?: string, scope?: Scope): Promise<Result<{ cancelled?: true; path?: string; notes?: string[] }>>;
   /** Records the open tabs so the next start can reopen them. */
   workspaceSave(tabs: Array<{ documentId: string; sessionId: string; title: string; unsaved: boolean }>, activeDocumentId: string | null): Promise<Result<{ saved: number }>>;
   /** What the last run left open. */
@@ -48,7 +58,9 @@ export interface HostApi extends FileHost {
   appClose(discard: boolean): Promise<Result<{ closing: true }>>;
   /** The person cancelled the close prompt: the window stays open and may ask again. */
   appCloseCancelled(): Promise<Result<{ cancelled: true }>>;
-  openVsdx(): Promise<Result<NativeOutcome>>;
+  appAbout(): Promise<Result<AboutInfo>>;
+  /** With a recent id or a path named by the shell the file opens without asking; otherwise the person chooses. */
+  openVsdx(recentId?: string, path?: string, scope?: Scope): Promise<Result<NativeOutcome>>;
   /** `path` repeats a choice the person already made when they agree to a lossy export. */
   exportVsdx(opts: { acceptLoss?: boolean; path?: string }): Promise<Result<NativeOutcome>>;
   /** Brings a document an agent made in the background into this window as a tab. */
@@ -63,6 +75,8 @@ export interface HostApi extends FileHost {
   documentCopyPath(documentId: string): Promise<Result<{ copied: string }>>;
 }
 
+export interface RecentEntry { id: string; path: string; kind: 'json' | 'vsdx'; availability: 'available' | 'missing' | 'unavailable' }
+export interface RecentList { entries: RecentEntry[]; warning?: string | null }
 export interface LibraryEntry { id: string; name: string; tags: string[]; mimeType: string; sha256: string; width: number; height: number; version: number; scope: 'library' }
 export type WorkspaceMemory = { found: false } | { found: true; cleanExit: boolean; activeDocumentId: string | null; tabs: Array<{ documentId: string; sessionId: string; path: string | null; title: string | null; unsaved: boolean }> };
 export interface RecoveryLossInfo { tornTailDiscarded: boolean; corruptionAfterRevision: number | null; messages: string[] }
@@ -70,12 +84,16 @@ export interface RecoveryLossInfo { tornTailDiscarded: boolean; corruptionAfterR
 /** One unfinished session as the host describes it. Sizes are as of the session's last checkpoint. */
 export interface RecoveryOffer { sessionId: string; documentId: string; title: string | null; originalPath: string | null; pageCount: number; objectCount: number; checkpointRevision: number; lastDurableRevision: number; lastWrite: string; loss: RecoveryLossInfo }
 export interface DiagnosticItem { severity: 'info' | 'warning' | 'error'; code: string; message: string; elementId?: string; pageId?: string; action?: string }
-export interface NativeOutcome { cancelled?: true; path?: string; summary?: string; diagnostics?: DiagnosticItem[]; lossy?: boolean; revision?: number; bytes?: number }
+export interface NativeOutcome { warning?: string | null; cancelled?: true; path?: string; summary?: string; diagnostics?: DiagnosticItem[]; lossy?: boolean; revision?: number; bytes?: number }
 
 /** What a person is shown about a Visio file: what came across and what did not, with an optional action (export anyway). */
 export interface CompatibilityView { title: string; summary: string; diagnostics: DiagnosticItem[]; confirm?: { label: string; run: () => void } }
 
 export const noHost: HostApi = {
+  editorExport: async () => fail('not_running', 'there is no host to export images'),
+  recentList: async () => fail('not_running', 'Recent files require the desktop app'),
+  recentRemove: async () => fail('not_running', 'Recent files require the desktop app'),
+  recentClear: async () => fail('not_running', 'Recent files require the desktop app'),
   recoveryStatus: async () => fail('not_running', 'there is no host'),
   recoveryList: async () => ok({ auto: false, sessions: [] }),
   recoveryFetch: async () => fail('not_running', 'there is no host'),
@@ -83,6 +101,7 @@ export const noHost: HostApi = {
   recoveryFinish: async () => fail('not_running', 'there is no host'),
   appClose: async () => fail('not_running', 'there is no host'),
   appCloseCancelled: async () => fail('not_running', 'there is no host'),
+  appAbout: async () => fail('not_running', 'there is no host to report its version'),
   libraryList: async () => fail('not_running', 'there is no host to read the picture library'),
   libraryImport: async () => fail('not_running', 'there is no host to add pictures'),
   libraryUse: async () => fail('not_running', 'there is no host to read the picture library'),
@@ -126,9 +145,27 @@ export interface Status { text: string; kind: 'info' | 'warning' | 'error' }
  * `version` changes whenever anything the UI shows may have changed (React subscribes through `subscribe`/`getVersion`).
  */
 export class EditorModel {
+  exportPrompt: {options:EditorExportOptions;busy:boolean;error?:string}|null=null;
+  beginImageExport(format: 'png'|'pdf'='png'):void {
+    this.exportPrompt={busy:false,options:{expected:{...this.engine.scope(),baseRevision:this.engine.revision},format,scope:format==='pdf'?'all':'page',pageId:this.currentPage.id,elementIds:[...this.selection],scale:1,background:'page'}};
+    this.bump();
+  }
+  cancelImageExport():void { if(!this.exportPrompt?.busy){this.exportPrompt=null;this.bump();} }
+  async finishImageExport(copy=false):Promise<void> {
+    if(copy){if(!this.selection.length)return;this.beginImageExport();this.exportPrompt!.options={...this.exportPrompt!.options,scope:'selection',format:'png',background:'transparent',copy:true};}
+    const p=this.exportPrompt;if(!p||p.busy)return;p.busy=true;p.error=undefined;this.bump();
+    try {
+      const r=await this.host.editorExport(structuredClone(p.options));
+      if(!r.ok){p.error=r.error.message;this.say(r.error.message,'error');return;}
+      this.exportPrompt=null;
+      if(!r.value.cancelled)this.say(r.value.copied?'Copied selection as image':`Exported ${r.value.pages??1} page(s) to ${r.value.path??''}`,'info');
+    } catch(e){p.error=String(e);this.say(String(e),'error');}
+    finally{p.busy=false;this.bump();}
+  }
   readonly engine: CommandEngine;
   readonly newDocument: NewDocumentFlow;
   readonly controller: GestureController;
+  readonly find: FindReplaceFlow;
   private adapter: MaxGraphAdapter | null = null;
   private readonly projector = createSnapshotProjector((snapshot, assetId) => this.assetUrlIn(snapshot, assetId));
   private listeners = new Set<() => void>();
@@ -185,15 +222,26 @@ export class EditorModel {
   unit: Unit = 'mm';
   status: Status = { text: 'Ready', kind: 'info' };
   viewport: ViewportInfo | null = null;
+  showGuides = true;
+  snapToGuides = true;
+  toggleGuides(field: 'showGuides' | 'snapToGuides'): void { this[field] = !this[field]; this.bump(); }
   /** Called when the interlock should hold agent mutations (I30 wires this to the admission gate). */
   onGestureState: (active: boolean) => void = () => {};
 
   constructor(engine: CommandEngine) {
     this.engine = engine;
     this.controller = new GestureController(engine);
+    this.find = new FindReplaceFlow(engine, () => this.bump(), hit => {
+      this.setCurrentPage(hit.pageId);
+      if(hit.hidden){this.find.message='This result is hidden; it was not unhidden or selected.';return;}
+      const ids=findSelection(this.currentPage,hit.id);
+      this.selection=ids;this.canvas?.setSelection(ids);
+      queueMicrotask(()=>this.adapter?.reveal(ids[0]??hit.id));
+    });
+    this.find.canStart=()=>!this.controller.isActive()&&!this.closePrompt&&!this.files?.prompt&&!this.newDocument?.prompt&&!this.report&&!this.recoveryOffers.length&&!this.recoveryReport;
     this.newDocument = new NewDocumentFlow(engine, () => this.bump());
     this.files = new FileConflictFlow(engine, () => this.host, () => this.bump());
-    this.files.canPresent = () => !this.controller.isActive() && !this.closePrompt && !this.newDocument.prompt && !this.recoveryOffers.length && !this.recoveryReport;
+    this.files.canPresent = () => !this.exportPrompt && !this.controller.isActive() && !this.closePrompt && !this.newDocument.prompt && !this.recoveryOffers.length && !this.recoveryReport;
     this.files.message = (text,error) => this.say(text,error?'error':'warning');
     this.files.completed = outcome => {
       if(outcome.reloaded){this.pageId=undefined;this.selection=[];this.tool={kind:'select'};this.sessionReplaced();this.zoomToFit();}
@@ -301,7 +349,7 @@ export class EditorModel {
     if (token && !gestureMatches(token.kind, intent)) token = null;
     const oneShot = !token;
     if (!token) token = this.controller.begin(intent.type === 'connect' ? 'create' : 'inspector', this.engine.scope(), []);
-    const operations = intentOperations(token.startSnapshot, intent);
+    const operations = intentOperations(token.startSnapshot, intent, { enabled: this.showGuides && this.snapToGuides, scale: this.viewport?.scale ?? 1 });
     const planned = this.controller.preview(token, operations);
     if (!planned.ok) { this.controller.cancel(token); this.say(planned.error.message, 'warning'); return; }
     const r = await this.controller.commit(token);
@@ -351,7 +399,7 @@ export class EditorModel {
       const prepared = iconOperations({ ...this.iconSettings, iconId: what.slice(5), pageId: page.id,
         x: at.x - this.iconSettings.sizePt / 2, y: at.y - this.iconSettings.sizePt / 2 });
       if (!prepared.ok) { this.say(prepared.error.message, 'error'); return; }
-      const r = await this.apply('create', prepared.value.operations);
+      const r = await this.apply('create', prepared.value.operations.map(op => snapCreation(op,page,{enabled:this.showGuides && this.snapToGuides,scale:this.viewport?.scale??1,preserveSize:true})));
       this.setTool({ kind: 'select' });
       if (r.ok) { this.selection = [prepared.value.elementId]; this.canvas?.setSelection(this.selection); this.bump(); }
       return;
@@ -363,7 +411,7 @@ export class EditorModel {
       const size = DEFAULT_SIZE[what] ?? DEFAULT_SIZE.rectangle!;
       op = { op: 'createShape', bounds: { x: at.x - size.w / 2, y: at.y - size.h / 2, width: size.w, height: size.h }, geometry: { preset: what as 'rectangle' } };
     }
-    const snapped = snapCreate(op, page.grid);
+    const snapped = snapCreation(op, page, {enabled:this.showGuides && this.snapToGuides,scale:this.viewport?.scale??1});
     const r = await this.apply('create', [snapped]);
     this.setTool({ kind: 'select' });
     if (r.ok && r.value.created[0]) this.canvas?.setSelection([r.value.created[0]]), this.selection = [r.value.created[0]], this.bump();
@@ -532,7 +580,76 @@ export class EditorModel {
   }
 
 
+  /** What an arrow key moves the selection by: one grid step (at least 1 pt). */
+  get nudgeStepPt(): number { return Math.max(1, this.currentPage.grid.spacingPt); }
   async nudge(dx: number, dy: number): Promise<void> { await this.apply('nudge', nudgeOperations(this.snapshot, this.selection, dx, dy)); }
+
+  selectMatching(mode: 'style' | 'layers'): void {
+    if(this.targets.length!==1){this.say('Select one object first.','info');return;}
+    const result=matchingSelection(this.currentPage,this.targets[0]!,mode);
+    if(result.limitation){this.say(result.limitation,'info');return;}
+    this.selection=result.ids;this.canvas?.setSelection(result.ids);this.bump();
+  }
+
+  // ------------------------------------------------------------------ keyboard navigation (W17)
+  /** The object the keyboard is on: the last thing selected, standing as a group when the whole group is. */
+  get activeObjectId(): string | undefined { return this.targets.at(-1); }
+
+  /** Selects exactly these objects (a group stands for its members) and brings the last into view. Not a pointer gesture, so nothing is moved or edited. */
+  selectObjects(ids: string[]): void {
+    const leaves = leavesOfTargets(this.snapshot, ids);
+    this.selection = leaves;
+    this.canvas?.setSelection(leaves);
+    if (ids.length) this.canvas?.ensureVisible(leaves.at(-1)!);
+    this.bump();
+  }
+
+  /** Tab / Shift+Tab. False when there is nowhere further to go, so the key can leave the canvas. */
+  stepObject(delta: 1 | -1): boolean {
+    const next = stepFrom(navigableObjects(this.currentPage), this.activeObjectId, delta);
+    if (!next) return false;
+    this.selectObjects([next.id]);
+    return true;
+  }
+
+  jumpObject(dir: Direction): void {
+    const page = this.currentPage, order = navigableObjects(page), from = this.activeObjectId;
+    const next = from ? nearestIn(page, order, from, dir) : order[0];
+    if (next) this.selectObjects([next.id]); else if (from) this.say(`No object ${dir === 'up' || dir === 'down' ? dir : 'to the ' + dir} of this one.`, 'info');
+  }
+
+  endObject(which: 'first' | 'last'): void {
+    const order = navigableObjects(this.currentPage);
+    const e = which === 'first' ? order[0] : order.at(-1);
+    if (e) this.selectObjects([e.id]);
+  }
+
+  /** Enter / F2: edit the text of the selected shape or text box. */
+  editSelectedText(): void {
+    const only = this.selectedElements();
+    if (only.length !== 1 || (only[0]!.kind !== 'shape' && only[0]!.kind !== 'text')) { this.say('Select one shape or text box to edit its text.', 'info'); return; }
+    if (only[0]!.locked) { this.say('That object is locked.', 'warning'); return; }
+    this.canvas?.startTextEdit(only[0]!.id);
+  }
+
+  /** "Connect objects": choose where a connector starts and ends from lists, with no pointer. */
+  connectPrompt: { from: string; to: string; error: string | null } | null = null;
+  beginConnect(): void {
+    const picks = connectable(this.currentPage);
+    if (picks.length < 2) { this.say('Add at least two objects before connecting them.', 'info'); return; }
+    const chosen = this.targets.filter(id => picks.some(p => p.id === id));
+    this.connectPrompt = { from: chosen[0] ?? picks[0]!.id, to: chosen[1] ?? picks.find(p => p.id !== (chosen[0] ?? picks[0]!.id))!.id, error: null };
+    this.bump();
+  }
+  connectCancel(): void { this.connectPrompt = null; this.bump(); }
+  async connectCreate(from: string, to: string): Promise<void> {
+    if (from === to) { this.connectPrompt = { from, to, error: 'Choose two different objects.' }; this.bump(); return; }
+    const r = await this.apply('create', intentOperations(this.snapshot, { type: 'connect', from, to }));
+    if (!r.ok) { this.connectPrompt = { from, to, error: r.error.message }; this.bump(); return; }
+    this.connectPrompt = null;
+    if (r.value.created[0]) this.selectObjects([r.value.created[0]]); else this.bump();
+    this.say('Connector created.', 'info');
+  }
 
   selectAll(): void {
     const page = this.currentPage;
@@ -558,10 +675,12 @@ export class EditorModel {
   zoomReset(): void { this.adapter?.setZoom(DEFAULT_SCALE); }
 
   /** Opens a file into this document. Says whether a file was opened (not cancelled, not failed) and which. */
-  async open(path?: string): Promise<{ opened: boolean; path?: string }> {
-    const r = await this.host.openJson(path);
-    if (!r.ok) { this.say(r.error.message, 'error'); return { opened: false }; }
+  async open(path?: string, recentId?: string): Promise<{ opened: boolean; path?: string; error?: string }> {
+    const r = await this.host.openJson(path, recentId, this.engine.scope());
+    if (!r.ok) { this.say(r.error.message, 'error'); return { opened: false, error: r.error.message }; }
     if (r.value.cancelled) return { opened: false };
+    // The host marks the file as saved too, but its note can reach this tab before the new session is settled; this tab knows its own session.
+    if (r.value.path && this.engine.status().savedPath !== r.value.path) await this.engine.markSaved(this.engine.scope(), this.engine.revision, r.value.path);
     this.selection = [];
     this.showCommitted();
     this.lastSavedAt = new Date();
@@ -581,17 +700,17 @@ export class EditorModel {
     return p ? (p.split(/[\\/]/).pop() || p) : `Untitled ${this.untitledNo}`;
   }
 
-  async openVsdx(): Promise<{ opened: boolean }> {
-    const r = await this.host.openVsdx();
-    if (!r.ok) { this.say(r.error.message, 'error'); return { opened: false }; }
+  async openVsdx(recentId?: string, path?: string): Promise<{ opened: boolean; path?: string; error?: string }> {
+    const r = await this.host.openVsdx(recentId, path, this.engine.scope());
+    if (!r.ok) { this.say(r.error.message, 'error'); return { opened: false, error: r.error.message }; }
     if (r.value.cancelled) return { opened: false };
     this.selection = [];
     this.showCommitted();
     const items = r.value.diagnostics ?? [];
-    this.say(`Opened ${r.value.path ?? 'file'}. ${r.value.summary ?? ''}`.trim(), r.value.lossy ? 'warning' : 'info');
+    this.say(`Opened ${r.value.path ?? 'file'}. ${r.value.summary ?? ''} ${r.value.warning ?? ''}`.trim(), r.value.lossy || r.value.warning ? 'warning' : 'info');
     if (items.length) this.report = { title: 'Opened a Visio drawing', summary: r.value.summary ?? '', diagnostics: items };
     this.bump();
-    return { opened: true };
+    return r.value.path ? { opened: true, path: r.value.path } : { opened: true };
   }
 
   /** Exports an editable Visio file. If Visio cannot hold something, nothing is written until the person has seen what and agreed. */
@@ -985,7 +1104,7 @@ export class EditorModel {
     const natW = p.value.width ? toPoints(p.value.width, 'px') : 96, natH = p.value.height ? toPoints(p.value.height, 'px') : 96;
     const k = Math.min(1, page.widthPt / 2 / natW, page.heightPt / 2 / natH);
     const w = natW * k, h = natH * k;
-    const r = await this.apply('create', [...plan.operations, { op: 'createImage', assetId: plan.resolvedAssetId, name: p.value.ref.asset.name, bounds: { x: (at?.x ?? page.widthPt / 2) - w / 2, y: (at?.y ?? page.heightPt / 2) - h / 2, width: w, height: h }, fit: 'contain', preserveAspectRatio: true }]);
+    const r = await this.apply('create', [...plan.operations, snapCreation({ op: 'createImage', assetId: plan.resolvedAssetId, name: p.value.ref.asset.name, bounds: { x: (at?.x ?? page.widthPt / 2) - w / 2, y: (at?.y ?? page.heightPt / 2) - h / 2, width: w, height: h }, fit: 'contain', preserveAspectRatio: true }, page, {enabled:this.showGuides && this.snapToGuides,scale:this.viewport?.scale??1})]);
     if (r.ok && r.value.created.length) { this.selection = [r.value.created[r.value.created.length - 1]!]; this.canvas?.setSelection(this.selection); this.bump(); }
   }
 
@@ -1040,14 +1159,6 @@ function gestureMatches(kind: GestureKind, intent: Intent): boolean {
   }
 }
 
-/** New shapes snap to the grid like moved ones (page grid, absolute coordinates). */
-function snapCreate(op: Operation, grid: { snap: boolean; spacingPt: number }): Operation {
-  if (!grid.snap || (op.op !== 'createShape' && op.op !== 'createText')) return op;
-  const g = grid.spacingPt;
-  const s = (v: number) => Math.round(v / g) * g;
-  const b = op.bounds;
-  return { ...op, bounds: { x: s(b.x), y: s(b.y), width: Math.max(g, s(b.width)), height: Math.max(g, s(b.height)) } };
-}
 
 function diagnosticOf(details: Record<string, unknown> | undefined): { line?: number; column?: number; hint?: string } {
   const out: { line?: number; column?: number; hint?: string } = {};

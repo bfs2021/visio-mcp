@@ -38,6 +38,21 @@ public class MappingTests
     static void Near(double expected, double? actual, double tol = Tol) => Assert.True(actual is { } a && Math.Abs(a - expected) <= tol, $"expected {expected} but was {actual}");
 
     [Fact]
+    public void EditedAndDeletedGuidesRetainIdentityAcrossRepeatedNativeRoundTrips()
+    {
+        var page = Doc.Page([Doc.Shape(1, 50, 50, 100, 60)], guides: [
+            new { id = Doc.Id(90), orientation = "horizontal", positionPt = -20.5 },
+            new { id = Doc.Id(91), orientation = "vertical", positionPt = 120.25 }]);
+        var (_, first) = RT.Trip(Doc.Snapshot(page));
+        var edited = JsonSerializer.SerializeToNode(first.Document.Pages[0], ContractJson.Options)!.AsObject();
+        edited["guides"] = new JsonArray(new JsonObject { ["id"] = Doc.Id(90), ["orientation"] = "horizontal", ["positionPt"] = 240.75 });
+        var (_, second) = RT.Trip(Doc.Snapshot(edited));
+        var guide = Assert.Single(second.Document.Pages[0].Guides);
+        Assert.Equal(Doc.Id(90), guide.Id); Assert.Equal("horizontal", guide.Orientation); Near(240.75, guide.PositionPt);
+        Assert.Equal(Doc.Id(1), Assert.Single(RT.All(second.Document))["id"]!.GetValue<string>());
+    }
+
+    [Fact]
     public void PageSizeNameGridAndGuidesRoundTrip()
     {
         var page = Doc.Page([Doc.Shape(1, 50, 50, 100, 60)], new { name = "Architecture", widthPt = 595.2755905511812, heightPt = 841.8897637795276 },

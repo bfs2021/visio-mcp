@@ -18,6 +18,14 @@ const req = (method: string, scope: { documentId: string; sessionId: string }, p
   ({ protocolVersion: 1, kind: 'request', requestId, method, ...scope, params } as RequestEnvelope);
 
 describe('BridgeClient', () => {
+  it('keeps an editor export pending while the native dialog exceeds the ordinary timeout',async()=>{
+    vi.useFakeTimers();try{
+      const {wv,toHost,fromHost}=fakeWebView(),client=new BridgeClient(wv);let done=false;
+      const call=client.request({protocolVersion:1,kind:'request',requestId:'export',method:'host.exportImage',params:{}}).then(r=>{done=true;return r;});
+      await vi.advanceTimersByTimeAsync(20000);expect(done).toBe(false);
+      fromHost({protocolVersion:1,kind:'response',requestId:toHost[0].requestId,result:{path:'chosen.png'}});expect((await call).result).toEqual({path:'chosen.png'});
+    }finally{vi.useRealTimers();}
+  });
   it('mints unique correlation ids and returns each caller its own id', async () => {
     const { wv, toHost, fromHost } = fakeWebView();
     const client = new BridgeClient(wv);

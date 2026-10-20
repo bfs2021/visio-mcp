@@ -73,7 +73,7 @@ public sealed partial class HostServices
             if (!saved.IsOk) return Err(request, saved.Error!);
             SetPath(expected.DocumentId, saved.Value.Path); RecordDisk(expected.DocumentId, saved.Value.Version!);
             await window.RecoveryMgr.OnSavedAsync(expected.SessionId, saved.Value.Revision, saved.Value.Path);
-            return Ok(request, new JsonObject { ["path"] = saved.Value.Path, ["revision"] = saved.Value.Revision });
+            return Ok(request, new JsonObject { ["path"] = saved.Value.Path, ["revision"] = saved.Value.Revision, ["warning"] = await RecordRecentAsync(saved.Value.Path, "json", false) });
         }
         catch (DiskChangedException e) { return OfferFile(request, path, expected, e.Observed, baseline: observed); }
     }

@@ -14,7 +14,7 @@ import type { EngineHandlerOptions } from './engineHandlers';
 /**
  * The page behind the agent-only view. It has the engine, the request router and the renderer, and nothing else: no editor chrome, no tabs,
  * no host services. Documents an agent creates live here and are announced to the host as they open and close. Handing one to the person's
- * window is the host's doing; this page only answers `app.createDocument` and `app.dropDocument`.
+ * window is the host's doing; this page only answers `app.createDocument`, `app.adoptDocument` (an imported file) and `app.dropDocument`.
  */
 export function startAgentApp(webview: WebViewLike | undefined, hooks: {
   initialPreferences?: AppPreferences; preferences?: PreferencesModel; preferencesService?: PreferencesService; client?: BridgeClient;
@@ -51,12 +51,19 @@ export function startAgentApp(webview: WebViewLike | undefined, hooks: {
     const state = workspace.add(engine, { activate: false });
     return ok({ ...state.engine.scope(), revision: engine.revision, title: doc.title, pageId: doc.pages[0]!.id });
   };
+  /** A document the host prepared (a .vsdx read through import_visio): validated by the router, opened in the background with a fresh history. */
+  const adoptDocument: NonNullable<NonNullable<EngineHandlerOptions['app']>['adoptDocument']> = async document => {
+    const engine = new CommandEngine({ document });
+    hooks.configureEngine?.(engine);
+    const state = workspace.add(engine, { activate: false });
+    return ok({ ...state.engine.scope(), revision: engine.revision });
+  };
   const dropDocument: NonNullable<NonNullable<EngineHandlerOptions['app']>['dropDocument']> = documentId =>
     workspace.close(documentId) ? ok({ dropped: documentId }) : fail('document_mismatch', 'that document is not in this view');
 
   const router = createRequestRouter(workspace.engineOf, {
     ...(hooks.render ? { render: hooks.render } : {}), ...(hooks.layoutContext ? { layoutContext: hooks.layoutContext } : {}), ...(hooks.rasterise ? { rasterise: hooks.rasterise } : {}),
-    app: { createDocument, dropDocument },
+    app: { createDocument, dropDocument, adoptDocument },
   });
   if (!webview) return { preferences, workspace, router, client: null };
   const client = hooks.client ?? new BridgeClient(webview);

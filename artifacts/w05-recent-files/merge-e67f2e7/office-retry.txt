@@ -1,0 +1,5 @@
+Test run for C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\artifacts\w05-recent-files\merge-e67f2e7\retry\office-retry_net10.0_20261019181927.trx
+
+Passed!  - Failed:     0, Passed:     1, Skipped:     0, Total:     1, Duration: 32 s - Diagram.Windows.Tests.dll (net10.0)
