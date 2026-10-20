@@ -13,6 +13,10 @@ const MAX_SCALE = 8;
 
 export interface RenderParams {
   scope: 'page' | 'region';
+  /** Exact pixels per point for editor exports. Omitted preserves MCP fit behaviour. */
+  scale?: number;
+  background?: 'page' | 'white' | 'transparent';
+  selectionOnly?: boolean;
   pageId?: string;
   format?: 'png' | 'jpeg' | 'svg';
   mode?: 'clean' | 'debug';
@@ -48,10 +52,14 @@ const finitePositive = (n: unknown, max = 100000): n is number => typeof n === '
 /** Validates the request and works out what to crop and how big to make it. Pure, so it is tested without a browser. */
 export function planRender(snapshot: Snapshot, projection: Projection | undefined, p: RenderParams): Result<{ page: Page; dims: Dims; format: 'png' | 'jpeg' | 'svg'; mode: 'clean' | 'debug' }> {
   const format = p.format ?? 'png', mode = p.mode ?? 'clean';
+  if (p.scale !== undefined && !finitePositive(p.scale, MAX_SCALE)) return fail('invalid_request', 'scale must be greater than 0 and no more than 8');
+  if (p.background !== undefined && !['page','white','transparent'].includes(p.background)) return fail('invalid_request', 'invalid export background');
+  if (format === 'jpeg' && p.background === 'transparent') return fail('invalid_request', 'JPEG requires an opaque background');
   if (format !== 'png' && format !== 'jpeg' && format !== 'svg') return fail('invalid_request', 'format must be png, jpeg or svg');
   if (mode !== 'clean' && mode !== 'debug') return fail('invalid_request', 'mode must be clean or debug');
   const maxWidth = p.maxWidth ?? 1600, maxHeight = p.maxHeight ?? 1200;
   if (!finitePositive(maxWidth, 8192) || !finitePositive(maxHeight, 8192)) return fail('invalid_request', 'maxWidth and maxHeight must be between 1 and 8192');
+  if (p.selectionOnly && (p.scope !== 'region' || !p.elementIds?.length)) return fail('invalid_request', 'selectionOnly requires elementIds');
   const doc = snapshot.document;
   const pageId = p.pageId ?? defaultScope(doc);
   const page = doc.pages.find(x => x.id === pageId);
@@ -89,9 +97,9 @@ export function planRender(snapshot: Snapshot, projection: Projection | undefine
     }
     crop = { x: core.x - padding, y: core.y - padding, width: core.width + 2 * padding, height: core.height + 2 * padding };
   }
-  const scale = Math.min(maxWidth / crop.width, maxHeight / crop.height, MAX_SCALE);
+  const scale = p.scale ?? Math.min(maxWidth / crop.width, maxHeight / crop.height, MAX_SCALE);
   const widthPx = Math.max(1, Math.round(crop.width * scale)), heightPx = Math.max(1, Math.round(crop.height * scale));
-  if (widthPx * heightPx > MAX_PIXELS) return fail('limit_exceeded', `${widthPx} x ${heightPx} pixels is over the ${MAX_PIXELS / 1e6} megapixel limit`, { details: { widthPx, heightPx, limit: MAX_PIXELS } });
+  if (widthPx > 8192 || heightPx > 8192 || widthPx * heightPx > MAX_PIXELS) return fail('limit_exceeded', `${widthPx} x ${heightPx} pixels is over the ${MAX_PIXELS / 1e6} megapixel limit`, { details: { widthPx, heightPx, limit: MAX_PIXELS } });
   return ok({ page, dims: { crop, widthPx, heightPx, scale: widthPx / crop.width }, format, mode });
 }
 
@@ -162,7 +170,18 @@ export function createSnapshotRenderer(deps: RendererDeps) {
       a.project(snapshot, page.id);
       const svgRoot = (host!.querySelector('svg') as SVGSVGElement | null);
       if (!svgRoot) return fail('internal_error', 'the drawing surface produced no image');
+      if(params.selectionOnly)for(const el of page.elements){
+        const cell=a.graph.getDataModel().getCell(el.id),state=cell?a.graph.getView().getState(cell):undefined;
+        for(const node of [state?.shape?.node,state?.text?.node])node?.setAttribute('data-export-element',el.id);
+      }
       const svg = svgRoot.cloneNode(true) as SVGSVGElement;
+      for(const node of Array.from(svgRoot.querySelectorAll('[data-export-element]')))node.removeAttribute('data-export-element');
+      if(params.selectionOnly){
+        const wanted=new Set<string>();
+        const add=(id:string)=>{if(wanted.has(id))return;const el=page.elements.find(e=>e.id===id||e.alias===id);if(!el)return;wanted.add(el.id);if(el.kind==='group')el.childIds.forEach(add);};
+        params.elementIds!.forEach(add);
+        for(const node of Array.from(svg.querySelectorAll('[data-export-element]'))){if(!wanted.has(node.getAttribute('data-export-element')!))node.remove();else node.removeAttribute('data-export-element');}
+      }
 
       // images: inline approved bytes, and fail rather than draw nothing
       for (const img of Array.from(svg.querySelectorAll('image'))) {
@@ -180,18 +199,28 @@ export function createSnapshotRenderer(deps: RendererDeps) {
       svg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
       svg.setAttribute('width', String(dims.widthPx));
       svg.setAttribute('height', String(dims.heightPx));
+      // Fill the rounded pixel viewport exactly; default meet introduces translucent edge gutters.
+      if(params.scale!==undefined)svg.setAttribute('preserveAspectRatio', 'none');
       svg.setAttribute('viewBox', `${dims.crop.x + MARGIN_PT} ${dims.crop.y + MARGIN_PT} ${dims.crop.width} ${dims.crop.height}`);
       svg.setAttribute('style', 'overflow:hidden;background:none');
       await document.fonts.ready;
 
+      const paint=params.background===undefined?(page.background.kind==='solid'?{...page.background,opacity:1}:{kind:'none' as const}):params.background==='white'?{kind:'solid' as const,colour:'#ffffff',opacity:1}:params.background==='transparent'?{kind:'none' as const}:page.background;
+      if(paint.kind!=='none'&&(format==='svg'||params.background!==undefined)){
+        const ns='http://www.w3.org/2000/svg',rect=document.createElementNS(ns,'rect');
+        const area=params.background==='white'||params.background===undefined?{x:dims.crop.x+MARGIN_PT,y:dims.crop.y+MARGIN_PT,width:dims.crop.width,height:dims.crop.height}:{x:MARGIN_PT,y:MARGIN_PT,width:page.widthPt,height:page.heightPt};
+        for(const [k,v] of Object.entries(area))rect.setAttribute(k,String(v));
+        if(paint.kind==='solid'){rect.setAttribute('fill',paint.colour);rect.setAttribute('fill-opacity',String(paint.opacity));}
+        else {
+          const defs=document.createElementNS(ns,'defs'),gradient=document.createElementNS(ns,'linearGradient'),id='export-page-background';gradient.id=id;
+          const rad=paint.angleDeg*Math.PI/180,dx=Math.cos(rad),dy=Math.sin(rad),L=Math.abs(page.widthPt*dx)+Math.abs(page.heightPt*dy)||1,gx=page.widthPt*dx/L,gy=page.heightPt*dy/L,n=gx*gx+gy*gy||1;
+          for(const [k,v] of Object.entries({x1:.5-gx/n/2,y1:.5-gy/n/2,x2:.5+gx/n/2,y2:.5+gy/n/2}))gradient.setAttribute(k,String(v));
+          for(const stop of paint.stops){const node=document.createElementNS(ns,'stop');node.setAttribute('offset',String(stop.offset));node.setAttribute('stop-color',stop.colour);node.setAttribute('stop-opacity',String(stop.opacity));gradient.appendChild(node);}defs.appendChild(gradient);svg.insertBefore(defs,svg.firstChild);rect.setAttribute('fill','url(#'+id+')');
+        }
+        svg.insertBefore(rect,svg.firstChild);
+      }
       if (format === 'svg') {
         // a vector file: the page background, then the drawing, with the same inlined pictures
-        const bgColour = page.background.kind === 'solid' ? page.background.colour : null;
-        if (bgColour) {
-          const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-          for (const [k, v] of Object.entries({ x: String(dims.crop.x + MARGIN_PT), y: String(dims.crop.y + MARGIN_PT), width: String(dims.crop.width), height: String(dims.crop.height), fill: bgColour })) rect.setAttribute(k, v);
-          svg.insertBefore(rect, svg.firstChild);
-        }
         svg.setAttribute('style', '');
         const text = new XMLSerializer().serializeToString(svg);
         const bytes = new TextEncoder().encode(text);
@@ -213,8 +242,8 @@ export function createSnapshotRenderer(deps: RendererDeps) {
       canvas.width = dims.widthPx;
       canvas.height = dims.heightPx;
       const g = canvas.getContext('2d')!;
-      const bg = page.background.kind === 'solid' ? page.background.colour : format === 'jpeg' ? '#ffffff' : null;
-      if (bg) { g.fillStyle = bg; g.fillRect(0, 0, canvas.width, canvas.height); }
+      const legacyBackground=params.background===undefined&&page.background.kind==='solid'?page.background.colour:format==='jpeg'?'#ffffff':null;
+      if(legacyBackground){g.fillStyle=legacyBackground;g.fillRect(0,0,canvas.width,canvas.height);}
       g.drawImage(image, 0, 0, dims.widthPx, dims.heightPx);
       if (mode === 'debug') drawDebug(g, snapshot, page, projection, dims);
 

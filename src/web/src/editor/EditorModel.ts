@@ -1,3 +1,4 @@
+import type { EditorExportOptions } from './EditorExportOptions';
 import { FileConflictFlow, type FileHost, type FileOutcome } from './FileConflictFlow';
 import type { ExpectedDocument } from './NewDocumentFlow';
 import { NewDocumentFlow } from './NewDocumentFlow';
@@ -23,6 +24,7 @@ import type { AgentDocument } from '../bridge/engineHandlers';
 
 /** What the page needs from the host. In a plain browser (tests, dev) a stub stands in. */
 export interface HostApi extends FileHost {
+  editorExport(options: EditorExportOptions): Promise<Result<{cancelled?:true;path?:string;copied?:boolean;pages?:number}>>;
   pickImage(): Promise<Result<{ cancelled: true } | { ref: PreparedAssetRef; notes: string[]; width: number; height: number }>>;
   /** Without a path the person chooses a file; with one (from the last session's tabs) it is reopened without asking. */
   openJson(path?: string): Promise<Result<{ cancelled?: true; path?: string; notes?: string[] }>>;
@@ -76,6 +78,7 @@ export interface NativeOutcome { cancelled?: true; path?: string; summary?: stri
 export interface CompatibilityView { title: string; summary: string; diagnostics: DiagnosticItem[]; confirm?: { label: string; run: () => void } }
 
 export const noHost: HostApi = {
+  editorExport: async () => fail('not_running', 'there is no host to export images'),
   recoveryStatus: async () => fail('not_running', 'there is no host'),
   recoveryList: async () => ok({ auto: false, sessions: [] }),
   recoveryFetch: async () => fail('not_running', 'there is no host'),
@@ -126,6 +129,23 @@ export interface Status { text: string; kind: 'info' | 'warning' | 'error' }
  * `version` changes whenever anything the UI shows may have changed (React subscribes through `subscribe`/`getVersion`).
  */
 export class EditorModel {
+  exportPrompt: {options:EditorExportOptions;busy:boolean;error?:string}|null=null;
+  beginImageExport(format: 'png'|'pdf'='png'):void {
+    this.exportPrompt={busy:false,options:{expected:{...this.engine.scope(),baseRevision:this.engine.revision},format,scope:format==='pdf'?'all':'page',pageId:this.currentPage.id,elementIds:[...this.selection],scale:1,background:'page'}};
+    this.bump();
+  }
+  cancelImageExport():void { if(!this.exportPrompt?.busy){this.exportPrompt=null;this.bump();} }
+  async finishImageExport(copy=false):Promise<void> {
+    if(copy){if(!this.selection.length)return;this.beginImageExport();this.exportPrompt!.options={...this.exportPrompt!.options,scope:'selection',format:'png',background:'transparent',copy:true};}
+    const p=this.exportPrompt;if(!p||p.busy)return;p.busy=true;p.error=undefined;this.bump();
+    try {
+      const r=await this.host.editorExport(structuredClone(p.options));
+      if(!r.ok){p.error=r.error.message;this.say(r.error.message,'error');return;}
+      this.exportPrompt=null;
+      if(!r.value.cancelled)this.say(r.value.copied?'Copied selection as image':`Exported ${r.value.pages??1} page(s) to ${r.value.path??''}`,'info');
+    } catch(e){p.error=String(e);this.say(String(e),'error');}
+    finally{p.busy=false;this.bump();}
+  }
   readonly engine: CommandEngine;
   readonly newDocument: NewDocumentFlow;
   readonly controller: GestureController;
@@ -193,7 +213,7 @@ export class EditorModel {
     this.controller = new GestureController(engine);
     this.newDocument = new NewDocumentFlow(engine, () => this.bump());
     this.files = new FileConflictFlow(engine, () => this.host, () => this.bump());
-    this.files.canPresent = () => !this.controller.isActive() && !this.closePrompt && !this.newDocument.prompt && !this.recoveryOffers.length && !this.recoveryReport;
+    this.files.canPresent = () => !this.exportPrompt && !this.controller.isActive() && !this.closePrompt && !this.newDocument.prompt && !this.recoveryOffers.length && !this.recoveryReport;
     this.files.message = (text,error) => this.say(text,error?'error':'warning');
     this.files.completed = outcome => {
       if(outcome.reloaded){this.pageId=undefined;this.selection=[];this.tool={kind:'select'};this.sessionReplaced();this.zoomToFit();}

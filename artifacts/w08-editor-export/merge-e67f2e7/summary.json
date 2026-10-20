@@ -1,0 +1,32 @@
+{
+  "main": "e67f2e7",
+  "featureParent": "eb54c59",
+  "coreDotnet": {
+    "passed": 348,
+    "failed": 0
+  },
+  "windowsInitial": {
+    "passed": 87,
+    "failed": 1,
+    "total": 88
+  },
+  "featureRetry": {
+    "passed": 16,
+    "failed": 0
+  },
+  "frontend": 399,
+  "browserInitial": {
+    "passed": 114,
+    "failed": 1
+  },
+  "browserFinal": {
+    "passed": 115,
+    "failed": 0
+  },
+  "typecheck": "PASS",
+  "generated": "PASS",
+  "webBuild": "PASS",
+  "dotnetBuild": "PASS",
+  "review": "No substantive findings",
+  "manual": "NOT RUN"
+}

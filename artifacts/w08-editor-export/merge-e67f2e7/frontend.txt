@@ -1,0 +1,17 @@
+
+> test
+> vitest run
+
+
+ RUN  v5.0.3 C:/Users/claude/.codex/worktrees/w08-merge-main/diagram-app/src/web
+
+
+ Test Files  43 passed (43)
+      Tests  399 passed (399)
+   Start at  11:47:10
+   Duration  14.01s (import 61%, tests 25%, transform 12%, worker 2%)
+
+     Import  112 modules were evaluated 156 times · 5.89s total, 61% of tracked time
+             ~1.66s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
