@@ -59,7 +59,7 @@ public sealed partial class HostServices(MainWindow window)
             if (status.Error is { } error) return Err(request, error);
             openExpected = new ExpectedState { DocumentId = target.DocumentId, SessionId = target.SessionId, BaseRevision = status.Result!.Value.GetProperty("revision").GetInt32() };
         }
-        var fileAction = request.Method is "host.newDocument" or "host.openJson" or "host.openVsdx" or "host.saveJson";
+        var fileAction = request.Method is "host.newDocument" or "host.openJson" or "host.openVsdx" or "host.saveJson" or "host.exportImage";
         fileAction = fileAction || request.Method.StartsWith("host.fileConflict.", StringComparison.Ordinal);
         if (fileAction) await newDocumentGate.WaitAsync(ct);
         try
@@ -76,6 +76,7 @@ public sealed partial class HostServices(MainWindow window)
                 "host.fileConflict.resolve" => await ResolveFileAsync(request, ct),
                 "host.pickImage" => await PickImageAsync(request, ct),
                 "host.openVsdx" => await OpenVsdxAsync(request, openExpected!, ct),
+                "host.exportImage" => await window.Exports.HandleEditorAsync(request, ct),
                 "host.exportVsdx" => await ExportVsdxAsync(request, ct),
                 var m when m.StartsWith("host.library.", StringComparison.Ordinal) => await LibraryAsync(request, ct),
                 "host.app.close" => await window.ApproveCloseAsync(request.Params["discard"]?.GetValue<bool>() == true) ? Ok(request, new JsonObject { ["closing"] = true }) : Err(request, "invalid_request", "the window is not waiting to close"),

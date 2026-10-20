@@ -1,3 +1,4 @@
+import { ExportImageDialog } from './components/ExportImageDialog';
 import { RecentFilesDialog } from './components/RecentFilesDialog';
 import { FileConflictDialog } from './components/FileConflictDialog';
 import { NewDocumentDialog } from './components/NewDocumentDialog';
@@ -28,8 +29,8 @@ function useShortcuts(ws: WorkspaceModel) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const model = ws.active;
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') { e.preventDefault(); if (!ws.recentPrompt && !ws.tabs.some(t => t.newDocument.prompt || t.closePrompt || t.files.prompt)) model.newDocument.begin(); return; }
-      if (ws.recentPrompt || ws.tabs.some(t => t.newDocument.prompt || t.closePrompt || t.files.prompt)) return;
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') { e.preventDefault(); if (!ws.recentPrompt && !ws.tabs.some(t => t.newDocument.prompt || t.closePrompt || t.exportPrompt || t.files.prompt)) model.newDocument.begin(); return; }
+      if (ws.recentPrompt || ws.tabs.some(t => t.newDocument.prompt || t.closePrompt || t.exportPrompt || t.files.prompt)) return;
       if (e.ctrlKey && e.key === 'Tab') { e.preventDefault(); ws.cycle(e.shiftKey ? -1 : 1); return; } // most recently used first; works while typing too, like a browser
       if (e.ctrlKey && (e.key === 'PageDown' || e.key === 'PageUp')) { e.preventDefault(); ws.step(e.key === 'PageDown' ? 1 : -1); return; } // in tab order
       if (typing(e.target)) return;
@@ -94,6 +95,7 @@ export function App({ ws }: { ws: WorkspaceModel }) {
       {asking && !ws.tabs.some(t=>t.files.prompt) && <CloseDialog model={asking} />}
       <FileConflictDialog model={ws.tabs.find(t=>t.files.prompt?.source==='save') ?? ws.tabs.find(t=>t.files.prompt) ?? model} />
       {ws.tabs.filter(t => t.newDocument.prompt).map(t => <NewDocumentDialog key={t.tabId} model={t} />)}
+      {ws.tabs.filter(t=>t.exportPrompt && !ws.tabs.some(x=>x.files.prompt) && !asking && !holder.recoveryReport && !holder.recoveryOffers.length && !ws.tabs.some(x=>x.newDocument.prompt)).slice(0,1).map(t=><ExportImageDialog key={t.tabId} model={t}/>)}
       {ws.recentPrompt && !ws.tabs.some(t=>t.files.prompt) && !asking && !holder.recoveryReport && !holder.recoveryOffers.length && !ws.tabs.some(t=>t.newDocument.prompt) && <RecentFilesDialog ws={ws} />}
       <DocumentTitle model={model} />
       <StatusBar model={model} />

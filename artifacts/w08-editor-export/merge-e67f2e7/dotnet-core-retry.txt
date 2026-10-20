@@ -1,0 +1,30 @@
+Test run for C:\Users\claude\.codex\worktrees\w08-merge-main\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\claude\.codex\worktrees\w08-merge-main\diagram-app\artifacts\w08-editor-export\merge-e67f2e7\verified-trx\w08-core-merge_net10.0_20261019181911.trx
+
+Passed!  - Failed:     0, Passed:    24, Skipped:     0, Total:    24, Duration: 427 ms - Diagram.Contracts.Tests.dll (net10.0)
+Test run for C:\Users\claude\.codex\worktrees\w08-merge-main\diagram-app\tests\Diagram.Host.Tests\bin\Debug\net10.0\Diagram.Host.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\claude\.codex\worktrees\w08-merge-main\diagram-app\artifacts\w08-editor-export\merge-e67f2e7\verified-trx\w08-core-merge_net10.0_20261019181925.trx
+
+Passed!  - Failed:     0, Passed:   145, Skipped:     0, Total:   145, Duration: 8 s - Diagram.Host.Tests.dll (net10.0)
+Test run for C:\Users\claude\.codex\worktrees\w08-merge-main\diagram-app\tests\Diagram.Ipc.Tests\bin\Debug\net10.0\Diagram.Ipc.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\claude\.codex\worktrees\w08-merge-main\diagram-app\artifacts\w08-editor-export\merge-e67f2e7\verified-trx\w08-core-merge_net10.0_20261019181929.trx
+
+Passed!  - Failed:     0, Passed:    17, Skipped:     0, Total:    17, Duration: 2 s - Diagram.Ipc.Tests.dll (net10.0)
+Test run for C:\Users\claude\.codex\worktrees\w08-merge-main\diagram-app\tests\Diagram.Mcp.Tests\bin\Debug\net10.0\Diagram.Mcp.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\claude\.codex\worktrees\w08-merge-main\diagram-app\artifacts\w08-editor-export\merge-e67f2e7\verified-trx\w08-core-merge_net10.0_20261019182044.trx
+
+Passed!  - Failed:     0, Passed:    14, Skipped:     0, Total:    14, Duration: 1 m 11 s - Diagram.Mcp.Tests.dll (net10.0)
+Test run for C:\Users\claude\.codex\worktrees\w08-merge-main\diagram-app\tests\Diagram.Visio.Tests\bin\Debug\net10.0\Diagram.Visio.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: C:\Users\claude\.codex\worktrees\w08-merge-main\diagram-app\artifacts\w08-editor-export\merge-e67f2e7\verified-trx\w08-core-merge_net10.0_20261019182055.trx
+
+Passed!  - Failed:     0, Passed:   148, Skipped:     0, Total:   148, Duration: 7 s - Diagram.Visio.Tests.dll (net10.0)
+Test run for C:\Users\claude\.codex\worktrees\w08-merge-main\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+No test matches the given testcase filter `FullyQualifiedName!~Diagram.Windows.Tests` in C:\Users\claude\.codex\worktrees\w08-merge-main\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll
+Results File: C:\Users\claude\.codex\worktrees\w08-merge-main\diagram-app\artifacts\w08-editor-export\merge-e67f2e7\verified-trx\w08-core-merge_net10.0_20261019182057.trx
+

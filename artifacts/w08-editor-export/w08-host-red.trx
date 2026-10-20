@@ -1,0 +1,88 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="49087ced-78bb-4c97-b990-fa07af2e176a" name="claude@W11-TEMPLATE 2026-10-19 01:53:42" runUser="W11-TEMPLATE\claude" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-19T01:53:42.2332121+01:00" queuing="2026-10-19T01:53:42.2332125+01:00" start="2026-10-19T01:53:35.4228608+01:00" finish="2026-10-19T01:53:44.0106959+01:00" />
+  <TestSettings name="default" id="649554ab-1d6c-4131-9821-7e65e4d96fbd">
+    <Deployment runDeploymentRoot="claude_W11-TEMPLATE_2026-10-19_01_53_42" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="ab0cf8cc-5df9-41af-9388-f4db01c0d851" testId="d8b865f7-e2ab-627d-b3c8-87f31899a298" testName="Diagram.Windows.Tests.EditorExportTests.InvalidOrStaleOptionsNeverOpenADestinationOrPublish" computerName="W11-TEMPLATE" duration="00:00:01.7380724" startTime="2026-10-19T01:53:42.2159189+01:00" endTime="2026-10-19T01:53:43.9176674+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ab0cf8cc-5df9-41af-9388-f4db01c0d851">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Strings differ&#xD;
+           ↓ (pos 0)&#xD;
+Expected: "invalid_request"&#xD;
+Actual:   "method_not_found"&#xD;
+           ↑ (pos 0)</Message>
+          <StackTrace>   at Diagram.Windows.Tests.EditorExportTests.InvalidOrStaleOptionsNeverOpenADestinationOrPublish() in C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\EditorExportTests.cs:line 24&#xD;
+   at Diagram.Windows.Tests.EditorExportTests.InvalidOrStaleOptionsNeverOpenADestinationOrPublish() in C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\EditorExportTests.cs:line 25&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="94c69b76-3494-49d4-af10-33e9d8355187" testId="08e7d194-7d02-9b10-473e-5ea62f929c5a" testName="Diagram.Windows.Tests.EditorExportTests.ImageExportCreatesRealPngAndPreservesSnapshot" computerName="W11-TEMPLATE" duration="00:00:03.4656072" startTime="2026-10-19T01:53:38.6739637+01:00" endTime="2026-10-19T01:53:42.1508517+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="94c69b76-3494-49d4-af10-33e9d8355187">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Null() Failure: Value is not null&#xD;
+Expected: null&#xD;
+Actual:   AppError { Code = method_not_found, Message = unknown host method host.exportImage, Retryable = False, Details = , Outcome =  }</Message>
+          <StackTrace>   at Diagram.Windows.Tests.EditorExportTests.ImageExportCreatesRealPngAndPreservesSnapshot() in C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\EditorExportTests.cs:line 17&#xD;
+   at Diagram.Windows.Tests.EditorExportTests.ImageExportCreatesRealPngAndPreservesSnapshot() in C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\EditorExportTests.cs:line 19&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Diagram.Windows.Tests.EditorExportTests.InvalidOrStaleOptionsNeverOpenADestinationOrPublish" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="d8b865f7-e2ab-627d-b3c8-87f31899a298">
+      <Execution id="ab0cf8cc-5df9-41af-9388-f4db01c0d851" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.EditorExportTests" name="InvalidOrStaleOptionsNeverOpenADestinationOrPublish" />
+    </UnitTest>
+    <UnitTest name="Diagram.Windows.Tests.EditorExportTests.ImageExportCreatesRealPngAndPreservesSnapshot" storage="c:\users\claude\.codex\worktrees\r03-icons\diagram-app\tests\diagram.windows.tests\bin\debug\net10.0-windows\diagram.windows.tests.dll" id="08e7d194-7d02-9b10-473e-5ea62f929c5a">
+      <Execution id="94c69b76-3494-49d4-af10-33e9d8355187" />
+      <TestMethod codeBase="C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Diagram.Windows.Tests.EditorExportTests" name="ImageExportCreatesRealPngAndPreservesSnapshot" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="d8b865f7-e2ab-627d-b3c8-87f31899a298" executionId="ab0cf8cc-5df9-41af-9388-f4db01c0d851" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="08e7d194-7d02-9b10-473e-5ea62f929c5a" executionId="94c69b76-3494-49d4-af10-33e9d8355187" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="2" executed="2" passed="0" failed="2" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v4.0.1+0f7d528729 (64-bit .NET 10.0.13)&#xD;
+[xUnit.net 00:00:00.93]   Discovering: Diagram.Windows.Tests&#xD;
+[xUnit.net 00:00:02.30]   Discovered:  Diagram.Windows.Tests&#xD;
+[xUnit.net 00:00:02.35]   Starting:    Diagram.Windows.Tests&#xD;
+[xUnit.net 00:00:05.86]       Assert.Null() Failure: Value is not null&#xD;
+[xUnit.net 00:00:05.86]       Expected: null&#xD;
+[xUnit.net 00:00:05.86]       Actual:   AppError { Code = method_not_found, Message = unknown host method host.exportImage, Retryable = False, Details = , Outcome =  }&#xD;
+[xUnit.net 00:00:05.86]       Stack Trace:&#xD;
+[xUnit.net 00:00:05.86]         C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\EditorExportTests.cs(17,0): at Diagram.Windows.Tests.EditorExportTests.ImageExportCreatesRealPngAndPreservesSnapshot()&#xD;
+[xUnit.net 00:00:05.86]         C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\EditorExportTests.cs(19,0): at Diagram.Windows.Tests.EditorExportTests.ImageExportCreatesRealPngAndPreservesSnapshot()&#xD;
+[xUnit.net 00:00:05.86]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:07.62]       Assert.Equal() Failure: Strings differ&#xD;
+[xUnit.net 00:00:07.62]                  ↓ (pos 0)&#xD;
+[xUnit.net 00:00:07.62]       Expected: "invalid_request"&#xD;
+[xUnit.net 00:00:07.62]       Actual:   "method_not_found"&#xD;
+[xUnit.net 00:00:07.62]                  ↑ (pos 0)&#xD;
+[xUnit.net 00:00:07.62]       Stack Trace:&#xD;
+[xUnit.net 00:00:07.62]         C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\EditorExportTests.cs(24,0): at Diagram.Windows.Tests.EditorExportTests.InvalidOrStaleOptionsNeverOpenADestinationOrPublish()&#xD;
+[xUnit.net 00:00:07.62]         C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\EditorExportTests.cs(25,0): at Diagram.Windows.Tests.EditorExportTests.InvalidOrStaleOptionsNeverOpenADestinationOrPublish()&#xD;
+[xUnit.net 00:00:07.62]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:07.64]   Finished:    Diagram.Windows.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="W11-TEMPLATE" outcome="Error" timestamp="2026-10-19T01:53:42.1637316+01:00">
+        <Text>[xUnit.net 00:00:05.86]     Diagram.Windows.Tests.EditorExportTests.ImageExportCreatesRealPngAndPreservesSnapshot [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="W11-TEMPLATE" outcome="Error" timestamp="2026-10-19T01:53:43.9185656+01:00">
+        <Text>[xUnit.net 00:00:07.62]     Diagram.Windows.Tests.EditorExportTests.InvalidOrStaleOptionsNeverOpenADestinationOrPublish [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

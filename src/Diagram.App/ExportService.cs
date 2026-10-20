@@ -12,7 +12,7 @@ namespace Diagram.App;
 /// folder of the open document or to the application's export folder, anywhere else needs the person's choice (see <see cref="ExportPathPolicy"/>),
 /// and the destination is checked again right before the write.
 /// </summary>
-public sealed class ExportService
+public sealed partial class ExportService
 {
     readonly MainWindow window;
 

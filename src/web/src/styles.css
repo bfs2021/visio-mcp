@@ -149,6 +149,10 @@ textarea { width: 100%; resize: vertical; }
 .tab-menu { position: fixed; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
+.export-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px 20px; margin:16px 0; }
+.export-options label { display:flex; flex-direction:column; gap:5px; min-width:0; }
+.export-options select { max-width:100%; }
+@media(max-width:600px) { .export-options { grid-template-columns:1fr; } }
 .recent-files {width:min(680px,90vw)}
 .recent-items {max-height:50vh;overflow:auto;padding:0;list-style:none}
 .recent-items li {padding:10px 0;border-bottom:1px solid #ddd}

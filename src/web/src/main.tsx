@@ -14,6 +14,7 @@ import type { DocumentState } from './workspace/Workspace';
 function hostApi(host: HostServices | null): HostApi {
   if (!host) return noHost;
   return {
+    editorExport: opts => host.call('host.exportImage', {...opts}),
     pickImage: () => host.call('host.pickImage'),
     openJson: (path, recentId) => host.call('host.openJson', recentId ? { recentId } : path ? { path } : {}),
     recentList: () => host.call('host.recent.list'),
