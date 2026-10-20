@@ -229,9 +229,21 @@ export class MaxGraphAdapter implements CanvasAdapter {
       model.endUpdate();
       this.projecting = false;
     }
+    this.redrawHops();
     this.restoreSelection(selected);
     this.layoutWorld();
     return ok(undefined);
+  }
+
+  /** A hop depends on the other connectors, which may have moved while this one did not change, so a hopping connector is always repainted. */
+  private redrawHops(): void {
+    const model = this.graph.getDataModel();
+    for (const el of this.pageElements.values()) {
+      if (el.kind !== 'connector' || el.hops !== 'arc') continue;
+      const cell = model.getCell(el.id);
+      const state = cell && this.graph.view.getState(cell);
+      if (state) this.graph.cellRenderer.redraw(state, true);
+    }
   }
 
   private restoreSelection(ids: string[]): void {
@@ -298,10 +310,18 @@ export class MaxGraphAdapter implements CanvasAdapter {
     return { interior: route.slice(1, -1).map(p => new Point(p.x, p.y)), fixed: { from: pin(a), to: pin(b) } };
   }
 
+  /** Connectors a hopping connector does not hop: the ones it is joined to or that join it, because those meet it on purpose. */
+  private hopIgnoreOf(el: Extract<Element, { kind: 'connector' }>): string[] {
+    const ids = new Set<string>();
+    for (const ep of [el.from, el.to]) if (ep.join) ids.add(ep.join.connectorId);
+    for (const o of this.pageElements.values()) if (o.kind === 'connector' && [o.from, o.to].some(ep => ep.join?.connectorId === el.id)) ids.add(o.id);
+    return [...ids].sort();
+  }
+
   private upsertEdge(el: Extract<Element, { kind: 'connector' }>, layers: readonly import('../contracts/generated').Layer[]): void {
     const model = this.graph.getDataModel();
     const state = effectiveState(el, layers);
-    const key = this.keyFor(el, state) + [el.from.elementId, el.to.elementId].map(id => (id ? this.shown.get(id) ?? '' : '')).join('|');
+    const key = this.keyFor(el, state) + [el.from.elementId, el.to.elementId].map(id => (id ? this.shown.get(id) ?? '' : '')).join('|') + (el.hops === 'arc' ? this.hopIgnoreOf(el).join(',') : '');
     let cell = model.getCell(el.id);
     if (cell && this.shown.get(el.id) === key) return;
     const geo = new Geometry();
@@ -310,7 +330,7 @@ export class MaxGraphAdapter implements CanvasAdapter {
     if (el.labelAnchor) { geo.x = el.labelAnchor.position * 2 - 1; geo.y = -el.labelAnchor.offsetPt; } // maxGraph: x runs -1 (start) to 1 (end) along the line; its y is positive to the left of travel, ours to the right
     if (el.from.glue === 'none' && el.from.point) geo.setTerminalPoint(new Point(el.from.point.x, el.from.point.y), true);
     if (el.to.glue === 'none' && el.to.point) geo.setTerminalPoint(new Point(el.to.point.x, el.to.point.y), false);
-    const style = edgeStyle(el, state.locked);
+    const style = edgeStyle(el, state.locked, this.hopIgnoreOf(el));
     if (el.route === 'orthogonal') {
       const r = this.orthogonalRoute(el);
       geo.points = r.interior;

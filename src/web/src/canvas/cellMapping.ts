@@ -3,6 +3,7 @@ import { HexagonShape, PerimeterRegistry, Point, ShapeRegistry, type AbstractCan
 // HexagonShape is the public path-shape base: its redrawPath is replaced below, keeping addPoints/rounding helpers.
 import type { ConnectorElement, Element, ImageElement, Layer, Paint, ShapeElement, TextBlock, TextElement } from '../contracts/generated';
 import { parsePath } from '../geometry/svgPath';
+import { HopConnectorShape } from './hopShape';
 import { gradientDirection, patchGradients } from './gradients';
 import { arcParameters, outlineOf, outlinePolygon, OUTLINE_PRESETS, type OutlinePreset } from '../geometry/presetOutlines';
 
@@ -107,6 +108,7 @@ export function registerCustomShapes(): void {
   ShapeRegistry.add('parallelogram', ParallelogramShape);
   ShapeRegistry.add('callout', CalloutShape);
   ShapeRegistry.add('custom-path', CustomPathShape);
+  ShapeRegistry.add('hop-connector', HopConnectorShape);
   PerimeterRegistry.add('diagram-parallelogram', polygonPerimeter(POLYGONS.parallelogram!));
   PerimeterRegistry.add('diagram-callout', polygonPerimeter(POLYGONS.callout!));
   for (const p of OUTLINE_PRESETS) {
@@ -198,7 +200,10 @@ export function vertexStyle(el: ShapeElement | TextElement | ImageElement, locke
 
 const PORT: Record<string, [number, number] | undefined> = { north: [0.5, 0], south: [0.5, 1], west: [0, 0.5], east: [1, 0.5] };
 
-export function edgeStyle(c: ConnectorElement, locked: boolean): CellStyle {
+/** R16: a hopping connector draws an arc this big (points) where it crosses another connector. */
+export const HOP_SIZE_PT = 4;
+
+export function edgeStyle(c: ConnectorElement, locked: boolean, hopIgnore: readonly string[] = []): CellStyle {
   const style: CellStyle = { strokeColor: c.style.colour, strokeWidth: c.style.widthPt, startArrow: ARROW[c.style.startArrow] as CellStyle['startArrow'], endArrow: ARROW[c.style.endArrow] as CellStyle['endArrow'] };
   const dash = DASH[c.style.dash];
   if (dash) { style.dashed = true; style.dashPattern = dash; }
@@ -206,6 +211,9 @@ export function edgeStyle(c: ConnectorElement, locked: boolean): CellStyle {
   style.endSize = ARROW_SIZE[c.style.endArrowSize ?? 'medium'];
   if (c.route === 'orthogonal') style.edgeStyle = 'elbowEdgeStyle';
   if (c.route === 'curved') style.curved = true;
+  if (c.hops === 'arc' && c.route !== 'curved') { // a curved route is drawn by maxGraph's own curve, which has no hops
+    Object.assign(style, { shape: 'hop-connector', hopSize: HOP_SIZE_PT, hopOrder: c.zIndex, hopIgnore: hopIgnore.join(',') });
+  }
   if (c.label) textStyle(style, c.label);
   for (const [ep, x, y] of [[c.from, 'exitX', 'exitY'], [c.to, 'entryX', 'entryY']] as const) {
     const fixed = ep.glue === 'static' && ep.port ? PORT[ep.port] : undefined;
