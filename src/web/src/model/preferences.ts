@@ -1,9 +1,9 @@
 import type { AppPreferences, CapturedDocumentDefaults } from '../contracts/generated';
-import { preferencesDefaults } from '../contracts/generated';
+import { createPreferencesDefaults } from '../contracts/generated';
 import * as V from './validators.generated.js';
 import { fail, ok, type Result } from './result';
 
-export function defaultPreferences(): AppPreferences { return structuredClone(preferencesDefaults); }
+export function defaultPreferences(): AppPreferences { return createPreferencesDefaults(); }
 
 export function validatePreferences(value: unknown): Result<AppPreferences> {
   // Copy only the branch requiring normalization; never alter the caller's draft.

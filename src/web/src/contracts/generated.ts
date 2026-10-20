@@ -883,4 +883,4 @@ export interface AppPreferences {
   theme: "light" | "dark";
 }
 
-export const preferencesDefaults: AppPreferences = {"schemaVersion":1,"units":"mm","grid":{"spacingPt":14.173228346456694,"visible":true,"snap":true},"font":{"family":"Segoe UI","sizePt":12},"recovery":{"checkpointSeconds":60},"theme":"light"};
+export function createPreferencesDefaults(): AppPreferences { return {"schemaVersion":1,"units":"mm","grid":{"spacingPt":14.173228346456694,"visible":true,"snap":true},"font":{"family":"Segoe UI","sizePt":12},"recovery":{"checkpointSeconds":60},"theme":"light"}; }

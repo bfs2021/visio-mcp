@@ -69,7 +69,7 @@ function emitTs() {
     else if (schema.properties) out.push(`export interface ${n} ${objectTs(schema, '')}`, '');
     else out.push(`export type ${n} = ${ts(schema)};`, '');
   }
-  out.push('export const preferencesDefaults: AppPreferences = ' + JSON.stringify(defs.get('AppPreferences').schema.default) + ';');
+  out.push('export function createPreferencesDefaults(): AppPreferences { return ' + JSON.stringify(defs.get('AppPreferences').schema.default) + '; }');
   return out.join('\n');
 }
 

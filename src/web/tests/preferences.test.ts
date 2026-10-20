@@ -1,7 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { defaultPreferences, validatePreferences, captureDefaults } from '../src/model/preferences';
+import { createPreferencesDefaults } from '../src/contracts/generated';
 
 describe('preferences canonical contract', () => {
+  it('returns independent generated defaults for callers that mutate nested settings', () => {
+    const first = createPreferencesDefaults();
+    first.grid.visible = false;
+    first.font.family = 'Custom';
+    const second = createPreferencesDefaults();
+    expect(second.grid.visible).toBe(true);
+    expect(second.font.family).toBe('Segoe UI');
+    expect(defaultPreferences()).toEqual(second);
+  });
   it('supplies independent legacy defaults and captured copies', () => {
     const p = defaultPreferences();
     expect(p).toEqual({ schemaVersion: 1, units: 'mm', grid: { spacingPt: 72 * 5 / 25.4, visible: true, snap: true }, font: { family: 'Segoe UI', sizePt: 12 }, recovery: { checkpointSeconds: 60 }, theme: 'light' });
