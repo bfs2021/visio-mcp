@@ -11,6 +11,12 @@ public sealed partial class HostServices
     // Files the last workspace listed. Reopening one needs no dialog, but only these: the page cannot name any other path.
     readonly HashSet<string> reopenable = new(StringComparer.OrdinalIgnoreCase);
 
+    readonly HashSet<string> launched = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>The shell (a double-click, Open with, or a second launch) named these files, so the page may open each once without a dialog.</summary>
+    public void ApproveLaunch(IEnumerable<LaunchFile> files) { lock (launched) foreach (var f in files) launched.Add(f.Path); }
+    bool TakeLaunch(string path) { lock (launched) return launched.Remove(Path.GetFullPath(path)); }
+
     bool MayReopen(string path) { lock (reopenable) return reopenable.Contains(Path.GetFullPath(path)); }
 
     async Task<ResponseEnvelope> WorkspaceAsync(RequestEnvelope request, CancellationToken ct)

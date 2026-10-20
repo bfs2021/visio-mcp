@@ -84,7 +84,7 @@ public sealed partial class HostServices(MainWindow window)
         ExpectedState? openExpected = null;
         if (request.Method is "host.openJson" or "host.openVsdx")
         {
-            var target = window.Router.CurrentScope;
+            var target = TargetOf(request);
             if (target is null) return Err(request, "not_ready", "the editor is not ready");
             var status = await window.Router.SendAsync(new RequestEnvelope { RequestId = Guid.NewGuid().ToString(), Method = "doc.status", DocumentId = target.DocumentId, SessionId = target.SessionId, Params = new() }, ct);
             if (status.Error is { } error) return Err(request, error);
@@ -154,6 +154,11 @@ public sealed partial class HostServices(MainWindow window)
         return Ok(request, new JsonObject { [what == "copyPath" ? "copied" : "revealed"] = path });
     }
 
+    /// <summary>The tab an open is meant for. A page that just made a tab names it, because the host may not yet have been told that tab is the current one.</summary>
+    Scope? TargetOf(RequestEnvelope request) =>
+        request.Params["documentId"]?.GetValue<string>() is { Length: > 0 } d && request.Params["sessionId"]?.GetValue<string>() is { Length: > 0 } s
+            ? new Scope { DocumentId = d, SessionId = s } : window.Router.CurrentScope;
+
     string? Ask(string kind, Func<string?> dialog) => DialogOverride is { } o ? o(kind) : window.Dispatcher.Invoke(dialog);
 
     async Task<ResponseEnvelope> OpenAsync(RequestEnvelope request, ExpectedState expected, CancellationToken ct)
@@ -171,7 +176,7 @@ public sealed partial class HostServices(MainWindow window)
         else if (request.Params["path"]?.GetValue<string>() is { Length: > 0 } requested)
         {
             // reopening a tab from the last run: no dialog, but only a file that run listed
-            if (!MayReopen(requested)) return Err(request, "invalid_request", "that file was not open in the last session");
+            if (!TakeLaunch(requested) && !MayReopen(requested)) return Err(request, "invalid_request", "that file was not open in the last session");
             path = Path.GetFullPath(requested);
         }
         else { var folder = await RecentOpenFolderAsync(ct); path = Ask("open", () =>
@@ -199,8 +204,12 @@ public sealed partial class HostServices(MainWindow window)
         var recentId = request.Params["recentId"]?.GetValue<string>();
         var entry = recentId is null ? null : await window.Recents.ResolveAsync(recentId, "vsdx", ct);
         if (recentId is not null && entry is null) return Err(request, "not_found", "that recent Visio file is no longer listed");
-        var folder = entry is null ? await RecentOpenFolderAsync(ct) : null;
-        var path = entry?.Path ?? Ask("openVsdx", () =>
+        string? requested = request.Params["path"]?.GetValue<string>();
+        if (requested is { Length: > 0 } && !TakeLaunch(requested)) return Err(request, "invalid_request", "that file was not given to the app by the shell");
+        var folder = entry is null && requested is not { Length: > 0 } ? await RecentOpenFolderAsync(ct) : null;
+        string? path = entry?.Path;
+        if (path is null && requested is { Length: > 0 }) path = Path.GetFullPath(requested);
+        path ??= Ask("openVsdx", () =>
         {
             var d = new OpenFileDialog { Title = "Open Visio drawing", InitialDirectory = folder ?? "", Filter = "Visio drawings (*.vsdx)|*.vsdx|All files (*.*)|*.*" };
             return d.ShowDialog(window) == true ? d.FileName : null;

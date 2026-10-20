@@ -4,7 +4,7 @@ import type { ExpectedDocument } from './NewDocumentFlow';
 import { NewDocumentFlow } from './NewDocumentFlow';
 import { componentWarningText } from '../layout/componentTemplates';
 import type { ComponentProposal } from '../layout/components';
-import type { DiagramDocument, Element, Operation, PreparedAssetRef, Snapshot, TransactionResult } from '../contracts/generated';
+import type { DiagramDocument, Element, Operation, PreparedAssetRef, Scope, Snapshot, TransactionResult } from '../contracts/generated';
 import { CommandEngine } from '../commands/CommandEngine';
 import { copyElements, pasteOperations, type ClipboardData } from '../commands/clipboard';
 import { MaxGraphAdapter, DEFAULT_SCALE } from '../canvas/MaxGraphAdapter';
@@ -34,7 +34,7 @@ export interface HostApi extends FileHost {
   recentClear(): Promise<Result<RecentList>>;
   pickImage(): Promise<Result<{ cancelled: true } | { ref: PreparedAssetRef; notes: string[]; width: number; height: number }>>;
   /** Without a path the person chooses a file; with one (from the last session's tabs) it is reopened without asking. */
-  openJson(path?: string, recentId?: string): Promise<Result<{ cancelled?: true; path?: string; notes?: string[] }>>;
+  openJson(path?: string, recentId?: string, scope?: Scope): Promise<Result<{ cancelled?: true; path?: string; notes?: string[] }>>;
   /** Records the open tabs so the next start can reopen them. */
   workspaceSave(tabs: Array<{ documentId: string; sessionId: string; title: string; unsaved: boolean }>, activeDocumentId: string | null): Promise<Result<{ saved: number }>>;
   /** What the last run left open. */
@@ -57,9 +57,9 @@ export interface HostApi extends FileHost {
   appClose(discard: boolean): Promise<Result<{ closing: true }>>;
   /** The person cancelled the close prompt: the window stays open and may ask again. */
   appCloseCancelled(): Promise<Result<{ cancelled: true }>>;
-  /** The About box: this build, the connected MCP companions and where data lives. */
   appAbout(): Promise<Result<AboutInfo>>;
-  openVsdx(recentId?: string): Promise<Result<NativeOutcome>>;
+  /** With a recent id or a path named by the shell the file opens without asking; otherwise the person chooses. */
+  openVsdx(recentId?: string, path?: string, scope?: Scope): Promise<Result<NativeOutcome>>;
   /** `path` repeats a choice the person already made when they agree to a lossy export. */
   exportVsdx(opts: { acceptLoss?: boolean; path?: string }): Promise<Result<NativeOutcome>>;
   /** Brings a document an agent made in the background into this window as a tab. */
@@ -613,9 +613,11 @@ export class EditorModel {
 
   /** Opens a file into this document. Says whether a file was opened (not cancelled, not failed) and which. */
   async open(path?: string, recentId?: string): Promise<{ opened: boolean; path?: string; error?: string }> {
-    const r = await this.host.openJson(path, recentId);
+    const r = await this.host.openJson(path, recentId, this.engine.scope());
     if (!r.ok) { this.say(r.error.message, 'error'); return { opened: false, error: r.error.message }; }
     if (r.value.cancelled) return { opened: false };
+    // The host marks the file as saved too, but its note can reach this tab before the new session is settled; this tab knows its own session.
+    if (r.value.path && this.engine.status().savedPath !== r.value.path) await this.engine.markSaved(this.engine.scope(), this.engine.revision, r.value.path);
     this.selection = [];
     this.showCommitted();
     this.lastSavedAt = new Date();
@@ -635,8 +637,8 @@ export class EditorModel {
     return p ? (p.split(/[\\/]/).pop() || p) : `Untitled ${this.untitledNo}`;
   }
 
-  async openVsdx(recentId?: string): Promise<{ opened: boolean; error?: string }> {
-    const r = await this.host.openVsdx(recentId);
+  async openVsdx(recentId?: string, path?: string): Promise<{ opened: boolean; path?: string; error?: string }> {
+    const r = await this.host.openVsdx(recentId, path, this.engine.scope());
     if (!r.ok) { this.say(r.error.message, 'error'); return { opened: false, error: r.error.message }; }
     if (r.value.cancelled) return { opened: false };
     this.selection = [];
@@ -645,7 +647,7 @@ export class EditorModel {
     this.say(`Opened ${r.value.path ?? 'file'}. ${r.value.summary ?? ''} ${r.value.warning ?? ''}`.trim(), r.value.lossy || r.value.warning ? 'warning' : 'info');
     if (items.length) this.report = { title: 'Opened a Visio drawing', summary: r.value.summary ?? '', diagnostics: items };
     this.bump();
-    return { opened: true };
+    return r.value.path ? { opened: true, path: r.value.path } : { opened: true };
   }
 
   /** Exports an editable Visio file. If Visio cannot hold something, nothing is written until the person has seen what and agreed. */

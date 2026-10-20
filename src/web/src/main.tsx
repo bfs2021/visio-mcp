@@ -16,7 +16,7 @@ function hostApi(host: HostServices | null): HostApi {
   return {
     editorExport: opts => host.call('host.exportImage', {...opts}),
     pickImage: () => host.call('host.pickImage'),
-    openJson: (path, recentId) => host.call('host.openJson', recentId ? { recentId } : path ? { path } : {}),
+    openJson: (path, recentId, scope) => host.call('host.openJson', { ...(recentId ? { recentId } : path ? { path } : {}), ...(scope ? { documentId: scope.documentId, sessionId: scope.sessionId } : {}) }),
     recentList: () => host.call('host.recent.list'),
     recentRemove: id => host.call('host.recent.remove', { id }),
     recentClear: () => host.call('host.recent.clear'),
@@ -39,7 +39,7 @@ function hostApi(host: HostServices | null): HostApi {
     libraryReplaceSource: id => host.call('host.library.replaceSource', { id }),
     librarySetMetadata: (id, patch) => host.call('host.library.setMetadata', { id, ...patch }),
     libraryDelete: id => host.call('host.library.delete', { id }),
-    openVsdx: recentId => host.call('host.openVsdx', recentId ? { recentId } : {}),
+    openVsdx: (recentId, path, scope) => host.call('host.openVsdx', { ...(recentId ? { recentId } : path ? { path } : {}), ...(scope ? { documentId: scope.documentId, sessionId: scope.sessionId } : {}) }),
     documentShow: documentId => host.call('host.documents.show', { documentId }),
     documentDiscard: documentId => host.call('host.documents.discard', { documentId }),
     agentDocuments: () => host.call('host.documents.agent'),
@@ -63,6 +63,7 @@ const app = startApp(window.chrome?.webview, null, {
     adoptDocument: (document, activate) => ws!.adoptDocument(document, activate),
     activateDocument: documentId => ws!.activateById(documentId),
     agentDocuments: list => ws!.setAgentDocs(list),
+    openFiles: files => ws!.openFromShell(files),
   },
 });
 const { engine, host, router, sessionChanged, workspace } = app;
@@ -90,7 +91,8 @@ ws.host = hostApi(host);
 if (host) ws.protectNew = scope => host.call('host.protectNewDocument', { ...scope });
 configure(firstModel, workspace.active!);
 const model = firstModel;
-void ws.restoreWorkspace(model).then(() => ws!.refreshAgentDocs()); // the last run's tabs come back; unfinished work no tab owns is offered
+ws.restored = ws.restoreWorkspace(model).then(() => ws!.refreshAgentDocs());
+void ws.restored; // the last run's tabs come back; unfinished work no tab owns is offered
 
 // A read-only window onto the editor for automated tests. It is compiled out of production builds, and nothing here edits the document.
 // It always points at the active tab, so a test sees what the person sees.

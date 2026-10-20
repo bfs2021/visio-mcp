@@ -42,6 +42,10 @@ public static class PipeNames
         return $"agentic-diagram.v{protocolVersion}.{id.User!.Value}.{LogonSessionId(id.AccessToken.DangerousGetHandle()):x}";
     }
 
+    /// <summary>The pipe a second launch uses to reach the running window. Scoped like the MCP pipe: one per user and logon session.</summary>
+    public static string ForLaunch() { using var id = WindowsIdentity.GetCurrent(); return ForLaunch(id.User!.Value, LogonSessionId(id.AccessToken.DangerousGetHandle())); }
+    public static string ForLaunch(string sid, long logonSession) => $"agentic-diagram.launch.v1.{sid}.{logonSession:x}";
+
     public static long LogonSessionId() { using var id = WindowsIdentity.GetCurrent(); return LogonSessionId(id.AccessToken.DangerousGetHandle()); }
 
     /// <summary>AuthenticationId (the logon session LUID) from TOKEN_STATISTICS.</summary>
