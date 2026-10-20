@@ -103,7 +103,8 @@ export function App({ ws }: { ws: WorkspaceModel }) {
       <PageTabs model={model} />
       <Drawer model={model} />
       {!ws.tabs.some(t=>t.newDocument.prompt||t.closePrompt||t.files.prompt||t.report||t.recoveryOffers.length||t.recoveryReport)&&<FindPanel key={model.tabId} model={model} />}
-      <CompatibilityDialog model={model} />
+      {/* A report from an in-flight host call waits here until Preferences releases modal ownership. */}
+      {!ws.preferences.dialogOpen && <CompatibilityDialog model={model} />}
       {!ws.tabs.some(t=>t.files.prompt) && <RecoveryDialog model={holder} onRecover={id => void ws.restoreOrphan(holder, id)} />}
       {asking && !ws.tabs.some(t=>t.files.prompt) && <CloseDialog model={asking} />}
       <FileConflictDialog model={ws.tabs.find(t=>t.files.prompt?.source==='save') ?? ws.tabs.find(t=>t.files.prompt) ?? model} />

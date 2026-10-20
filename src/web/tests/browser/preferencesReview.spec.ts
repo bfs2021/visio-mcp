@@ -69,3 +69,39 @@ test('compatibility report blocks the keyboard palette route to Preferences', as
   await expect(page.getByRole('dialog')).toHaveCount(1);
   expect(errors).toEqual([]);
 });
+
+for (const closeAction of ['Cancel', 'Save preferences']) {
+  test(`late compatibility report waits until Preferences closes with ${closeAction}`, async ({ page }) => {
+    const errors = await openEditor(page);
+    await page.evaluate(() => (window as any).__editor.setHost({
+      exportVsdx: async (opts: { acceptLoss?: boolean }) => opts.acceptLoss
+        ? { ok: true, value: { cancelled: true } }
+        : new Promise(resolve => { (window as any).__finishVisio = () => resolve({
+          ok: false, error: { code: 'compatibility_loss', message: 'Delayed export review', retryable: false,
+            details: { path: 'C:\\exports\\delayed.vsdx', diagnostics: [{ severity: 'warning', code: 'curves_flattened', message: 'Review delayed curves.' }] } },
+        }); }),
+    }));
+    await page.getByTestId('menu-file').click();
+    await page.getByTestId('menu-export-visio').click();
+    await page.getByTestId('menu-edit').click();
+    await page.getByTestId('menu-preferences').click();
+    await expect(page.getByTestId('preferences-dialog')).toBeVisible();
+    await page.evaluate(async () => {
+      (window as any).__finishVisio();
+      // Let the delayed model reply and React render settle before testing modal ownership.
+      await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    });
+    await expect(page.getByTestId('compat-dialog')).toHaveCount(0);
+    await expect(page.getByRole('dialog')).toHaveCount(1);
+    await page.getByRole('button', { name: closeAction, exact: true }).click();
+    await expect(page.getByTestId('preferences-dialog')).toHaveCount(0);
+    await expect(page.getByTestId('compat-dialog')).toBeVisible();
+    await expect(page.getByTestId('compat-summary')).toHaveText('Delayed export review');
+    await expect(page.getByTestId('diag-item')).toContainText('Review delayed curves.');
+    await expect(page.getByTestId('compat-confirm')).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(1);
+    await page.getByTestId('compat-close').click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    expect(errors).toEqual([]);
+  });
+}
