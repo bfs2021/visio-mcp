@@ -62,3 +62,15 @@ R23 and R22 touch `obstacles.ts` and the Layers panel and should not be built in
 2. **"Behind"** means the Visio notion, element order (send backward/forward), not layer order. Layers controlling rendering order is a separate feature, R29 #69. Caution recorded in R23 #62: z-order alone cannot mean pass-through, because connectors normally sit in front of everything; pass-through also needs an explicit or suggested background role.
 3. **Migration**: existing connectors with waypoints load as Manual (R20 #59).
 4. **Junction and manually added vertex**: included now, as R30 #70, built on the R16 join model (PR #57). Struck from the on-hold list in R28 #67.
+
+### Levels (owner proposal, 2026-10-20)
+
+The "behind" question in decision 2 is resolved by a **level**, tracked in R29 #69 and kept separate from layers:
+
+- `level` is a new integer field beside `zIndex`, default 0, range -127 to +127. Effective order is level first, then `zIndex`. Send backward/forward act within a level; *Move to level* changes it.
+- A connector inherits its start object's level at creation (MCP and DrawScript may set it) and keeps it if the source later moves. Glue works across levels. Junctions and branches share their connector's level. A group takes the level of its top member.
+- Routing (R23 #62): a shape on a lower level than the connector is passed through; same or higher level is avoided; per-element or layer policy overrides. Everything defaults to level 0, so existing documents route as before.
+- Hops (R16, R24 #63): the higher-level connector gets the arc; on equal levels the newest. Hops are recomputed whenever a connector's line moves.
+- Visio has no levels: export keeps the visual order and reports `level_not_native`.
+
+This replaces the earlier caution that z-order alone cannot mean pass-through, and the heuristic "background role" suggestion in R23.
