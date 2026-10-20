@@ -36,7 +36,7 @@ export class BridgeClient {
       const timer = setTimeout(() => {
         this.pending.delete(id);
         resolve(failure(envelope.requestId, { code: 'timeout_unknown', message: 'the host did not answer', retryable: false, outcome: 'unknown' }));
-      }, this.timeoutMs);
+      }, envelope.method === 'host.exportImage' ? 10 * 60_000 : this.timeoutMs);
       this.pending.set(id, r => { clearTimeout(timer); resolve({ ...r, requestId: envelope.requestId }); });
       this.webview.postMessage({ ...envelope, requestId: id });
     });

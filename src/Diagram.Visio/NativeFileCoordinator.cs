@@ -47,34 +47,46 @@ public sealed class StoreBlobSource(BlobStore store, IRasteriser? rasteriser) : 
 /// </summary>
 public sealed class NativeFileCoordinator(IEditorChannel editor, IExportSource source, BlobStore blobs, AtomicFileWriter writer, IVsdxImporter importer, IVsdxExporter exporter, IRasteriser? rasteriser = null)
 {
-    public async Task<Result<NativeOpened>> OpenAsync(string path, ExpectedState expected, CancellationToken ct)
+    /// <summary>
+    /// Reads and imports a .vsdx without opening it anywhere: the limits of <see cref="ImportOptions"/> apply, and every picture is durable in the
+    /// blob store before the result is returned, so a document built from it can never point at a missing image.
+    /// </summary>
+    /// <param name="revalidate">Run immediately before the bytes are read: a last look at whether the source is still the one that was approved.</param>
+    public async Task<Result<ImportResult>> ImportFileAsync(string path, CancellationToken ct, Func<Result<Unit>>? revalidate = null)
     {
         var safe = PathPolicy.Validate(path);
-        if (!safe.IsOk) return Result<NativeOpened>.Fail(safe.Error!);
-        if (!string.Equals(Path.GetExtension(safe.Value), ".vsdx", StringComparison.OrdinalIgnoreCase)) return Result<NativeOpened>.Fail("invalid_request", "this is not a Visio drawing (.vsdx)");
+        if (!safe.IsOk) return Result<ImportResult>.Fail(safe.Error!);
+        if (!string.Equals(Path.GetExtension(safe.Value), ".vsdx", StringComparison.OrdinalIgnoreCase)) return Result<ImportResult>.Fail("invalid_request", "this is not a Visio drawing (.vsdx)");
         var options = new ImportOptions();
         byte[] bytes;
         try
         {
+            if (revalidate?.Invoke() is { IsOk: false } stale) return Result<ImportResult>.Fail(stale.Error!);
             var info = new FileInfo(safe.Value);
-            if (!info.Exists) return Result<NativeOpened>.Fail("not_found", "the file does not exist");
-            if (info.Length > options.MaxPackageBytes) return Result<NativeOpened>.Fail("limit_exceeded", $"file is {info.Length} bytes; the limit is {options.MaxPackageBytes}");
+            if (!info.Exists) return Result<ImportResult>.Fail("not_found", "the file does not exist");
+            if (info.Length > options.MaxPackageBytes) return Result<ImportResult>.Fail("limit_exceeded", $"file is {info.Length} bytes; the limit is {options.MaxPackageBytes}");
             bytes = await File.ReadAllBytesAsync(safe.Value, ct);
         }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return Result<NativeOpened>.Fail("io_error", "the file could not be read", retryable: true); }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return Result<ImportResult>.Fail("io_error", "the file could not be read", retryable: true); }
 
         // everything below runs outside the editor's queue and touches nothing the user can see
         var imported = await importer.ImportAsync(new MemoryStream(bytes), options, ct);
+        if (!imported.IsOk) return Result<ImportResult>.Fail(imported.Error!);
+        try { foreach (var blob in imported.Value.Blobs) await blobs.PutDurableAsync(blob.Bytes, ct); } // durable before the editor can see a reference to it
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return Result<ImportResult>.Fail("io_error", "the pictures in the file could not be stored, so the document was not opened: " + e.Message, retryable: true); }
+        return imported;
+    }
+
+    public async Task<Result<NativeOpened>> OpenAsync(string path, ExpectedState expected, CancellationToken ct)
+    {
+        var imported = await ImportFileAsync(path, ct);
         if (!imported.IsOk) return Result<NativeOpened>.Fail(imported.Error!);
         var result = imported.Value;
-
-        try { foreach (var blob in result.Blobs) await blobs.PutDurableAsync(blob.Bytes, ct); } // durable before the editor can see a reference to it
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return Result<NativeOpened>.Fail("io_error", "the pictures in the file could not be stored, so the document was not opened: " + e.Message, retryable: true); }
-
-        var candidate = result.Document with { Source = new DocumentSource { Format = "vsdx", Path = safe.Value } };
+        var full = Path.GetFullPath(path);
+        var candidate = result.Document with { Source = new DocumentSource { Format = "vsdx", Path = full } };
         var replaced = await editor.ReplaceAsync(candidate, expected, ct);
         if (!replaced.IsOk) return Result<NativeOpened>.Fail(replaced.Error!);
-        return Result<NativeOpened>.Ok(new NativeOpened(replaced.Value, new CompatibilityReport(result.Diagnostics), result.Identity, safe.Value));
+        return Result<NativeOpened>.Ok(new NativeOpened(replaced.Value, new CompatibilityReport(result.Diagnostics), result.Identity, full));
     }
 
     /// <param name="revalidate">Run immediately before the file is written: a last look at whether the destination is still the one that was approved.</param>

@@ -135,8 +135,16 @@ public sealed class NativeVsdxImporter : IVsdxImporter
                 foreach (var row in sec.Elements(V + "Row"))
                 {
                     var t = (string?)row.Attribute("T"); var rix = (string?)row.Attribute("IX"); var rn = (string?)row.Attribute("N");
-                    if (!mine.Elements(V + "Row").Any(r => (string?)r.Attribute("T") == t && (string?)r.Attribute("IX") == rix && (string?)r.Attribute("N") == rn)) { var copy = new XElement(row); mine.Add(copy); added.Add(copy); }
+                    var same = mine.Elements(V + "Row").FirstOrDefault(r => (string?)r.Attribute("T") == t && (string?)r.Attribute("IX") == rix && (string?)r.Attribute("N") == rn);
+                    if (same is null) { var copy = new XElement(row); mine.Add(copy); added.Add(copy); continue; }
+                    // a row the shape overrides may state only some of its cells (a LineTo with just a Y): the rest come from the master's row
+                    var rowHave = same.Elements(V + "Cell").Select(c => (string?)c.Attribute("N")).ToHashSet();
+                    foreach (var c in row.Elements(V + "Cell"))
+                        if (!rowHave.Contains((string?)c.Attribute("N"))) { var copy = new XElement(c); same.Add(copy); added.Add(copy); }
                 }
+                // rows from the master were appended; put every row back in its own order (a path must open with its MoveTo)
+                static double Ix(XElement e) => double.TryParse((string?)e.Attribute("IX"), System.Globalization.NumberStyles.Float, Inv, out var v) ? v : double.MaxValue;
+                if (mine.Elements(V + "Row").Skip(1).Any()) mine.ReplaceNodes(mine.Elements().Select((e, i) => (e, i)).OrderBy(x => x.e.Name == V + "Row" ? 1 : 0).ThenBy(x => x.e.Name == V + "Row" ? Ix(x.e) : 0).ThenBy(x => x.i).Select(x => (object)x.e));
             }
             // inherited cells hold the master's values; where they are proportional to the shape's size, restate them for this instance
             double Size(string n) => double.TryParse(Own(s, n), System.Globalization.NumberStyles.Float, Inv, out var v) ? v : 0;
@@ -411,6 +419,21 @@ public sealed class NativeVsdxImporter : IVsdxImporter
                 return new JsonObject { ["x"] = cx - w / 2, ["y"] = cy - h / 2, ["width"] = w, ["height"] = h };
             }
 
+            /// <summary>Visio draws a vertical or horizontal rule as a shape with no width or no height; the editor needs a positive size, so it becomes a hairline around the same centre line.</summary>
+            JsonObject Hairline(JsonObject b, string id, string sid)
+            {
+                const double Min = 0.01;
+                var changed = false;
+                foreach (var (pos, size) in new[] { ("x", "width"), ("y", "height") })
+                {
+                    var length = b[size]!.GetValue<double>();
+                    if (length >= Min) continue;
+                    b[pos] = b[pos]!.GetValue<double>() + length / 2 - Min / 2; b[size] = Min; changed = true;
+                }
+                if (changed) Note("zero_size_adjusted", "This shape has no width or no height in Visio (a rule); it was given a hairline size so the editor can hold it.", id, sid, "size adjusted", "info");
+                return b;
+            }
+
             // ------------------------------------------------------------ walk
             void Walk(XElement s, Xf? parent, List<XElement> connects)
             {
@@ -434,7 +457,7 @@ public sealed class NativeVsdxImporter : IVsdxImporter
                 var id = idByShape[sid];
                 var o = new JsonObject
                 {
-                    ["id"] = id, ["kind"] = kind, ["layerIds"] = LayerIds(s), ["zIndex"] = 0, ["locked"] = false, ["hidden"] = false, ["bounds"] = Bounds(xf),
+                    ["id"] = id, ["kind"] = kind, ["layerIds"] = LayerIds(s), ["zIndex"] = 0, ["locked"] = false, ["hidden"] = false, ["bounds"] = kind is "shape" or "image" ? Hairline(Bounds(xf), id, sid) : Bounds(xf),
                     ["rotationDeg"] = NormaliseDeg(-TotalAngle(xf) * 180 / Math.PI), ["metadata"] = new JsonObject(),
                 };
                 var alias = u.GetValueOrDefault("AgentAlias");
@@ -489,6 +512,10 @@ public sealed class NativeVsdxImporter : IVsdxImporter
                 var geometry = ReadGeometryFor(s, sid, u, xf, hasGeometry);
                 shape["geometry"] = geometry.Geometry;
                 shape["style"] = Style(s, idByShape[sid], u);
+                // a drawing made only of open lines (every outline marked NoFill) has nothing to fill; Visio draws it as a line
+                var outlines = s.Elements(V + "Section").Where(x => (string?)x.Attribute("N") == "Geometry").ToList();
+                if (hasGeometry && !geometry.Placeholder && outlines.All(o => o.Elements(V + "Cell").Any(c => (string?)c.Attribute("N") == "NoFill" && (string?)c.Attribute("V") == "1")))
+                    ((JsonObject)shape["style"]!)["fill"] = new JsonObject { ["kind"] = "none" };
                 if (text is not null) shape["text"] = text;
                 if (portsOf.TryGetValue(sid, out var ports) && ports.Count > 0) shape["ports"] = new JsonArray(ports.Select(p => (JsonNode)new JsonObject { ["id"] = p.Id, ["x"] = Math.Clamp(p.X, 0, 1), ["y"] = Math.Clamp(p.Y, 0, 1) }).ToArray());
                 if (geometry.Placeholder) { ((JsonObject)shape["metadata"]!)["visio.unsupported"] = geometry.Why!; }
@@ -608,7 +635,7 @@ public sealed class NativeVsdxImporter : IVsdxImporter
                 if (presetName == "svgPath" && u.TryGetValue("AgentGeomSig", out var stored) && stored == sig && u.TryGetValue("AgentSvgPath", out var original))
                     return new GeoResult(new JsonObject { ["svgPath"] = original }, false, null);
                 // anything else: keep the outline as a restricted path, and say it was converted
-                var path = GeometryMap.ToSvgPath(sections, xf.Width, xf.Height);
+                var path = GeometryMap.ToSvgPath(sections, xf.Width > 0 ? xf.Width : 1, xf.Height > 0 ? xf.Height : 1); // a rule has no width or no height; the fractions were already made against 1
                 if (path.Length == 0 || path.Length > 65536) { Note("unsupported_shape", "The outline of this shape is too complex; it is shown as a marked placeholder.", id, sid, "placeholder rectangle"); return new GeoResult(new JsonObject { ["preset"] = "rectangle" }, true, "outline too complex"); }
                 Note("outline_converted", "The outline is not one of the editor's presets and was converted to a custom path.", id, sid, "custom path", "info");
                 return new GeoResult(new JsonObject { ["svgPath"] = path }, false, null);
@@ -650,6 +677,27 @@ public sealed class NativeVsdxImporter : IVsdxImporter
                                 lastX = x1; lastY = y1;
                                 break;
                             }
+                            case "NURBSTo":
+                            {
+                                var x1 = Cv("X", lastX); var y1 = Cv("Y", lastY);
+                                var e = row.Elements(V + "Cell").FirstOrDefault(c => (string?)c.Attribute("N") == "E")?.Attribute("V")?.Value;
+                                var pts = e is null ? null : FlattenNurbs(e, lastX, lastY, x1, y1, Cv("D", 1), Cv("B", 1), Cv("C", 0), w, h);
+                                if (pts is null)
+                                {
+                                    rows.Add(new LineRow(Fr(x1, y1)));
+                                    Note("geometry_approximated", "A curve that could not be evaluated was imported as a straight line to its end point.", elementId, sid, "approximated", "info");
+                                }
+                                else foreach (var (px, py) in pts) rows.Add(new LineRow(Fr(px, py)));
+                                lastX = x1; lastY = y1;
+                                break;
+                            }
+                            case "EllipticalArcTo":
+                            {
+                                var x1 = Cv("X", lastX); var y1 = Cv("Y", lastY);
+                                foreach (var (px, py) in FlattenEllipticalArc(lastX, lastY, x1, y1, Cv("A", (lastX + x1) / 2), Cv("B", (lastY + y1) / 2), Cv("C", 0), Cv("D", 1))) rows.Add(new LineRow(Fr(px, py)));
+                                lastX = x1; lastY = y1;
+                                break;
+                            }
                             case "InfiniteLine": break;
                             default:
                                 if (row.Elements(V + "Cell").Any(c => (string?)c.Attribute("N") == "X"))
@@ -663,6 +711,86 @@ public sealed class NativeVsdxImporter : IVsdxImporter
                     if (rows.Count > 0) result.Add(new GeoSection(rows, noFill));
                 }
                 return result;
+            }
+
+            /// <summary>
+            /// Samples a Visio NURBS segment: NURBS(lastKnot, degree, xType, yType, x, y, knot, weight, ...) lists the control points between the segment's start
+            /// and end. Types 0 are fractions of the shape's width or height. Knots are taken as a clamped vector; a segment that does not fit that
+            /// (wrong knot count, bad numbers) returns null so the caller can draw a straight line instead of following the control polygon.
+            /// </summary>
+            static List<(double X, double Y)>? FlattenNurbs(string formula, double sx, double sy, double ex, double ey, double firstWeight, double lastWeight, double firstKnot, double w, double h)
+            {
+                var open = formula.IndexOf('('); var close = formula.LastIndexOf(')');
+                if (!formula.StartsWith("NURBS", StringComparison.OrdinalIgnoreCase) || open < 0 || close < open) return null;
+                var a = new List<double>();
+                foreach (var part in formula[(open + 1)..close].Split(',', StringSplitOptions.TrimEntries))
+                {
+                    if (!double.TryParse(part, System.Globalization.NumberStyles.Float, Inv, out var v) || !double.IsFinite(v)) return null;
+                    a.Add(v);
+                }
+                if (a.Count < 4 || (a.Count - 4) % 4 != 0) return null;
+                var lastKnot = a[0]; var degree = (int)a[1]; var xRel = a[2] == 0; var yRel = a[3] == 0;
+                var px = new List<double> { sx }; var py = new List<double> { sy }; var wt = new List<double> { firstWeight }; var interior = new List<double>();
+                for (var i = 4; i < a.Count; i += 4)
+                {
+                    px.Add(xRel ? a[i] * w : a[i]); py.Add(yRel ? a[i + 1] * h : a[i + 1]); wt.Add(a[i + 3]);
+                    if (a[i + 2] > firstKnot + 1e-9 && a[i + 2] < lastKnot - 1e-9) interior.Add(a[i + 2]);
+                }
+                px.Add(ex); py.Add(ey); wt.Add(lastWeight);
+                var n = px.Count;
+                if (degree < 1 || degree > 8 || n < degree + 1 || n > 64 || lastKnot <= firstKnot || wt.Any(x => x <= 0) || interior.Count != n - degree - 1) return null;
+                interior.Sort();
+                var knots = new List<double>();
+                for (var i = 0; i <= degree; i++) knots.Add(firstKnot);
+                knots.AddRange(interior);
+                for (var i = 0; i <= degree; i++) knots.Add(lastKnot);
+
+                (double X, double Y) At(double t)
+                {
+                    var k = degree;
+                    while (k < n - 1 && t >= knots[k + 1]) k++;
+                    var dx = new double[degree + 1]; var dy = new double[degree + 1]; var dw = new double[degree + 1];
+                    for (var j = 0; j <= degree; j++) { var idx = j + k - degree; dw[j] = wt[idx]; dx[j] = px[idx] * dw[j]; dy[j] = py[idx] * dw[j]; }
+                    for (var r = 1; r <= degree; r++)
+                        for (var j = degree; j >= r; j--)
+                        {
+                            var left = knots[j + k - degree]; var right = knots[j + 1 + k - r];
+                            var alpha = right - left < 1e-12 ? 0 : (t - left) / (right - left);
+                            dx[j] = (1 - alpha) * dx[j - 1] + alpha * dx[j]; dy[j] = (1 - alpha) * dy[j - 1] + alpha * dy[j]; dw[j] = (1 - alpha) * dw[j - 1] + alpha * dw[j];
+                        }
+                    return (dx[degree] / dw[degree], dy[degree] / dw[degree]);
+                }
+
+                var steps = Math.Max(8, 4 * (n - 1));
+                var points = new List<(double X, double Y)>();
+                for (var i = 1; i < steps; i++) points.Add(At(firstKnot + (lastKnot - firstKnot) * i / steps));
+                points.Add((ex, ey));
+                return points.All(p => double.IsFinite(p.X) && double.IsFinite(p.Y)) ? points : null;
+            }
+
+            /// <summary>
+            /// Samples a Visio elliptical arc from (x0,y0) to (x1,y1) through the control point (cx,cy). The ellipse's major axis lies at `angle` and
+            /// `ratio` is major over minor; the points are squeezed into a circle, the circle through the three points is walked, and the result is mapped back.
+            /// </summary>
+            static IEnumerable<(double X, double Y)> FlattenEllipticalArc(double x0, double y0, double x1, double y1, double cx, double cy, double angle, double ratio)
+            {
+                if (!(ratio > 1e-6) || !double.IsFinite(ratio)) ratio = 1;
+                var ca = Math.Cos(angle); var sa = Math.Sin(angle);
+                (double X, double Y) To((double X, double Y) p) => (p.X * ca + p.Y * sa, (-p.X * sa + p.Y * ca) * ratio);
+                (double X, double Y) From((double X, double Y) p) => (p.X * ca - (p.Y / ratio) * sa, p.X * sa + (p.Y / ratio) * ca);
+                var a = To((x0, y0)); var b = To((cx, cy)); var c = To((x1, y1));
+                var d = 2 * (a.X * (b.Y - c.Y) + b.X * (c.Y - a.Y) + c.X * (a.Y - b.Y));
+                if (Math.Abs(d) < 1e-12) { yield return (x1, y1); yield break; }
+                var ux = ((a.X * a.X + a.Y * a.Y) * (b.Y - c.Y) + (b.X * b.X + b.Y * b.Y) * (c.Y - a.Y) + (c.X * c.X + c.Y * c.Y) * (a.Y - b.Y)) / d;
+                var uy = ((a.X * a.X + a.Y * a.Y) * (c.X - b.X) + (b.X * b.X + b.Y * b.Y) * (a.X - c.X) + (c.X * c.X + c.Y * c.Y) * (b.X - a.X)) / d;
+                var radius = Math.Sqrt((a.X - ux) * (a.X - ux) + (a.Y - uy) * (a.Y - uy));
+                var t0 = Math.Atan2(a.Y - uy, a.X - ux); var tb = Math.Atan2(b.Y - uy, b.X - ux); var t1 = Math.Atan2(c.Y - uy, c.X - ux);
+                static double Wrap(double v) { while (v < 0) v += 2 * Math.PI; while (v >= 2 * Math.PI) v -= 2 * Math.PI; return v; }
+                var ccw = Wrap(tb - t0) < Wrap(t1 - t0); // does counter-clockwise travel from the start pass the control point before reaching the end?
+                var sweep = ccw ? Wrap(t1 - t0) : -Wrap(t0 - t1);
+                var steps = Math.Max(4, (int)(Math.Abs(sweep) / (Math.PI / 12)));
+                for (var i = 1; i < steps; i++) { var t = t0 + sweep * i / steps; yield return From((ux + radius * Math.Cos(t), uy + radius * Math.Sin(t))); }
+                yield return (x1, y1);
             }
 
             /// <summary>Points along the circular arc from (x0,y0) to (x1,y1) whose midpoint lies `bulge` away from the chord (positive: to the right of travel).</summary>

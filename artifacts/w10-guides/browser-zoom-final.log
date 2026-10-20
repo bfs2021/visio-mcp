@@ -1,0 +1,20 @@
+
+> test:browser
+> playwright test tests/browser/guides.spec.ts
+
+[WebServer] (node:4508) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:17220) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 5 tests using 1 worker
+
+(node:11836) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 tests\browser\guides.spec.ts:5:1 › ruler guides create, move, cancel, delete and undo without altering shapes (2.6s)
+  ok 2 tests\browser\guides.spec.ts:30:1 › authored guides win over a coarse grid in a real canvas drag (896ms)
+  ok 3 tests\browser\guides.spec.ts:41:1 › picture placement uses page guides without changing its natural dimensions (881ms)
+  ok 4 tests\browser\guides.spec.ts:53:1 › vector icon placement snaps to a guide and retains the chosen size (746ms)
+  ok 5 tests\browser\guides.spec.ts:61:1 › vertical ruler conversion survives zoom and scroll and clean renders omit guides (978ms)
+
+  5 passed (10.0s)

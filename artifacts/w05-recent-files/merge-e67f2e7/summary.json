@@ -1,0 +1,21 @@
+{
+  "main": "e67f2e7",
+  "featureParent": "83121a2",
+  "dotnetInitial": {
+    "passed": 441,
+    "failed": 1,
+    "total": 442
+  },
+  "officeRetry": {
+    "passed": 1,
+    "failed": 0
+  },
+  "nativeIntegration": 14,
+  "frontend": 397,
+  "browser": 114,
+  "typecheck": "PASS",
+  "generated": "PASS",
+  "webBuild": "PASS",
+  "review": "No substantive findings",
+  "manual": "NOT RUN"
+}

@@ -1,0 +1,35 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Diagram.Core.Contracts -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Core.Contracts\bin\Debug\net10.0\Diagram.Core.Contracts.dll
+  Diagram.Host.Core -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Host.Core\bin\Debug\net10.0\Diagram.Host.Core.dll
+  Diagram.Ipc -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Ipc\bin\Debug\net10.0\Diagram.Ipc.dll
+  Diagram.Visio.Abstractions -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Visio.Abstractions\bin\Debug\net10.0\Diagram.Visio.Abstractions.dll
+  Diagram.Visio -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Visio\bin\Debug\net10.0\Diagram.Visio.dll
+  Diagram.App -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.App\bin\Debug\net10.0-windows\Diagram.App.dll
+  Diagram.Mcp -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Mcp\bin\Debug\net10.0\Diagram.Mcp.dll
+C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\CrashRecoveryTests.cs(86,9): warning CS8631: The type 'string?' cannot be used as type parameter 'T' in the generic type or method 'Assert.Equal<T>(ReadOnlySpan<T>, T[])'. Nullability of type argument 'string?' doesn't match constraint type 'System.IEquatable<string?>'. [C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\Diagram.Windows.Tests.csproj]
+  Diagram.Windows.Tests -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll
+Test run for C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:04.60]     Diagram.Windows.Tests.RecentFilesTests.AnEditWhileOpenIsWaitingCannotBeDiscardedByItsLateReply(method: "host.openVsdx") [FAIL]
+  Failed Diagram.Windows.Tests.RecentFilesTests.AnEditWhileOpenIsWaitingCannotBeDiscardedByItsLateReply(method: "host.openVsdx") [2 s]
+  Error Message:
+   Assert.Equal() Failure: Strings differ
+Expected: "revision_conflict"
+Actual:   null
+  Stack Trace:
+     at Diagram.Windows.Tests.RecentFilesTests.AnEditWhileOpenIsWaitingCannotBeDiscardedByItsLateReply(String method) in C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\RecentFilesTests.cs:line 58
+   at Diagram.Windows.Tests.RecentFilesTests.AnEditWhileOpenIsWaitingCannotBeDiscardedByItsLateReply(String method) in C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\RecentFilesTests.cs:line 58
+--- End of stack trace from previous location ---
+[xUnit.net 00:00:06.31]     Diagram.Windows.Tests.RecentFilesTests.AnEditWhileOpenIsWaitingCannotBeDiscardedByItsLateReply(method: "host.openJson") [FAIL]
+  Failed Diagram.Windows.Tests.RecentFilesTests.AnEditWhileOpenIsWaitingCannotBeDiscardedByItsLateReply(method: "host.openJson") [1 s]
+  Error Message:
+   Assert.Equal() Failure: Strings differ
+Expected: "revision_conflict"
+Actual:   null
+  Stack Trace:
+     at Diagram.Windows.Tests.RecentFilesTests.AnEditWhileOpenIsWaitingCannotBeDiscardedByItsLateReply(String method) in C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\RecentFilesTests.cs:line 58
+   at Diagram.Windows.Tests.RecentFilesTests.AnEditWhileOpenIsWaitingCannotBeDiscardedByItsLateReply(String method) in C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\RecentFilesTests.cs:line 58
+--- End of stack trace from previous location ---
+
+Failed!  - Failed:     2, Passed:     0, Skipped:     0, Total:     2, Duration: 3 s - Diagram.Windows.Tests.dll (net10.0)

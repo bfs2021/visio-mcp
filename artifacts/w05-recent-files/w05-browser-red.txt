@@ -1,0 +1,62 @@
+
+> test:browser
+> playwright test recent.spec.ts
+
+[WebServer] (node:16660) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:1032) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 2 tests using 1 worker
+
+(node:20736) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 tests\browser\recent.spec.ts:3:1 › Recent removes missing history and preserves work on failed Open (1.0m)
+(node:12816) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  2 tests\browser\recent.spec.ts:9:1 › Recent uses host IDs, opens beside unsaved work and reuses existing tabs (1.0m)
+
+
+  1) tests\browser\recent.spec.ts:3:1 › Recent removes missing history and preserves work on failed Open 
+
+    Test timeout of 60000ms exceeded.
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+      - waiting for getByTestId('menu-recent')
+
+
+      4 |  await openEditor(page);await placeShape(page,'shape-rectangle',{x:200,y:150},'kept');const before=await snapshot(page);
+      5 |  await page.evaluate(()=>{let entries=[{id:'gone',path:'C:/Gone/plan.diagram.json',kind:'json',availability:'missing'}];(window as any).__editor.setHost({recentList:async()=>({ok:true,value:{entries}}),recentRemove:async()=>{entries=[];return {ok:true,value:{entries}};},openJson:async()=>({ok:false,error:{code:'io_error',message:'File is missing',retryable:false}})});});
+    > 6 |  await page.getByTestId('menu-file').click();await page.getByTestId('menu-recent').click();const d=page.getByRole('dialog',{name:'Recent files'});await expect(d).toContainText('missing');await page.keyboard.press('Control+n');await expect(page.getByTestId('new-document')).toHaveCount(0);
+        |                                                                                    ^
+      7 |  await d.getByRole('button',{name:'Open',exact:true}).click();await expect(d.getByRole('alert')).toContainText('File is missing');expect(await snapshot(page)).toEqual(before);await expect(page.getByTestId('tab')).toHaveCount(1);await d.getByRole('button',{name:'Remove',exact:true}).click();await expect(d).toContainText('No recent files');await page.keyboard.press('Escape');await expect(d).toHaveCount(0);
+      8 | });
+      9 | test('Recent uses host IDs, opens beside unsaved work and reuses existing tabs',async({page})=>{
+        at C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\web\tests\browser\recent.spec.ts:6:84
+
+    Error Context: test-results\recent-Recent-removes-miss-ee624-eserves-work-on-failed-Open\error-context.md
+
+  2) tests\browser\recent.spec.ts:9:1 › Recent uses host IDs, opens beside unsaved work and reuses existing tabs 
+
+    Test timeout of 60000ms exceeded.
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+      - waiting for getByTestId('menu-recent')
+
+
+      10 |  await openEditor(page);await placeShape(page,'shape-rectangle',{x:200,y:150},'kept');
+      11 |  await page.evaluate(()=>{const w=window as any;w.__calls=[];w.__editor.setHost({recentList:async()=>({ok:true,value:{entries:[{id:'host-id',path:'C:/Work/plan.diagram.json',kind:'json',availability:'available'}]}}),recentClear:async()=>({ok:true,value:{entries:[]}}),openJson:async(path:string|undefined,id:string)=>{w.__calls.push([path??null,id]);await w.__editor.markSaved('C:/Work/plan.diagram.json');return {ok:true,value:{path:'C:/Work/plan.diagram.json'}};}});});
+    > 12 |  for(let i=0;i<2;i++){await page.getByTestId('menu-file').click();await page.getByTestId('menu-recent').click();await page.getByRole('dialog',{name:'Recent files'}).getByRole('button',{name:'Open',exact:true}).click();await expect(page.getByRole('dialog',{name:'Recent files'})).toHaveCount(0);}
+         |                                                                                                         ^
+      13 |  await expect(page.getByTestId('tab')).toHaveCount(2);expect(await page.evaluate(()=>(window as any).__calls)).toEqual([[null,'host-id']]);await page.getByTestId('tab').first().click();expect((await snapshot(page)).document.pages[0]!.elements.map(e=>e.id)).toContain('kept');
+      14 |  await page.getByTestId('menu-file').click();await page.getByTestId('menu-recent').click();await page.getByRole('button',{name:'Clear recent',exact:true}).click();await expect(page.getByRole('dialog',{name:'Recent files'})).toContainText('No recent files');
+      15 | });
+        at C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\web\tests\browser\recent.spec.ts:12:105
+
+    Error Context: test-results\recent-Recent-uses-host-ID-0b20a-rk-and-reuses-existing-tabs\error-context.md
+
+  2 failed
+    tests\browser\recent.spec.ts:3:1 › Recent removes missing history and preserves work on failed Open 
+    tests\browser\recent.spec.ts:9:1 › Recent uses host IDs, opens beside unsaved work and reuses existing tabs 

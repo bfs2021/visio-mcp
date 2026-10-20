@@ -18,6 +18,9 @@ public sealed class DenyAllConsent : IExportConsent
     public Task<bool> AskAsync(ConsentRequest request, CancellationToken ct) => Task.FromResult(false);
 }
 
+/// <summary>A file to read that passed the rules (see <see cref="ExportPathPolicy.ResolveReadAsync"/>).</summary>
+public sealed record ApprovedSource(string Path, bool Consented);
+
 /// <summary>A destination that passed the rules. Revalidate it immediately before writing: the folder can change between approval and write.</summary>
 public sealed record ApprovedDestination(string Path, bool Existed, bool Consented, string SessionId, int Revision);
 
@@ -30,6 +33,8 @@ public sealed class ExportPathPolicy
 {
     public static readonly TimeSpan ConsentTimeout = TimeSpan.FromSeconds(60);
     static readonly Dictionary<string, string[]> Extensions = new() { ["vsdx"] = [".vsdx"], ["svg"] = [".svg"], ["png"] = [".png"], ["jpeg"] = [".jpg", ".jpeg"] };
+    static readonly Dictionary<string,string[]> EditorExtensions = new(Extensions) { ["pdf"]=[".pdf"], ["zip"]=[".zip"] };
+    readonly IReadOnlyDictionary<string,string[]> extensions;
     static readonly HashSet<string> Reserved = new(StringComparer.OrdinalIgnoreCase)
     {
         "CON", "PRN", "AUX", "NUL", "CONIN$", "CONOUT$", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "COM¹", "COM²", "COM³",
@@ -42,8 +47,9 @@ public sealed class ExportPathPolicy
     readonly IExportConsent consent;
     readonly TimeSpan timeout;
 
-    public ExportPathPolicy(string exportRoot, Func<IReadOnlyList<string>> savedDirectories, Func<Scope?> currentScope, IExportConsent? consent = null, TimeSpan? consentTimeout = null)
+    public ExportPathPolicy(string exportRoot, Func<IReadOnlyList<string>> savedDirectories, Func<Scope?> currentScope, IExportConsent? consent = null, TimeSpan? consentTimeout = null, bool editorFormats = false)
     {
+        extensions = editorFormats ? EditorExtensions : Extensions;
         this.exportRoot = System.IO.Path.GetFullPath(exportRoot);
         this.savedDirectories = savedDirectories;
         this.currentScope = currentScope;
@@ -110,7 +116,7 @@ public sealed class ExportPathPolicy
 
     public async Task<Result<ApprovedDestination>> ResolveAsync(string? requested, string format, string title, Scope scope, int revision, string clientLabel, CancellationToken ct)
     {
-        if (!Extensions.TryGetValue(format, out var exts)) return Result<ApprovedDestination>.Fail("invalid_request", "format must be vsdx, svg, png or jpeg");
+        if (!extensions.TryGetValue(format, out var exts)) return Result<ApprovedDestination>.Fail("invalid_request", "format must be vsdx, svg, png or jpeg");
         if (requested is not null && string.IsNullOrWhiteSpace(requested)) return Result<ApprovedDestination>.Fail("path_not_permitted", "the path is empty");
         var roots = ApprovedRoots();
         string full;
@@ -160,6 +166,58 @@ public sealed class ExportPathPolicy
             consented = true;
         }
         return Result<ApprovedDestination>.Ok(new ApprovedDestination(full, exists, consented, scope.SessionId, revision));
+    }
+
+    /// <summary>
+    /// Where a client may read a file from (import_visio). The same approved folders and never-allowed paths as for export; a file elsewhere needs the
+    /// person's explicit yes. The file must already exist and carry the expected extension. Revalidate with <see cref="RevalidateRead"/> just before reading.
+    /// </summary>
+    public async Task<Result<ApprovedSource>> ResolveReadAsync(string requested, string extension, string clientLabel, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(requested)) return Result<ApprovedSource>.Fail("path_not_permitted", "the path is empty");
+        var safe = Canonical(System.IO.Path.IsPathRooted(requested) ? requested : System.IO.Path.Combine(exportRoot, requested));
+        if (!safe.IsOk) return Result<ApprovedSource>.Fail(safe.Error!);
+        var full = safe.Value;
+        if (!string.Equals(System.IO.Path.GetExtension(full), extension, StringComparison.OrdinalIgnoreCase)) return Result<ApprovedSource>.Fail("invalid_request", $"this must be a {extension} file");
+        var roots = ApprovedRoots();
+        var inside = roots.Any(r => Inside(full, r));
+        var links = NoLinkEscape(full, roots, inside);
+        if (!links.IsOk) return Result<ApprovedSource>.Fail(links.Error!);
+        if (System.IO.Directory.Exists(full)) return Result<ApprovedSource>.Fail("path_not_permitted", "that path is a folder");
+        if (!System.IO.File.Exists(full)) return Result<ApprovedSource>.Fail("not_found", "the file does not exist");
+        // a file that is itself a link may lead anywhere; inside an approved folder it must not leave it
+        if (inside && new System.IO.FileInfo(full) is { Attributes: var a } fi && (a & System.IO.FileAttributes.ReparsePoint) != 0
+            && (fi.ResolveLinkTarget(true)?.FullName is not { } t || !roots.Any(r => Inside(t, r))))
+            return Result<ApprovedSource>.Fail("path_not_permitted", "that file is a link that leads outside the approved folders");
+
+        var consented = false;
+        if (!inside)
+        {
+            using var limit = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            limit.CancelAfter(timeout);
+            bool yes;
+            try { yes = await consent.AskAsync(new ConsentRequest(clientLabel, full, "read a file outside the approved folders", $"The {clientLabel} asked to open this file as a reference."), limit.Token).ConfigureAwait(false); }
+            catch (OperationCanceledException) { yes = false; }
+            if (!yes)
+                return Result<ApprovedSource>.Fail("path_not_permitted", "files are read from the open document's folder or the application's export folder unless you approve a different place",
+                    details: new JsonObject { ["exportFolder"] = exportRoot, ["asked"] = true });
+            consented = true;
+        }
+        return Result<ApprovedSource>.Ok(new ApprovedSource(full, consented));
+    }
+
+    /// <summary>The same rules again immediately before the bytes are read: the folder or file can change after approval.</summary>
+    public Result<ApprovedSource> RevalidateRead(ApprovedSource approved)
+    {
+        var safe = Canonical(approved.Path);
+        if (!safe.IsOk) return Result<ApprovedSource>.Fail(safe.Error!);
+        var roots = ApprovedRoots();
+        var inside = roots.Any(r => Inside(safe.Value, r));
+        var links = NoLinkEscape(safe.Value, roots, inside);
+        if (!links.IsOk) return Result<ApprovedSource>.Fail(links.Error!);
+        if (!inside && !approved.Consented) return Result<ApprovedSource>.Fail("path_not_permitted", "that place is no longer an approved folder");
+        if (!System.IO.File.Exists(safe.Value)) return Result<ApprovedSource>.Fail("not_found", "the file no longer exists");
+        return Result<ApprovedSource>.Ok(approved);
     }
 
     /// <summary>Checks the destination again right before the write: the same rules, the same session, and no surprise file where there was none.</summary>

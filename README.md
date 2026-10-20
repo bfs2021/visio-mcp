@@ -113,3 +113,7 @@ an existing component to preview reflow after changing its text or width.
 MCP clients can discover schemas/examples with `list_layout_components` and get
 read-only create/reflow proposals with `get_layout_component`.
 See [R04 usage and verification](docs/m5/R04-layout-components.md).
+
+## Install
+
+Per-user install, update, uninstall and MCP registration are described in [docs/install.md](docs/install.md).
