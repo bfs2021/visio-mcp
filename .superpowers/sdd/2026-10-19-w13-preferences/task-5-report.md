@@ -25,3 +25,15 @@ The host initializes the timer from the persisted preferences snapshot. After a 
 - `tests/Diagram.Windows.Tests/PreferencesRecoveryTests.cs`, `BridgeTests.cs`: native save/restart/failure coverage.
 
 Self-review: existing constructor positions remain unchanged, so current call sites and millisecond test options compile. A timer tick already queued before an update may still finish, as required. The update completion represents a successful `ITimer.Change`, not merely queue insertion. Disposal and the update share the manager gate; callbacks cannot enqueue once shutdown begins. Persistence failure does not call the timer update. The native test verifies recovery data and timing through the real host/renderer, but it is automated evidence, not fresh manual acceptance. No full Windows suite, browser suite, main merge, or push was performed in this Task 5 handoff.
+
+## Review fix round 1 — controlled shutdown race
+
+Added `InFlightCheckpointAndQueuedUpdateSettleWhenDisposeBegins`: a `TaskCompletionSource` holds the real snapshot reply while a checkpoint is in flight; an interval update waits behind it; fake timer disposal is held after shutdown starts. The test advances the fake clock, verifies a new drain cannot enqueue, releases both gates, and confirms the queued update settles with `ObjectDisposedException`, disposal finishes, revision 1 remains durable, and later clock advances do not cause another snapshot or checkpoint. There are no sleeps.
+
+The current implementation passed this supplementary test without a runtime change. To prove sensitivity, a temporary mutation that suppressed `done.TrySetException` made the test fail after its bounded 5-second wait (`TimeoutException` instead of `ObjectDisposedException`). A second temporary mutation removed the `!stopping` enqueue guard; the test failed because a drain was accepted after shutdown began. Both mutations were restored, and `git diff` showed no production changes.
+
+Final checks after restoration:
+
+- `dotnet test tests/Diagram.Host.Tests --filter Recovery --no-restore`: 26 passed, 0 failed.
+- `dotnet test tests/Diagram.Host.Tests --no-restore`: 173 passed, 0 failed.
+- `git diff --check`: no whitespace errors. Existing test analyzer warnings appeared during the first targeted run; the final two runs reused build output and exited zero.

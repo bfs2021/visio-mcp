@@ -14,6 +14,7 @@ public partial class RecoveryTests
     {
         readonly List<ManualTimer> timers = [];
         TimeSpan now;
+        public TaskCompletionSource? PauseTimerDisposal;
         public override ITimer CreateTimer(TimerCallback callback, object? state, TimeSpan dueTime, TimeSpan period)
         {
             var timer = new ManualTimer(this, callback, state);
@@ -51,7 +52,11 @@ public partial class RecoveryTests
                 callback(state);
             }
             public void Dispose() { disposed = true; Due = null; }
-            public ValueTask DisposeAsync() { Dispose(); return ValueTask.CompletedTask; }
+            public async ValueTask DisposeAsync()
+            {
+                if (owner.PauseTimerDisposal is { } pause) await pause.Task;
+                Dispose();
+            }
         }
     }
 
@@ -59,9 +64,13 @@ public partial class RecoveryTests
     {
         public BridgeRouter Router = null!;
         public int Revision;
+        public int SnapshotRequests;
+        public TaskCompletionSource? PauseSnapshot;
+        public TaskCompletionSource SnapshotEntered = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public void Post(string json)
         {
             var req = JsonNode.Parse(json)!.AsObject();
+            Interlocked.Increment(ref SnapshotRequests);
             var doc = DocJson(Revision).Deserialize<DiagramDocument>(ContractJson.Options)!;
             var snapshot = new Snapshot { DocumentId = Doc, SessionId = Sess, Revision = Revision, Document = doc };
             var response = new JsonObject
@@ -69,7 +78,13 @@ public partial class RecoveryTests
                 ["protocolVersion"] = 1, ["kind"] = "response", ["requestId"] = req["requestId"]!.GetValue<string>(),
                 ["result"] = JsonSerializer.SerializeToNode(snapshot, ContractJson.Options),
             };
-            Task.Run(() => Router.OnMessage(TimerOrigin, response.ToJsonString(), true));
+            var reply = response.ToJsonString();
+            if (PauseSnapshot is { } pause)
+            {
+                SnapshotEntered.TrySetResult();
+                Task.Run(async () => { await pause.Task; Router.OnMessage(TimerOrigin, reply, true); });
+            }
+            else Task.Run(() => Router.OnMessage(TimerOrigin, reply, true));
         }
     }
 
@@ -187,6 +202,34 @@ public partial class RecoveryTests
         await e.Manager.UpdateCheckpointIntervalAsync(TimeSpan.FromSeconds(10));
         Assert.Equal(1, e.Manager.Status.LastDurableRevision);
         e.Clock.Advance(TimeSpan.FromSeconds(10)); await e.Manager.DrainAsync();
+        Assert.Equal(1, await e.CheckpointRevisionAsync());
+    }
+
+    [Fact]
+    public async Task InFlightCheckpointAndQueuedUpdateSettleWhenDisposeBegins()
+    {
+        await using var e = new TimerEnv(); await e.OpenAsync(); await e.CommitAsync(1);
+        e.Page.PauseSnapshot = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        var checkpoint = e.Manager.CheckpointNowAsync();
+        await e.Page.SnapshotEntered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        var update = e.Manager.UpdateCheckpointIntervalAsync(TimeSpan.FromSeconds(10));
+        e.Clock.PauseTimerDisposal = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        var disposing = e.Manager.DisposeAsync().AsTask();
+        Assert.False(update.IsCompleted);
+        e.Clock.Advance(TimeSpan.FromSeconds(60));
+        var rejectedNewWork = e.Manager.DrainAsync().IsCompleted; // shutdown has begun
+        e.Clock.PauseTimerDisposal.SetResult();
+        e.Page.PauseSnapshot.SetResult();
+        await checkpoint.WaitAsync(TimeSpan.FromSeconds(5));
+        await Assert.ThrowsAsync<ObjectDisposedException>(() => update.WaitAsync(TimeSpan.FromSeconds(5)));
+        await disposing.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.True(rejectedNewWork); // callbacks and callers cannot enqueue after stop
+        Assert.Equal(1, await e.CheckpointRevisionAsync());
+        Assert.Equal(1, e.Manager.StatusOfSession(Sess).LastDurableRevision);
+        var requestsAtStop = e.Page.SnapshotRequests;
+        e.Clock.Advance(TimeSpan.FromMinutes(2));
+        await e.Manager.DrainAsync();
+        Assert.Equal(requestsAtStop, e.Page.SnapshotRequests);
         Assert.Equal(1, await e.CheckpointRevisionAsync());
     }
 }
