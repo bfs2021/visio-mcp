@@ -7,6 +7,9 @@ import { validateDocument } from '../src/model/validate';
 import { compile } from '../src/script/compiler';
 import { restoreRecovery } from '../src/commands/recovery';
 import { CommandEngine } from '../src/commands/CommandEngine';
+import { planComponent } from '../src/layout/components';
+import { iconOperations } from '../src/icons/catalog';
+import { copyElements, pasteOperations } from '../src/commands/clipboard';
 import type { DiagramDocument, Operation } from '../src/contracts/generated';
 
 const captured = () => {
@@ -130,6 +133,35 @@ describe('captured document defaults', () => {
     expect(a.pages[0]!.elements[0]).toMatchObject({ text: { fontFamily: 'Aptos', fontSizePt: 19 } });
     expect(b.pages[0]!.elements[0]).toMatchObject({ text: { fontFamily: 'Aptos', fontSizePt: 19 } });
     expect(a.pages[1]!.grid).toEqual(b.pages[1]!.grid);
+  });
+  it('preserves component and icon authored formatting through clipboard and JSON import', async () => {
+    const { engine, run } = fixture(newDocument(id, undefined, captured()));
+    const pageId = engine.store.snapshot().document.pages[0]!.id;
+    const proposal = planComponent(engine.store.snapshot(), { measureWidth: (text, font) => text.length * font.sizePt / 2 }, {
+      pageId, templateId: 'repository-card', content: { title: 'Authored title', items: ['One item'] },
+    });
+    expect(proposal.ok).toBe(true);
+    if (!proposal.ok) return;
+    expect((await run(proposal.value.operations)).ok).toBe(true);
+    const icon = iconOperations({ pageId, iconId: 'lucide:git-branch', colour: '#16A34A', sizePt: 24 });
+    expect(icon.ok).toBe(true);
+    if (!icon.ok) return;
+    expect((await run(icon.value.operations)).ok).toBe(true);
+    const source = engine.store.snapshot();
+    const title = source.document.pages[0]!.elements.find(e => e.metadata['layout.role'] === 'title')!;
+    const iconShape = source.document.pages[0]!.elements.find(e => e.id === icon.value.elementId)!;
+    expect(title).toMatchObject({ kind: 'text', text: { fontFamily: 'Arial', fontSizePt: 15, colour: '#1e293b' } });
+    expect(iconShape).toMatchObject({ kind: 'shape', style: { stroke: { colour: '#16A34A' } } });
+    const clip = copyElements(source, [title.id, iconShape.id])!;
+    const copied = pasteOperations(clip, source.document.pages[0]!, 32, id);
+    expect((await run(copied.operations)).ok).toBe(true);
+    const imported = validateDocument(JSON.parse(JSON.stringify(engine.store.snapshot().document)));
+    expect(imported.ok).toBe(true);
+    if (!imported.ok) return;
+    const pasted = imported.value.pages[0]!.elements.filter(e => copied.newIds.includes(e.id));
+    expect(pasted.find(e => e.kind === 'text')).toMatchObject({ text: { fontFamily: 'Arial', fontSizePt: 15, colour: '#1e293b' } });
+    expect(pasted.find(e => e.kind === 'shape')).toMatchObject({ style: { stroke: { colour: '#16A34A' } } });
+    expect(imported.value.metadata['editor.defaults.v1']).toBe(source.document.metadata['editor.defaults.v1']);
   });
   it.each(['{', JSON.stringify({ grid: { spacingPt: 0, visible: true, snap: true }, font: { family: 'X', sizePt: 12 } }), 'é'.repeat(4097)])('falls back without changing malformed metadata', async raw => {
     const doc = newDocument(id);

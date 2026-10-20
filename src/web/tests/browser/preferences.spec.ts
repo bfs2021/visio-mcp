@@ -219,3 +219,72 @@ test('dark diagnostic, sidebar, recovery and tab notice text meets normal-text c
   });
   for (const cls of ['message warning', 'message error', 'tab-notice', 'tab-banner']) expect.soft(await contrast(page.locator(`[data-contrast="${cls}"]`)), cls).toBeGreaterThanOrEqual(4.5);
 });
+
+test('saved grid and font are captured by File New, Ctrl+N, and the plus tab', async ({ page }) => {
+  await openEditor(page);
+  const original = await snapshot(page);
+  await open(page);
+  await page.getByLabel('Display units').selectOption('pt');
+  await page.getByLabel('Grid spacing (pt)').fill('42');
+  await page.getByLabel('Show grid on new pages').uncheck();
+  await page.getByLabel('Snap to grid on new pages').uncheck();
+  await page.getByLabel('Default font', { exact: true }).fill('Aptos');
+  await page.getByLabel('Default font size (pt)').fill('19');
+  await page.getByRole('button', { name: 'Save preferences' }).click();
+  const verify = async () => {
+    const doc = (await snapshot(page)).document;
+    expect(doc.pages[0]!.grid).toEqual({ spacingPt: 42, visible: false, snap: false });
+    expect(JSON.parse(doc.metadata['editor.defaults.v1']!)).toEqual({
+      grid: { spacingPt: 42, visible: false, snap: false }, font: { family: 'Aptos', sizePt: 19 },
+    });
+    expect(doc.pages[0]!.elements).toEqual([]);
+  };
+  await page.getByTestId('menu-file').click();
+  await page.getByTestId('menu-new').click();
+  await page.getByLabel('Starting page').selectOption('custom');
+  await page.getByTestId('new-document').getByLabel('Width (pt)').fill('500');
+  await page.getByTestId('new-document').getByLabel('Height (pt)').fill('300');
+  await page.getByRole('button', { name: 'Create', exact: true }).click();
+  await verify();
+  expect((await snapshot(page)).document.pages[0]).toMatchObject({ widthPt: 500, heightPt: 300 });
+  await page.keyboard.press('Control+n');
+  await page.getByRole('button', { name: 'Create', exact: true }).click();
+  await verify();
+  await page.getByTestId('tab-new').click();
+  await verify();
+  await page.getByTestId('tab').first().click();
+  expect((await snapshot(page)).document).toEqual(original.document);
+});
+test('dark merged command, find, and recent chrome has readable text', async ({ page }) => {
+  await openEditor(page);
+  await open(page);
+  await page.getByLabel('Theme').selectOption('dark');
+  await page.getByRole('button', { name: 'Save preferences' }).click();
+  const ratio = async (selector: string) => page.locator(selector).first().evaluate(element => {
+    const luminance = (css: string) => {
+      const rgb = css.match(/[\d.]+/g)!.slice(0, 3).map(Number).map(c => c / 255).map(c => c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+      return rgb[0]! * .2126 + rgb[1]! * .7152 + rgb[2]! * .0722;
+    };
+    let parent: Element | null = element;
+    while (parent && getComputedStyle(parent).backgroundColor === 'rgba(0, 0, 0, 0)') parent = parent.parentElement;
+    const a = luminance(getComputedStyle(element).color), b = luminance(getComputedStyle(parent!).backgroundColor);
+    return (Math.max(a, b) + .05) / (Math.min(a, b) + .05);
+  });
+  await page.keyboard.press('Control+Shift+P');
+  await expect(page.getByTestId('help-palette')).toBeVisible();
+  expect.soft(await ratio('.palette li.active'), 'selected command').toBeGreaterThanOrEqual(4.5);
+  expect.soft(await ratio('.palette li.active .palette-group'), 'selected command group').toBeGreaterThanOrEqual(4.5);
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Control+f');
+  await expect(page.getByTestId('find-panel')).toBeVisible();
+  expect.soft(await ratio('.find-panel h2'), 'find heading').toBeGreaterThanOrEqual(4.5);
+  await page.getByRole('button', { name: 'Close find' }).click();
+  await page.getByTestId('menu-file').click();
+  await page.getByTestId('menu-recent').click();
+  await expect(page.getByTestId('recent-files')).toBeVisible();
+  await page.evaluate(() => {
+    const sample = document.createElement('div'); sample.className = 'recent-path'; sample.textContent = 'C:\\Work\\drawing.diagram.json';
+    document.querySelector('.recent-files')!.append(sample);
+  });
+  expect.soft(await ratio('.recent-files .recent-path'), 'recent path').toBeGreaterThanOrEqual(4.5);
+});
