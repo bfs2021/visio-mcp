@@ -117,6 +117,11 @@ export function validateDocument(value: unknown): Result<DiagramDocument> {
     if (pageIds.has(page.id)) return fail('invalid_request', `duplicate page id ${page.id}`);
     pageIds.add(page.id);
     { const bad = paintProblem(page.background, 'background'); if (bad) return fail('invalid_request', bad); }
+    const guideIds = new Set<string>();
+    for (const guide of page.guides) {
+      if (guideIds.has(guide.id)) return fail('invalid_request', `duplicate guide id ${guide.id}`);
+      guideIds.add(guide.id);
+    }
     const layerIds = new Set<string>();
     for (const l of page.layers) {
       if (layerIds.has(l.id)) return fail('invalid_request', `duplicate layer id ${l.id}`);
