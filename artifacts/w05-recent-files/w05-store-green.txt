@@ -1,0 +1,14 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Diagram.Core.Contracts -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Core.Contracts\bin\Debug\net10.0\Diagram.Core.Contracts.dll
+  Diagram.Host.Core -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Host.Core\bin\Debug\net10.0\Diagram.Host.Core.dll
+C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\RecentFilesTests.cs(34,71): warning xUnit2031: Do not use a Where clause to filter before calling Assert.Single. Use the overload of Assert.Single that accepts a filtering function. (https://xunit.net/xunit.analyzers/rules/xUnit2031) [C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\Diagram.Host.Tests.csproj]
+C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\MultiDocumentTests.cs(190,68): warning xUnit1031: Test methods should not use blocking task operations, as they can cause deadlocks. Use an async test method and await instead. (https://xunit.net/xunit.analyzers/rules/xUnit1031) [C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\Diagram.Host.Tests.csproj]
+C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\MultiDocumentTests.cs(192,74): warning xUnit1031: Test methods should not use blocking task operations, as they can cause deadlocks. Use an async test method and await instead. (https://xunit.net/xunit.analyzers/rules/xUnit1031) [C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\Diagram.Host.Tests.csproj]
+C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\MultiDocumentTests.cs(193,68): warning xUnit1031: Test methods should not use blocking task operations, as they can cause deadlocks. Use an async test method and await instead. (https://xunit.net/xunit.analyzers/rules/xUnit1031) [C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\Diagram.Host.Tests.csproj]
+C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\MultiDocumentTests.cs(200,74): warning xUnit1031: Test methods should not use blocking task operations, as they can cause deadlocks. Use an async test method and await instead. (https://xunit.net/xunit.analyzers/rules/xUnit1031) [C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\Diagram.Host.Tests.csproj]
+  Diagram.Host.Tests -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\bin\Debug\net10.0\Diagram.Host.Tests.dll
+Test run for C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Host.Tests\bin\Debug\net10.0\Diagram.Host.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:     7, Skipped:     0, Total:     7, Duration: 601 ms - Diagram.Host.Tests.dll (net10.0)

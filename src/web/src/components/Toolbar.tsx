@@ -30,6 +30,7 @@ export function Toolbar({ model, ws }: { model: EditorModel; ws: WorkspaceModel 
     { name: 'File', items: [
       { id: 'new', label: 'New…', shortcut: 'Ctrl+N', run: () => model.newDocument.begin() },
       { id: 'open', label: 'Open…', shortcut: 'Ctrl+O', run: () => void ws.openFile() },
+      { id: 'recent', label: 'Recent files…', run: () => ws.showRecent() },
       { id: 'save', label: 'Save', shortcut: 'Ctrl+S', run: () => void model.save(false) },
       { id: 'save-as', label: 'Save as…', shortcut: 'Ctrl+Shift+S', run: () => void model.save(true) },
       'sep',
