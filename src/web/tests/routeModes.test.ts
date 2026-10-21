@@ -1,0 +1,183 @@
+import { describe, expect, it } from 'vitest';
+import type { ConnectorElement, Element, Operation, TransactionResult } from '../src/contracts/generated';
+import { newDocument } from '../src/model/newDocument';
+import { planRoutes, routeDefects } from '../src/layout/routePlanner';
+import { canonicalSerialize } from '../src/model/canonical';
+import { createTestEngine } from './support/engine';
+
+const box = (x: number, y: number, width = 100, height = 60) => ({ x, y, width, height });
+
+async function setup(extra: object[] = []) {
+  const t = createTestEngine({ document: newDocument() });
+  const page = t.store.snapshot().document.pages[0]!.id;
+  const run = async (ops: object[]) => t.engine.execute(t.request(ops.map(o => ((o as { op: string }).op.startsWith('create') ? { pageId: page, ...o } : o) as Operation)), 'mcp');
+  const ok = async (ops: object[]): Promise<TransactionResult> => {
+    const r = await run(ops);
+    if (!r.ok) throw new Error(`${r.error.code}: ${r.error.message}`);
+    return r.value;
+  };
+  await ok([
+    { op: 'createShape', alias: 'a', bounds: box(0, 100) },
+    { op: 'createShape', alias: 'b', bounds: box(700, 100) },
+    { op: 'createShape', alias: 'c', bounds: box(0, 400) },
+    { op: 'createShape', alias: 'd', bounds: box(700, 400) },
+    { op: 'createShape', alias: 'far', bounds: box(1200, 900, 40, 40) },
+    { op: 'createConnector', alias: 'ab', from: { elementId: 'a', port: 'east', glue: 'static' }, to: { elementId: 'b', port: 'west', glue: 'static' }, route: 'orthogonal' },
+    { op: 'createConnector', alias: 'cd', from: { elementId: 'c', port: 'east', glue: 'static' }, to: { elementId: 'd', port: 'west', glue: 'static' }, route: 'orthogonal' },
+    { op: 'createConnector', alias: 'straight', from: { elementId: 'a', glue: 'dynamic' }, to: { elementId: 'c', glue: 'dynamic' } },
+    ...extra,
+  ]);
+  const doc = () => t.store.snapshot().document;
+  const el = (alias: string) => doc().pages[0]!.elements.find(e => e.alias === alias) as Element & Record<string, any>;
+  const conn = (alias: string) => el(alias) as unknown as ConnectorElement;
+  return { t, page, run, ok, doc, el, conn };
+}
+
+describe('stored routes (R20)', () => {
+  it('stores the route of automatic orthogonal connectors only', async () => {
+    const s = await setup();
+    expect(s.conn('ab').routing?.advisory?.length).toBeGreaterThanOrEqual(2);
+    expect(s.conn('cd').routing?.advisory).toBeDefined();
+    expect(s.conn('straight').routing).toBeUndefined();
+    expect(routeDefects(s.conn('ab').routing!.advisory!)).toEqual([]);
+  });
+
+  it('a 1 pt nudge of an unrelated shape changes no connector and reports no route change', async () => {
+    const s = await setup();
+    const result = await s.ok([{ op: 'move', target: 'far', delta: { xPt: 1, yPt: 0 } }]);
+    expect(result.changed).toEqual([s.el('far').id]);
+    expect(result.routeChanges ?? []).toEqual([]);
+  });
+
+  it('moving an end shape changes that connector, names it in changed and routeChanges, and undo restores the route exactly', async () => {
+    const s = await setup();
+    const before = canonicalSerialize(s.doc().pages);
+    const result = await s.ok([{ op: 'move', target: 'b', delta: { xPt: 0, yPt: 40 } }]);
+    const ab = s.conn('ab');
+    expect(result.changed).toContain(ab.id);
+    expect(result.routeChanges?.find(c => c.id === ab.id)?.provenance).toMatch(/elastic|rerouted|kept/);
+    expect(result.changed).not.toContain(s.conn('cd').id);
+    expect(ab.routing!.advisory![ab.routing!.advisory!.length - 1]!.y).toBe(170);
+    const undo = await s.t.engine.undo({ ...s.t.scope(), transactionId: '00000000-0000-4000-8000-0000000000aa', baseRevision: s.t.engine.revision });
+    expect(undo.ok).toBe(true);
+    expect(canonicalSerialize(s.doc().pages)).toBe(before);
+  });
+
+  it('planning a document again from its stored routes changes nothing', async () => {
+    const s = await setup();
+    const page = s.doc().pages[0]!;
+    const again = planRoutes({ elements: page.elements, layers: page.layers, pageArea: page.widthPt * page.heightPt });
+    expect(again.changes).toEqual([]);
+    expect([...again.routes.values()].every(r => r.provenance === 'kept')).toBe(true);
+    const renamed = await s.ok([{ op: 'set', target: 'ab', patch: { name: 'x' } }]);
+    expect(renamed.changed).toEqual([s.conn('ab').id]);
+    expect(renamed.routeChanges ?? []).toEqual([]);
+  });
+
+  it('copies and moves carry the stored route with them', async () => {
+    const s = await setup();
+    const was = s.conn('ab').routing!.advisory!;
+    await s.ok([{ op: 'duplicate', targets: ['a', 'b', 'ab'], offset: { xPt: 0, yPt: 300 } }]);
+    const copy = s.doc().pages[0]!.elements.filter(e => e.kind === 'connector' && e.alias !== 'ab' && e.routing?.advisory && e.route === 'orthogonal' && e.id !== s.conn('cd').id);
+    expect(copy.length).toBeGreaterThan(0);
+    const dup = copy.find(c => (c as ConnectorElement).routing!.advisory![0]!.y === was[0]!.y + 300) as ConnectorElement | undefined;
+    expect(dup).toBeDefined();
+    expect(routeDefects(dup!.routing!.advisory!)).toEqual([]);
+  });
+});
+
+describe('route modes (R20)', () => {
+  it('manual keeps the drawn route as waypoints and stores no route; automatic forgets both', async () => {
+    const s = await setup();
+    const drawn = s.conn('ab').routing!.advisory!;
+    await s.ok([{ op: 'set', target: 'ab', patch: { routing: { mode: 'manual' } } }]);
+    const manual = s.conn('ab');
+    expect(manual.waypoints.length).toBeGreaterThan(0);
+    expect(manual.routing).toBeUndefined();
+    const page = s.doc().pages[0]!;
+    const route = planRoutes({ elements: page.elements, layers: page.layers, pageArea: 1e6 }).routes.get(manual.id)!;
+    expect(route.provenance).toBe('authored');
+    expect(route.points).toEqual(drawn);
+    await s.ok([{ op: 'set', target: 'ab', patch: { routing: { mode: 'automatic' } } }]);
+    expect(s.conn('ab').waypoints).toEqual([]);
+    expect(s.conn('ab').routing?.advisory).toBeDefined();
+  });
+
+  it('frozen keeps the route as it is, follows a small end move, and never searches around a new obstacle', async () => {
+    const s = await setup();
+    await s.ok([{ op: 'set', target: 'ab', patch: { routing: { mode: 'frozen' } } }]);
+    const frozen = s.conn('ab');
+    expect(frozen.routing?.mode).toBe('frozen');
+    expect(frozen.waypoints).toEqual([]);
+    const stored = frozen.routing!.advisory!.map(p => ({ ...p }));
+    await s.ok([{ op: 'createShape', alias: 'wall', bounds: box(330, 90, 40, 80) }]);
+    expect(s.conn('ab').routing!.advisory).toEqual(stored); // the obstacle did not move the route
+    const result = await s.ok([{ op: 'move', target: 'b', delta: { xPt: 0, yPt: 20 } }]);
+    const now = s.conn('ab').routing!.advisory!;
+    expect(result.changed).toContain(s.conn('ab').id);
+    expect(now[now.length - 1]!.y).toBe(stored[stored.length - 1]!.y + 20);
+    expect(s.conn('ab').routing!.mode).toBe('frozen');
+    expect(s.conn('ab').waypoints).toEqual([]);
+  });
+
+  it('frozen that cannot follow an end safely keeps the stored route and flags it unresolved', async () => {
+    const s = await setup();
+    await s.ok([{ op: 'set', target: 'ab', patch: { routing: { mode: 'frozen' } } }]);
+    const stored = s.conn('ab').routing!.advisory!.map(p => ({ ...p }));
+    // b jumps to the other side of a, so the stored east-to-west route cannot follow
+    const result = await s.ok([{ op: 'move', target: 'b', delta: { xPt: -900, yPt: 0 } }]);
+    expect(s.conn('ab').routing!.advisory).toEqual(stored);
+    expect(result.routeChanges?.find(c => c.id === s.conn('ab').id)?.provenance).toBe('unresolved');
+  });
+
+  it('a frozen route refuses waypoint edits with a structured error and nothing changes', async () => {
+    const s = await setup();
+    await s.ok([{ op: 'set', target: 'ab', patch: { routing: { mode: 'frozen' } } }]);
+    const rev = s.t.engine.revision;
+    const r = await s.run([{ op: 'set', target: 'ab', patch: { waypoints: [{ x: 300, y: 130 }] } }]);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(JSON.stringify(r.error)).toMatch(/route_frozen|frozen/);
+    expect(s.t.engine.revision).toBe(rev);
+  });
+
+  it('guided is refused with a clear error and is never persisted', async () => {
+    const s = await setup();
+    const rev = s.t.engine.revision;
+    const r = await s.run([{ op: 'set', target: 'ab', patch: { routing: { mode: 'guided' } } }]);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(JSON.stringify(r.error)).toMatch(/guided/);
+    expect(s.t.engine.revision).toBe(rev);
+    expect(s.conn('ab').routing?.mode).toBeUndefined();
+  });
+
+  it('route modes are refused on connectors that are not orthogonal', async () => {
+    const s = await setup();
+    const r = await s.run([{ op: 'set', target: 'straight', patch: { routing: { mode: 'frozen' } } }]);
+    expect(r.ok).toBe(false);
+  });
+
+  it('reroute forgets the stored route, reports what changed, and is undoable', async () => {
+    const s = await setup([{ op: 'createShape', alias: 'wall', bounds: box(330, 90, 40, 80) }]);
+    const detour = s.conn('ab').routing!.advisory!;
+    expect(detour.length).toBeGreaterThan(2);
+    await s.ok([{ op: 'delete', target: 'wall' }]); // gain is under the straighten limit only if small; force the explicit path either way
+    const before = canonicalSerialize(s.doc().pages);
+    const result = await s.ok([{ op: 'reroute' }]);
+    expect(s.conn('ab').routing!.advisory!.length).toBe(2);
+    expect(result.changed).toContain(s.conn('ab').id);
+    expect(result.routeChanges?.some(c => c.id === s.conn('ab').id)).toBe(true);
+    const undo = await s.t.engine.undo({ ...s.t.scope(), transactionId: '00000000-0000-4000-8000-0000000000ab', baseRevision: s.t.engine.revision });
+    expect(undo.ok).toBe(true);
+    expect(canonicalSerialize(s.doc().pages)).toBe(before);
+  });
+
+  it('reroute named for a manual or frozen connector is refused; unnamed it skips them', async () => {
+    const s = await setup();
+    await s.ok([{ op: 'set', target: 'ab', patch: { routing: { mode: 'frozen' } } }]);
+    const named = await s.run([{ op: 'reroute', targets: ['ab'] }]);
+    expect(named.ok).toBe(false);
+    const all = await s.run([{ op: 'reroute' }]);
+    expect(all.ok).toBe(true);
+    expect(s.conn('ab').routing?.mode).toBe('frozen');
+  });
+});

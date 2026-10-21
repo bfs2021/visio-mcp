@@ -65,7 +65,9 @@ test('manual_edit_without_llm', async ({ page }) => {
   });
 
   await test.step('move a shape by dragging: one revision, the connector stays glued and untouched', async () => {
-    const connectorBefore = JSON.stringify((await elements(page)).find(e => e.kind === 'connector'));
+    // R20: the connector keeps its ends and style; only its stored route follows the moved shape
+    const withoutRoute = (e: unknown) => JSON.stringify({ ...(e as object), routing: undefined });
+    const connectorBefore = withoutRoute((await elements(page)).find(e => e.kind === 'connector'));
     await page.mouse.click((await centre(page, rect.id)).x, (await centre(page, rect.id)).y);
     expect(await selection(page)).toEqual([rect.id]);
     const r0 = await revision(page);
@@ -77,7 +79,7 @@ test('manual_edit_without_llm', async ({ page }) => {
     expect(moved.bounds.x).toBeGreaterThan(rect.bounds.x + 20);
     expect(moved.bounds.x / GRID).toBeCloseTo(Math.round(moved.bounds.x / GRID), 4); // committed coordinates are the snapped ones
     expect(moved.bounds.y / GRID).toBeCloseTo(Math.round(moved.bounds.y / GRID), 4);
-    expect(JSON.stringify((await elements(page)).find(e => e.kind === 'connector'))).toBe(connectorBefore);
+    expect(withoutRoute((await elements(page)).find(e => e.kind === 'connector'))).toBe(connectorBefore);
     rect = moved as ShapeElement;
   });
 
@@ -381,7 +383,8 @@ test('connector glue follows a moved shape and survives projection rebuilds', as
   await page.evaluate(id => (window as any).__editor.agentApply([{ op: 'move', target: id, delta: { xPt: 0, yPt: 150 } }]), b.id);
   await expect.poll(async () => (await centre(page, conn.id)).y).not.toBeCloseTo(before.y, 0);
   const after = (await elements(page)).find(e => e.id === conn.id) as ConnectorElement;
-  expect(JSON.stringify(after)).toBe(JSON.stringify(conn)); // canonical connector unchanged
+  const withoutRoute = (e: unknown) => JSON.stringify({ ...(e as object), routing: undefined });
+  expect(withoutRoute(after)).toBe(withoutRoute(conn)); // ends, glue and style unchanged; only the stored route follows the move
   expect(after.to.elementId).toBe(b.id);
   const exp = await page.evaluate(() => (window as any).__editor.exportSnapshot());
   expect(exp.projection.connectors[conn.id].routePoints.length).toBeGreaterThanOrEqual(2); // derived route, carried with the snapshot revision

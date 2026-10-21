@@ -421,6 +421,24 @@ describe('scripts and the engine', () => {
   });
 });
 
+describe('compiler: route modes (R20)', () => {
+  it('connect mode=, set mode= and reroute compile to the route operations', async () => {
+    const t = await scene();
+    await run(t, [
+      { op: 'createShape', id: id(970), alias: 'p', bounds: { x: 0, y: 200, width: 10, height: 10 } },
+      { op: 'createShape', id: id(971), alias: 'q', bounds: { x: 200, y: 200, width: 10, height: 10 } },
+      { op: 'createConnector', id: id(972), alias: 'wire', from: { elementId: id(970), glue: 'dynamic' }, to: { elementId: id(971), glue: 'dynamic' }, route: 'orthogonal' },
+    ]);
+    const made = ops(t, ['connect id=w2 from=p to=q route=orthogonal mode=frozen', 'set wire mode=manual', 'reroute', 'reroute wire'].join(String.fromCharCode(10)));
+    expect(made[0]).toMatchObject({ op: 'createConnector', route: 'orthogonal', routing: { mode: 'frozen' } });
+    expect(made[1]).toMatchObject({ op: 'set', patch: { routing: { mode: 'manual' } } });
+    expect(made[2]).toEqual({ op: 'reroute' });
+    expect(made[3]).toMatchObject({ op: 'reroute', targets: [id(972)] });
+    expect(bad(t, 'set wire mode=sideways')).toBeDefined();
+    expect(bad(t, 'set p mode=frozen')).toBeDefined();
+  });
+});
+
 describe('compiler: things riding on a connector', () => {
   it('on= at= offset= attach a shape or text box, labelAt= labelOffset= place a connector label', async () => {
     const t = await scene();

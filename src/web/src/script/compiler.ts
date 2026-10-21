@@ -426,10 +426,11 @@ class Compiler {
       case 'distribute': return this.cmdDistribute(cmd);
       case 'set-gap': return this.cmdSetGap(cmd);
       case 'z': return this.cmdZ(cmd);
+      case 'reroute': return this.cmdReroute(cmd);
       case 'layer': return this.cmdLayer(cmd);
       case 'asset': return this.cmdAsset(cmd);
       default:
-        return this.err(`unknown command "${cmd.verb}"`, cmd.verbToken, 'commands: page, add, connect, group, set, move, resize, rotate, delete, duplicate, align, distribute, set-gap, z, layer, asset');
+        return this.err(`unknown command "${cmd.verb}"`, cmd.verbToken, 'commands: page, add, connect, group, set, move, resize, rotate, delete, duplicate, align, distribute, set-gap, z, reroute, layer, asset');
     }
   }
 
@@ -593,7 +594,7 @@ class Compiler {
     this.begin(cmd);
     if (this.args.pos.length) this.err('connect takes only name=value fields', this.args.pos[0]!);
     this.finish(['id', 'uuid', 'from', 'to', 'fromAlias', 'fromPort', 'toAlias', 'toPort', 'fromX', 'fromY', 'toX', 'toY', 'route', 'name', 'layer',
-      'stroke', 'strokeWidth', 'dash', 'startArrow', 'endArrow', 'startArrowSize', 'endArrowSize', 'text', 'labelAt', 'labelOffset']);
+      'stroke', 'strokeWidth', 'dash', 'startArrow', 'endArrow', 'startArrowSize', 'endArrowSize', 'text', 'labelAt', 'labelOffset', 'mode']);
     const pageId = this.pageIdForCreate();
     const { id, alias } = this.identity();
     const op: Operation = { op: 'createConnector', id, pageId, from: this.endpoint('from'), to: this.endpoint('to') };
@@ -601,6 +602,7 @@ class Compiler {
     if (this.has('name')) op.name = this.str(this.raw('name')!);
     if (this.has('layer')) op.layerIds = [this.layerId(this.wordOrString(this.raw('layer')!), this.raw('layer')!.value)];
     if (this.has('route')) op.route = this.enumValue(this.raw('route')!, ['straight', 'orthogonal', 'curved'] as const);
+    if (this.has('mode')) op.routing = { mode: this.enumValue(this.raw('mode')!, ['automatic', 'manual', 'frozen', 'guided'] as const) };
     const style = this.lineStyle();
     if (Object.keys(style).length) op.style = style as never;
     if (this.has('text')) op.label = { value: this.str(this.raw('text')!) };
@@ -672,6 +674,10 @@ class Compiler {
     if (this.has('route')) {
       if (!isConnector) this.err('route= applies to connectors only', this.raw('route')!.keyToken);
       patch.route = this.enumValue(this.raw('route')!, ['straight', 'orthogonal', 'curved'] as const); handled.add('route');
+    }
+    if (this.has('mode')) {
+      if (!isConnector) this.err('mode= applies to connectors only', this.raw('mode')!.keyToken);
+      patch.routing = { mode: this.enumValue(this.raw('mode')!, ['automatic', 'manual', 'frozen', 'guided'] as const) }; handled.add('mode');
     }
     if (this.has('on') || this.has('at') || this.has('offset')) {
       if (known.kind !== 'shape' && known.kind !== 'text') this.err('on=, at= and offset= apply to shapes and text boxes', (this.raw('on') ?? this.raw('at') ?? this.raw('offset'))!.keyToken);
@@ -829,6 +835,13 @@ class Compiler {
     if (l.value < 0) this.err('the gap cannot be negative', l);
     const targets = this.ids(this.args.pos.slice(0, -1), 2, 'set-gap');
     this.emit({ op: 'setGap', targets, axis, gapPt: toPoints(l.value, l.unit as Unit) });
+  }
+
+  /** reroute [connector...]: the router plans these automatic connectors again from scratch; no targets means all of them on the page. */
+  private cmdReroute(cmd: Command): void {
+    this.begin(cmd);
+    this.finish([]);
+    this.emit(this.args.pos.length ? { op: 'reroute', targets: this.ids(this.args.pos, 1, 'reroute') } : { op: 'reroute' });
   }
 
   private cmdZ(cmd: Command): void {

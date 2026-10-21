@@ -43,6 +43,7 @@ const opByTag: Record<string, string> = { createShape: 'CreateShape', createText
   distribute: 'Distribute',
   setGap: 'SetGap',
   reorder: 'Reorder',
+  reroute: 'Reroute',
   addPage: 'AddPage',
   reorderPage: 'ReorderPage',
   duplicatePage: 'DuplicatePage',

@@ -248,6 +248,7 @@ public sealed record ConnectorElement : Element
     [JsonPropertyName("style")] public required LineStyle Style { get; init; }
     [JsonPropertyName("label")] public TextBlock? Label { get; init; }
     [JsonPropertyName("labelAnchor")] public PathAnchor? LabelAnchor { get; init; }
+    [JsonPropertyName("routing")] public JsonObject? Routing { get; init; }
 }
 
 public sealed record GroupElement : Element
@@ -386,6 +387,7 @@ public sealed record ElementPatch
     [JsonPropertyName("ports")] public IReadOnlyList<Port>? Ports { get; init; }
     [JsonPropertyName("attachment")] public JsonObject? Attachment { get; init; }
     [JsonPropertyName("labelAnchor")] public JsonObject? LabelAnchor { get; init; }
+    [JsonPropertyName("routing")] public JsonObject? Routing { get; init; }
 }
 
 public sealed record CreateShapeOp : Operation
@@ -446,6 +448,7 @@ public sealed record CreateConnectorOp : Operation
     [JsonPropertyName("style")] public StylePatch? Style { get; init; }
     [JsonPropertyName("label")] public TextBlockPatch? Label { get; init; }
     [JsonPropertyName("labelAnchor")] public LabelAnchorInput? LabelAnchor { get; init; }
+    [JsonPropertyName("routing")] public JsonObject? Routing { get; init; }
 }
 
 public sealed record AttachmentInput
@@ -549,6 +552,7 @@ public sealed record SetPageOp : Operation
 [JsonDerivedType(typeof(DistributeOp), "distribute")]
 [JsonDerivedType(typeof(SetGapOp), "setGap")]
 [JsonDerivedType(typeof(ReorderOp), "reorder")]
+[JsonDerivedType(typeof(RerouteOp), "reroute")]
 [JsonDerivedType(typeof(AddPageOp), "addPage")]
 [JsonDerivedType(typeof(ReorderPageOp), "reorderPage")]
 [JsonDerivedType(typeof(DuplicatePageOp), "duplicatePage")]
@@ -704,6 +708,11 @@ public sealed record ReplaceAssetOp : Operation
     [JsonPropertyName("targets")] public IReadOnlyList<string>? Targets { get; init; }
 }
 
+public sealed record RerouteOp : Operation
+{
+    [JsonPropertyName("targets")] public IReadOnlyList<string>? Targets { get; init; }
+}
+
 public sealed record AppError
 {
     [JsonPropertyName("code")] public required string Code { get; init; }
@@ -791,6 +800,14 @@ public sealed record TransactionResult
     [JsonPropertyName("visuallyAffectedIds")] public required IReadOnlyList<string> VisuallyAffectedIds { get; init; }
     [JsonPropertyName("warnings")] public required IReadOnlyList<Diagnostic> Warnings { get; init; }
     [JsonPropertyName("projectionStatus")] public required string ProjectionStatus { get; init; }
+    [JsonPropertyName("routeChanges")] public IReadOnlyList<RouteChange>? RouteChanges { get; init; }
+}
+
+public sealed record RouteChange
+{
+    [JsonPropertyName("id")] public required string Id { get; init; }
+    [JsonPropertyName("provenance")] public required string Provenance { get; init; }
+    [JsonPropertyName("reason")] public string? Reason { get; init; }
 }
 
 public sealed record Snapshot

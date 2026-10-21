@@ -410,6 +410,24 @@
               "maximum": 2000
             }
           }
+        },
+        "routing": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode"
+          ],
+          "description": "Route mode of an orthogonal connector. automatic: the router chooses and remembers the route (also clears waypoints). manual: keep the route as drawn now as waypoints. frozen: keep the route as drawn now and never replace it. guided is reserved (R21) and refused.",
+          "properties": {
+            "mode": {
+              "enum": [
+                "automatic",
+                "manual",
+                "frozen",
+                "guided"
+              ]
+            }
+          }
         }
       }
     },
@@ -645,6 +663,24 @@
         },
         "labelAnchor": {
           "$ref": "#/$defs/LabelAnchorInput"
+        },
+        "routing": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode"
+          ],
+          "description": "Route mode of an orthogonal connector. automatic: the router chooses and remembers the route (also clears waypoints). manual: keep the route as drawn now as waypoints. frozen: keep the route as drawn now and never replace it. guided is reserved (R21) and refused.",
+          "properties": {
+            "mode": {
+              "enum": [
+                "automatic",
+                "manual",
+                "frozen",
+                "guided"
+              ]
+            }
+          }
         }
       }
     },
@@ -985,6 +1021,9 @@
         },
         {
           "$ref": "#/$defs/Reorder"
+        },
+        {
+          "$ref": "#/$defs/Reroute"
         },
         {
           "$ref": "#/$defs/AddPage"
@@ -1586,6 +1625,28 @@
           "maxItems": 1000,
           "uniqueItems": true,
           "description": "Explicit targets in input order. Input order breaks ties in arrangement."
+        }
+      }
+    },
+    "Reroute": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op"
+      ],
+      "properties": {
+        "op": {
+          "const": "reroute"
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Target"
+          },
+          "minItems": 1,
+          "maxItems": 1000,
+          "uniqueItems": true,
+          "description": "Automatic orthogonal connectors to route again from scratch, forgetting their stored route. Absent: every automatic orthogonal connector on the page. Manual and frozen connectors are refused when named, skipped otherwise."
         }
       }
     }
