@@ -17,15 +17,15 @@ export interface Segment { a: V; b: V }
 export interface AvoidOptions { clearance?: number; spacing?: number; stub?: number; budget?: number }
 export interface AvoidResult { route: V[]; blocked: boolean; rerouted: boolean }
 
-const CLEARANCE = 8;
-const SPACING = 6;
-const STUB = 12;
-const BUDGET = 80_000;
+export const CLEARANCE = 8;
+export const SPACING = 6;
+export const STUB = 12;
+export const BUDGET = 80_000;
 const TURN = 24;
 const SHARED = 1; // extra cost per point of overlap with an earlier route
 const EPS = 1e-6;
 
-const inflate = (r: Rect, d: number): Rect => ({ x: r.x - d, y: r.y - d, width: r.width + 2 * d, height: r.height + 2 * d });
+export const inflate = (r: Rect, d: number): Rect => ({ x: r.x - d, y: r.y - d, width: r.width + 2 * d, height: r.height + 2 * d });
 
 /** Whether an axis-aligned segment passes through the open interior of a rectangle. */
 function crosses(a: V, b: V, r: Rect): boolean {
@@ -53,7 +53,7 @@ function sharedLength(a: V, b: V, occupied: readonly Segment[]): number {
 /** The segments of a polyline, for recording as occupied once a connector is routed. */
 export const segmentsOf = (route: readonly V[]): Segment[] => route.slice(1).map((p, i) => ({ a: route[i]!, b: p }));
 
-function isClear(route: readonly V[], others: readonly Rect[], ends: readonly Rect[], pad: number): boolean {
+export function isClear(route: readonly V[], others: readonly Rect[], ends: readonly Rect[], pad: number): boolean {
   const inflatedOthers = others.map(r => inflate(r, pad)), inflatedEnds = ends.map(r => inflate(r, pad));
   for (let i = 1; i < route.length; i++) {
     const a = route[i - 1]!, b = route[i]!;
@@ -62,6 +62,17 @@ function isClear(route: readonly V[], others: readonly Rect[], ends: readonly Re
     if (i > 1 && i < route.length - 1 && inflatedEnds.some(r => crosses(a, b, r))) return false;
   }
   return true;
+}
+
+/** Indices of the segments of `route` that pass through an obstacle inflated by `pad`; the first and last may touch their own shapes. */
+export function blockedSegments(route: readonly V[], others: readonly Rect[], ends: readonly Rect[], pad: number): number[] {
+  const inflatedOthers = others.map(r => inflate(r, pad)), inflatedEnds = ends.map(r => inflate(r, pad));
+  const out: number[] = [];
+  for (let i = 1; i < route.length; i++) {
+    const a = route[i - 1]!, b = route[i]!;
+    if (inflatedOthers.some(r => crosses(a, b, r)) || (i > 1 && i < route.length - 1 && inflatedEnds.some(r => crosses(a, b, r)))) out.push(i - 1);
+  }
+  return out;
 }
 
 const DIRS: V[] = [{ x: 1, y: 0 }, { x: 0, y: 1 }, { x: -1, y: 0 }, { x: 0, y: -1 }];
@@ -93,7 +104,7 @@ class Heap {
 }
 
 /** Searches the grid of obstacle-edge lines for the cheapest orthogonal path from `start` (leaving along `startDir`) to `goal`. */
-function search(start: V, startDir: V, goal: V, goalDir: V, blockers: readonly Rect[], occupied: readonly Segment[], spacing: number, budget: number): V[] | undefined {
+export function search(start: V, startDir: V, goal: V, goalDir: V, blockers: readonly Rect[], occupied: readonly Segment[], spacing: number, budget: number): V[] | undefined {
   const xs = new Set<number>([start.x, goal.x]), ys = new Set<number>([start.y, goal.y]);
   for (const r of blockers) {
     for (const x of [r.x, r.x + r.width]) { xs.add(x); xs.add(x < r.x + r.width / 2 ? x - spacing : x + spacing); }

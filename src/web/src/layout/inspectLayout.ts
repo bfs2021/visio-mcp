@@ -216,6 +216,8 @@ function connectorChecks(
     ? ctx.projection.connectors[el.id]!.routePoints
     : [el.from.glue === 'none' ? el.from.point : centre(el.from.elementId), ...el.waypoints, el.to.glue === 'none' ? el.to.point : centre(el.to.elementId)].filter((p): p is Point => !!p);
   if (route.length < 2) return;
+  const proj = ctx.projection?.connectors[el.id];
+  if (proj?.routeProvenance === 'unresolved') add('UNRESOLVED_ROUTE', 'warning', [el.id], box, 'No clear route was found for this connector; the route shown may cross shapes or run along other connectors.', { provenance: proj.routeProvenance, ...(proj.routeReason ? { reason: proj.routeReason } : {}) });
   const ancestorsOfEnds = new Set<string>();
   for (const id of [el.from.elementId, el.to.elementId]) for (let p = id ? parents.get(id) : undefined; p; p = parents.get(p)) ancestorsOfEnds.add(p);
   const crossed: string[] = [];

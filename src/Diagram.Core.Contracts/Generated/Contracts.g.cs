@@ -806,6 +806,8 @@ public sealed record ConnectorProjection
 {
     [JsonPropertyName("routePoints")] public required IReadOnlyList<Point> RoutePoints { get; init; }
     [JsonPropertyName("visualBounds")] public required Bounds VisualBounds { get; init; }
+    [JsonPropertyName("routeProvenance")] public string? RouteProvenance { get; init; }
+    [JsonPropertyName("routeReason")] public string? RouteReason { get; init; }
 }
 
 public sealed record Projection

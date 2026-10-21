@@ -312,7 +312,7 @@ test('an automatic orthogonal route goes around a shape in its way, through a co
     { op: 'createShape', id: U(42), bounds: box(500, 120), style: { fill: BLUE, stroke: { kind: 'none' } } },
     { op: 'createShape', id: U(43), bounds: wall, style: { fill: RED, stroke: { kind: 'none' } } },
     { op: 'createConnector', id: U(44), from: { elementId: U(41), port: 'east', glue: 'static' }, to: { elementId: U(42), port: 'west', glue: 'static' }, route: 'orthogonal' },
-    { op: 'createConnector', id: U(45), from: { elementId: U(41), port: 'east', glue: 'static' }, to: { elementId: U(42), port: 'west', glue: 'static' }, route: 'orthogonal', waypoints: [{ x: 220, y: 150 }, { x: 220, y: 150 }] },
+    { op: 'createConnector', id: U(45), from: { elementId: U(41), port: 'north', glue: 'static' }, to: { elementId: U(42), port: 'north', glue: 'static' }, route: 'orthogonal', waypoints: [{ x: 350, y: 60 }] },
   ]);
   const routes = (await call(page, 'doc.exportSnapshot', {})).result.projection.connectors;
   const hitsWall = (pts: Array<{ x: number; y: number }>) => pts.slice(1).some((p, i) => {
@@ -327,6 +327,26 @@ test('an automatic orthogonal route goes around a shape in its way, through a co
   await apply(page, [{ op: 'move', target: U(43), delta: { xPt: 0, yPt: 200 } }]);
   const clear = ((await call(page, 'doc.exportSnapshot', {})).result.projection.connectors[U(44)].routePoints) as Array<{ x: number; y: number }>;
   expect(clear).toHaveLength(2);
+});
+
+test('R19: nudging an unrelated shape leaves every connector route exactly as it was', async ({ page }) => {
+  await openEditor(page);
+  await apply(page, [
+    { op: 'createShape', id: U(60), bounds: box(100, 120), style: { fill: RED, stroke: { kind: 'none' } } },
+    { op: 'createShape', id: U(61), bounds: box(500, 120), style: { fill: BLUE, stroke: { kind: 'none' } } },
+    { op: 'createShape', id: U(62), bounds: box(280, 90, 60, 110), style: { fill: RED, stroke: { kind: 'none' } } },
+    { op: 'createShape', id: U(63), bounds: box(100, 420), style: { fill: RED, stroke: { kind: 'none' } } },
+    { op: 'createShape', id: U(64), bounds: box(500, 420), style: { fill: BLUE, stroke: { kind: 'none' } } },
+    { op: 'createShape', id: U(65), bounds: box(900, 700), style: { fill: RED, stroke: { kind: 'none' } } },
+    { op: 'createConnector', id: U(66), from: { elementId: U(60), port: 'east', glue: 'static' }, to: { elementId: U(61), port: 'west', glue: 'static' }, route: 'orthogonal' },
+    { op: 'createConnector', id: U(67), from: { elementId: U(63), port: 'east', glue: 'static' }, to: { elementId: U(64), port: 'west', glue: 'static' }, route: 'orthogonal' },
+  ]);
+  const routes = async () => (await call(page, 'doc.exportSnapshot', {})).result.projection.connectors;
+  const before = await routes();
+  for (const dx of [1, 1, 1]) await apply(page, [{ op: 'move', target: U(65), delta: { xPt: dx, yPt: 0 } }]);
+  const after = await routes();
+  expect(after[U(66)].routePoints).toEqual(before[U(66)].routePoints);
+  expect(after[U(67)].routePoints).toEqual(before[U(67)].routePoints);
 });
 
 test('automatic routing stays quick and deterministic on a dense page', async ({ page }) => {

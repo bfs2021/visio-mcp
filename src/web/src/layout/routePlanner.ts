@@ -1,0 +1,187 @@
+import type { Element, Layer } from '../contracts/generated';
+import { centreOfTerminal, endFor, routeOrthogonal, type End, type Terminal, type V } from './orthogonalRoute';
+import { avoidObstacles, blockedSegments, CLEARANCE, BUDGET, SPACING, STUB, inflate, isClear, search, segmentsOf, type Rect, type Segment } from './obstacleRoute';
+import { selectObstacles, visualRect } from './obstacles';
+
+/**
+ * The route planner (R19). Pure: the same elements, layers and previous routes always give the same routes, whichever surface asks
+ * (live canvas, hidden projection, layout check, export, MCP).
+ *
+ * An edit must not re-route what it does not touch. For each automatic orthogonal connector, in connector id order (never z-order):
+ *   1. keep  - the previous route, if its ends have not moved and it is still clear of the obstacles;
+ *   2. elastic - the previous route with only its first and last runs moved to follow a moved end;
+ *   3. repaired - a detour spliced in around the new obstacle, between the vertices either side of the blocked run;
+ *   4. rerouted - the full search (R08b);
+ *   5. unresolved - nothing clear was found: the best available route is returned and flagged, never reported as success.
+ * Connectors with author waypoints are `authored`: their route is computed from the waypoints and never searched.
+ */
+type Connector = Extract<Element, { kind: 'connector' }>;
+export type RouteProvenance = 'authored' | 'kept' | 'elastic' | 'repaired' | 'rerouted' | 'unresolved';
+export interface PinnedEnd { x: number; y: number; perimeter: boolean }
+export interface PlannedRoute {
+  /** The whole route including both anchors. */
+  points: V[];
+  provenance: RouteProvenance;
+  /** Why the route is not simply the previous one; absent for `kept` and `authored`. */
+  reason?: string;
+  fixed: { from?: PinnedEnd; to?: PinnedEnd };
+  /** The ends the route was planned for, used to see whether an end has moved. */
+  ends: { a: { anchor: V; dir: V }; b: { anchor: V; dir: V } };
+}
+export interface PlanInput {
+  elements: readonly Element[];
+  layers: readonly Layer[];
+  pageArea: number;
+  /** Routes planned earlier for this document; absent on a first load. */
+  previous?: ReadonlyMap<string, PlannedRoute>;
+}
+export interface RouteChange { id: string; provenance: RouteProvenance; reason?: string }
+export interface PlanResult {
+  routes: Map<string, PlannedRoute>;
+  /** Connectors whose route differs from `previous` (or that had none), with why. */
+  changes: RouteChange[];
+}
+
+const EPS = 1e-6;
+const SIDE = new Set(['0.5,0', '0.5,1', '0,0.5', '1,0.5']);
+const same = (p: V, q: V): boolean => Math.abs(p.x - q.x) < EPS && Math.abs(p.y - q.y) < EPS;
+const horizontalSeg = (p: V, q: V): boolean => Math.abs(p.y - q.y) < EPS;
+const dot = (p: V, q: V): number => p.x * q.x + p.y * q.y;
+const dirOf = (p: V, q: V): V => ({ x: Math.sign(q.x - p.x), y: Math.sign(q.y - p.y) });
+
+function tidy(points: V[]): V[] {
+  const out: V[] = [];
+  for (const p of points) if (!out.length || !same(out[out.length - 1]!, p)) out.push(p);
+  for (let i = out.length - 2; i > 0; i--) {
+    const a = out[i - 1]!, b = out[i]!, c = out[i + 1]!;
+    if ((Math.abs(a.x - b.x) < EPS && Math.abs(b.x - c.x) < EPS) || (Math.abs(a.y - b.y) < EPS && Math.abs(b.y - c.y) < EPS)) out.splice(i, 1);
+  }
+  return out;
+}
+
+/** What is wrong with a route as a committed orthogonal path; empty when it is exact. */
+export function routeDefects(points: readonly V[]): string[] {
+  const out: string[] = [];
+  for (let i = 1; i < points.length; i++) {
+    const p = points[i - 1]!, q = points[i]!;
+    if (same(p, q)) out.push(`zero-length segment ${i - 1}`);
+    else if (Math.abs(p.x - q.x) > EPS && Math.abs(p.y - q.y) > EPS) out.push(`diagonal segment ${i - 1}`);
+    else if (i > 1) {
+      const o = points[i - 2]!;
+      if ((Math.abs(o.x - p.x) < EPS && Math.abs(p.x - q.x) < EPS) || (Math.abs(o.y - p.y) < EPS && Math.abs(p.y - q.y) < EPS)) out.push(`redundant vertex ${i - 1}`);
+    }
+  }
+  return out;
+}
+
+/** The previous route with its first and last runs moved to the new anchors; interior tracks stay. Undefined when it cannot be adapted. */
+function elastic(prev: readonly V[], a: End, b: End): V[] | undefined {
+  const n = prev.length;
+  if (n < 3) return undefined;
+  const r = prev.map(p => ({ ...p }));
+  r[0] = { ...a.anchor }; r[n - 1] = { ...b.anchor };
+  if (horizontalSeg(prev[0]!, prev[1]!)) r[1]!.y = a.anchor.y; else r[1]!.x = a.anchor.x;
+  if (horizontalSeg(prev[n - 2]!, prev[n - 1]!)) r[n - 2]!.y = b.anchor.y; else r[n - 2]!.x = b.anchor.x;
+  if (dot(dirOf(r[0]!, r[1]!), a.dir) <= 0 || dot(dirOf(r[n - 1]!, r[n - 2]!), b.dir) <= 0) return undefined;
+  const out = tidy(r);
+  return routeDefects(out).length ? undefined : out;
+}
+
+interface Work {
+  el: Connector;
+  a: End; b: End;
+  base: V[];
+  endRects: Rect[];
+  others: Rect[];
+}
+
+const lengthOf = (r: readonly V[]): number => r.slice(1).reduce((n, p, i) => n + Math.abs(p.x - r[i]!.x) + Math.abs(p.y - r[i]!.y), 0);
+/** Hysteresis has a limit: a previous route is dropped only when the clear default route is shorter by more than this (two turns' worth). */
+const STRAIGHTEN_GAIN = 48;
+const detourPays = (candidate: readonly V[], w: Work): boolean =>
+  lengthOf(candidate) - lengthOf(w.base) > STRAIGHTEN_GAIN && isClear(w.base, w.others, w.endRects, 2);
+
+const pin = (e: End): PinnedEnd | undefined => (e.fraction ? { x: e.fraction.x, y: e.fraction.y, perimeter: SIDE.has(`${e.fraction.x},${e.fraction.y}`) } : undefined);
+
+/** Detours around the blocked run only, keeping the vertices either side; undefined if that is not possible. */
+function repair(route: readonly V[], w: Work, occupied: readonly Segment[]): V[] | undefined {
+  const bad = blockedSegments(route, w.others, w.endRects, 2);
+  if (!bad.length) return undefined;
+  const n = route.length;
+  const lo = bad[0]!, hi = bad[bad.length - 1]! + 1;
+  const blockers = [...w.others, ...w.endRects].map(r => inflate(r, CLEARANCE));
+  const inside = (p: V) => blockers.some(r => p.x > r.x + EPS && p.x < r.x + r.width - EPS && p.y > r.y + EPS && p.y < r.y + r.height - EPS);
+  // an end run is searched from just outside its shape, as the full search does; the vertices either side of the rest stay
+  const stubOf = (e: End): V => ({ x: e.anchor.x + e.dir.x * STUB, y: e.anchor.y + e.dir.y * STUB });
+  const start = lo === 0 ? stubOf(w.a) : route[lo]!, into = lo === 0 ? w.a.dir : dirOf(route[lo - 1]!, route[lo]!);
+  const goal = hi === n - 1 ? stubOf(w.b) : route[hi]!, goalDir = hi === n - 1 ? w.b.dir : (() => { const o = dirOf(route[hi]!, route[hi + 1]!); return { x: -o.x, y: -o.y }; })();
+  if (inside(start) || inside(goal)) return undefined;
+  const path = search(start, into, goal, goalDir, blockers, occupied, SPACING, BUDGET);
+  if (!path) return undefined;
+  const next = tidy([...(lo === 0 ? [route[0]!] : route.slice(0, lo)), ...path, ...(hi === n - 1 ? [route[n - 1]!] : route.slice(hi + 1))]);
+  return routeDefects(next).length || !isClear(next, w.others, w.endRects, 2) ? undefined : next;
+}
+
+export function planRoutes(input: PlanInput): PlanResult {
+  const byId = new Map(input.elements.map(e => [e.id, e]));
+  const terminal = (ep: Connector['from']): Terminal | undefined => {
+    const t = ep.glue !== 'none' && ep.elementId ? byId.get(ep.elementId) : undefined;
+    if (!t || t.kind === 'connector' || t.kind === 'group') return undefined;
+    return { box: t.bounds, rotationDeg: t.rotationDeg, ports: t.kind === 'shape' ? t.ports : undefined };
+  };
+  const connectors = input.elements.filter((e): e is Connector => e.kind === 'connector' && e.route === 'orthogonal').sort((x, y) => (x.id < y.id ? -1 : x.id > y.id ? 1 : 0));
+
+  const work: Work[] = connectors.map(el => {
+    const ta = terminal(el.from), tb = terminal(el.to);
+    const pointOf = (t: Terminal | undefined, ep: Connector['from']) => (t ? centreOfTerminal(t) : ep.point ?? { x: 0, y: 0 });
+    const wp = el.waypoints.map(p => ({ x: p.x, y: p.y }));
+    const a = endFor(el.from, ta, wp[0] ?? pointOf(tb, el.to));
+    const b = endFor(el.to, tb, wp[wp.length - 1] ?? pointOf(ta, el.from));
+    const endIds = new Set([el.from.elementId, el.to.elementId].filter((id): id is string => !!id));
+    const endRects = [ta, tb].filter((t): t is Terminal => !!t).map(t => visualRect({ bounds: t.box, rotationDeg: t.rotationDeg }));
+    const free = [el.from, el.to].filter(ep => ep.glue === 'none' && ep.point).map(ep => ep.point!);
+    const others = wp.length ? [] : selectObstacles(input.elements, input.layers, endIds, endRects, free, input.pageArea);
+    return { el, a, b, base: routeOrthogonal(a, b, wp), endRects, others };
+  });
+
+  const routes = new Map<string, PlannedRoute>();
+  const occupied: Segment[] = [];
+  const make = (w: Work, points: V[], provenance: RouteProvenance, reason?: string): PlannedRoute => ({
+    points, provenance, ...(reason ? { reason } : {}), fixed: { from: pin(w.a), to: pin(w.b) },
+    ends: { a: { anchor: w.a.anchor, dir: w.a.dir }, b: { anchor: w.b.anchor, dir: w.b.dir } },
+  });
+  const put = (w: Work, r: PlannedRoute) => { routes.set(w.el.id, r); occupied.push(...segmentsOf(r.points)); };
+
+  // Authored routes are fixed: they claim their tracks first.
+  for (const w of work) if (w.el.waypoints.length) put(w, make(w, w.base, 'authored'));
+
+  // Routes that survive (kept or elastic) claim theirs next, so only the connectors that need it are searched.
+  const pending: Array<{ w: Work; candidate?: V[]; why: string }> = [];
+  for (const w of work) {
+    if (w.el.waypoints.length) continue;
+    const prev = input.previous?.get(w.el.id);
+    if (!prev || prev.provenance === 'authored') { pending.push({ w, why: 'no previous route' }); continue; }
+    const unmoved = same(prev.ends.a.anchor, w.a.anchor) && same(prev.ends.b.anchor, w.b.anchor) && same(prev.ends.a.dir, w.a.dir) && same(prev.ends.b.dir, w.b.dir);
+    const candidate = unmoved ? [...prev.points] : elastic(prev.points, w.a, w.b);
+    if (!candidate) { pending.push({ w, why: 'an end moved and the old route cannot follow it' }); continue; }
+    if (isClear(candidate, w.others, w.endRects, 2) && !(detourPays(candidate, w))) put(w, make(w, candidate, unmoved ? 'kept' : 'elastic', unmoved ? undefined : 'an end moved'));
+    else if (!isClear(candidate, w.others, w.endRects, 2)) pending.push({ w, candidate, why: 'an obstacle is now in the way' });
+    else pending.push({ w, why: 'the obstacle that forced a detour is gone and the direct route is much shorter' });
+  }
+
+  for (const { w, candidate, why } of pending) {
+    const fixed = candidate && repair(candidate, w, occupied);
+    if (fixed) { put(w, make(w, fixed, 'repaired', why)); continue; }
+    const r = avoidObstacles(w.a, w.b, w.base, w.others, w.endRects, occupied);
+    if (r.blocked) put(w, make(w, candidate ?? r.route, 'unresolved', 'no clear route was found'));
+    else put(w, make(w, r.route, 'rerouted', why));
+  }
+
+  const changes: RouteChange[] = [];
+  for (const w of work) {
+    const now = routes.get(w.el.id)!, was = input.previous?.get(w.el.id);
+    const moved = !was || was.points.length !== now.points.length || now.points.some((p, i) => !same(p, was.points[i]!));
+    if (moved || now.provenance === 'unresolved') changes.push({ id: w.el.id, provenance: now.provenance, ...(now.reason ? { reason: now.reason } : {}) });
+  }
+  return { routes, changes };
+}

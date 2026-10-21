@@ -1,0 +1,174 @@
+import { describe, expect, it } from 'vitest';
+import type { Element } from '../src/contracts/generated';
+import { planRoutes, routeDefects, type PlanResult } from '../src/layout/routePlanner';
+import { isClear } from '../src/layout/obstacleRoute';
+import { selectObstacles, visualRect } from '../src/layout/obstacles';
+
+const solid = { kind: 'solid', colour: '#fff', opacity: 1 } as const;
+const shape = (id: string, x: number, y: number, w = 100, h = 60): Element => ({
+  id, kind: 'shape', layerIds: [], zIndex: 1, locked: false, hidden: false, bounds: { x, y, width: w, height: h }, rotationDeg: 0, metadata: {}, geometry: { preset: 'rectangle' },
+  style: { fill: solid, stroke: solid, strokeWidthPt: 1, dash: 'solid', lineCap: 'butt', lineJoin: 'miter' },
+}) as Element;
+const conn = (id: string, from: string, to: string, extra: object = {}, fromPort?: string, toPort?: string): Element => ({
+  id, kind: 'connector', layerIds: [], zIndex: 2, locked: false, hidden: false, bounds: { x: 0, y: 0, width: 0, height: 0 }, rotationDeg: 0, metadata: {},
+  from: fromPort ? { elementId: from, glue: 'static', port: fromPort } : { elementId: from, glue: 'dynamic' },
+  to: toPort ? { elementId: to, glue: 'static', port: toPort } : { elementId: to, glue: 'dynamic' },
+  route: 'orthogonal', waypoints: [], style: { stroke: solid, strokeWidthPt: 1, dash: 'solid', lineCap: 'butt', lineJoin: 'miter' }, ...extra,
+}) as unknown as Element;
+const plan = (elements: Element[], previous?: PlanResult['routes']): PlanResult => planRoutes({ elements, layers: [], pageArea: 1_000_000, previous });
+const moveBy = (els: Element[], id: string, dx: number, dy: number): Element[] => els.map(e => (e.id === id && e.kind !== 'connector' && e.kind !== 'group' ? { ...e, bounds: { ...e.bounds, x: e.bounds.x + dx, y: e.bounds.y + dy } } : e));
+const pts = (r: PlanResult, id: string) => r.routes.get(id)!.points;
+
+describe('route planner', () => {
+  const base = [shape('a', 0, 100), shape('b', 400, 100), shape('c', 0, 400), shape('d', 400, 400), conn('ab', 'a', 'b', {}, 'east', 'west'), conn('cd', 'c', 'd', {}, 'east', 'west')];
+
+  it('plans an exact orthogonal route and says where it came from', () => {
+    const r = plan(base);
+    for (const id of ['ab', 'cd']) {
+      expect(routeDefects(pts(r, id))).toEqual([]);
+      expect(r.routes.get(id)!.provenance).toBe('rerouted');
+    }
+    expect(r.changes.map(c => c.id)).toEqual(['ab', 'cd']);
+  });
+
+  it('is the same whatever order the elements are listed in (z-order does not decide priority)', () => {
+    const a = plan(base), b = plan([...base].reverse());
+    for (const id of ['ab', 'cd']) expect(pts(b, id)).toEqual(pts(a, id));
+  });
+
+  it('keeps every route and reports no change when an unrelated shape is nudged by 1 pt', () => {
+    const els = [...base, shape('far', 800, 800)];
+    const first = plan(els);
+    const next = plan(moveBy(els, 'far', 1, 0), first.routes);
+    expect(next.changes).toEqual([]);
+    for (const id of ['ab', 'cd']) { expect(pts(next, id)).toEqual(pts(first, id)); expect(next.routes.get(id)!.provenance).toBe('kept'); }
+  });
+
+  it('keeps the interior track when an end shape moves a few points, changing only the end runs', () => {
+    // a to d: leaves east, comes in from the top of d, so the route has an interior vertical track
+    const els = [shape('a', 0, 100), shape('d', 400, 400), conn('ad', 'a', 'd', {}, 'east', 'north')];
+    const first = plan(els);
+    const moved = plan(moveBy(els, 'd', 7, 0), first.routes);
+    expect(moved.routes.get('ad')!.provenance).toBe('elastic');
+    expect(routeDefects(pts(moved, 'ad'))).toEqual([]);
+    const was = pts(first, 'ad'), now = pts(moved, 'ad');
+    expect(now[now.length - 1]).toEqual({ x: 457, y: 400 }); // glued to the moved north port
+    expect(now[0]).toEqual(was[0]); // the unmoved end did not change
+  });
+
+  it('splices a local detour around a newly blocking shape and keeps the route either side', () => {
+    const els = [shape('a', 0, 100), shape('b', 700, 100), conn('ab', 'a', 'b', {}, 'east', 'west')];
+    const first = plan(els);
+    expect(pts(first, 'ab').length).toBe(2);
+    const wall = shape('wall', 330, 90, 40, 80);
+    const next = plan([...els, wall], first.routes);
+    const r = next.routes.get('ab')!;
+    expect(['repaired', 'rerouted']).toContain(r.provenance);
+    expect(routeDefects(r.points)).toEqual([]);
+    const obstacles = selectObstacles([...els, wall], [], new Set(['a', 'b']), [visualRect(els[0] as never), visualRect(els[1] as never)], [], 1_000_000);
+    expect(isClear(r.points, obstacles, [], 2)).toBe(true);
+    expect(r.points[0]).toEqual(pts(first, 'ab')[0]);
+  });
+
+  it('repairs only the blocked run of a longer route', () => {
+    // a to d with a vertical track at x=450; a wall lands on the horizontal run along y=130
+    const els = [shape('a', 0, 100), shape('d', 600, 500), conn('ad', 'a', 'd', {}, 'east', 'north')];
+    const first = plan(els);
+    const was = pts(first, 'ad');
+    const wall = shape('wall', 200, 110, 40, 40);
+    const next = plan([...els, wall], first.routes);
+    const r = next.routes.get('ad')!;
+    expect(r.provenance).toBe('repaired');
+    expect(routeDefects(r.points)).toEqual([]);
+    expect(r.points[r.points.length - 1]).toEqual(was[was.length - 1]);
+    expect(r.points[0]).toEqual(was[0]);
+  });
+
+  it('does not flip to a slightly shorter route when a nearby shape changes a little (hysteresis)', () => {
+    const els = [shape('a', 0, 100), shape('b', 700, 100), shape('wall', 330, 90, 40, 80), conn('ab', 'a', 'b', {}, 'east', 'west')];
+    const first = plan(els);
+    const smaller = els.map(e => (e.id === 'wall' ? shape('wall', 330, 100, 40, 70) : e));
+    const next = plan(smaller, first.routes);
+    expect(next.routes.get('ab')!.provenance).toBe('kept');
+    expect(pts(next, 'ab')).toEqual(pts(first, 'ab'));
+  });
+
+  it('straightens a detour once the obstacle that forced it is gone and the direct route is much shorter', () => {
+    const els = [shape('a', 0, 100), shape('b', 700, 100), shape('wall', 330, 90, 40, 80), conn('ab', 'a', 'b', {}, 'east', 'west')];
+    const first = plan(els);
+    const without = plan(els.filter(e => e.id !== 'wall'), first.routes);
+    expect(without.routes.get('ab')!.provenance).toBe('rerouted');
+    expect(pts(without, 'ab').length).toBe(2);
+    expect(without.routes.get('ab')!.reason).toMatch(/gone/);
+  });
+
+  it('flags a connector that cannot be routed instead of calling it a success', () => {
+    const els = [shape('a', 0, 100), shape('b', 700, 100),
+      shape('n', 690, 20, 120, 20), shape('s', 690, 180, 120, 20), shape('w', 650, 20, 30, 180), shape('e2', 820, 20, 30, 180), shape('lid', 650, 5, 200, 10),
+      conn('ab', 'a', 'b', {}, 'east', 'west')];
+    // b is walled in on all four sides with gaps smaller than the clearance
+    const r = plan(els).routes.get('ab')!;
+    expect(r.provenance).toBe('unresolved');
+    expect(r.reason).toMatch(/no clear route/);
+    expect(plan(els).routes.get('ab')!.points).toEqual(r.points); // deterministic
+  });
+
+  it('never searches a connector that has author waypoints', () => {
+    const els = [shape('a', 0, 100), shape('b', 400, 100), shape('wall', 190, 90, 20, 80), conn('ab', 'a', 'b', { waypoints: [{ x: 200, y: 130 }] }, 'east', 'west')];
+    const r = plan(els).routes.get('ab')!;
+    expect(r.provenance).toBe('authored');
+  });
+
+  it('plans only orthogonal connectors', () => {
+    const r = plan([shape('a', 0, 0), shape('b', 300, 0), conn('ab', 'a', 'b', { route: 'straight' })]);
+    expect(r.routes.size).toBe(0);
+  });
+});
+
+/** A seeded 60-shape, 60-connector diagram: the stress case from the performance targets. */
+function stress(): Element[] {
+  let s = 12345;
+  const rnd = () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
+  const els: Element[] = [];
+  const id = (p: string, n: number) => `${p}${String(n).padStart(3, '0')}`;
+  for (let i = 0; i < 60; i++) els.push(shape(id('s', i), 40 + (i % 10) * 170, 40 + Math.floor(i / 10) * 130, 100, 60));
+  for (let i = 0; i < 60; i++) {
+    const a = Math.floor(rnd() * 60);
+    let b = Math.floor(rnd() * 60);
+    if (b === a) b = (b + 1) % 60;
+    els.push(conn(id('c', i), id('s', a), id('s', b)));
+  }
+  return els;
+}
+
+describe('route planner on the 60 shape, 60 connector diagram', () => {
+  const els = stress();
+  it('baseline: fresh planning is deterministic and exact', async () => {
+    const t0 = performance.now();
+    const r = plan(els);
+    const ms = performance.now() - t0;
+    expect(r.routes.size).toBe(60);
+    for (const [id, route] of r.routes) expect(routeDefects(route.points), id).toEqual([]);
+    const counts: Record<string, number> = {};
+    for (const route of r.routes.values()) counts[route.provenance] = (counts[route.provenance] ?? 0) + 1;
+    const summary = { provenance: counts, vertices: Object.fromEntries([...r.routes].map(([k, v]) => [k, v.points.map(p => `${p.x},${p.y}`).join(' ')])) };
+    await expect(JSON.stringify(summary, null, 1)).toMatchFileSnapshot('baselines/route-planner-stress-60.json');
+    expect(ms).toBeLessThan(5000);
+  });
+
+  it('a 1 pt nudge of one shape changes only connectors attached to it or near it', () => {
+    const first = plan(els);
+    const target = 's027';
+    const next = plan(moveBy(els, target, 1, 0), first.routes);
+    const attached = new Set(els.filter(e => e.kind === 'connector' && (e.from.elementId === target || e.to.elementId === target)).map(e => e.id));
+    const unexpected = next.changes.filter(c => !attached.has(c.id));
+    // anything else that moved must have had the nudged shape within its clearance
+    const box = els.find(e => e.id === target)!;
+    const near = (id: string) => {
+      const r = visualRect({ bounds: { x: (box as never as { bounds: { x: number } }).bounds.x - 20, y: (box as never as { bounds: { y: number } }).bounds.y - 20, width: 142, height: 102 }, rotationDeg: 0 });
+      return !isClear(first.routes.get(id)!.points, [r], [], 0);
+    };
+    expect(unexpected.filter(c => !near(c.id))).toEqual([]);
+    expect(next.changes.length).toBeLessThanOrEqual(attached.size + 6);
+  });
+});

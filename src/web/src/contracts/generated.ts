@@ -722,6 +722,8 @@ export interface Snapshot {
 export interface ConnectorProjection {
   routePoints: Point[];
   visualBounds: Bounds;
+  routeProvenance?: "authored" | "kept" | "elastic" | "repaired" | "rerouted" | "unresolved";
+  routeReason?: string;
 }
 
 export interface Projection {

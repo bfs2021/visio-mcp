@@ -8,9 +8,7 @@ import { canonicalSerialize } from '../model/canonical';
 import { ok, type Result } from '../model/result';
 import type { AdapterCallbacks, CanvasAdapter, Tool, ViewportInfo } from './CanvasAdapter';
 import { edgeStyle, effectiveState, labelOf, registerCustomShapes, vertexStyle } from './cellMapping';
-import { centreOfTerminal, endFor, routeOrthogonal, type Terminal } from '../layout/orthogonalRoute';
-import { avoidObstacles, segmentsOf, type Segment } from '../layout/obstacleRoute';
-import { selectObstacles, visualRect } from '../layout/obstacles';
+import { planRoutes, type PlannedRoute, type RouteChange } from '../layout/routePlanner';
 import { installGestureHooks } from './gestureHooks';
 import { pageOf } from './intents';
 
@@ -199,16 +197,18 @@ export class MaxGraphAdapter implements CanvasAdapter {
       for (const e of page.elements) if (e.kind !== 'group') wanted.set(e.id, e);
       this.pageElements = wanted;
       this.pageLayers = page.layers;
-      // Obstacle avoidance and parallel spacing make every orthogonal route depend on all the others, so a change to any shape or to
-      // any orthogonal connector re-routes them all, in z-order, from an empty set of occupied tracks. That keeps the result a pure
-      // function of the document.
+      // R19: a change that can affect a route (a shape moved, a connector edited) asks the planner again. The planner keeps every
+      // route that is still valid, so a nudge elsewhere leaves unrelated connectors exactly where they were. Stacking order does not
+      // affect routes, so it is not part of the signature.
       const sig = canonicalSerialize([...wanted.values()].map(e => e.kind === 'connector'
-        ? { id: e.id, f: e.from, t: e.to, w: e.waypoints, r: e.route, z: e.zIndex }
-        : { id: e.id, b: e.bounds, rot: e.rotationDeg, h: e.hidden, l: e.layerIds, k: e.kind, fi: e.kind === 'shape' ? [e.style.fill.kind, e.style.stroke.kind] : 0, z: e.zIndex }).concat(page.layers.map(l => ({ id: l.id, v: l.visible })) as never[]), );
+        ? { id: e.id, f: e.from, t: e.to, w: e.waypoints, r: e.route }
+        : { id: e.id, b: e.bounds, rot: e.rotationDeg, h: e.hidden, l: e.layerIds, k: e.kind, fi: e.kind === 'shape' ? [e.style.fill.kind, e.style.stroke.kind] : 0 }).concat(page.layers.map(l => ({ id: l.id, v: l.visible })) as never[]), );
       if (sig !== this.routingSig) {
         this.routingSig = sig;
-        this.occupied = [];
-        for (const e of wanted.values()) if (e.kind === 'connector' && e.route === 'orthogonal') this.shown.delete(e.id);
+        const plan = planRoutes({ elements: [...wanted.values()], layers: page.layers, pageArea: this.pageWidth * this.pageHeight, previous: this.planned });
+        this.planned = plan.routes;
+        this.routeChanges = plan.changes;
+        for (const c of plan.changes) this.shown.delete(c.id);
       }
       const parent = this.graph.getDefaultParent();
 
@@ -270,33 +270,10 @@ export class MaxGraphAdapter implements CanvasAdapter {
   private pageElements = new Map<string, Element>();
   private pageLayers: readonly import('../contracts/generated').Layer[] = [];
   private routingSig = '';
-  private occupied: Segment[] = [];
-
-  /** R08: an orthogonal connector's route, computed here so it leaves and enters along the end axes and passes through its waypoints. */
-  private orthogonalRoute(el: Extract<Element, { kind: 'connector' }>): { interior: Point[]; fixed: { from?: { x: number; y: number; perimeter: boolean }; to?: { x: number; y: number; perimeter: boolean } } } {
-    const terminal = (ep: typeof el.from): Terminal | undefined => {
-      const t = ep.glue !== 'none' && ep.elementId ? this.pageElements.get(ep.elementId) : undefined;
-      if (!t || t.kind === 'connector' || t.kind === 'group') return undefined;
-      return { box: t.bounds, rotationDeg: t.rotationDeg, ports: t.kind === 'shape' ? t.ports : undefined };
-    };
-    const ta = terminal(el.from), tb = terminal(el.to);
-    const pointOf = (t: Terminal | undefined, ep: typeof el.from) => (t ? centreOfTerminal(t) : ep.point ?? { x: 0, y: 0 });
-    const wp = el.waypoints.map(p => ({ x: p.x, y: p.y }));
-    const a = endFor(el.from, ta, wp[0] ?? pointOf(tb, el.to));
-    const b = endFor(el.to, tb, wp[wp.length - 1] ?? pointOf(ta, el.from));
-    let route = routeOrthogonal(a, b, wp);
-    if (!wp.length) { // R08b: author waypoints are never rerouted; an automatic route goes around the shapes in its way
-      const endIds = new Set([el.from.elementId, el.to.elementId].filter((id): id is string => !!id));
-      const endRects = [ta, tb].filter((t): t is Terminal => !!t).map(t => visualRect({ bounds: t.box, rotationDeg: t.rotationDeg }));
-      const free = [el.from, el.to].filter(ep => ep.glue === 'none' && ep.point).map(ep => ep.point!);
-      const obstacles = selectObstacles([...this.pageElements.values()], this.pageLayers, endIds, endRects, free, this.pageWidth * this.pageHeight);
-      route = avoidObstacles(a, b, route, obstacles, endRects, this.occupied).route;
-    }
-    this.occupied.push(...segmentsOf(route));
-    const SIDE = new Set(['0.5,0', '0.5,1', '0,0.5', '1,0.5']);
-    const pin = (e: typeof a) => (e.fraction ? { x: e.fraction.x, y: e.fraction.y, perimeter: SIDE.has(`${e.fraction.x},${e.fraction.y}`) } : undefined);
-    return { interior: route.slice(1, -1).map(p => new Point(p.x, p.y)), fixed: { from: pin(a), to: pin(b) } };
-  }
+  /** R19: the routes the planner chose for the page shown, and what changed in the last planning pass. */
+  private planned: ReadonlyMap<string, PlannedRoute> = new Map();
+  private routeChanges: RouteChange[] = [];
+  routePlan(): { routes: ReadonlyMap<string, PlannedRoute>; changes: readonly RouteChange[] } { return { routes: this.planned, changes: this.routeChanges }; }
 
   private upsertEdge(el: Extract<Element, { kind: 'connector' }>, layers: readonly import('../contracts/generated').Layer[]): void {
     const model = this.graph.getDataModel();
@@ -312,12 +289,14 @@ export class MaxGraphAdapter implements CanvasAdapter {
     if (el.to.glue === 'none' && el.to.point) geo.setTerminalPoint(new Point(el.to.point.x, el.to.point.y), false);
     const style = edgeStyle(el, state.locked);
     if (el.route === 'orthogonal') {
-      const r = this.orthogonalRoute(el);
-      geo.points = r.interior;
-      delete style.edgeStyle; // the route is explicit, so maxGraph draws the polyline as given
-      for (const [fix, x, y, per] of [[r.fixed.from, 'exitX', 'exitY', 'exitPerimeter'], [r.fixed.to, 'entryX', 'entryY', 'entryPerimeter']] as const) {
-        delete style[x]; delete style[y];
-        if (fix) { style[x] = fix.x; style[y] = fix.y; style[per] = fix.perimeter; }
+      const r = this.planned.get(el.id);
+      if (r) {
+        geo.points = r.points.slice(1, -1).map(p => new Point(p.x, p.y));
+        delete style.edgeStyle; // the route is explicit, so maxGraph draws the polyline as given
+        for (const [fix, x, y, per] of [[r.fixed.from, 'exitX', 'exitY', 'exitPerimeter'], [r.fixed.to, 'entryX', 'entryY', 'entryPerimeter']] as const) {
+          delete style[x]; delete style[y];
+          if (fix) { style[x] = fix.x; style[y] = fix.y; style[per] = fix.perimeter; }
+        }
       }
     }
     if (!cell) {
@@ -496,7 +475,7 @@ export class MaxGraphAdapter implements CanvasAdapter {
 
   /** Connector routes and visual bounds as maxGraph resolved them for the snapshot just projected. Derived data: never written back. */
   readProjection(snapshot: Snapshot, pageId?: string): import('../contracts/generated').Projection {
-    const connectors: Record<string, { routePoints: Array<{ x: number; y: number }>; visualBounds: { x: number; y: number; width: number; height: number } }> = {};
+    const connectors: import('../contracts/generated').Projection['connectors'] = {};
     const s = this.graph.view.scale;
     const t = this.graph.view.translate;
     const page = pageOf(snapshot, pageId);
@@ -508,7 +487,8 @@ export class MaxGraphAdapter implements CanvasAdapter {
       if (!pts.length) continue;
       const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
       const x = Math.min(...xs), y = Math.min(...ys);
-      connectors[el.id] = { routePoints: pts, visualBounds: { x, y, width: Math.max(...xs) - x, height: Math.max(...ys) - y } };
+      const planned = this.planned.get(el.id);
+      connectors[el.id] = { routePoints: pts, visualBounds: { x, y, width: Math.max(...xs) - x, height: Math.max(...ys) - y }, ...(planned ? { routeProvenance: planned.provenance, ...(planned.reason ? { routeReason: planned.reason } : {}) } : {}) };
     }
     return { documentId: snapshot.documentId, sessionId: snapshot.sessionId, revision: snapshot.revision, connectors, groupVisualBounds: {} };
   }
