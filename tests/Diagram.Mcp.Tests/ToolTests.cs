@@ -131,6 +131,7 @@ public class ToolTests
         Assert.Equal(SourceTools.OrderBy(x => x), tools.Select(t => t.Name).OrderBy(x => x));
         // nothing that opens, saves, replaces or runs anything outside the document
         Assert.DoesNotContain(tools, t => t.Name.Contains("open") || t.Name.Contains("save") || t.Name.Contains("shell") || t.Name.Contains("replace"));
+        Assert.DoesNotContain(tools, t => t.Name.Contains("preferences", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]

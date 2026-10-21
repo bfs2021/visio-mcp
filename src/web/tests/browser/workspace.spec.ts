@@ -124,3 +124,35 @@ test('the open tabs are sent to the host as they change, and an unchanged list i
   await page.getByTestId('tab').nth(0).click();
   await expect.poll(async () => (await saves()).at(-1)?.active).toBe(last.tabs[0].documentId);
 });
+
+test('preferences read warning remains visible after restoring and activating other tabs', async ({ page }) => {
+  await page.addInitScript(() => {
+    const listeners: Array<(event: { data: unknown }) => void> = [];
+    (window as any).chrome = { webview: {
+      addEventListener: (_type: string, listener: (event: { data: unknown }) => void) => listeners.push(listener),
+      postMessage: (message: any) => {
+        if (message.kind !== 'request') return;
+        queueMicrotask(() => listeners.forEach(listener => listener({ data: {
+          protocolVersion: 1, kind: 'response', requestId: message.requestId,
+          error: { code: 'io_error', message: message.method === 'host.preferences.get' ? 'Settings could not be read' : 'Host fixture unavailable', retryable: false },
+        } })));
+      },
+    } };
+  });
+  await openEditor(page);
+  await armHost(page, {
+    checkpoint: (await snapshot(page)).document, events: [], sessions: [],
+    memory: { found: true, cleanExit: true, activeDocumentId: 'b', tabs: [
+      { documentId: 'a', sessionId: 's1', path: 'C:\\Work\\one.diagram.json', title: 'one.diagram.json', unsaved: false },
+      { documentId: 'b', sessionId: 's2', path: 'C:\\Work\\two.diagram.json', title: 'two.diagram.json', unsaved: false },
+    ] },
+  });
+  await restore(page);
+  await expect(page.getByTestId('tab')).toHaveCount(2);
+  expect((await tabs(page))[1]!.active).toBe(true);
+  await expect(page.getByTestId('preferences-diagnostic')).toContainText('Settings could not be read');
+  await page.getByTestId('tab').nth(0).click();
+  await expect(page.getByTestId('preferences-diagnostic')).toContainText('Settings could not be read');
+  await page.getByTestId('tab').nth(1).click();
+  await expect(page.getByTestId('preferences-diagnostic')).toContainText('Settings could not be read');
+});

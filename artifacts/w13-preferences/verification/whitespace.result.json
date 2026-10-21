@@ -1,0 +1,6 @@
+{
+  "command": "git diff --check",
+  "head": "a74345513811c6e6be7b0d54bec69ba99af905ec",
+  "recordedUtc": "2026-10-20T21:53:16.7885040Z",
+  "exitCode": 0
+}

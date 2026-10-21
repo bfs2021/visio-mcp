@@ -233,7 +233,7 @@ public sealed class BridgeRouter : IEditorChannel, IExportSource, IRasteriser
         try
         {
             if (hostHandler is null) response = Fail(id, "method_not_found", "the host offers no services");
-            else if (channel != User && msg["method"]?.GetValue<string>() != "host.ping") response = Fail(id, "method_not_found", "the agent view has no host services"); // only the page the person works in may ask the host to open, save or recover
+            else if (channel != User && msg["method"]?.GetValue<string>() is not ("host.ping" or "host.preferences.get")) response = Fail(id, "method_not_found", "the agent view has no host services"); // only the page the person works in may ask the host to open, save or recover
             else
             {
                 var request = msg.Deserialize<RequestEnvelope>(ContractJson.Options)!;

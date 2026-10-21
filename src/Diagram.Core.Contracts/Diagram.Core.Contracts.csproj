@@ -5,4 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="../../contracts/preferences.schema.json" LogicalName="Diagram.Core.Contracts.preferences.schema.json" />
+  </ItemGroup>
 </Project>

@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const files = ['document', 'operations', 'protocol'];
+const files = ['document', 'operations', 'protocol', 'preferences'];
 const defs = new Map(); // name -> { schema, file }
 for (const f of files) {
   const s = JSON.parse(readFileSync(resolve(root, `contracts/${f}.schema.json`), 'utf8'));
@@ -69,6 +69,7 @@ function emitTs() {
     else if (schema.properties) out.push(`export interface ${n} ${objectTs(schema, '')}`, '');
     else out.push(`export type ${n} = ${ts(schema)};`, '');
   }
+  out.push('export function createPreferencesDefaults(): AppPreferences { return ' + JSON.stringify(defs.get('AppPreferences').schema.default) + '; }');
   return out.join('\n');
 }
 
@@ -156,7 +157,7 @@ function emitCs() {
 // precompiled (standalone) validators instead, so no code is generated at runtime.
 // Only what the page validates at runtime: whole documents and requests, and each operation (for precise error messages).
 const VALIDATED = [
-  'DiagramDocument', 'MutationRequest', 'ScriptRequest', 'UndoRequest', 'RequestEnvelope', 'Operation',
+  'AppPreferences', 'CapturedDocumentDefaults', 'DiagramDocument', 'MutationRequest', 'ScriptRequest', 'UndoRequest', 'RequestEnvelope', 'Operation',
   'CreateShape', 'CreateText', 'CreateImage', 'CreateConnector', 'Set', 'Move', 'Resize', 'Rotate', 'Delete', 'RegisterAsset', 'SetPage',
   'Duplicate', 'Group', 'Ungroup', 'Align', 'Distribute', 'SetGap', 'Reorder', 'AddPage', 'ReorderPage', 'DuplicatePage', 'DeletePage',
   'AddLayer', 'SetLayer', 'AssignLayers', 'DeleteLayer', 'SetAsset', 'RemoveAsset', 'ReplaceAsset',

@@ -3,14 +3,11 @@ import type { ConnectorElement, Element, ImageElement, Operation, Paint, ShapeEl
 import type { EditorModel } from '../editor/EditorModel';
 import { ArrangePanel } from './ArrangePanel';
 import { useModel } from './useModel';
+import { textDefaults } from '../model/documentDefaults';
 
 const round = (v: number) => Math.round(v * 1000) / 1000;
 
-// What a shape without a text block shows (the planner merges edits into the same defaults).
-const DEFAULT_TEXT: TextBlock = {
-  value: '', fontFamily: 'Segoe UI', fontSizePt: 12, bold: false, italic: false, underline: false, colour: '#000000',
-  horizontalAlign: 'center', verticalAlign: 'middle', wrap: true, paddingPt: 4,
-};
+const FONT_FAMILIES = ['Segoe UI', 'Arial', 'Calibri', 'Consolas', 'Times New Roman'];
 
 /** A field that edits locally and commits one transaction on Enter or blur, so typing never makes a revision per keystroke. */
 function NumberField({ label, value, onCommit, testId, step = 'any', min }: { label: string; value: number; onCommit: (v: number) => void; testId: string; step?: string; min?: number }) {
@@ -121,7 +118,7 @@ export function Inspector({ model }: { model: EditorModel }) {
   const geometry = el.kind !== 'connector';
   const isGroup = el.kind === 'group';
   const move = (dx: number, dy: number) => void model.apply('inspector', [{ op: 'move', target: el.id, delta: { xPt: dx, yPt: dy } }]);
-  const text: TextBlock | undefined = el.kind === 'shape' ? el.text ?? DEFAULT_TEXT : el.kind === 'text' ? el.text : el.kind === 'connector' ? el.label ?? DEFAULT_TEXT : undefined;
+  const text: TextBlock | undefined = el.kind === 'shape' ? el.text ?? textDefaults(model.snapshot.document) : el.kind === 'text' ? el.text : el.kind === 'connector' ? el.label ?? textDefaults(model.snapshot.document) : undefined;
   const setText = (patch: Partial<TextBlock>) => set({ text: patch });
 
   return (
@@ -161,7 +158,7 @@ export function Inspector({ model }: { model: EditorModel }) {
             <NumberField label="Size pt" testId="field-fontsize" value={text.fontSizePt} min={1} onCommit={v => setText({ fontSizePt: v })} />
             <label className="field"><span>Font</span>
               <select value={text.fontFamily} data-testid="field-font" onChange={e => setText({ fontFamily: e.target.value })}>
-                {['Segoe UI', 'Arial', 'Calibri', 'Consolas', 'Times New Roman'].map(f => <option key={f}>{f}</option>)}
+                {[...new Set([text.fontFamily, ...FONT_FAMILIES])].map(f => <option key={f}>{f}</option>)}
               </select>
             </label>
           </div>

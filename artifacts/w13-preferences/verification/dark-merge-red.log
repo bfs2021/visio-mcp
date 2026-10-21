@@ -1,0 +1,78 @@
+
+> test:browser
+> playwright test tests/browser/preferences.spec.ts --workers=1 -g dark merged command
+
+
+Running 1 test using 1 worker
+
+  x  1 tests\browser\preferences.spec.ts:258:1 › dark merged command, find, and recent chrome has readable text (1.6s)
+
+
+  1) tests\browser\preferences.spec.ts:258:1 › dark merged command, find, and recent chrome has readable text 
+
+    Error: selected command
+
+    expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 4.5
+    Received:    1.1136824447253377
+
+      273 |   await page.keyboard.press('Control+Shift+P');
+      274 |   await expect(page.getByTestId('help-palette')).toBeVisible();
+    > 275 |   expect.soft(await ratio('.palette li.active'), 'selected command').toBeGreaterThanOrEqual(4.5);
+          |                                                                      ^
+      276 |   expect.soft(await ratio('.palette li.active .palette-group'), 'selected command group').toBeGreaterThanOrEqual(4.5);
+      277 |   await page.keyboard.press('Escape');
+      278 |   await page.keyboard.press('Control+f');
+        at C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\web\tests\browser\preferences.spec.ts:275:70
+
+    Error: selected command group
+
+    expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 4.5
+    Received:    3.900504517149409
+
+      274 |   await expect(page.getByTestId('help-palette')).toBeVisible();
+      275 |   expect.soft(await ratio('.palette li.active'), 'selected command').toBeGreaterThanOrEqual(4.5);
+    > 276 |   expect.soft(await ratio('.palette li.active .palette-group'), 'selected command group').toBeGreaterThanOrEqual(4.5);
+          |                                                                                           ^
+      277 |   await page.keyboard.press('Escape');
+      278 |   await page.keyboard.press('Control+f');
+      279 |   await expect(page.getByTestId('find-panel')).toBeVisible();
+        at C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\web\tests\browser\preferences.spec.ts:276:91
+
+    Error: find heading
+
+    expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 4.5
+    Received:    1.0955171955711072
+
+      278 |   await page.keyboard.press('Control+f');
+      279 |   await expect(page.getByTestId('find-panel')).toBeVisible();
+    > 280 |   expect.soft(await ratio('.find-panel h2'), 'find heading').toBeGreaterThanOrEqual(4.5);
+          |                                                              ^
+      281 |   await page.getByRole('button', { name: 'Close find' }).click();
+      282 |   await page.getByTestId('menu-file').click();
+      283 |   await page.getByTestId('menu-recent').click();
+        at C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\web\tests\browser\preferences.spec.ts:280:62
+
+    Error: recent path
+
+    expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 4.5
+    Received:    2.321283222707396
+
+      287 |     document.querySelector('.recent-files')!.append(sample);
+      288 |   });
+    > 289 |   expect.soft(await ratio('.recent-files .recent-path'), 'recent path').toBeGreaterThanOrEqual(4.5);
+          |                                                                         ^
+      290 | });
+        at C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\web\tests\browser\preferences.spec.ts:289:73
+
+    Error Context: test-results\preferences-dark-merged-co-4a2c5-nt-chrome-has-readable-text\error-context.md
+
+  1 failed
+    tests\browser\preferences.spec.ts:258:1 › dark merged command, find, and recent chrome has readable text 

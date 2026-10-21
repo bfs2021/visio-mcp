@@ -1,0 +1,16 @@
+{
+  "reason": "No output or material CPU progress after17 native passes; agreed10-minute native cutoff exceeded",
+  "nativeStartedLocal": "2026-10-20T22:29:32.2116761+01:00",
+  "terminatedUtc": "2026-10-20T21:39:54.4758164Z",
+  "rootProcessId": 16228,
+  "testHostProcessId": 21472,
+  "commandLine": "\"C:/Program Files/dotnet\\dotnet.exe\" test Diagram.Windows.slnx -m:1 --logger console;verbosity=normal",
+  "lastLogLines": [
+    "  Passed Diagram.Windows.Tests.FlowchartVisioTests.SymbolsDrawnInTheEditorAreNativeVisioOutlinesThatVisioDrawsAndTheyComeBackAsPresets [9 s]",
+    "  Passed Diagram.Windows.Tests.FindReplaceTests.RealFindPanelReplacementSurvivesJsonSaveAndNativeVisioRoundTrip [1 s]",
+    "  Passed Diagram.Windows.Tests.CloseTests.SaveWritesTheFileThenClosesAndLeavesNothingToRecover [1 s]",
+    "  Passed Diagram.Windows.Tests.CloseTests.CancelKeepsTheWindowOpenAndTheWorkProtectedAndItAsksAgain [1 s]",
+    "  Passed Diagram.Windows.Tests.CloseTests.TheWindowTitleNamesTheFileAndMarksUnsavedWork [1 s]",
+    "  Passed Diagram.Windows.Tests.CloseTests.ADocumentWithNoChangesClosesWithoutAsking [933 ms]"
+  ]
+}

@@ -21,6 +21,7 @@ import { PageCanvas } from './components/PageCanvas';
 import { ShapesPanel } from './components/ShapesPanel';
 import { StatusBar } from './components/StatusBar';
 import { Toolbar } from './components/Toolbar';
+import { PreferencesDialog } from './components/PreferencesDialog';
 import { HelpDialogs } from './components/HelpDialogs';
 import { ConnectDialog } from './components/ConnectDialog';
 
@@ -32,7 +33,8 @@ function useShortcuts(ws: WorkspaceModel) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const model = ws.active;
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'p') { e.preventDefault(); if (!ws.recentPrompt && !ws.tabs.some(t => t.newDocument.prompt || t.closePrompt || t.exportPrompt || t.files.prompt || t.connectPrompt)) ws.help.toggle('palette'); return; }
+      if (ws.preferences.dialogOpen) return;
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'p') { e.preventDefault(); if (!ws.recentPrompt && !ws.tabs.some(t => t.newDocument.prompt || t.closePrompt || t.exportPrompt || t.report || t.files.prompt || t.connectPrompt)) ws.help.toggle('palette'); return; }
       if (ws.help.panel) return; // a Help panel is up: it takes the keys
       if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase()==='f') {
         e.preventDefault();
@@ -84,7 +86,7 @@ export function App({ ws }: { ws: WorkspaceModel }) {
   useShortcuts(ws);
   const model = ws.active;
   const asking = ws.tabs.find(t => t.closePrompt);
-  useEffect(()=>{const focus=()=>void ws.checkFiles();window.addEventListener('focus',focus);return()=>window.removeEventListener('focus',focus);},[ws]);
+  useEffect(()=>{const focus=()=>{if(!ws.preferences.dialogOpen)void ws.checkFiles();};window.addEventListener('focus',focus);return()=>window.removeEventListener('focus',focus);},[ws]);
   useEffect(()=>{if(!ws.isBusy()&&!ws.tabs.some(t=>t.newDocument.prompt||t.closePrompt||t.recoveryOffers.length||t.recoveryReport))model.files.presentNotice();});
   const holder = ws.tabs.find(t => t.recoveryOffers.length > 0 || t.recoveryReport) ?? model; // the tab that holds the recovery question
   return (
@@ -101,7 +103,8 @@ export function App({ ws }: { ws: WorkspaceModel }) {
       <PageTabs model={model} />
       <Drawer model={model} />
       {!ws.tabs.some(t=>t.newDocument.prompt||t.closePrompt||t.files.prompt||t.report||t.recoveryOffers.length||t.recoveryReport)&&<FindPanel key={model.tabId} model={model} />}
-      <CompatibilityDialog model={model} />
+      {/* A report from an in-flight host call waits here until Preferences releases modal ownership. */}
+      {!ws.preferences.dialogOpen && <CompatibilityDialog model={model} />}
       {!ws.tabs.some(t=>t.files.prompt) && <RecoveryDialog model={holder} onRecover={id => void ws.restoreOrphan(holder, id)} />}
       {asking && !ws.tabs.some(t=>t.files.prompt) && <CloseDialog model={asking} />}
       <FileConflictDialog model={ws.tabs.find(t=>t.files.prompt?.source==='save') ?? ws.tabs.find(t=>t.files.prompt) ?? model} />
@@ -112,6 +115,7 @@ export function App({ ws }: { ws: WorkspaceModel }) {
       {ws.tabs.filter(t => t.connectPrompt).map(t => <ConnectDialog key={`${t.tabId}-connect`} model={t} />)}
       <DocumentTitle model={model} />
       <StatusBar model={model} />
+      <PreferencesDialog ws={ws} />
     </div>
   );
 }

@@ -207,10 +207,16 @@ public class MappingTests
     public void DocumentTitleIdAndMetadataSurvive()
     {
         var doc = Doc.Make([Doc.Page([Doc.Shape(1, 10, 10, 50, 30)])], title: "Quarterly architecture");
+        const string capture = "{\"grid\":{\"spacingPt\":27,\"visible\":false,\"snap\":false},\"font\":{\"family\":\"Aptos\",\"sizePt\":19}}";
+        var node = JsonSerializer.SerializeToNode(doc, ContractJson.Options)!;
+        node["metadata"]!["editor.defaults.v1"] = capture;
+        doc = node.Deserialize<DiagramDocument>(ContractJson.Options)!;
         var back = RT.Trip(Doc.Snapshot(doc)).Back.Document;
         Assert.Equal("Quarterly architecture", back.Title);
         Assert.Equal(Doc.DocId, back.Id);
         Assert.Equal("tests", back.Metadata["author"]);
+        Assert.Equal(capture, back.Metadata["editor.defaults.v1"]);
+        Assert.Equal(Doc.Id(1), RT.All(back).Single()["id"]!.GetValue<string>());
         Assert.Equal(0, back.Revision);
         Assert.Equal("vsdx", back.Source!.Format);
     }

@@ -1,0 +1,46 @@
+
+> test
+> vitest run tests/documentDefaults.test.ts --maxWorkers=2
+
+
+ RUN  v5.0.3 C:/Users/claude/.codex/worktrees/r03-icons/diagram-app/src/web
+
+ ❯ tests/documentDefaults.test.ts (11 tests | 1 failed) 38ms
+   ❯ captured document defaults (11)
+     × preserves component and icon authored formatting through clipboard and JSON import 11ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/documentDefaults.test.ts > captured document defaults > preserves component and icon authored formatting through clipboard and JSON import
+AssertionError: expected { …(12) } to match object { kind: 'shape', …(1) }
+(30 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "kind": "shape",
+    "style": {
+      "stroke": {
+-       "colour": "#16A34A",
++       "colour": "#334155",
+      },
+    },
+  }
+
+ ❯ tests/documentDefaults.test.ts:154:23
+    152|     const iconShape = source.document.pages[0]!.elements.find(e => e.m…
+    153|     expect(title).toMatchObject({ kind: 'text', text: { fontFamily: 'A…
+    154|     expect(iconShape).toMatchObject({ kind: 'shape', style: { stroke: …
+       |                       ^
+    155|     const clip = copyElements(source, [title.id, iconShape.id])!;
+    156|     const copied = pasteOperations(clip, source.document.pages[0]!, 32…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
+   Start at  17:07:51
+   Duration  945ms (transform 63%, import 32%, tests 5%)
+
