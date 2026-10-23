@@ -172,21 +172,21 @@
 - CONNECTOR_CROSSES_SHAPE ignores passThrough elements and does not duplicate a soft-policy violation already represented by ROUTING_AVOIDANCE_VIOLATION.
 - MCP inspect_layout returns the same codes and element IDs as the page projection.
 
-- [ ] **Step 1: Add inspector tests** named layout_reports_hard_and_soft_routing_findings and passed_through_regions_are_not_reported_as_crossings. Assert code, severity, connector ID, blocker IDs, and no duplicate crossing for a soft violation.
-- [ ] **Step 2: Run the focused tests and verify they fail.**
+- [x] **Step 1: Add inspector tests** named layout_reports_hard_and_soft_routing_findings and passed_through_regions_are_not_reported_as_crossings. Assert code, severity, connector ID, blocker IDs, and no duplicate crossing for a soft violation. Added an MCP browser regression and policy summary coverage.
+- [x] **Step 2: Run the focused tests and verify they fail.**
 
   Run: npm --prefix src/web test -- tests/layout.test.ts
 
   Expected: FAIL because route findings are not carried through projections or inspection.
-- [ ] **Step 3: Carry routeFindings** from route planning through MaxGraphAdapter and update inspectLayout to apply policy-aware crossing filters.
-- [ ] **Step 4: Verify editor and browser behavior.**
+- [x] **Step 3: Carry routeFindings** from route planning through MaxGraphAdapter and update inspectLayout to apply policy-aware crossing filters.
+- [x] **Step 4: Verify editor and browser behavior.**
 
   Run: npm --prefix src/web test -- tests/layout.test.ts
 
   Run: npm --prefix src/web run test:browser -- tests/browser/routing-policy.spec.ts
 
-  Expected: PASS; canvas and MCP inspection show the same connector and blocker identities.
-- [ ] **Step 5: Commit** as feat(r22): report route policy findings.
+  Expected: PASS; canvas and MCP inspection show the same connector and blocker identities. Verification: layout/read-tools tests 20/20, browser test 1/1, full web suite 608/608, typecheck and generated-contract check passed. No protocol schema change was needed: route findings use the existing generic layout issue code and the R22 typed projection contract.
+- [x] **Step 5: Commit** as feat(r22): report route policy findings.
 
 ### Task 6: Add Inspector controls for obstacle policy and endpoint sides
 

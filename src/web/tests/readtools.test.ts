@@ -10,7 +10,9 @@ describe('read tools', () => {
     const t = createTestEngine();
     await run(t, [
       { op: 'set', target: 's3', patch: { hidden: true } },
-      { op: 'createConnector', id: id(950), from: { elementId: 's0', port: 'east', glue: 'static' }, to: { elementId: 's1', glue: 'dynamic' }, label: { value: 'flows' } },
+      { op: 'createConnector', id: id(950), from: { elementId: 's0', port: 'east', glue: 'static', preferredSide: 'north' }, to: { elementId: 's1', glue: 'dynamic' }, label: { value: 'flows' } },
+      { op: 'set', target: 's0', patch: { routingPolicy: { obstacle: 'passThrough' } } },
+      { op: 'set', target: id(950), patch: { routingPolicy: { text: 'avoid' } } },
     ]);
     const snap = t.store.snapshot();
     const before = exactElementHashes(snap);
@@ -25,7 +27,8 @@ describe('read tools', () => {
     expect(s.pages[0]!.omittedHidden).toBe(1);
     expect(els.find(e => e.alias === 's0')).toMatchObject({ kind: 'shape', bounds: { x: 100 }, text: 'Shape 0' });
     expect(els.find(e => e.alias === 's0')!.style).toBeUndefined();
-    expect(els.find(e => e.id === id(950))).toMatchObject({ kind: 'connector', text: 'flows', from: { elementId: expect.any(String), port: 'east', glue: 'static' } });
+    expect(els.find(e => e.id === id(950))).toMatchObject({ kind: 'connector', text: 'flows', routingPolicy: { text: 'avoid' }, from: { elementId: expect.any(String), port: 'east', glue: 'static', preferredSide: 'north' } });
+    expect(els.find(e => e.alias === 's0')!.routingPolicy).toEqual({ obstacle: 'passThrough' });
     const full = readSummary(snap, { includeStyle: true, includeGeometry: false, includeHidden: true });
     const e0 = (full.ok ? (full.value as typeof s).pages[0]!.elements.find(e => e.alias === 's0') : undefined) as Record<string, unknown>;
     expect(e0.style).toBeDefined();
