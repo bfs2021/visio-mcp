@@ -200,19 +200,19 @@
 - Connector selection exposes its label text policy and preferred side for each dynamic endpoint; fixed named ports remain selectable through existing controls.
 - Controls commit through the existing transactional set operation and display a message when a preferred side is relaxed.
 
-- [ ] **Step 1: Add Playwright tests** named inspector_sets_and_clears_obstacle_policy and inspector_sets_dynamic_endpoint_preferred_side. Assert controls show stored values, changes persist after selection changes, and Undo restores the prior policy.
-- [ ] **Step 2: Run the browser tests and verify they fail.**
+- [x] **Step 1: Add Playwright tests** named inspector_sets_and_clears_obstacle_policy and inspector_sets_dynamic_endpoint_preferred_side. Assert controls show stored values, changes persist after selection changes, and Undo restores the prior policy.
+- [x] **Step 2: Run the browser tests and verify they fail.**
 
   Run: npm --prefix src/web run test:browser -- tests/browser/routing-policy.spec.ts
 
   Expected: FAIL because the Inspector has no R22 controls.
-- [ ] **Step 3: Add policy controls** to the Inspector for shape, text, and connector selections, using the contracts and transaction fields from earlier tasks.
-- [ ] **Step 4: Run the focused browser tests.**
+- [x] **Step 3: Add policy controls** to the Inspector for shape, text, and connector selections, using the contracts and transaction fields from earlier tasks.
+- [x] **Step 4: Run the focused browser tests.**
 
   Run: npm --prefix src/web run test:browser -- tests/browser/routing-policy.spec.ts
 
   Expected: PASS, including undo and relaxed-side messaging.
-- [ ] **Step 5: Commit** as feat(r22): add routing policy inspector controls.
+- [x] **Step 5: Commit** as feat(r22): add routing policy inspector controls.
 
 ### Task 7: Report VSDX policy compatibility limits
 
