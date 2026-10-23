@@ -225,19 +225,19 @@
 - Each unsupported saved obstacle/text/endpoint preference policy emits a stable informational diagnostic code ROUTING_POLICY_NOT_NATIVE with elementId and unsupported field detail.
 - Do not claim native Visio routing behavior or rasterize geometry. Import continues using existing migration behavior when policy data is absent.
 
-- [ ] **Step 1: Add test** UnsupportedRoutingPolicyIsReportedWhileGeometryRemainsEditable. Assert the diagnostic code, affected element ID, a VSDX package is produced, and exported native shape/connector geometry remains present.
-- [ ] **Step 2: Run the focused Visio test and verify it fails.**
+- [x] **Step 1: Add test** UnsupportedRoutingPolicyIsReportedWhileGeometryRemainsEditable. Assert the diagnostic code, affected element ID, a VSDX package is produced, and exported native shape/connector geometry remains present.
+- [x] **Step 2: Run the focused Visio test and verify it fails.**
 
   Run: dotnet test tests/Diagram.Visio.Tests/Diagram.Visio.Tests.csproj --no-restore --filter FullyQualifiedName~UnsupportedRoutingPolicyIsReportedWhileGeometryRemainsEditable
 
   Expected: FAIL because the exporter currently omits the R22 policy without a finding.
-- [ ] **Step 3: Add informational compatibility diagnostics** in NativeVsdxExporter for policy fields that do not have verified native semantics. Do not warn for existing named static ports already carried by the exporter.
-- [ ] **Step 4: Run the focused Visio tests.**
+- [x] **Step 3: Add informational compatibility diagnostics** in NativeVsdxExporter for policy fields that do not have verified native semantics. Do not warn for existing named static ports already carried by the exporter.
+- [x] **Step 4: Run the focused Visio tests.**
 
   Run: dotnet test tests/Diagram.Visio.Tests/Diagram.Visio.Tests.csproj --no-restore --filter FullyQualifiedName~UnsupportedRoutingPolicyIsReportedWhileGeometryRemainsEditable
 
   Expected: PASS, with existing R08c and R16 export checks unchanged.
-- [ ] **Step 5: Commit** as feat(r22): report unsupported Visio routing policy.
+- [x] **Step 5: Commit** as feat(r22): report unsupported Visio routing policy.
 
 ### Task 8: Run integrated regression and record evidence
 

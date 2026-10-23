@@ -234,10 +234,35 @@ public sealed class NativeVsdxExporter : IVsdxExporter
             void Warn(string code, string message, string? elementId = null, string? action = null, string severity = "warning") =>
                 run.Warn(code, message, elementId, page.Id, action, severity);
 
+            void ReportRoutingPolicy(Element element)
+            {
+                var id = Common(element).Id;
+                var policy = element switch
+                {
+                    ShapeElement shape => shape.RoutingPolicy,
+                    TextElement text => text.RoutingPolicy,
+                    ConnectorElement connector => connector.RoutingPolicy,
+                    _ => null,
+                };
+                void Unsupported(string field) => Warn("ROUTING_POLICY_NOT_NATIVE",
+                    $"Visio does not preserve the editor's {field} routing policy; it remains available when the file is reopened in the editor.",
+                    id, field, "info");
+
+                if (policy?.Obstacle is not null) Unsupported("routingPolicy.obstacle");
+                if (policy?.ClearancePt is not null) Unsupported("routingPolicy.clearancePt");
+                if (policy?.Text is not null) Unsupported("routingPolicy.text");
+                if (element is ConnectorElement c)
+                {
+                    if (c.From.Glue == "dynamic" && c.From.PreferredSide is not null) Unsupported("from.preferredSide");
+                    if (c.To.Glue == "dynamic" && c.To.PreferredSide is not null) Unsupported("to.preferredSide");
+                }
+            }
+
             public (XElement PageEl, XDocument Content, List<(string, string)> Rels) Build()
             {
                 for (var i = 0; i < page.Layers.Count; i++) layerIndex[page.Layers[i].Id] = i;
                 foreach (var g in page.Elements.OfType<GroupElement>()) foreach (var c in g.ChildIds) parentOf[c] = g.Id;
+                foreach (var element in page.Elements) ReportRoutingPolicy(element);
 
                 // Visio draws in document order, so shapes go out back to front. A group stacks with its topmost member and draws as a block.
                 var roots = page.Elements.Where(e => e is ConnectorElement || !parentOf.ContainsKey(Common(e).Id!)).ToList();

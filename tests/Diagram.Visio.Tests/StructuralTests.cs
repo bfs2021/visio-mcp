@@ -109,6 +109,40 @@ public class StructuralTests
     }
 
     [Fact]
+    public void UnsupportedRoutingPolicyIsReportedWhileGeometryRemainsEditable()
+    {
+        var shapes = new object[]
+        {
+            Doc.Shape(1, 60, 80, 100, 50, new { routingPolicy = new { obstacle = "forbidden", clearancePt = 24, text = "avoid" } }, text: Doc.Text("Protected")),
+            Doc.Shape(2, 400, 300, 100, 50, new { ports = new[] { new { id = "in", x = 0.0, y = 0.5 } } }),
+            Doc.Connector(10,
+                new { elementId = Doc.Id(1), glue = "dynamic", preferredSide = "east" },
+                new { elementId = Doc.Id(2), glue = "static", port = "in" },
+                "orthogonal", new { routingPolicy = new { text = "avoid" } }),
+        };
+        var routes = new Dictionary<string, JsonObject> { [Doc.Id(10)] = Doc.Route((160, 105), (250, 105), (250, 325), (400, 325)) };
+        var exp = RT.Export(Doc.Snapshot(Doc.Make([Doc.Page(shapes)]), routes));
+
+        Assert.NotEmpty(exp.Package);
+        var policyDiagnostics = exp.Diagnostics.Where(d => d.Code == "ROUTING_POLICY_NOT_NATIVE").ToList();
+        Assert.Equal(5, policyDiagnostics.Count);
+        Assert.All(policyDiagnostics, d => Assert.Equal("info", d.Severity));
+        Assert.Contains(policyDiagnostics, d => d.ElementId == Doc.Id(1) && d.Action == "routingPolicy.obstacle");
+        Assert.Contains(policyDiagnostics, d => d.ElementId == Doc.Id(1) && d.Action == "routingPolicy.clearancePt");
+        Assert.Contains(policyDiagnostics, d => d.ElementId == Doc.Id(1) && d.Action == "routingPolicy.text");
+        Assert.Contains(policyDiagnostics, d => d.ElementId == Doc.Id(10) && d.Action == "routingPolicy.text");
+        Assert.Contains(policyDiagnostics, d => d.ElementId == Doc.Id(10) && d.Action == "from.preferredSide");
+        Assert.DoesNotContain(policyDiagnostics, d => d.Action == "to.preferredSide"); // the named static port is already represented natively
+
+        var shape = ShapeByAgentId(exp.Package, Doc.Id(1));
+        Assert.Contains(shape.Descendants(), e => e.Name.LocalName == "Row" && (string?)e.Attribute("T") == "MoveTo");
+        Assert.Contains(shape.Descendants(), e => e.Name.LocalName == "Row" && (string?)e.Attribute("T") == "LineTo");
+        var connector = ShapeByAgentId(exp.Package, Doc.Id(10));
+        var routeRows = connector.Descendants().Where(e => e.Name.LocalName == "Row" && ((string?)e.Attribute("T") is "MoveTo" or "LineTo")).ToList();
+        Assert.Equal(4, routeRows.Count);
+    }
+
+    [Fact]
     public void OnlyAuthoredWaypointRoutesAreFixedAgainstVisioRerouting()
     {
         var wp = new[] { new { x = 200.0, y = 40.0 }, new { x = 200.0, y = 300.0 } };
