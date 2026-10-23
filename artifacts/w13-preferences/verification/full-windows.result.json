@@ -1,0 +1,8 @@
+{
+  "command": "dotnet test Diagram.Windows.slnx -m:1",
+  "head": "bd15e52c38f07c8e0660dff73985992d5ba33657",
+  "startedUtc": "2026-10-20T21:18:03.6510473Z",
+  "finishedUtc": "2026-10-20T21:20:56.3833291Z",
+  "exitCode": 1,
+  "log": "verification/full-windows.log"
+}

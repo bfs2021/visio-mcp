@@ -1,0 +1,13 @@
+
+> test
+> vitest run tests/preferences.test.ts --maxWorkers=2
+
+
+ RUN  v5.0.3 C:/Users/claude/.codex/worktrees/r03-icons/diagram-app/src/web
+
+
+ Test Files  1 passed (1)
+      Tests  33 passed (33)
+   Start at  17:05:54
+   Duration  403ms (transform 78%, import 17%, tests 3%, worker 2%)
+

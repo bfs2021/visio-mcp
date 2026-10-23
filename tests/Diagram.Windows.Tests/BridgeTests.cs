@@ -25,7 +25,7 @@ sealed class Harness : IAsyncDisposable
     public static string RepoRoot => Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
     public static string Dist => Path.Combine(RepoRoot, "src", "web", "dist");
 
-    public static async Task<Harness> StartAsync(bool navigate = true, string? pipe = null, string? exportRoot = null, string? existingRoot = null, bool promptOnClose = false)
+    public static async Task<Harness> StartAsync(bool navigate = true, string? pipe = null, string? exportRoot = null, string? existingRoot = null, bool promptOnClose = false, TimeProvider? recoveryTimeProvider = null)
     {
         EnsureBuilt();
         var h = new Harness();
@@ -37,7 +37,7 @@ sealed class Harness : IAsyncDisposable
         h.Ui = await started.Task;
         await h.Ui.InvokeAsync(async () =>
         {
-            h.Window = new MainWindow(new AppOptions(Dist, Path.Combine(h.Root, "webview"), Path.Combine(h.Root, "blobs"), Offscreen: true, PipeName: pipe, ExportRoot: exportRoot, PromptOnClose: promptOnClose));
+            h.Window = new MainWindow(new AppOptions(Dist, Path.Combine(h.Root, "webview"), Path.Combine(h.Root, "blobs"), Offscreen: true, PipeName: pipe, ExportRoot: exportRoot, PromptOnClose: promptOnClose, RecoveryTimeProvider: recoveryTimeProvider));
             h.Window.Show();
             await h.Window.InitializeAsync();
             if (navigate) h.Window.Navigate();

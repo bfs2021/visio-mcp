@@ -1,0 +1,169 @@
+
+> test:browser
+> playwright test tests/browser/preferencesReview.spec.ts --workers=1
+
+[WebServer] (node:12788) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:11560) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 5 tests using 1 worker
+
+(node:8536) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 tests\browser\preferencesReview.spec.ts:6:5 › empty shape inspector uses captured font before first text materialization (7.6s)
+(node:16584) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  2 tests\browser\preferencesReview.spec.ts:6:5 › empty shape inspector uses captured font before explicit legacy formatting (6.1s)
+(node:19748) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  3 tests\browser\preferencesReview.spec.ts:6:5 › empty connector inspector uses captured font before first text materialization (6.1s)
+(node:20500) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  4 tests\browser\preferencesReview.spec.ts:6:5 › empty connector inspector uses captured font before explicit legacy formatting (6.0s)
+(node:4848) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  5 tests\browser\preferencesReview.spec.ts:45:1 › compatibility report blocks the keyboard palette route to Preferences (5.9s)
+
+
+  1) tests\browser\preferencesReview.spec.ts:6:5 › empty shape inspector uses captured font before first text materialization 
+
+    Error: expect(locator).toHaveValue(expected) failed
+
+    Locator:  getByTestId('field-font')
+    Expected: "Aptos"
+    Received: "Segoe UI"
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveValue" getByTestId('field-font') with timeout 5000ms
+      - waiting for getByTestId('field-font')
+        14 × locator resolved to <select data-testid="field-font">…</select>
+           - unexpected value "Segoe UI"
+
+
+      22 |       await page.mouse.click(point.x, point.y);
+      23 |       await expect(page.getByTestId('inspector').locator('h2')).toHaveText(kind === 'shape' ? 'Shape' : 'Connector');
+    > 24 |       await expect(page.getByTestId('field-font')).toHaveValue('Aptos');
+         |                                                    ^
+      25 |       await expect(page.getByTestId('field-fontsize')).toHaveValue('19');
+      26 |       expect(await snapshot(page)).toEqual(before);
+      27 |       if (legacy) {
+        at C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\web\tests\browser\preferencesReview.spec.ts:24:52
+
+    Error Context: test-results\preferencesReview-empty-sh-64ea6--first-text-materialization\error-context.md
+
+  2) tests\browser\preferencesReview.spec.ts:6:5 › empty shape inspector uses captured font before explicit legacy formatting 
+
+    Error: expect(locator).toHaveValue(expected) failed
+
+    Locator:  getByTestId('field-font')
+    Expected: "Aptos"
+    Received: "Segoe UI"
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveValue" getByTestId('field-font') with timeout 5000ms
+      - waiting for getByTestId('field-font')
+        14 × locator resolved to <select data-testid="field-font">…</select>
+           - unexpected value "Segoe UI"
+
+
+      22 |       await page.mouse.click(point.x, point.y);
+      23 |       await expect(page.getByTestId('inspector').locator('h2')).toHaveText(kind === 'shape' ? 'Shape' : 'Connector');
+    > 24 |       await expect(page.getByTestId('field-font')).toHaveValue('Aptos');
+         |                                                    ^
+      25 |       await expect(page.getByTestId('field-fontsize')).toHaveValue('19');
+      26 |       expect(await snapshot(page)).toEqual(before);
+      27 |       if (legacy) {
+        at C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\web\tests\browser\preferencesReview.spec.ts:24:52
+
+    Error Context: test-results\preferencesReview-empty-sh-3d88e--explicit-legacy-formatting\error-context.md
+
+  3) tests\browser\preferencesReview.spec.ts:6:5 › empty connector inspector uses captured font before first text materialization 
+
+    Error: expect(locator).toHaveValue(expected) failed
+
+    Locator:  getByTestId('field-font')
+    Expected: "Aptos"
+    Received: "Segoe UI"
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveValue" getByTestId('field-font') with timeout 5000ms
+      - waiting for getByTestId('field-font')
+        13 × locator resolved to <select data-testid="field-font">…</select>
+           - unexpected value "Segoe UI"
+
+
+      22 |       await page.mouse.click(point.x, point.y);
+      23 |       await expect(page.getByTestId('inspector').locator('h2')).toHaveText(kind === 'shape' ? 'Shape' : 'Connector');
+    > 24 |       await expect(page.getByTestId('field-font')).toHaveValue('Aptos');
+         |                                                    ^
+      25 |       await expect(page.getByTestId('field-fontsize')).toHaveValue('19');
+      26 |       expect(await snapshot(page)).toEqual(before);
+      27 |       if (legacy) {
+        at C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\web\tests\browser\preferencesReview.spec.ts:24:52
+
+    Error Context: test-results\preferencesReview-empty-co-902e2--first-text-materialization\error-context.md
+
+  4) tests\browser\preferencesReview.spec.ts:6:5 › empty connector inspector uses captured font before explicit legacy formatting 
+
+    Error: expect(locator).toHaveValue(expected) failed
+
+    Locator:  getByTestId('field-font')
+    Expected: "Aptos"
+    Received: "Segoe UI"
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveValue" getByTestId('field-font') with timeout 5000ms
+      - waiting for getByTestId('field-font')
+        14 × locator resolved to <select data-testid="field-font">…</select>
+           - unexpected value "Segoe UI"
+
+
+      22 |       await page.mouse.click(point.x, point.y);
+      23 |       await expect(page.getByTestId('inspector').locator('h2')).toHaveText(kind === 'shape' ? 'Shape' : 'Connector');
+    > 24 |       await expect(page.getByTestId('field-font')).toHaveValue('Aptos');
+         |                                                    ^
+      25 |       await expect(page.getByTestId('field-fontsize')).toHaveValue('19');
+      26 |       expect(await snapshot(page)).toEqual(before);
+      27 |       if (legacy) {
+        at C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\web\tests\browser\preferencesReview.spec.ts:24:52
+
+    Error Context: test-results\preferencesReview-empty-co-1e2ce--explicit-legacy-formatting\error-context.md
+
+  5) tests\browser\preferencesReview.spec.ts:45:1 › compatibility report blocks the keyboard palette route to Preferences 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByTestId('preferences-dialog')
+    Expected: 0
+    Received: 1
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" getByTestId('preferences-dialog') with timeout 5000ms
+      - waiting for getByTestId('preferences-dialog')
+        14 × locator resolved to 1 element
+           - unexpected value "1"
+
+
+      58 |     await page.keyboard.press('Enter');
+      59 |   }
+    > 60 |   await expect(page.getByTestId('preferences-dialog')).toHaveCount(0);
+         |                                                        ^
+      61 |   await expect(page.getByTestId('help-palette')).toHaveCount(0);
+      62 |   await expect(page.getByTestId('compat-dialog')).toBeVisible();
+      63 |   await expect(page.getByRole('dialog')).toHaveCount(1);
+        at C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\web\tests\browser\preferencesReview.spec.ts:60:56
+
+    Error Context: test-results\preferencesReview-compatib-3c99d-alette-route-to-Preferences\error-context.md
+
+  5 failed
+    tests\browser\preferencesReview.spec.ts:6:5 › empty shape inspector uses captured font before first text materialization 
+    tests\browser\preferencesReview.spec.ts:6:5 › empty shape inspector uses captured font before explicit legacy formatting 
+    tests\browser\preferencesReview.spec.ts:6:5 › empty connector inspector uses captured font before first text materialization 
+    tests\browser\preferencesReview.spec.ts:6:5 › empty connector inspector uses captured font before explicit legacy formatting 
+    tests\browser\preferencesReview.spec.ts:45:1 › compatibility report blocks the keyboard palette route to Preferences 

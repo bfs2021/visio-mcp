@@ -1,3 +1,7 @@
+import type { AppPreferences } from '../contracts/generated';
+import { PreferencesModel } from '../preferences/PreferencesModel';
+import type { PreferencesService } from './initializePreferences';
+import { validatePreferences } from '../model/preferences';
 import { CommandEngine } from '../commands/CommandEngine';
 import { fail, ok } from '../model/result';
 import { newDocument } from '../model/newDocument';
@@ -13,14 +17,24 @@ import type { EngineHandlerOptions } from './engineHandlers';
  * window is the host's doing; this page only answers `app.createDocument`, `app.adoptDocument` (an imported file) and `app.dropDocument`.
  */
 export function startAgentApp(webview: WebViewLike | undefined, hooks: {
+  initialPreferences?: AppPreferences; preferences?: PreferencesModel; preferencesService?: PreferencesService; client?: BridgeClient;
   render?: EngineHandlerOptions['render']; layoutContext?: EngineHandlerOptions['layoutContext']; rasterise?: EngineHandlerOptions['rasterise'];
   /** Gives a new engine what only the page can supply (the snapshot projector that resolves routes for exports). */
   configureEngine?: (engine: CommandEngine) => void;
 } = {}) {
+  const preferences = hooks.preferences ?? new PreferencesModel(hooks.initialPreferences);
   const workspace = new Workspace();
 
-  const createDocument: NonNullable<NonNullable<EngineHandlerOptions['app']>['createDocument']> = params => {
-    const doc = newDocument();
+  const createDocument: NonNullable<NonNullable<EngineHandlerOptions['app']>['createDocument']> = async params => {
+    // Agent views can outlive a visible-window Save. Refresh before capturing a new drawing.
+    if (hooks.preferencesService) {
+      const read = await hooks.preferencesService.get();
+      if (read.ok) {
+        const validated = validatePreferences(read.value.preferences);
+        if (validated.ok) preferences.apply(validated.value, read.value.versionTag);
+      }
+    }
+    const doc = newDocument(undefined, undefined, preferences.snapshotDefaults());
     if (params.title !== undefined) {
       if (typeof params.title !== 'string' || params.title.length === 0 || params.title.length > 200) return fail('invalid_request', 'title must be 1 to 200 characters');
       doc.title = params.title;
@@ -51,8 +65,8 @@ export function startAgentApp(webview: WebViewLike | undefined, hooks: {
     ...(hooks.render ? { render: hooks.render } : {}), ...(hooks.layoutContext ? { layoutContext: hooks.layoutContext } : {}), ...(hooks.rasterise ? { rasterise: hooks.rasterise } : {}),
     app: { createDocument, dropDocument, adoptDocument },
   });
-  if (!webview) return { workspace, router, client: null };
-  const client = new BridgeClient(webview);
+  if (!webview) return { preferences, workspace, router, client: null };
+  const client = hooks.client ?? new BridgeClient(webview);
   client.onRequest(router.dispatch);
   const mirror = (state: DocumentState) => state.engine.onCommitted(e => client.sendEvent('editor.committed', e as unknown as Record<string, unknown>));
   workspace.subscribe(e => {
@@ -62,5 +76,5 @@ export function startAgentApp(webview: WebViewLike | undefined, hooks: {
     } else if (e.kind === 'closed') client.sendEvent('editor.document.closed', { protocolVersion: 1, documentId: e.documentId });
   });
   client.sendEvent('editor.ready', { protocolVersion: 1 }); // no document yet: the page can answer
-  return { workspace, router, client };
+  return { preferences, workspace, router, client };
 }

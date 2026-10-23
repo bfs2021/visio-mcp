@@ -1,0 +1,3 @@
+# Preserve exact evidence bytes across platforms so SHA256SUMS remains verifiable.
+* -text whitespace=cr-at-eol
+*.log -diff

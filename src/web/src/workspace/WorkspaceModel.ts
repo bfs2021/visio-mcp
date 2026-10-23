@@ -18,6 +18,7 @@ export const TAB_LIMIT = 20;
 export class WorkspaceModel {
   private checkingFiles = false;
   async checkFiles(): Promise<void> {
+    if (this.preferences.dialogOpen) return;
     if(this.checkingFiles)return;this.checkingFiles=true;
     try{for(const tab of [...this.tabs]) if(this.tabs.includes(tab)) await tab.files.check();}finally{this.checkingFiles=false;}
   }
@@ -32,8 +33,19 @@ export class WorkspaceModel {
   configure: (model: EditorModel, state: DocumentState) => void = () => {};
   /** A short message the strip shows (for example, the tab limit). */
   notice: string | null = null;
+  /** Window-wide settings warning, independent of tab status and restore notices. */
+  get preferencesDiagnostic(): string | null { return this.app.preferences.diagnostic; }
+  get preferences() { return this.app.preferences; }
+  async openPreferences(): Promise<void> {
+    if (this.isBusy() || this.recentPrompt || this.help.panel || this.tabs.some(t => t.closePrompt || t.newDocument.prompt || t.exportPrompt || t.report || t.connectPrompt || t.files.prompt || t.recoveryOffers.length || t.recoveryReport)) return;
+    await this.preferences.open();
+  }
+  applyPreferencesUnits(units: import('../model/validate').Unit): void {
+    for (const tab of this.tabs) { tab.unit = units; tab.bump(); }
+    this.bump();
+  }
   recentPrompt = false;
-  showRecent(): void { this.recentPrompt = true; this.bump(); }
+  showRecent(): void { if (this.preferences.dialogOpen) return; this.recentPrompt = true; this.bump(); }
   closeRecent(): void { this.recentPrompt = false; this.bump(); }
   async openRecent(entry: RecentEntry): Promise<{ opened: boolean; error?: string }> {
     const existing = entry.kind === 'json' ? this.tabs.find(t => sameFile(t.engine.status().savedPath, entry.path)) : undefined;
@@ -60,6 +72,7 @@ export class WorkspaceModel {
   private lastPersisted = '';
 
   constructor(private readonly app: App, first: EditorModel) {
+    app.preferences.subscribe(() => this.bump());
     this.adopt(first, app.workspace.active!);
     // every document that appears in the workspace gets an editor, whoever opened it (the person, or an agent in the background)
     this.touch(first);
@@ -91,9 +104,11 @@ export class WorkspaceModel {
     state.ui = model;
     model.untitledNo = ++this.untitled;
     model.host = this.hostApi;
+    model.unit = this.preferences.current.units;
     model.closeTabNow = discard => this.closeNow(model, discard);
-    const canPresentFileChoice = model.files.canPresent;
-    model.files.canPresent = () => !this.recentPrompt && canPresentFileChoice();
+    model.newDocument.snapshotDefaults = this.app.preferences.snapshotDefaults;
+    model.newDocument.canStart = () => !this.preferences.dialogOpen && !model.controller.isActive() && !model.closePrompt && !model.recoveryOffers.length;
+    model.files.canPresent = () => !this.preferences.dialogOpen && !this.recentPrompt && !model.controller.isActive() && !model.closePrompt && !model.newDocument.prompt && !model.recoveryOffers.length && !model.recoveryReport;
     model.newDocument.replacesCurrent = false;
     model.newDocument.create = async document => {
       const target = this.newTab({ document });
@@ -115,6 +130,7 @@ export class WorkspaceModel {
   // ------------------------------------------------------------------ tabs
   /** A new untitled document in a new tab, which becomes the active one. Null if the tab limit was reached. */
   newTab(opts: { activate?: boolean; document?: DiagramDocument } = {}): EditorModel | null {
+    if (this.preferences.dialogOpen) return null;
     if (this.app.workspace.documents.length >= TAB_LIMIT) { this.notice = `You have ${TAB_LIMIT} documents open. Close some before opening more.`; this.bump(); return null; }
     this.notice = null;
     const state = this.app.openDocument({ ...(opts.activate === undefined ? {} : { activate: opts.activate }), ...(opts.document ? { document: { document: opts.document, explicitUnsaved: true } } : {}) });
@@ -122,6 +138,7 @@ export class WorkspaceModel {
   }
 
   activate(model: EditorModel): void {
+    if (this.preferences.dialogOpen) return;
     const s = this.stateOf(model);
     if (s && this.app.workspace.active !== s) { this.app.activateDocument(s.engine.scope().documentId); this.bump(); }
   }
@@ -136,6 +153,7 @@ export class WorkspaceModel {
    * pressing Ctrl+Tab twice quickly toggles between two). Releasing Ctrl makes the chosen tab the most recent (`endCycle`).
    */
   cycle(delta: 1 | -1): void {
+    if (this.preferences.dialogOpen) return;
     const tabs = this.tabs;
     if (tabs.length < 2) return;
     if (!this.cycling) this.cycling = { order: [...this.mru.filter(m => tabs.includes(m)), ...tabs.filter(t => !this.mru.includes(t))], index: 0 };
@@ -153,6 +171,7 @@ export class WorkspaceModel {
 
   /** Moves a tab to a position in the tab order (the order is remembered with the rest of the workspace). */
   moveTab(model: EditorModel, index: number): void {
+    if (this.preferences.dialogOpen) return;
     const s = this.stateOf(model);
     if (!s) return;
     const before = this.tabs.indexOf(model);
@@ -164,6 +183,7 @@ export class WorkspaceModel {
 
   /** Steps to the next (or previous) tab in tab order, wrapping round. */
   step(delta: 1 | -1): void {
+    if (this.preferences.dialogOpen) return;
     const tabs = this.tabs;
     if (tabs.length < 2) return;
     const i = tabs.indexOf(this.active);
@@ -172,6 +192,7 @@ export class WorkspaceModel {
 
   /** Opens a file in a tab: an untouched blank tab is used up first; opening a file that is already open shows that tab instead. */
   async openFile(kind: 'json' | 'vsdx' = 'json', recentId?: string, file?: string): Promise<{ opened: boolean; error?: string }> {
+    if (this.preferences.dialogOpen) return { opened: false, error: 'Preferences is open' };
     const reuse = this.active.isBlank ? this.active : null;
     const target = reuse ?? this.newTab();
     if (!target) return { opened: false, error: this.notice ?? 'Cannot open another tab' };
@@ -201,6 +222,7 @@ export class WorkspaceModel {
 
   /** The person asked to close a tab. Unsaved work asks first. Resolves true once it is closed, false if they chose Cancel. */
   async closeTab(model: EditorModel): Promise<boolean> {
+    if (this.preferences.dialogOpen) return false;
     if (!this.tabs.includes(model)) return true;
     this.activate(model);
     if (model.beginTabClose()) return new Promise<boolean>(resolve => { model.tabCloseResult = resolve; }); // the dialog asks; its answer comes back through closeTabNow
@@ -210,6 +232,7 @@ export class WorkspaceModel {
 
   /** Closes several tabs one after another, asking about each that has unsaved work; Cancel on any of them leaves the rest open. */
   async closeMany(models: EditorModel[]): Promise<void> {
+    if (this.preferences.dialogOpen) return;
     for (const m of [...models]) if (!(await this.closeTab(m))) return;
   }
 
@@ -227,6 +250,7 @@ export class WorkspaceModel {
 
   /** Closes a tab without asking. `discard` throws away its recovery session (Don't save); a closed unchanged tab leaves nothing behind either way. */
   async closeNow(model: EditorModel, discard: boolean): Promise<void> {
+    if (this.preferences.dialogOpen) return;
     const state = this.stateOf(model);
     if (!state) return;
     const scope = state.engine.scope();
@@ -252,7 +276,7 @@ export class WorkspaceModel {
 
   /** The host moves a background document here: it becomes a tab (unsaved, with a fresh history) and, normally, the one showing. */
   async adoptDocument(document: DiagramDocument, activate: boolean): Promise<Result<Scope & { revision: number }>> {
-    if (this.isBusy()) return fail('busy_user_editing', 'the person is editing; try again in a moment', { retryable: true, outcome: 'none' });
+    if (this.preferences.dialogOpen || this.isBusy()) return fail('busy_user_editing', 'the person is editing; try again in a moment', { retryable: true, outcome: 'none' });
     const target = this.newTab({ activate: false });
     if (!target) return fail('limit_exceeded', this.notice ?? 'too many documents are open', { outcome: 'none' });
     const replaced = await target.engine.replaceDocument(document, { ...target.engine.scope(), baseRevision: target.engine.revision });
@@ -269,13 +293,14 @@ export class WorkspaceModel {
   activateById(documentId: string): Result<{ activated: string }> {
     const tab = this.tabs.find(t => t.engine.scope().documentId === documentId);
     if (!tab) return fail('document_mismatch', 'that document is not open in the window', { outcome: 'none' });
-    if (this.isBusy()) return fail('busy_user_editing', 'the person is editing; try again in a moment', { retryable: true, outcome: 'none' });
+    if (this.preferences.dialogOpen || this.isBusy()) return fail('busy_user_editing', 'the person is editing; try again in a moment', { retryable: true, outcome: 'none' });
     this.activate(tab);
     return ok({ activated: documentId });
   }
 
   /** The person clicked a background document's tab. */
   async showAgentDocument(documentId: string): Promise<void> {
+    if (this.preferences.dialogOpen) return;
     const r = await this.hostApi.documentShow(documentId);
     this.notice = r.ok ? null : r.error.message;
     await this.refreshAgentDocs();
@@ -283,6 +308,7 @@ export class WorkspaceModel {
 
   /** Closing a background tab throws its work away: the first press asks, the second does it. */
   async discardAgentDocument(documentId: string): Promise<void> {
+    if (this.preferences.dialogOpen) return;
     const doc = this.agentDocs.find(d => d.documentId === documentId);
     if (doc && doc.unsaved && this.armedDiscard !== documentId) { this.armedDiscard = documentId; this.bump(); return; }
     this.armedDiscard = null;
@@ -312,6 +338,7 @@ export class WorkspaceModel {
    * their recovery sessions, still unsaved. Sessions that no tab owns are offered in the recovery dialog. Nothing is asked about what is restored.
    */
   async restoreWorkspace(holder: EditorModel): Promise<void> {
+    if (this.preferences.dialogOpen) return;
     try {
       const mem = await this.hostApi.workspaceLoad();
       if (!mem.ok || !mem.value.found || mem.value.tabs.length === 0) { await holder.checkRecovery(); return; }
@@ -362,6 +389,7 @@ export class WorkspaceModel {
 
   /** The person chose Recover in the dialog: the session opens as its own tab (an untouched blank one is used up first). */
   async restoreOrphan(holder: EditorModel, sessionId: string): Promise<void> {
+    if (this.preferences.dialogOpen) return;
     const target = this.active.isBlank ? this.active : this.newTab();
     if (!target) return;
     this.activate(target);
@@ -374,6 +402,7 @@ export class WorkspaceModel {
 
   /** The host wants to close the window. Nothing unsaved: it may. Otherwise one prompt covers every unsaved tab. */
   beginClose(): { dirty: boolean } {
+    if (this.preferences.dialogOpen) return { dirty: true };
     const dirty = this.unsavedTabs;
     if (dirty.length === 0) return { dirty: false };
     const first = dirty[0]!;

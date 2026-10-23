@@ -1,0 +1,23 @@
+{
+  "command": "dotnet.exe",
+  "head": "a74345513811c6e6be7b0d54bec69ba99af905ec",
+  "startedUtc": "2026-10-20T21:40:21.5031261Z",
+  "finishedUtc": "2026-10-20T21:40:48.7124483Z",
+  "exitCode": 0,
+  "arguments": [
+    "test",
+    "tests/Diagram.Windows.Tests/Diagram.Windows.Tests.csproj",
+    "--filter",
+    "FullyQualifiedName~CloseTests",
+    "--no-restore",
+    "-m:1",
+    "--logger",
+    "console;verbosity=normal",
+    "--blame-hang-timeout",
+    "90s",
+    "--blame-hang-dump-type",
+    "none",
+    "--results-directory",
+    "artifacts/w13-preferences/verification/close-hang"
+  ]
+}

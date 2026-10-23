@@ -17,6 +17,7 @@ import { parsePath } from '../geometry/svgPath';
 import { isOutlinePreset, PRESET_PORTS } from '../geometry/presetOutlines';
 import { paintProblem } from '../model/paint';
 import { planRoutes } from '../layout/routePlanner';
+import { readDocumentDefaults, textDefaults } from '../model/documentDefaults';
 
 export interface PlanContext {
   newId(): string;
@@ -42,10 +43,6 @@ export interface Plan {
   routeChanges?: RouteChange[];
 }
 
-const DEFAULT_TEXT: TextBlock = {
-  value: '', fontFamily: 'Segoe UI', fontSizePt: 12, bold: false, italic: false, underline: false, colour: '#000000',
-  horizontalAlign: 'center', verticalAlign: 'middle', wrap: true, paddingPt: 4,
-};
 const DEFAULT_SHAPE_STYLE: ShapeStyle = {
   fill: { kind: 'solid', colour: '#ffffff', opacity: 1 }, stroke: { kind: 'solid', colour: '#333333', opacity: 1 },
   strokeWidthPt: 1, dash: 'solid', lineCap: 'butt', lineJoin: 'miter',
@@ -447,7 +444,7 @@ class Planner {
         const bad = paintProblem(el.style.fill, 'fill') ?? paintProblem(el.style.stroke, 'stroke'); if (bad) stop('invalid_request', bad);
         if (op.alias) el.alias = op.alias;
         if (op.name !== undefined) el.name = op.name;
-        if (op.text) el.text = mergeText(DEFAULT_TEXT, op.text as PatchObj);
+        if (op.text) el.text = mergeText(textDefaults(this.doc), op.text as PatchObj);
         if (op.attachment) el.attachment = this.resolveAttachment(op.attachment, page.id, id);
         if (op.ports) el.ports = op.ports.map(p => ({ ...p }));
         else if (isOutlinePreset(el.geometry.preset)) el.ports = PRESET_PORTS[el.geometry.preset].map(p => ({ ...p })); // a flowchart symbol starts with its own connection points
@@ -466,7 +463,7 @@ class Planner {
         this.assertLayers(page, layerIds);
         const el: TextElement = {
           id, kind: 'text', layerIds: [...layerIds], zIndex: this.nextZ(page), locked: false, hidden: false,
-          bounds: { ...op.bounds }, rotationDeg: op.rotationDeg ?? 0, metadata: {}, text: mergeText(DEFAULT_TEXT, op.text as PatchObj),
+          bounds: { ...op.bounds }, rotationDeg: op.rotationDeg ?? 0, metadata: {}, text: mergeText(textDefaults(this.doc), op.text as PatchObj),
         };
         if (op.alias) el.alias = op.alias;
         if (op.name !== undefined) el.name = op.name;
@@ -515,7 +512,7 @@ class Planner {
         };
         if (op.alias) el.alias = op.alias;
         if (op.name !== undefined) el.name = op.name;
-        if (op.label) el.label = mergeText(DEFAULT_TEXT, op.label as PatchObj);
+        if (op.label) el.label = mergeText(textDefaults(this.doc), op.label as PatchObj);
         if (op.labelAnchor) el.labelAnchor = this.anchorOf(op.labelAnchor);
         this.addElement(pageIdx, el);
         if (op.routing) this.applyRouting(pageIdx, id, op.routing.mode);
@@ -863,7 +860,7 @@ class Planner {
     if (this.pages.some(p => p.id === id)) stop('invalid_request', `page id ${id} already exists`, { id });
     const page: Page = {
       id, name: op.name, widthPt: op.widthPt ?? toPoints(297, 'mm'), heightPt: op.heightPt ?? toPoints(210, 'mm'),
-      background: { kind: 'solid', colour: '#ffffff', opacity: 1 }, grid: { visible: true, spacingPt: toPoints(5, 'mm'), snap: true }, guides: [],
+      background: { kind: 'solid', colour: '#ffffff', opacity: 1 }, grid: { ...readDocumentDefaults(this.doc).defaults.grid }, guides: [],
       layers: [{ id: this.ctx.newId(), name: 'Layer 1', visible: true, locked: false, printable: true, snap: true, glue: true }],
       elements: [],
     };
@@ -928,8 +925,8 @@ class Planner {
         }
         case 'text': {
           need(element.kind === 'shape' || element.kind === 'text' || element.kind === 'connector', key);
-          if (element.kind === 'connector') { next.label = mergeText(element.label ?? DEFAULT_TEXT, value as PatchObj); break; } // a connector's text is its label
-          const base = (element as ShapeElement | TextElement).text ?? DEFAULT_TEXT;
+          if (element.kind === 'connector') { next.label = mergeText(element.label ?? textDefaults(this.doc), value as PatchObj); break; } // a connector's text is its label
+          const base = (element as ShapeElement | TextElement).text ?? textDefaults(this.doc);
           next.text = mergeText(base, value as PatchObj);
           break;
         }
@@ -1206,4 +1203,3 @@ function isNothing(d: DiffBody): boolean {
   return !d.upserts.elements.length && !d.upserts.assets.length && !d.upserts.pages.length && !d.upserts.layers.length &&
     !d.deletes.elementIds.length && !d.deletes.assetIds.length && !d.deletes.pageIds.length && !d.deletes.layerIds.length;
 }
-

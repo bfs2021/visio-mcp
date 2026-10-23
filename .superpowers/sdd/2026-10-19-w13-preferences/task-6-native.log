@@ -1,0 +1,25 @@
+  Diagram.Core.Contracts -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Core.Contracts\bin\Debug\net10.0\Diagram.Core.Contracts.dll
+  Diagram.Host.Core -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Host.Core\bin\Debug\net10.0\Diagram.Host.Core.dll
+  Diagram.Ipc -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Ipc\bin\Debug\net10.0\Diagram.Ipc.dll
+  Diagram.Visio.Abstractions -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Visio.Abstractions\bin\Debug\net10.0\Diagram.Visio.Abstractions.dll
+  Diagram.Visio -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Visio\bin\Debug\net10.0\Diagram.Visio.dll
+  Diagram.App -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.App\bin\Debug\net10.0-windows\Diagram.App.dll
+  Diagram.Mcp -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\Diagram.Mcp\bin\Debug\net10.0\Diagram.Mcp.dll
+  Diagram.Windows.Tests -> C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll
+Test run for C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v4.0.1+0f7d528729 (64-bit .NET 10.0.13)
+[xUnit.net 00:00:01.71]   Discovering: Diagram.Windows.Tests
+[xUnit.net 00:00:02.30]   Discovered:  Diagram.Windows.Tests
+[xUnit.net 00:00:02.32]   Starting:    Diagram.Windows.Tests
+  Passed Diagram.Windows.Tests.PreferencesHostTests.VisibleStartupAndAgentRegistryCapturePreferencesBeforeAnnouncingDocuments [2 s]
+  Passed Diagram.Windows.Tests.PreferencesHostTests.InternalGetSaveAndConflictUseTheIsolatedPerUserRoot [650 ms]
+  Passed Diagram.Windows.Tests.PreferencesHostTests.InitializedAgentUsesSavedDefaultsForOnlyItsNextDrawing [1 s]
+  Passed Diagram.Windows.Tests.PreferencesHostTests.InvalidPayloadCannotTouchThePreferencesFile [691 ms]
+[xUnit.net 00:00:09.84]   Finished:    Diagram.Windows.Tests
+  Passed Diagram.Windows.Tests.PreferencesHostTests.DialogFocusAndSavedThemeSurviveNativeRestart [2 s]
+
+Test Run Successful.
+Total tests: 5
+     Passed: 5
+ Total time: 10.8375 Seconds

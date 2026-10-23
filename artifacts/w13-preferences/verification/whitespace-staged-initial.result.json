@@ -1,0 +1,5 @@
+{
+  "command": "git diff --cached --check",
+  "exitCode": 2,
+  "reason": "Two copied review reports contained a blank line at EOF; copies normalized before final retry"
+}

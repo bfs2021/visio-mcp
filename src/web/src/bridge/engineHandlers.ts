@@ -22,7 +22,7 @@ export interface AgentDocument { documentId: string; sessionId: string; title: s
 /** What the window-level `app.*` requests do. The person's page and the agent-only page each supply the ones that apply to them. */
 export interface AppHandlers {
   /** Agent view: a new document in the background. */
-  createDocument?: (params: Record<string, unknown>) => Result<Scope & { revision: number; title: string; pageId: string }>;
+  createDocument?: (params: Record<string, unknown>) => Result<Scope & { revision: number; title: string; pageId: string }> | Promise<Result<Scope & { revision: number; title: string; pageId: string }>>;
   /** Agent view: let go of a document (it was handed over, or the person closed its tab). */
   dropDocument?: (documentId: string) => Result<{ dropped: string }>;
   /** The person's page: take a document from the agent view as a new tab. */
@@ -66,7 +66,7 @@ export function createEngineHandler(source: CommandEngine | EngineResolver, opts
     const respond = <T>(r: Result<T>) => toResponse(id, r);
     const appHandler = opts.app;
     switch (env.method) {
-      case 'app.createDocument': return respond(appHandler?.createDocument ? appHandler.createDocument(p) : fail('method_not_found', 'this page does not create documents'));
+      case 'app.createDocument': return respond(appHandler?.createDocument ? await appHandler.createDocument(p) : fail('method_not_found', 'this page does not create documents'));
       case 'app.dropDocument': return respond(appHandler?.dropDocument && typeof p.documentId === 'string' ? appHandler.dropDocument(p.documentId) : fail('method_not_found', 'this page does not drop documents'));
       case 'app.adoptDocument': {
         if (!appHandler?.adoptDocument) return respond(fail('method_not_found', 'this page does not take documents'));

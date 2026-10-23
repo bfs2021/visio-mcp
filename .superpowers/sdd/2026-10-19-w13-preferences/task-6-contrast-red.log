@@ -1,0 +1,146 @@
+
+> test:browser
+> playwright test tests/browser/preferences.spec.ts --workers=1 -g dark diagnostic
+
+[WebServer] (node:15876) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:22272) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 1 test using 1 worker
+
+(node:8008) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 tests\browser\preferences.spec.ts:180:1 › dark diagnostic, sidebar, recovery and tab notice text meets normal-text contrast (1.9s)
+
+
+  1) tests\browser\preferences.spec.ts:180:1 › dark diagnostic, sidebar, recovery and tab notice text meets normal-text contrast
+
+    Error: sidebar heading
+
+    expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 4.5
+    Received:    3.084598321897082
+
+      197 |     });
+      198 |   };
+    > 199 |   expect.soft(await contrast(page.locator('.side-section h3').first()), 'sidebar heading').toBeGreaterThanOrEqual(4.5);
+          |                                                                                            ^
+      200 |   await open(page);
+      201 |   await page.getByLabel('Default font', { exact: true }).fill('');
+      202 |   await page.getByRole('button', { name: 'Save preferences' }).click();
+        at C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\web\tests\browser\preferences.spec.ts:199:92
+
+    Error: validation error
+
+    expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 4.5
+    Received:    2.0703834242250294
+
+      201 |   await page.getByLabel('Default font', { exact: true }).fill('');
+      202 |   await page.getByRole('button', { name: 'Save preferences' }).click();
+    > 203 |   expect.soft(await contrast(page.getByTestId('preferences-error-font')), 'validation error').toBeGreaterThanOrEqual(4.5);
+          |                                                                                               ^
+      204 |   await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+      205 |   await page.evaluate(async () => {
+      206 |     const editor = (window as any).__editor;
+        at C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\web\tests\browser\preferences.spec.ts:203:95
+
+    Error: recovery secondary text
+
+    expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 4.5
+    Received:    3.084598321897082
+
+      208 |     await editor.checkRecovery();
+      209 |   });
+    > 210 |   expect.soft(await contrast(page.getByTestId('recovery-path')), 'recovery secondary text').toBeGreaterThanOrEqual(4.5);
+          |                                                                                             ^
+      211 |   expect.soft(await contrast(page.locator('.recovery-info .diag-warning')), 'recovery warning').toBeGreaterThanOrEqual(4.5);
+      212 |   await page.getByTestId('recovery-later').click();
+      213 |   // Isolated representatives cover conditional status/notice classes against their real shell backgrounds.
+        at C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\web\tests\browser\preferences.spec.ts:210:93
+
+    Error: recovery warning
+
+    expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 4.5
+    Received:    2.0703834242250294
+
+      209 |   });
+      210 |   expect.soft(await contrast(page.getByTestId('recovery-path')), 'recovery secondary text').toBeGreaterThanOrEqual(4.5);
+    > 211 |   expect.soft(await contrast(page.locator('.recovery-info .diag-warning')), 'recovery warning').toBeGreaterThanOrEqual(4.5);
+          |                                                                                                 ^
+      212 |   await page.getByTestId('recovery-later').click();
+      213 |   // Isolated representatives cover conditional status/notice classes against their real shell backgrounds.
+      214 |   await page.evaluate(() => {
+        at C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\web\tests\browser\preferences.spec.ts:211:97
+
+    Error: message warning
+
+    expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 4.5
+    Received:    2.4986427210068767
+
+      218 |     }
+      219 |   });
+    > 220 |   for (const cls of ['message warning', 'message error', 'tab-notice', 'tab-banner']) expect.soft(await contrast(page.locator(`[data-contrast="${cls}"]`)), cls).toBeGreaterThanOrEqual(4.5);
+          |                                                                                                                                                                  ^
+      221 | });
+      222 |
+        at C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\web\tests\browser\preferences.spec.ts:220:162
+
+    Error: message error
+
+    expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 4.5
+    Received:    1.9392857757691473
+
+      218 |     }
+      219 |   });
+    > 220 |   for (const cls of ['message warning', 'message error', 'tab-notice', 'tab-banner']) expect.soft(await contrast(page.locator(`[data-contrast="${cls}"]`)), cls).toBeGreaterThanOrEqual(4.5);
+          |                                                                                                                                                                  ^
+      221 | });
+      222 |
+        at C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\web\tests\browser\preferences.spec.ts:220:162
+
+    Error: tab-notice
+
+    expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 4.5
+    Received:    2.4986427210068767
+
+      218 |     }
+      219 |   });
+    > 220 |   for (const cls of ['message warning', 'message error', 'tab-notice', 'tab-banner']) expect.soft(await contrast(page.locator(`[data-contrast="${cls}"]`)), cls).toBeGreaterThanOrEqual(4.5);
+          |                                                                                                                                                                  ^
+      221 | });
+      222 |
+        at C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\web\tests\browser\preferences.spec.ts:220:162
+
+    Error: tab-banner
+
+    expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 4.5
+    Received:    1.0164334918516211
+
+      218 |     }
+      219 |   });
+    > 220 |   for (const cls of ['message warning', 'message error', 'tab-notice', 'tab-banner']) expect.soft(await contrast(page.locator(`[data-contrast="${cls}"]`)), cls).toBeGreaterThanOrEqual(4.5);
+          |                                                                                                                                                                  ^
+      221 | });
+      222 |
+        at C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\web\tests\browser\preferences.spec.ts:220:162
+
+    Error Context: test-results\preferences-dark-diagnosti-ca772--meets-normal-text-contrast\error-context.md
+
+  1 failed
+    tests\browser\preferences.spec.ts:180:1 › dark diagnostic, sidebar, recovery and tab notice text meets normal-text contrast

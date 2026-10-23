@@ -1,0 +1,10 @@
+
+> test:browser
+> playwright test tests/browser/preferences.spec.ts --workers=1 -g saved grid and font
+
+
+Running 1 test using 1 worker
+
+  ok 1 tests\browser\preferences.spec.ts:223:1 › saved grid and font are captured by File New, Ctrl+N, and the plus tab (2.0s)
+
+  1 passed (4.7s)

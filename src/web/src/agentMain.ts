@@ -1,3 +1,4 @@
+import { initializePreferences } from './bridge/initializePreferences';
 import { startAgentApp } from './bridge/agentApp';
 import { createSnapshotProjector } from './canvas/SnapshotProjector';
 import { createSnapshotRenderer } from './render/SnapshotRenderer';
@@ -9,7 +10,9 @@ const assetUrl = (snapshot: { document: { assets: Array<{ id: string; sha256: st
   return a ? `/assets/${a.sha256}` : '';
 };
 const renderer = createSnapshotRenderer({ assetUrl: assetUrl as never });
+const initialPreferences = await initializePreferences(window.chrome?.webview);
 const app = startAgentApp(window.chrome?.webview, {
+  ...initialPreferences,
   render: renderer.render, rasterise: renderer.rasterise, layoutContext: createBrowserLayoutContext(assetUrl as never),
   configureEngine: engine => { engine.setSnapshotProjector(createSnapshotProjector((snapshot, id) => assetUrl(snapshot as never, id)).project); },
 });

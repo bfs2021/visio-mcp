@@ -1,0 +1,31 @@
+
+> test
+> vitest run tests/preferences.test.ts --maxWorkers=2
+
+
+ RUN  v5.0.3 C:/Users/claude/.codex/worktrees/r03-icons/diagram-app/src/web
+
+ ❯ tests/preferences.test.ts (33 tests | 1 failed) 8ms
+   ❯ preferences canonical contract (32)
+     × returns independent generated defaults for callers that mutate nested settings 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/preferences.test.ts > preferences canonical contract > returns independent generated defaults for callers that mutate nested settings
+TypeError: createPreferencesDefaults is not a function
+ ❯ tests/preferences.test.ts:7:19
+      5| describe('preferences canonical contract', () => {
+      6|   it('returns independent generated defaults for callers that mutate n…
+      7|     const first = createPreferencesDefaults();
+       |                   ^
+      8|     first.grid.visible = false;
+      9|     first.font.family = 'Custom';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 32 passed (33)
+   Start at  17:05:31
+   Duration  411ms (transform 79%, import 17%, tests 3%, worker 1%)
+

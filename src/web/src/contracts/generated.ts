@@ -878,3 +878,33 @@ export interface Origin {
   connectionId: string;
 }
 
+export interface PreferencesGrid {
+  spacingPt: number;
+  visible: boolean;
+  snap: boolean;
+}
+
+export interface PreferencesFont {
+  family: string;
+  sizePt: number;
+}
+
+export interface PreferencesRecovery {
+  checkpointSeconds: number;
+}
+
+export interface CapturedDocumentDefaults {
+  grid: PreferencesGrid;
+  font: PreferencesFont;
+}
+
+export interface AppPreferences {
+  schemaVersion: 1;
+  units: "mm" | "cm" | "in" | "pt" | "px";
+  grid: PreferencesGrid;
+  font: PreferencesFont;
+  recovery: PreferencesRecovery;
+  theme: "light" | "dark";
+}
+
+export function createPreferencesDefaults(): AppPreferences { return {"schemaVersion":1,"units":"mm","grid":{"spacingPt":14.173228346456694,"visible":true,"snap":true},"font":{"family":"Segoe UI","sizePt":12},"recovery":{"checkpointSeconds":60},"theme":"light"}; }

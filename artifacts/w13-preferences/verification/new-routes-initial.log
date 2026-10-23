@@ -1,0 +1,33 @@
+
+> test:browser
+> playwright test tests/browser/preferences.spec.ts --workers=1 -g saved grid and font
+
+
+Running 1 test using 1 worker
+
+  x  1 tests\browser\preferences.spec.ts:223:1 › saved grid and font are captured by File New, Ctrl+N, and the plus tab (1.6s)
+
+
+  1) tests\browser\preferences.spec.ts:223:1 › saved grid and font are captured by File New, Ctrl+N, and the plus tab 
+
+    Error: locator.fill: Error: strict mode violation: getByLabel('Width (pt)') resolved to 2 elements:
+        1) <input min="120" max="2000" value="400" type="number" aria-label="Component width (pt)"/> aka getByRole('spinbutton', { name: 'Component width (pt)' })
+        2) <input min="0" step="any" type="number" value="841.8898" aria-label="Width (pt)"/> aka getByTestId('new-document').getByRole('spinbutton', { name: 'Width (pt)' })
+
+    Call log:
+      - waiting for getByLabel('Width (pt)')
+
+
+      243 |   await page.getByTestId('menu-new').click();
+      244 |   await page.getByLabel('Starting page').selectOption('custom');
+    > 245 |   await page.getByLabel('Width (pt)').fill('500');
+          |                                       ^
+      246 |   await page.getByLabel('Height (pt)').fill('300');
+      247 |   await page.getByRole('button', { name: 'Create', exact: true }).click();
+      248 |   await verify();
+        at C:\Users\claude\.codex\worktrees\r03-icons\diagram-app\src\web\tests\browser\preferences.spec.ts:245:39
+
+    Error Context: test-results\preferences-saved-grid-and-ef811-New-Ctrl-N-and-the-plus-tab\error-context.md
+
+  1 failed
+    tests\browser\preferences.spec.ts:223:1 › saved grid and font are captured by File New, Ctrl+N, and the plus tab 

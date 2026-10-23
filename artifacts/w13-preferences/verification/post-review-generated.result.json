@@ -1,0 +1,12 @@
+{
+  "command": "npm.cmd",
+  "arguments": [
+    "run",
+    "generate:check"
+  ],
+  "head": "0d74ade18edf9001961b1fb5ca194c16a6cd775c",
+  "startedUtc": "2026-10-20T21:25:11.0039445Z",
+  "finishedUtc": "2026-10-20T21:25:11.6368422Z",
+  "exitCode": 0,
+  "log": "verification/post-review-generated.log"
+}

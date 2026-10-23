@@ -38,17 +38,19 @@ public sealed class RecoveryManager : IAsyncDisposable
     readonly RecoveryOptions options;
     readonly Channel<Func<Task>> work = Channel.CreateUnbounded<Func<Task>>(new UnboundedChannelOptions { SingleReader = true });
     readonly Task worker;
-    readonly Timer timer;
+    readonly ITimer timer;
     readonly CancellationTokenSource stop = new();
     readonly object gate = new();
+    bool stopping;
     readonly Dictionary<string, Track> tracks = new(); // by session id
     TaskCompletionSource ready = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-    public RecoveryManager(BridgeRouter router, RecoveryStore store, BlobStore blobs, Func<string?> currentPath, RecoveryOptions? options = null, Func<string, string?>? documentPath = null)
+    public RecoveryManager(BridgeRouter router, RecoveryStore store, BlobStore blobs, Func<string?> currentPath, RecoveryOptions? options = null, Func<string, string?>? documentPath = null, TimeProvider? timeProvider = null)
     {
         this.router = router; this.store = store; this.blobs = blobs; this.currentPath = currentPath; this.documentPath = documentPath; this.options = options ?? new RecoveryOptions();
         worker = Task.Run(RunAsync);
-        timer = new Timer(_ => { if (HasPending()) Post(CheckpointAllAsync); }, null, this.options.CheckpointEvery ?? TimeSpan.FromSeconds(60), this.options.CheckpointEvery ?? TimeSpan.FromSeconds(60));
+        var interval = this.options.CheckpointEvery ?? TimeSpan.FromSeconds(60);
+        timer = (timeProvider ?? TimeProvider.System).CreateTimer(_ => { if (HasPending()) Post(CheckpointAllAsync); }, null, interval, interval);
     }
 
     bool HasPending() { lock (gate) return tracks.Values.Any(t => Volatile.Read(ref t.CommitsSinceCheckpoint) > 0); }
@@ -90,7 +92,31 @@ public sealed class RecoveryManager : IAsyncDisposable
         return done.Task;
     }
 
-    bool Post(Func<Task> job) => work.Writer.TryWrite(job); // false once disposed: nothing more will be written
+    bool Post(Func<Task> job) { lock (gate) return !stopping && work.Writer.TryWrite(job); }
+
+    /// <summary>Changes only the periodic checkpoint cadence; queued commits and recovery sessions stay intact.</summary>
+    public Task UpdateCheckpointIntervalAsync(TimeSpan interval, CancellationToken ct = default)
+    {
+        if (interval < TimeSpan.FromSeconds(10) || interval > TimeSpan.FromHours(1) || interval.Ticks % TimeSpan.TicksPerSecond != 0)
+            throw new ArgumentOutOfRangeException(nameof(interval), "Checkpoint interval must be 10–3600 whole seconds.");
+        ct.ThrowIfCancellationRequested();
+        var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        if (!Post(() =>
+        {
+            try
+            {
+                ct.ThrowIfCancellationRequested();
+                lock (gate)
+                {
+                    if (stopping || !timer.Change(interval, interval)) throw new ObjectDisposedException(nameof(RecoveryManager));
+                }
+                done.TrySetResult();
+            }
+            catch (Exception e) { done.TrySetException(e); }
+            return Task.CompletedTask;
+        })) done.TrySetException(new ObjectDisposedException(nameof(RecoveryManager)));
+        return done.Task;
+    }
 
     async Task RunAsync()
     {
@@ -320,6 +346,7 @@ public sealed class RecoveryManager : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        lock (gate) stopping = true;
         router.Committed -= OnCommitted;
         router.SessionChanged -= OnSession;
         router.DocumentClosed -= OnClosed;

@@ -1,14 +1,15 @@
-import type { DiagramDocument, Scope } from '../contracts/generated';
+import type { CapturedDocumentDefaults, DiagramDocument, Scope } from '../contracts/generated';
 import type { CommandEngine } from '../commands/CommandEngine';
 import { newDocument, type PageSize } from '../model/newDocument';
 import type { Result } from '../model/result';
 
 export type ExpectedDocument = Scope & { baseRevision: number };
-export interface NewPrompt { stage: 'size' | 'confirm'; size: PageSize; expected: ExpectedDocument; saving: boolean; error: string | null }
+export interface NewPrompt { defaults?: CapturedDocumentDefaults; stage: 'size' | 'confirm'; size: PageSize; expected: ExpectedDocument; saving: boolean; error: string | null }
 
 /** One revision-pinned lifecycle action, shared by menu and keyboard; a workspace may replace create with its new-tab action. */
 export class NewDocumentFlow {
   prompt: NewPrompt | null = null;
+  snapshotDefaults: () => CapturedDocumentDefaults | undefined = () => undefined;
   canStart = () => true;
   replacesCurrent = true;
   save = async () => {};
@@ -20,7 +21,8 @@ export class NewDocumentFlow {
   begin(): void {
     if (this.prompt || !this.canStart()) return;
     const p = newDocument().pages[0]!;
-    this.prompt = { stage: 'size', size: { widthPt: p.widthPt, heightPt: p.heightPt }, expected: { ...this.engine.scope(), baseRevision: this.engine.revision }, saving: false, error: null };
+    const defaults = this.snapshotDefaults();
+    this.prompt = { ...(defaults ? { defaults } : {}), stage: 'size', size: { widthPt: p.widthPt, heightPt: p.heightPt }, expected: { ...this.engine.scope(), baseRevision: this.engine.revision }, saving: false, error: null };
     this.changed();
   }
   cancel(): void { if (!this.prompt?.saving) { this.prompt = null; this.changed(); } }
@@ -52,11 +54,10 @@ export class NewDocumentFlow {
     if (!this.current(p)) return;
     p.saving = true; p.error = null; this.changed();
     try {
-      const r = await this.create(newDocument(undefined, p.size), p.expected, discard);
+      const r = await this.create(newDocument(undefined, p.size, p.defaults), p.expected, discard);
       if (!r.ok) { p.error = r.error.message; return; }
       this.prompt = null; this.created(r.value);
     } catch (e) { p.error = e instanceof Error ? e.message : 'The new drawing could not be created.'; }
     finally { p.saving = false; this.changed(); }
   }
 }
-

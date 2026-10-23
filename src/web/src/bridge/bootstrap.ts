@@ -1,3 +1,5 @@
+import type { AppPreferences } from '../contracts/generated';
+import { PreferencesModel } from '../preferences/PreferencesModel';
 import { CommandEngine } from '../commands/CommandEngine';
 import { newDocument } from '../model/newDocument';
 import { Workspace, type DocumentState } from '../workspace/Workspace';
@@ -15,9 +17,10 @@ declare global {
  * announces readiness. `editor.ready` is sent only after the handler is registered, so the host never sees a ready editor that cannot answer.
  * Documents opened or closed later are announced to the host as they happen, so it always knows which are open and which is active.
  */
-export function startApp(webview: WebViewLike | undefined, root: HTMLElement | null = typeof document !== 'undefined' ? document.getElementById('status') : null, hooks: { onSessionChanged?: (state: DocumentState) => void; render?: EngineHandlerOptions['render']; layoutContext?: EngineHandlerOptions['layoutContext']; rasterise?: EngineHandlerOptions['rasterise']; beforeClose?: EngineHandlerOptions['beforeClose']; app?: EngineHandlerOptions['app'] } = {}) {
+export function startApp(webview: WebViewLike | undefined, root: HTMLElement | null = typeof document !== 'undefined' ? document.getElementById('status') : null, hooks: { initialPreferences?: AppPreferences; preferences?: PreferencesModel; client?: BridgeClient; onSessionChanged?: (state: DocumentState) => void; render?: EngineHandlerOptions['render']; layoutContext?: EngineHandlerOptions['layoutContext']; rasterise?: EngineHandlerOptions['rasterise']; beforeClose?: EngineHandlerOptions['beforeClose']; app?: EngineHandlerOptions['app'] } = {}) {
+  const preferences = hooks.preferences ?? new PreferencesModel(hooks.initialPreferences);
   const workspace = new Workspace();
-  const first = workspace.add(new CommandEngine({ document: newDocument() }));
+  const first = workspace.add(new CommandEngine({ document: newDocument(undefined, undefined, preferences.snapshotDefaults()) }));
   const engine = first.engine;
   const show = () => {
     const active = workspace.active?.engine ?? engine;
@@ -46,15 +49,15 @@ export function startApp(webview: WebViewLike | undefined, root: HTMLElement | n
 
   /** Opens another document in the workspace (an agent's, in the background, or the person's own) and tells the host. */
   const openDocument = (opts: { activate?: boolean; document?: ConstructorParameters<typeof CommandEngine>[0] } = {}): DocumentState => {
-    const state = workspace.add(new CommandEngine(opts.document ?? { document: newDocument() }), opts.activate === undefined ? {} : { activate: opts.activate });
+    const state = workspace.add(new CommandEngine(opts.document ?? { document: newDocument(undefined, undefined, preferences.snapshotDefaults()) }), opts.activate === undefined ? {} : { activate: opts.activate });
     state.engine.onCommitted(show);
     return state;
   };
   const closeDocument = (documentId: string) => workspace.close(documentId);
   const activateDocument = (documentId: string) => workspace.activate(documentId);
 
-  if (!webview) return { engine, client: null, host: null, router, sessionChanged, workspace, openDocument, closeDocument, activateDocument };
-  client = new BridgeClient(webview);
+  if (!webview) return { preferences, engine, client: null, host: null, router, sessionChanged, workspace, openDocument, closeDocument, activateDocument };
+  client = hooks.client ?? new BridgeClient(webview);
   const host = createHostServices(client);
   client.onRequest(router.dispatch);
   const sender = client;
@@ -66,5 +69,5 @@ export function startApp(webview: WebViewLike | undefined, root: HTMLElement | n
     else if (e.kind === 'activated') sender.sendEvent('editor.document.activated', { protocolVersion: 1, documentId: e.state.engine.scope().documentId });
   });
   announce('editor.ready', first);
-  return { engine, client, host, router, sessionChanged, workspace, openDocument, closeDocument, activateDocument };
+  return { preferences, engine, client, host, router, sessionChanged, workspace, openDocument, closeDocument, activateDocument };
 }

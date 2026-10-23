@@ -1,3 +1,5 @@
+import { initializePreferences } from './bridge/initializePreferences';
+import { applyChromeTheme } from './preferences/applyChromeTheme';
 import type { ComponentProposal } from './layout/components';
 import '@maxgraph/core/css/common.css';
 import './styles.css';
@@ -55,7 +57,10 @@ const assetUrl = (snapshot: { document: { assets: Array<{ id: string; sha256: st
 };
 const renderer = createSnapshotRenderer({ assetUrl: assetUrl as never });
 let ws: WorkspaceModel | null = null;
+const initialPreferences = await initializePreferences(window.chrome?.webview);
+applyChromeTheme(initialPreferences.preferences.current.theme);
 const app = startApp(window.chrome?.webview, null, {
+  ...initialPreferences,
   onSessionChanged: state => (state.ui as EditorModel | null)?.sessionReplaced(),
   render: renderer.render, rasterise: renderer.rasterise, layoutContext: createBrowserLayoutContext(assetUrl as never),
   beforeClose: async () => ws!.beginClose(),
@@ -85,6 +90,8 @@ function configure(model: EditorModel, state: DocumentState): void {
 
 const firstModel = new EditorModel(engine);
 ws = new WorkspaceModel(app, firstModel);
+app.preferences.onSaved = saved => { applyChromeTheme(saved.theme); ws!.applyPreferencesUnits(saved.units); };
+app.preferences.subscribe(() => router?.setGestureActive(app.preferences.dialogOpen));
 ws.configure = configure;
 ws.isBusy = () => !!router?.isGestureActive();
 ws.host = hostApi(host);
@@ -144,6 +151,14 @@ if (import.meta.env.VITE_TEST_API === '1') {
     activateTab: (index: number) => shell.activate(shell.tabs[index]!),
     moveTab: (from: number, to: number) => shell.moveTab(shell.tabs[from]!, to),
     agentOpenDocument: (opts?: { activate?: boolean }) => app.openDocument(opts ?? {}).engine.scope(),
+    preferencesHostSave: async (patch: Partial<import('./contracts/generated').AppPreferences>) => {
+      const read = await initialPreferences.preferencesService.get();
+      return read.ok ? initialPreferences.preferencesService.save({ ...read.value.preferences, ...patch }, read.value.versionTag) : read;
+    },
+    preferencesFailWrites: () => app.preferences.useService({
+      get: () => initialPreferences.preferencesService.get(),
+      save: async () => ({ ok: false, error: { code: 'io_error', message: 'Settings file could not be written', retryable: false } }),
+    }),
   };
 }
 

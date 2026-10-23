@@ -1,0 +1,16 @@
+
+> test
+> vitest run --maxWorkers=2
+
+
+ RUN  v5.0.3 C:/Users/claude/.codex/worktrees/r03-icons/diagram-app/src/web
+
+
+ Test Files  53 passed (53)
+      Tests  497 passed (497)
+   Start at  22:24:21
+   Duration  13.60s (import 65%, tests 24%, transform 10%, worker 2%)
+
+    Isolate  53 workers spawned · ~140ms startup each (spawn + environment, per file)
+             at least ~3.56s faster with isolate: false — reuses workers across files instead of one per file
+

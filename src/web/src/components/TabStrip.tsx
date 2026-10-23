@@ -38,6 +38,7 @@ export function TabStrip({ ws }: { ws: WorkspaceModel }) {
 
   // ---- dragging to reorder (pointer events, so it works the same with mouse, pen and touch)
   const onPointerDown = (e: React.PointerEvent, tab: EditorModel) => {
+    if (ws.preferences.dialogOpen) return;
     if (e.button !== 0 || (e.target as HTMLElement).closest('.tab-close')) return;
     drag.current = { tab, startX: e.clientX, moved: false };
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -120,6 +121,7 @@ export function TabStrip({ ws }: { ws: WorkspaceModel }) {
       )}
       <button type="button" className="tab-new" aria-label="New document" title="New document (Ctrl+N)" data-testid="tab-new" onClick={() => ws.newTab()}>+</button>
       {ws.notice && <span className="tab-notice" role="status" data-testid="tab-notice">{ws.notice}</span>}
+      {ws.preferencesDiagnostic && <div className="tab-banner" role="status" data-testid="preferences-diagnostic">{ws.preferencesDiagnostic}</div>}
       {ws.banner && (
         <div className="tab-banner" role="status" data-testid="restore-banner" title={ws.banner.lines.join(' ')}>
           <span>{ws.banner.text}</span>
