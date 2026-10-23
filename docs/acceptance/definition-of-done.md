@@ -73,9 +73,10 @@ These descriptions preserve the acceptance snapshot. Current work status and own
    and library import dialog in the I52 suite were exercised through automation only. See the supplementary sign-off below.
 3. **Alignment diagnostics are conservative heuristics** (item 13). R05 detects nearby comparable peer boxes; grouped, rotated, custom-vector and free-text arrangements remain outside this check. See [R05](../m5/R05-regression.md).
 4. **Thread-pool starvation when a test process launches a child** (A05, [shim-startup-pause.md](shim-startup-pause.md)): not a freeze of the application and not specific to the shim; it scales with machine load (2 s at about 70 % busy, 5 s at 96 %) and the product never launches a process. The exact mechanism was not isolated.
-5. **One machine and one Office version.** Visio 16.0 build 20430 and the installed Word; no other builds.
-6. Library picture bytes are not garbage-collected on a schedule (I51 gap 4), and a recovered session that is not edited before a second crash is offered again (I51 gap 3).
-7. Connector `bounds` in the canonical document are authored fallback geometry, not the live extent (design decision; `visualBounds` carries the extent). An
+5. **Performance gaps found by A06 (#21, [performance.md](performance.md)):** a page preview with eight 6-megapixel pictures takes 1.4 to 1.5 s against the 1 s preferred target; `.vsdx` export refuses a document whose pictures exceed 64 MiB in all (reported as `internal_error`); selecting and dragging all 500 elements stalls the display for about 0.65 s at release. None was profiled.
+6. **One machine and one Office version.** Visio 16.0 build 20430 and the installed Word; no other builds.
+7. Library picture bytes are not garbage-collected on a schedule (I51 gap 4), and a recovered session that is not edited before a second crash is offered again (I51 gap 3).
+8. Connector `bounds` in the canonical document are authored fallback geometry, not the live extent (design decision; `visualBounds` carries the extent). An
    agent reading stored connector bounds after moving a glued shape sees the old values.
 
 ## Verdict
