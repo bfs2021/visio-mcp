@@ -1,6 +1,6 @@
 # W09 — Print and print preview
 
-Status: proposed design, awaiting owner review. Issue: https://github.com/rp2839/visio-mcp/issues/31
+Status: revised proposal; review requested for the print-dispatch detail. Issue: https://github.com/rp2839/visio-mcp/issues/31
 Related design: [W08 editor export](W08-editor-export.md).
 
 ## Outcome
@@ -18,7 +18,7 @@ W08 already pins document/session/revision before export, renders pages through 
 - Fit places each selected drawing page on one physical sheet while preserving aspect ratio inside the chosen margins. Tile keeps the drawing at its native page scale and splits it into consecutive sheets in row-major order. Tiled sheets have no implicit overlap; the preview makes their count and cut boundaries visible.
 - Page ranges use 1-based drawing-page numbers and accept comma-separated pages and inclusive ranges (for example, `1,3-5`). Invalid, reversed, empty or out-of-document ranges are explained before printing.
 - Preview uses the same page ordering, paper dimensions, margins, orientation and scale calculations that produce the final print document. Show sheet numbers and the source drawing-page number(s) on each preview sheet; these labels are preview chrome and are not printed.
-- **Print** sends the composed sheets to the selected system printer. **Save as PDF** writes the same composed sheets through W08's approved PDF destination and atomic-write path. File → Export PDF remains the W08 action that exports every drawing page at its original page dimensions.
+- **Print** sends the composed sheets to the selected system printer using the exact settings shown in the in-app preview. The in-app dialog owns printer and layout settings; do not open a second settings dialog that could silently change the reviewed layout. **Save as PDF** writes the same composed sheets through W08's approved PDF destination and atomic-write path. File → Export PDF remains the W08 action that exports every drawing page at its original page dimensions.
 - Cancel closes the dialog without printing, saving, or changing the document. A stale preview is rejected if the active document, session or revision changes; the user can reopen Print to preview the latest revision.
 
 ## Architecture and data flow
@@ -27,9 +27,9 @@ W08 already pins document/session/revision before export, renders pages through 
 2. The host validates the captured identity/revision and range, renders only the requested drawing pages through the existing render barrier, and checks that all images are from the same revision. Existing page-count, raster-size and byte limits remain in force; tile expansion has an explicit maximum sheet count and fails with a useful message before printing or publishing.
 3. A pure print-layout component maps page SVGs to physical sheets. Fit computes a uniform scale into the printable area. Tile computes deterministic horizontal and vertical slices at native scale, in row-major order. It returns the composed sheet geometry and the source-page mapping used by both the preview and the output renderer.
 4. The preview presents those composed sheets without taking a screenshot of the visible canvas. Re-rendering or printing rechecks the pinned revision. One shared offline WebView2 composition path produces print-ready output from the page SVGs; it has scripting and external navigation/resources disabled as in W08.
-5. Physical printing submits the composed document to the selected printer with the exact settings used by preview; there must not be a second dialog that can silently override layout settings. If the installed WebView2 runtime requires a platform print UI that can change those settings, compare its returned settings and refresh the preview before allowing final output. Saving as PDF serializes the same composed pages and writes via W08's destination checks, overwrite consent and atomic writer. A cancellation or print/PDF error leaves the source drawing unchanged and reports that no file was published where applicable.
+5. Physical printing submits the composed document to the selected printer with the exact settings used by preview through WebView2's print engine. The in-app preview dialog is the sole settings UI so no second dialog can silently override the selected layout. Saving as PDF serializes the same composed pages and writes via W08's destination checks, overwrite consent and atomic writer. Cancelling in the in-app dialog or encountering a print/PDF error leaves the source drawing unchanged and reports that no file was published where applicable.
 
-The implementation should verify the installed WebView2 runtime's print-settings behavior for page ranges, printer media, orientation and margins before relying on it. Any setting that the runtime cannot preserve consistently must be applied in the shared sheet composition layer or be reported as unsupported; the app must not silently print a layout that differs from preview.
+The implementation should verify the installed WebView2 runtime's print-settings behavior for printer media, orientation and margins before relying on it. Drawing-page ranges and Fit/Tile are applied in the shared sheet composition layer. Any setting that the runtime cannot preserve consistently must be applied in the shared sheet composition layer or be reported as unsupported; the app must not silently print a layout that differs from preview.
 
 ## Boundaries
 
@@ -42,7 +42,7 @@ The implementation should verify the installed WebView2 runtime's print-settings
 
 - Invalid ranges and layouts are blocked before rendering.
 - A changed document identity/revision, unavailable printer, unsupported paper size, over-limit sheet expansion, renderer failure, WebView2 print failure, rejected destination or writer failure yields an actionable error and no partial PDF publication.
-- Cancelling the native print UI is a normal cancellation and does not change document state.
+- Cancelling before print dispatch in the in-app dialog is a normal cancellation and does not change document state.
 - If the selected printer reports non-printable margins, the preview uses those margins or warns that the configured margin cannot be honored. Never claim exact edge-to-edge output when the printer cannot provide it.
 
 ## Verification
