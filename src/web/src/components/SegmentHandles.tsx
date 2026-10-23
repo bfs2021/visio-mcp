@@ -3,7 +3,7 @@ import type { ConnectorElement, Operation } from '../contracts/generated';
 import type { EditorModel } from '../editor/EditorModel';
 import type { GestureToken } from '../canvas/GestureController';
 import { planRoutes } from '../layout/routePlanner';
-import { moveSegment, segmentsOf, type RouteSegment } from '../layout/routeSegments';
+import { moveSegment, runIndexOf, segmentsOf, type RouteSegment } from '../layout/routeSegments';
 import { snapCandidates, snapRun, SNAP_PX, type RunSnap } from '../layout/segmentSnap';
 import { RULER_SIZE } from './Ruler';
 
@@ -53,7 +53,15 @@ export function SegmentHandles({ model }: { model: EditorModel }) {
   const down = (seg: RouteSegment) => (e: React.PointerEvent<SVGElement>) => {
     if (e.button !== 0 || model.controller.isActive()) return;
     e.preventDefault(); e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId);
-    drag.current = { token: model.controller.begin('bend', model.engine.scope(), [connector.id]), segment: seg, startClient: seg.axis === 'h' ? e.clientY : e.clientX, held: undefined };
+    const token = model.controller.begin('bend', model.engine.scope(), [connector.id]);
+    const probe = model.controller.preview(token, [op(seg, seg.coord + 1)]); // a lock or other refusal is explained now, before anything is dragged
+    if (!probe.ok) { model.controller.cancel(token); model.say(probe.error.message, 'warning'); return; }
+    drag.current = { token, segment: seg, startClient: seg.axis === 'h' ? e.clientY : e.clientX, held: undefined };
+  };
+  const togglePin = (seg: RouteSegment, pinned: boolean) => (e: React.SyntheticEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    if (model.controller.isActive()) return;
+    void model.apply('inspector', [{ op: 'pinSegment', target: connector.id, segment: seg.index, pinned: !pinned }]);
   };
   const move = (e: React.PointerEvent<SVGElement>) => {
     const d = drag.current; if (!d) return;
@@ -86,6 +94,7 @@ export function SegmentHandles({ model }: { model: EditorModel }) {
   };
 
   const segs = segmentsOf(drawn).filter(s => s.movable && s.length > 0);
+  const pinned = new Set((connector.routing?.constraints ?? []).map(c => runIndexOf(drawn, c.axis, c.index)));
   return (
     <div style={{ position: 'absolute', left: RULER_SIZE, top: RULER_SIZE, right: 0, bottom: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 5 }} data-testid="segment-overlay">
       <svg width="100%" height="100%" style={{ position: 'absolute', inset: 0, overflow: 'visible' }}>
@@ -95,13 +104,15 @@ export function SegmentHandles({ model }: { model: EditorModel }) {
           const cx = sx((s.from.x + s.to.x) / 2), cy = sy((s.from.y + s.to.y) / 2);
           const cursor = s.axis === 'h' ? 'ns-resize' : 'ew-resize';
           return (
-            <g key={s.index} data-testid={`segment-handle-${s.index}`} role="slider" tabIndex={0} aria-label={`Move ${s.axis === 'h' ? 'horizontal' : 'vertical'} run ${s.index}`}
+            <g key={s.index} data-testid={`segment-handle-${s.index}`} role="slider" tabIndex={0} aria-label={`Move ${s.axis === 'h' ? 'horizontal' : 'vertical'} run ${s.index}${pinned.has(s.index) ? ' (pinned)' : ''}`}
               aria-orientation={s.axis === 'h' ? 'vertical' : 'horizontal'} aria-valuenow={Math.round(s.coord * 100) / 100}
               style={{ pointerEvents: 'auto', cursor, outline: 'none' }}
               onPointerDown={down(s)} onPointerMove={move} onPointerUp={e => void up(e)} onPointerCancel={cancel} onLostPointerCapture={cancel}
-              onPointerEnter={() => setHover(s.index)} onPointerLeave={() => setHover(null)} onFocus={() => setHover(s.index)} onBlur={() => setHover(null)} onKeyDown={key(s)}>
+              onPointerEnter={() => setHover(s.index)} onPointerLeave={() => setHover(null)} onFocus={() => setHover(s.index)} onBlur={() => setHover(null)} onKeyDown={key(s)}
+              onDoubleClick={togglePin(s, pinned.has(s.index))} onContextMenu={togglePin(s, pinned.has(s.index))} data-pinned={pinned.has(s.index)}>
+              <title>{pinned.has(s.index) ? 'Pinned run: double-click or right-click to release it' : 'Drag to move this run. Double-click or right-click to pin it where it is'}</title>
               <rect x={cx - HIT_PX / 2} y={cy - HIT_PX / 2} width={HIT_PX} height={HIT_PX} fill="transparent" />
-              <rect x={cx - HANDLE_PX / 2} y={cy - HANDLE_PX / 2} width={HANDLE_PX} height={HANDLE_PX} rx={2} fill="#fff" stroke="#0284c7" strokeWidth={2} />
+              <rect x={cx - HANDLE_PX / 2} y={cy - HANDLE_PX / 2} width={HANDLE_PX} height={HANDLE_PX} rx={2} fill={pinned.has(s.index) ? '#0284c7' : '#fff'} stroke="#0284c7" strokeWidth={2} />
             </g>
           );
         })}

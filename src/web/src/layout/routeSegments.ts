@@ -72,3 +72,53 @@ export function moveSegment(points: readonly Point[], index: number, target: num
   }
   return { ok: true, points: simplifyRoute(next) };
 }
+
+/** A run held at a place (R21 guided routes). The run is found by axis and by its position among the inner runs of that axis. */
+export interface RunConstraint { axis: 'h' | 'v'; index: number; at: number }
+
+/** The inner runs of a route that can be pinned: movable and of some length. */
+const pinnable = (points: readonly Point[]): RouteSegment[] => segmentsOf(points).filter(s => s.movable && s.length > 0);
+
+/** The constraint address (axis and ordinal among that axis's inner runs) of the run that starts at point `index`. */
+export function addressOf(points: readonly Point[], index: number): { axis: 'h' | 'v'; index: number; coord: number } | undefined {
+  const runs = pinnable(points);
+  const seg = runs.find(s => s.index === index);
+  if (!seg) return undefined;
+  return { axis: seg.axis, index: runs.filter(s => s.axis === seg.axis && s.index < seg.index).length, coord: seg.coord };
+}
+
+/** The route-point index of the run an address points at, or undefined when the route has no such run. */
+export function runIndexOf(points: readonly Point[], axis: 'h' | 'v', ordinal: number): number | undefined {
+  return pinnable(points).filter(s => s.axis === axis)[ordinal]?.index;
+}
+
+/**
+ * Holds each constrained run at its place. A constraint whose run no longer exists, or that cannot be applied without breaking the
+ * route, is returned in `unmet` and the route is left as the router drew it for that run.
+ */
+export function applyConstraints(points: readonly Point[], constraints: readonly RunConstraint[]): { points: Point[]; unmet: RunConstraint[] } {
+  let route = points.map(p => ({ x: p.x, y: p.y }));
+  const unmet: RunConstraint[] = [];
+  for (const c of constraints) {
+    const at = runIndexOf(route, c.axis, c.index);
+    if (at === undefined) { unmet.push(c); continue; }
+    const seg = segmentsOf(route).find(s => s.index === at)!;
+    if (Math.abs(seg.coord - c.at) <= EPS) continue;
+    const moved = moveSegment(route, at, c.at);
+    if (!moved.ok) { unmet.push(c); continue; }
+    route = moved.points;
+  }
+  return { points: route, unmet };
+}
+
+/** Re-addresses held places against a route that has just changed shape. A held place with no run left on it is dropped. */
+export function readdress(points: readonly Point[], held: ReadonlyArray<{ axis: 'h' | 'v'; at: number }>): RunConstraint[] {
+  const runs = pinnable(points);
+  const out: RunConstraint[] = [];
+  for (const h of held) {
+    const same = runs.filter(s => s.axis === h.axis);
+    const k = same.findIndex(s => Math.abs(s.coord - h.at) <= EPS);
+    if (k >= 0) out.push({ axis: h.axis, index: k, at: h.at });
+  }
+  return out;
+}

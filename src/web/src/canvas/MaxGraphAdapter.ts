@@ -201,7 +201,7 @@ export class MaxGraphAdapter implements CanvasAdapter {
       // route that is still valid, so a nudge elsewhere leaves unrelated connectors exactly where they were. Stacking order does not
       // affect routes, so it is not part of the signature.
       const sig = canonicalSerialize([...wanted.values()].map(e => e.kind === 'connector'
-        ? { id: e.id, f: e.from, t: e.to, w: e.waypoints, r: e.route }
+        ? { id: e.id, f: e.from, t: e.to, w: e.waypoints, r: e.route, g: e.routing }
         : { id: e.id, b: e.bounds, rot: e.rotationDeg, h: e.hidden, l: e.layerIds, k: e.kind, fi: e.kind === 'shape' ? [e.style.fill.kind, e.style.stroke.kind] : 0 }).concat(page.layers.map(l => ({ id: l.id, v: l.visible })) as never[]), );
       if (sig !== this.routingSig) {
         this.routingSig = sig;

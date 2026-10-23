@@ -1060,6 +1060,9 @@
         },
         {
           "$ref": "#/$defs/MoveSegment"
+        },
+        {
+          "$ref": "#/$defs/PinSegment"
         }
       ],
       "x-discriminator": "op"
@@ -1683,7 +1686,36 @@
           "description": "How far the run moves on its perpendicular axis, in page points (positive is down or right)."
         }
       },
-      "description": "Moves one run of an orthogonal connector sideways. The neighbouring runs lengthen or shorten, both ends and the other runs stay, and a run moved level with a parallel neighbour merges into it. An automatic connector becomes manual; a frozen one stays frozen with the new route."
+      "description": "Moves one run of an orthogonal connector sideways. The neighbouring runs lengthen or shorten, both ends and the other runs stay, and a run moved level with a parallel neighbour merges into it. An automatic connector pins that run (it becomes guided: only that run is held and the router plans the rest); a manual one keeps its waypoints; a frozen one stays frozen with the new route."
+    },
+    "PinSegment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "target",
+        "segment",
+        "pinned"
+      ],
+      "properties": {
+        "op": {
+          "const": "pinSegment"
+        },
+        "target": {
+          "$ref": "#/$defs/Target"
+        },
+        "segment": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 511,
+          "description": "Index of the run in the route as drawn now."
+        },
+        "pinned": {
+          "type": "boolean",
+          "description": "true holds the run where it is now, so the router keeps it there when it replans (a guided route). false releases it. Automatic connectors only."
+        }
+      },
+      "description": "Pins or unpins one inner run of an automatic orthogonal connector. Moving a run with moveSegment pins it as well."
     }
   }
 }

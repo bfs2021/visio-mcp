@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { ConnectorElement, Element, Operation, TransactionResult } from '../src/contracts/generated';
 import { newDocument } from '../src/model/newDocument';
 import { moveSegment, segmentsOf, simplifyRoute } from '../src/layout/routeSegments';
-import { routeDefects } from '../src/layout/routePlanner';
+import { planRoutes, routeDefects } from '../src/layout/routePlanner';
 import { canonicalSerialize } from '../src/model/canonical';
 import { createTestEngine } from './support/engine';
 
@@ -62,17 +62,68 @@ async function setup() {
 }
 
 describe('moveSegment operation (R21)', () => {
-  it('moves the middle run, makes the connector manual and keeps the ends glued', async () => {
+  it('pins the moved run and nothing else: the connector becomes guided, with no waypoints', async () => {
     const s = await setup();
     const was = s.conn().routing!.advisory!;
     const run = was[1]!.x;
     const result = await s.ok([{ op: 'moveSegment', target: 'z', segment: 1, by: 30 }]);
     expect(result.changed).toContain(s.conn().id);
     const c = s.conn();
-    expect(c.waypoints.length).toBeGreaterThan(0);
-    expect(c.routing).toBeUndefined();
-    expect(c.waypoints.every(w => w.x === run + 30 || w.y === was[0]!.y || w.y === was.at(-1)!.y)).toBe(true);
+    expect(c.waypoints).toEqual([]);
+    expect(c.routing!.constraints).toEqual([{ axis: 'v', index: 0, at: run + 30 }]);
+    expect(c.routing!.advisory![1]!.x).toBe(run + 30);
     expect(c.from.glue).toBe('static');
+  });
+
+  it('a pinned run stays put when an end shape moves, while the rest of the route follows', async () => {
+    const s = await setup();
+    const run = s.conn().routing!.advisory![1]!.x;
+    await s.ok([{ op: 'moveSegment', target: 'z', segment: 1, by: 30 }]);
+    await s.ok([{ op: 'move', target: 'd', delta: { xPt: 0, yPt: 60 } }]);
+    const r = s.conn().routing!.advisory!;
+    expect(r[1]!.x).toBe(run + 30);
+    expect(r.at(-1)!.y).toBe(490);
+    expect(routeDefects(r)).toEqual([]);
+    const page = s.doc().pages[0]!;
+    expect(planRoutes({ elements: page.elements, layers: page.layers, pageArea: page.widthPt * page.heightPt }).changes).toEqual([]);
+  });
+
+  it('pinSegment pins where the run is and unpins; Re-route keeps pins; Reset to Automatic drops them', async () => {
+    const s = await setup();
+    const run = s.conn().routing!.advisory![1]!.x;
+    await s.ok([{ op: 'pinSegment', target: 'z', segment: 1, pinned: true }]);
+    expect(s.conn().routing!.constraints).toEqual([{ axis: 'v', index: 0, at: run }]);
+    await s.ok([{ op: 'reroute', targets: ['z'] }]);
+    expect(s.conn().routing!.constraints).toHaveLength(1);
+    await s.ok([{ op: 'pinSegment', target: 'z', segment: 1, pinned: false }]);
+    expect(s.conn().routing!.constraints).toBeUndefined();
+    await s.ok([{ op: 'pinSegment', target: 'z', segment: 1, pinned: true }]);
+    await s.ok([{ op: 'set', target: 'z', patch: { routing: { mode: 'automatic' } } }]);
+    expect(s.conn().routing?.constraints).toBeUndefined();
+  });
+
+  it('refuses to pin a port run, and a manual or frozen route', async () => {
+    const s = await setup();
+    const r0 = await s.run([{ op: 'pinSegment', target: 'z', segment: 0, pinned: true }]);
+    expect(r0.ok).toBe(false);
+    await s.ok([{ op: 'set', target: 'z', patch: { routing: { mode: 'frozen' } } }]);
+    const r1 = await s.run([{ op: 'pinSegment', target: 'z', segment: 1, pinned: true }]);
+    expect(r1.ok).toBe(false);
+    if (!r1.ok) expect(JSON.stringify(r1.error)).toMatch(/route_not_automatic/);
+  });
+
+  it('a pin that would cross a shape is flagged unresolved and the route is left as drawn', async () => {
+    const s = await setup();
+    await s.ok([{ op: 'moveSegment', target: 'z', segment: 1, by: 30 }]);
+    const x = s.conn().routing!.constraints![0]!.at;
+    const result = await s.ok([{ op: 'createShape', alias: 'wall', bounds: { x: x - 10, y: 150, width: 20, height: 200 } }]);
+    const change = result.routeChanges?.find(c => c.id === s.conn().id);
+    expect(change?.provenance).toBe('unresolved');
+    expect(change?.reason).toMatch(/pinned/);
+    expect(s.conn().routing!.advisory!.some((p, i, a) => i > 0 && Math.abs(p.x - x) < 1 && Math.abs(a[i - 1]!.x - x) < 1 && Math.min(p.y, a[i - 1]!.y) < 350 && Math.max(p.y, a[i - 1]!.y) > 150)).toBe(false); // no run through the wall
+    const page = s.doc().pages[0]!;
+    expect(routeDefects(s.conn().routing!.advisory!)).toEqual([]);
+    expect(page.elements.length).toBe(4);
   });
 
   it('to= and by= agree, and one undo restores the original', async () => {

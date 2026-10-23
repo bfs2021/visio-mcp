@@ -5,7 +5,7 @@ import { ArrangePanel } from './ArrangePanel';
 import { useModel } from './useModel';
 import { textDefaults } from '../model/documentDefaults';
 import { planRoutes } from '../layout/routePlanner';
-import { segmentsOf } from '../layout/routeSegments';
+import { runIndexOf, segmentsOf } from '../layout/routeSegments';
 
 const round = (v: number) => Math.round(v * 1000) / 1000;
 
@@ -258,11 +258,21 @@ function RunFields({ el, model }: { el: ConnectorElement; model: EditorModel }) 
   const points = planRoutes({ elements: page.elements, layers: page.layers, pageArea: page.widthPt * page.heightPt }).routes.get(el.id)?.points;
   const runs = points ? segmentsOf(points).filter(s => s.movable && s.length > 0) : [];
   if (!runs.length) return null;
+  const pinned = new Set((el.routing?.constraints ?? []).map(c => runIndexOf(points!, c.axis, c.index)));
+  const automatic = !el.waypoints.length && el.routing?.mode !== 'frozen';
   return (
     <div className="grid2">
       {runs.map(r => (
-        <NumberField key={r.index} label={`Run ${r.index} ${r.axis === 'h' ? 'y' : 'x'} ${model.unit}`} testId={`field-run-${r.index}`} value={model.toUnit(r.coord)}
-          onCommit={v => void model.apply('inspector', [{ op: 'moveSegment', target: el.id, segment: r.index, to: model.fromUnit(v) }] as Operation[])} />
+        <div key={r.index} className="run-row">
+          <NumberField label={`Run ${r.index} ${r.axis === 'h' ? 'y' : 'x'} ${model.unit}`} testId={`field-run-${r.index}`} value={model.toUnit(r.coord)}
+            onCommit={v => void model.apply('inspector', [{ op: 'moveSegment', target: el.id, segment: r.index, to: model.fromUnit(v) }] as Operation[])} />
+          {automatic && (
+            <label className="field"><span>Pinned</span>
+              <input type="checkbox" checked={pinned.has(r.index)} data-testid={`run-pin-${r.index}`} title="Hold this run where it is when the router plans the route again"
+                onChange={e => void model.apply('inspector', [{ op: 'pinSegment', target: el.id, segment: r.index, pinned: e.target.checked }] as Operation[])} />
+            </label>
+          )}
+        </div>
       ))}
     </div>
   );
@@ -297,8 +307,8 @@ function ConnectorStyle({ el, set, model }: { el: ConnectorElement; set: (p: Rec
         {el.route === 'orthogonal' && (
           <>
             <label className="field"><span>Route mode</span>
-              <select value={el.routing?.mode ?? (el.waypoints.length ? 'manual' : 'automatic')} data-testid="field-route-mode" title="Automatic: the router chooses and keeps the route. Manual: you control the bends. Frozen: the route is kept as it is."
-                onChange={e => set({ routing: { mode: e.target.value } })}><option>automatic</option><option>manual</option><option>frozen</option></select>
+              <select value={el.routing?.mode ?? (el.waypoints.length ? 'manual' : el.routing?.constraints?.length ? 'guided' : 'automatic')} data-testid="field-route-mode" title="Automatic: the router chooses and keeps the route. Manual: you control the bends. Frozen: the route is kept as it is."
+                onChange={e => set({ routing: { mode: e.target.value } })}><option>automatic</option><option>manual</option><option>frozen</option>{el.routing?.constraints?.length ? <option disabled>guided</option> : null}</select>
             </label>
             <RunFields el={el} model={model} />
             {!el.routing?.mode && !el.waypoints.length && (

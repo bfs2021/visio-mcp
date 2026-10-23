@@ -8,7 +8,7 @@ import { toPoints } from '../model/validate';
 import { computeArrange, planZ, type ArrangeItem, type ArrangeOp } from './arrange';
 import { emptyDiffBody, type DiffBody } from './diff';
 import {
-  centreOf, isRightAngle, mapConnectorPoints, rotatePoint, rotateRect, scaleRect, translateBounds, visualBounds,
+  centreOf, isRightAngle, mapConnectorPoints, mapRouting, rotatePoint, rotateRect, scaleRect, translateBounds, visualBounds,
   type PointMap,
 } from './geometry';
 import { ancestorsOf, groupBoundsFrom, leavesUnder } from './groups';
@@ -17,7 +17,7 @@ import { parsePath } from '../geometry/svgPath';
 import { isOutlinePreset, PRESET_PORTS } from '../geometry/presetOutlines';
 import { paintProblem } from '../model/paint';
 import { planRoutes } from '../layout/routePlanner';
-import { moveSegment, segmentsOf } from '../layout/routeSegments';
+import { addressOf, moveSegment, readdress, segmentsOf, type RunConstraint } from '../layout/routeSegments';
 import { readDocumentDefaults, textDefaults } from '../model/documentDefaults';
 
 export interface PlanContext {
@@ -534,7 +534,7 @@ class Planner {
           if (!freeFrom && !freeTo && element.waypoints.length === 0) return stop('invalid_request', 'a glued connector is positioned by its endpoints', { target: element.id });
           const shift = (ep: Endpoint): Endpoint => (ep.glue === 'none' ? { ...ep, point: { x: ep.point!.x + dx, y: ep.point!.y + dy } } : ep);
           const next: ConnectorElement = { ...element, from: shift(element.from), to: shift(element.to), waypoints: element.waypoints.map(p => ({ x: p.x + dx, y: p.y + dy })) };
-          if (element.routing?.advisory) next.routing = { ...element.routing, advisory: element.routing.advisory.map(p => ({ x: p.x + dx, y: p.y + dy })) };
+          if (element.routing) next.routing = mapRouting(element.routing, p => ({ x: p.x + dx, y: p.y + dy }));
           next.bounds = this.connectorBounds(next.from, next.to, next.waypoints);
           this.store(pageIdx, index, next);
           return;
@@ -611,6 +611,7 @@ class Planner {
       case 'reorder': return this.applyReorder(op.targets, op.to);
       case 'reroute': return this.applyReroute(op.targets);
       case 'moveSegment': return this.applyMoveSegment(op);
+      case 'pinSegment': return this.applyPinSegment(op);
       case 'addPage': return this.applyAddPage(op);
       case 'reorderPage': {
         const from = this.pageIndex(op.pageId);
@@ -846,7 +847,7 @@ class Planner {
           copy.from = remapEnd(e.from, e.id);
           copy.to = remapEnd(e.to, e.id);
           copy.waypoints = e.waypoints.map(shiftPoint);
-          if (e.routing?.advisory) copy.routing = { ...e.routing, advisory: e.routing.advisory.map(shiftPoint) };
+          if (e.routing) copy.routing = mapRouting(e.routing, shiftPoint);
         }
       }
       copies.push(copy as unknown as Element);
@@ -995,7 +996,7 @@ class Planner {
     if (!el || el.kind !== 'connector') stop('invalid_request', 'routing applies to connectors', { target: id });
     this.assertEditable(this.pages[pageIdx]!, el, 'edit');
     if (el.route !== 'orthogonal') stop('invalid_request', 'route modes apply to orthogonal connectors', { target: id });
-    if (mode === 'guided') refuse('routing_mode_unavailable', 'guided routing is not available yet: it arrives with segment constraints (R21, issue #60)', { target: id, mode });
+    if (mode === 'guided') refuse('routing_mode_unavailable', 'a route becomes guided when you pin a run: drag a run, or use pinSegment', { target: id, mode });
     const frozen = el.routing?.mode === 'frozen', manual = !frozen && el.waypoints.length > 0;
     const next: ConnectorElement = { ...el };
     if (mode === 'automatic') {
@@ -1018,8 +1019,9 @@ class Planner {
   }
 
   /**
-   * Slides one inner run of the drawn route sideways. Automatic becomes manual (the route as moved is kept as waypoints), manual keeps
-   * its waypoints, frozen stays frozen with the moved route. The runs that leave a port are refused.
+   * Slides one inner run of the drawn route sideways. An automatic (or guided) connector pins that run: only it is held, and the
+   * router still plans the rest. A manual connector keeps its waypoints, and a frozen one stays frozen with the moved route. The runs
+   * that leave a port are refused.
    */
   private applyMoveSegment(op: Extract<Operation, { op: 'moveSegment' }>): void {
     const hit = this.resolve(op.target, this.ctx.pageId);
@@ -1038,13 +1040,41 @@ class Planner {
     const points = moved.points.map(p => ({ x: Math.round(p.x * 1000) / 1000, y: Math.round(p.y * 1000) / 1000 }));
     const next: ConnectorElement = { ...el };
     if (el.routing?.mode === 'frozen') next.routing = { mode: 'frozen', advisory: points };
-    else {
+    else if (el.waypoints.length) {
       const inner = points.slice(1, -1);
       next.waypoints = inner.length ? inner : [{ x: (points[0]!.x + points[1]!.x) / 2, y: (points[0]!.y + points[1]!.y) / 2 }];
       delete next.routing;
+    } else {
+      const addr = addressOf(drawn, op.segment)!;
+      const held = (el.routing?.constraints ?? []).filter(c => !(c.axis === addr.axis && c.index === addr.index)).map(c => ({ axis: c.axis, at: c.at }));
+      held.push({ axis: addr.axis, at: Math.round(target * 1000) / 1000 });
+      next.routing = { constraints: readdress(points, held), advisory: points };
     }
     next.bounds = this.connectorBounds(next.from, next.to, next.waypoints);
     this.store(hit.pageIdx, hit.index, next);
+  }
+
+  /** Holds one inner run of an automatic route where it is now, or lets the router choose it again. */
+  private applyPinSegment(op: Extract<Operation, { op: 'pinSegment' }>): void {
+    const hit = this.resolve(op.target, this.ctx.pageId);
+    const el = hit.element;
+    if (el.kind !== 'connector' || el.route !== 'orthogonal') stop('invalid_request', 'pinSegment applies to orthogonal connectors', { target: el.id });
+    this.assertEditable(hit.page, el, 'edit');
+    if (el.waypoints.length || el.routing?.mode === 'frozen') refuse('route_not_automatic', 'only an automatic route has runs to pin: a manual or frozen route is already held as drawn', { target: el.id });
+    const drawn = this.drawnRoute(hit.pageIdx, el.id);
+    const addr = addressOf(drawn, op.segment);
+    if (!addr) {
+      const why = segmentsOf(drawn).find(s => s.index === op.segment);
+      refuse(why ? 'segment_fixed' : 'segment_missing', why?.fixedReason ?? `the route has no run ${op.segment}`, { target: el.id, segment: op.segment });
+    }
+    const current = el.routing?.constraints ?? [];
+    const others: RunConstraint[] = current.filter(c => !(c.axis === addr.axis && c.index === addr.index));
+    const was = others.length !== current.length;
+    if (op.pinned === was) return;
+    const constraints = op.pinned ? [...others, { axis: addr.axis, index: addr.index, at: Math.round(addr.coord * 1000) / 1000 }] : others;
+    const routing: NonNullable<ConnectorElement['routing']> = { advisory: drawn.map(p => ({ x: Math.round(p.x * 1000) / 1000, y: Math.round(p.y * 1000) / 1000 })) };
+    if (constraints.length) routing.constraints = constraints;
+    this.store(hit.pageIdx, hit.index, { ...el, routing });
   }
 
   /** Forgets the stored route of automatic orthogonal connectors so the router plans them from scratch. Explicit, undoable, reports what changed. */
@@ -1064,6 +1094,7 @@ class Planner {
       this.assertEditable(this.pages[pi]!, element, 'edit');
       const next: ConnectorElement = { ...element };
       delete next.routing;
+      if (element.routing?.constraints?.length) next.routing = { constraints: element.routing.constraints }; // pinned runs survive a re-route
       this.fresh.add(element.id);
       this.store(pi, index, next);
     }

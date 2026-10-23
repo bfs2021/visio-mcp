@@ -251,6 +251,13 @@ public sealed record ConnectorElement : Element
     [JsonPropertyName("routing")] public JsonObject? Routing { get; init; }
 }
 
+public sealed record RunConstraint
+{
+    [JsonPropertyName("axis")] public required string Axis { get; init; }
+    [JsonPropertyName("index")] public required int Index { get; init; }
+    [JsonPropertyName("at")] public required double At { get; init; }
+}
+
 public sealed record GroupElement : Element
 {
     [JsonPropertyName("id")] public required string Id { get; init; }
@@ -565,6 +572,7 @@ public sealed record SetPageOp : Operation
 [JsonDerivedType(typeof(RemoveAssetOp), "removeAsset")]
 [JsonDerivedType(typeof(ReplaceAssetOp), "replaceAsset")]
 [JsonDerivedType(typeof(MoveSegmentOp), "moveSegment")]
+[JsonDerivedType(typeof(PinSegmentOp), "pinSegment")]
 public abstract record Operation;
 
 public sealed record DuplicateOp : Operation
@@ -720,6 +728,13 @@ public sealed record MoveSegmentOp : Operation
     [JsonPropertyName("segment")] public required int Segment { get; init; }
     [JsonPropertyName("to")] public double? To { get; init; }
     [JsonPropertyName("by")] public double? By { get; init; }
+}
+
+public sealed record PinSegmentOp : Operation
+{
+    [JsonPropertyName("target")] public required string Target { get; init; }
+    [JsonPropertyName("segment")] public required int Segment { get; init; }
+    [JsonPropertyName("pinned")] public required bool Pinned { get; init; }
 }
 
 public sealed record AppError

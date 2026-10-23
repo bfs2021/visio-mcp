@@ -45,6 +45,7 @@ const opByTag: Record<string, string> = { createShape: 'CreateShape', createText
   reorder: 'Reorder',
   reroute: 'Reroute',
   moveSegment: 'MoveSegment',
+  pinSegment: 'PinSegment',
   addPage: 'AddPage',
   reorderPage: 'ReorderPage',
   duplicatePage: 'DuplicatePage',

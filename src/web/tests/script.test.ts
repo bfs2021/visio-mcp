@@ -483,5 +483,8 @@ describe('compiler: things riding on a connector', () => {
     expect(bad(t, 'move-segment wire segment=1')).toBeDefined();
     expect(bad(t, 'move-segment wire segment=1 by=1pt to=2pt')).toBeDefined();
     expect(bad(t, 'move-segment p segment=1 by=1pt')).toBeDefined();
+    const pins = ops(t, ['pin-segment wire segment=1', 'unpin-segment wire segment=1'].join(String.fromCharCode(10)));
+    expect(pins[0]).toEqual({ op: 'pinSegment', target: id(972), segment: 1, pinned: true });
+    expect(pins[1]).toEqual({ op: 'pinSegment', target: id(972), segment: 1, pinned: false });
   });
 });

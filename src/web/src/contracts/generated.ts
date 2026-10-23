@@ -219,8 +219,15 @@ export interface ConnectorElement {
   labelAnchor?: PathAnchor;
   routing?: {
     mode?: "frozen";
+    constraints?: RunConstraint[];
     advisory?: Point[];
   };
+}
+
+export interface RunConstraint {
+  axis: "h" | "v";
+  index: number;
+  at: number;
 }
 
 export interface GroupElement {
@@ -497,7 +504,7 @@ export interface SetPageOp {
   patch: PagePatch;
 }
 
-export type Operation = CreateShapeOp | CreateTextOp | CreateImageOp | CreateConnectorOp | SetOp | MoveOp | ResizeOp | RotateOp | DeleteOp | RegisterAssetOp | SetPageOp | DuplicateOp | GroupOp | UngroupOp | AlignOp | DistributeOp | SetGapOp | ReorderOp | RerouteOp | AddPageOp | ReorderPageOp | DuplicatePageOp | DeletePageOp | AddLayerOp | SetLayerOp | AssignLayersOp | DeleteLayerOp | SetAssetOp | RemoveAssetOp | ReplaceAssetOp | MoveSegmentOp;
+export type Operation = CreateShapeOp | CreateTextOp | CreateImageOp | CreateConnectorOp | SetOp | MoveOp | ResizeOp | RotateOp | DeleteOp | RegisterAssetOp | SetPageOp | DuplicateOp | GroupOp | UngroupOp | AlignOp | DistributeOp | SetGapOp | ReorderOp | RerouteOp | AddPageOp | ReorderPageOp | DuplicatePageOp | DeletePageOp | AddLayerOp | SetLayerOp | AssignLayersOp | DeleteLayerOp | SetAssetOp | RemoveAssetOp | ReplaceAssetOp | MoveSegmentOp | PinSegmentOp;
 
 export interface DuplicateOp {
   op: "duplicate";
@@ -650,6 +657,13 @@ export interface MoveSegmentOp {
   segment: number;
   to?: number;
   by?: number;
+}
+
+export interface PinSegmentOp {
+  op: "pinSegment";
+  target: Target;
+  segment: number;
+  pinned: boolean;
 }
 
 export type ErrorCode = "not_running" | "not_ready" | "no_document" | "session_mismatch" | "document_mismatch" | "unsupported_version" | "invalid_request" | "not_found" | "ambiguous_target" | "revision_conflict" | "locked_target" | "limit_exceeded" | "history_unavailable" | "transaction_id_conflict" | "timeout_unknown" | "io_error" | "compatibility_loss" | "projection_failed" | "busy" | "busy_user_editing" | "path_not_permitted" | "consent_denied" | "dependency_conflict" | "method_not_found" | "internal_error";
