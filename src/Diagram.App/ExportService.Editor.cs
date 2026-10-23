@@ -1,5 +1,6 @@
 using System.IO;
 using System.IO.Compression;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Windows;
@@ -13,6 +14,7 @@ public sealed partial class ExportService
 {
     const int ExportBytesLimit=64*1024*1024;
     sealed class ExportRejected(AppError error):Exception(error.Message) { public AppError Error=>error; }
+    [DoesNotReturn]
     static void Refuse(string code,string message)=>throw new ExportRejected(new AppError {Retryable=false,Code=code,Message=message});
     async Task<Snapshot> CheckExportAsync(ExpectedState expected,CancellationToken ct)
     {

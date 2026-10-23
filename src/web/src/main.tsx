@@ -18,6 +18,7 @@ function hostApi(host: HostServices | null): HostApi {
   if (!host) return noHost;
   return {
     editorExport: opts => host.call('host.exportImage', {...opts}),
+    editorPrint: (action, params = {}) => host.call('host.print', { action, ...params }),
     pickImage: () => host.call('host.pickImage'),
     openJson: (path, recentId, scope) => host.call('host.openJson', { ...(recentId ? { recentId } : path ? { path } : {}), ...(scope ? { documentId: scope.documentId, sessionId: scope.sessionId } : {}) }),
     openIngress: (ticketId, expected) => host.call('host.ingress.open', { ticketId, ...expected }),

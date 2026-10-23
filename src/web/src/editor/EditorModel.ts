@@ -1,4 +1,5 @@
 import type { EditorExportOptions } from './EditorExportOptions';
+import type { EditorPrintOptions, EditorPrintResponse, PrintDevice, PrintSheetPreview } from './EditorPrintOptions';
 import { FileConflictFlow, type FileHost, type FileOutcome } from './FileConflictFlow';
 import type { ExpectedDocument } from './NewDocumentFlow';
 import { NewDocumentFlow } from './NewDocumentFlow';
@@ -31,6 +32,7 @@ import type { AboutInfo } from '../workspace/HelpState';
 /** What the page needs from the host. In a plain browser (tests, dev) a stub stands in. */
 export interface HostApi extends FileHost {
   editorExport(options: EditorExportOptions): Promise<Result<{cancelled?:true;path?:string;copied?:boolean;pages?:number}>>;
+  editorPrint(action: 'devices'|'preview'|'print'|'savePdf', params?: Record<string, unknown>): Promise<Result<EditorPrintResponse>>;
   recentList(): Promise<Result<RecentList>>;
   recentRemove(id: string): Promise<Result<RecentList>>;
   recentClear(): Promise<Result<RecentList>>;
@@ -98,6 +100,7 @@ export interface CompatibilityView { title: string; summary: string; diagnostics
 
 export const noHost: HostApi = {
   editorExport: async () => fail('not_running', 'there is no host to export images'),
+  editorPrint: async () => fail('not_running', 'Print preview requires the desktop app'),
   recentList: async () => fail('not_running', 'Recent files require the desktop app'),
   recentRemove: async () => fail('not_running', 'Recent files require the desktop app'),
   recentClear: async () => fail('not_running', 'Recent files require the desktop app'),
@@ -159,6 +162,66 @@ export interface Status { text: string; kind: 'info' | 'warning' | 'error' }
  */
 export class EditorModel {
   exportPrompt: {options:EditorExportOptions;busy:boolean;error?:string}|null=null;
+  printPrompt: {options:EditorPrintOptions;devices:PrintDevice[];jobId:string|null;sheets:PrintSheetPreview[];marginWarnings:string[];busy:boolean;loadingDevices:boolean;error:string|null}|null=null;
+  beginPrint(): void {
+    if (this.printPrompt) return;
+    this.printPrompt = { options: { expected: { ...this.engine.scope(), baseRevision: this.engine.revision }, pageRange: '1', printerId: '', mediaId: '', orientation: 'portrait', layout: 'fit', margins: { leftPt: 36, topPt: 36, rightPt: 36, bottomPt: 36 } }, devices: [], jobId: null, sheets: [], marginWarnings: [], busy: false, loadingDevices: true, error: null };
+    const prompt = this.printPrompt;
+    this.bump();
+    void (async () => {
+      const result = await this.host.editorPrint('devices');
+      if (this.printPrompt !== prompt) return;
+      prompt.loadingDevices = false;
+      if (!result.ok) prompt.error = result.error.message;
+      else {
+        prompt.devices = result.value.devices ?? [];
+        const device = prompt.devices[0], media = device?.media[0];
+        if (device && media) { prompt.options.printerId = device.id; prompt.options.mediaId = media.id; }
+        else prompt.error = 'No printers with supported paper sizes are available.';
+      }
+      this.bump();
+    })().catch(error => { if (this.printPrompt === prompt) { prompt.loadingDevices = false; prompt.error = String(error); this.bump(); } });
+  }
+  cancelPrint(): void { if (!this.printPrompt?.busy) { this.printPrompt = null; this.bump(); } }
+  changePrintOptions(patch: Partial<Omit<EditorPrintOptions, 'expected'>>): void {
+    const prompt = this.printPrompt;
+    if (!prompt || prompt.busy) return;
+    prompt.options = { ...prompt.options, ...patch };
+    prompt.jobId = null; prompt.sheets = []; prompt.marginWarnings = []; prompt.error = null;
+    this.bump();
+  }
+  private printStateCurrent(prompt: NonNullable<EditorModel['printPrompt']>): boolean {
+    const scope = this.engine.scope();
+    if (scope.documentId === prompt.options.expected.documentId && scope.sessionId === prompt.options.expected.sessionId && this.engine.revision === prompt.options.expected.baseRevision) return true;
+    prompt.jobId = null; prompt.sheets = []; prompt.error = 'The drawing changed while Print preview was open. Close it and open a fresh preview.'; this.bump(); return false;
+  }
+  async preparePrint(): Promise<void> {
+    const prompt = this.printPrompt;
+    if (!prompt || prompt.busy || !prompt.options.printerId || !prompt.options.mediaId || !this.printStateCurrent(prompt)) return;
+    prompt.busy = true; prompt.error = null; prompt.jobId = null; prompt.sheets = []; prompt.marginWarnings = []; this.bump();
+    try {
+      const result = await this.host.editorPrint('preview', structuredClone(prompt.options) as unknown as Record<string, unknown>);
+      if (this.printPrompt !== prompt) return;
+      if (!result.ok) { prompt.error = result.error.message; return; }
+      if (!result.value.jobId || !result.value.sheets?.length) { prompt.error = 'The host did not return a prepared print preview.'; return; }
+      prompt.jobId = result.value.jobId; prompt.sheets = result.value.sheets; prompt.marginWarnings = result.value.marginWarnings ?? [];
+    } catch (error) { prompt.error = String(error); }
+    finally { if (this.printPrompt === prompt) { prompt.busy = false; this.bump(); } }
+  }
+  async finishPrint(action: 'print'|'savePdf'): Promise<void> {
+    const prompt = this.printPrompt;
+    if (!prompt || prompt.busy || !prompt.jobId || !this.printStateCurrent(prompt)) return;
+    prompt.busy = true; prompt.error = null; this.bump();
+    try {
+      const result = await this.host.editorPrint(action, { jobId: prompt.jobId });
+      if (this.printPrompt !== prompt) return;
+      if (!result.ok) { prompt.error = result.error.message; prompt.jobId = null; prompt.sheets = []; return; }
+      if (result.value.cancelled) { prompt.error = 'Save was cancelled. Prepare the preview again before output.'; prompt.jobId = null; prompt.sheets = []; return; }
+      this.printPrompt = null;
+      this.say(action === 'print' ? 'Print job sent' : `Saved print-layout PDF to ${result.value.path ?? ''}`, 'info');
+    } catch (error) { prompt.error = String(error); prompt.jobId = null; prompt.sheets = []; }
+    finally { if (this.printPrompt === prompt) { prompt.busy = false; this.bump(); } }
+  }
   beginImageExport(format: 'png'|'pdf'='png'):void {
     this.exportPrompt={busy:false,options:{expected:{...this.engine.scope(),baseRevision:this.engine.revision},format,scope:format==='pdf'?'all':'page',pageId:this.currentPage.id,elementIds:[...this.selection],scale:1,background:'page'}};
     this.bump();
@@ -259,7 +322,7 @@ export class EditorModel {
     this.find.canStart=()=>!this.controller.isActive()&&!this.closePrompt&&!this.files?.prompt&&!this.newDocument?.prompt&&!this.report&&!this.recoveryOffers.length&&!this.recoveryReport;
     this.newDocument = new NewDocumentFlow(engine, () => this.bump());
     this.files = new FileConflictFlow(engine, () => this.host, () => this.bump());
-    this.files.canPresent = () => !this.exportPrompt && !this.controller.isActive() && !this.closePrompt && !this.newDocument.prompt && !this.recoveryOffers.length && !this.recoveryReport;
+  this.files.canPresent = () => !this.exportPrompt && !this.printPrompt && !this.controller.isActive() && !this.closePrompt && !this.newDocument.prompt && !this.recoveryOffers.length && !this.recoveryReport;
     this.files.message = (text,error) => this.say(text,error?'error':'warning');
     this.files.completed = outcome => {
       if(outcome.reloaded){this.pageId=undefined;this.selection=[];this.tool={kind:'select'};this.sessionReplaced();this.zoomToFit();}

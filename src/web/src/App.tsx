@@ -1,4 +1,5 @@
 import { ExportImageDialog } from './components/ExportImageDialog';
+import { PrintPreviewDialog } from './components/PrintPreviewDialog';
 import { RecentFilesDialog } from './components/RecentFilesDialog';
 import { FindPanel } from './components/FindPanel';
 import { FileConflictDialog } from './components/FileConflictDialog';
@@ -35,15 +36,15 @@ function useShortcuts(ws: WorkspaceModel) {
     const onKey = (e: KeyboardEvent) => {
       const model = ws.active;
       if (ws.preferences.dialogOpen) return;
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'p') { e.preventDefault(); if (!ws.recentPrompt && !ws.tabs.some(t => t.newDocument.prompt || t.closePrompt || t.exportPrompt || t.report || t.files.prompt || t.connectPrompt)) ws.help.toggle('palette'); return; }
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'p') { e.preventDefault(); if (!ws.recentPrompt && !ws.tabs.some(t => t.newDocument.prompt || t.closePrompt || t.exportPrompt || t.printPrompt || t.report || t.files.prompt || t.connectPrompt)) ws.help.toggle('palette'); return; }
       if (ws.help.panel) return; // a Help panel is up: it takes the keys
       if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase()==='f') {
         e.preventDefault();
-        if(!ws.tabs.some(t=>t.newDocument.prompt||t.closePrompt||t.files.prompt||t.report||t.recoveryOffers.length||t.recoveryReport))model.find.open();
+        if(!ws.tabs.some(t=>t.newDocument.prompt||t.closePrompt||t.exportPrompt||t.printPrompt||t.files.prompt||t.report||t.recoveryOffers.length||t.recoveryReport))model.find.open();
         return;
       }
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') { e.preventDefault(); if (!ws.recentPrompt && !ws.tabs.some(t => t.newDocument.prompt || t.closePrompt || t.exportPrompt || t.files.prompt || t.connectPrompt)) model.newDocument.begin(); return; }
-      if (ws.recentPrompt || ws.tabs.some(t => t.newDocument.prompt || t.closePrompt || t.exportPrompt || t.files.prompt || t.connectPrompt)) return;
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') { e.preventDefault(); if (!ws.recentPrompt && !ws.tabs.some(t => t.newDocument.prompt || t.closePrompt || t.exportPrompt || t.printPrompt || t.files.prompt || t.connectPrompt)) model.newDocument.begin(); return; }
+      if (ws.recentPrompt || ws.tabs.some(t => t.newDocument.prompt || t.closePrompt || t.exportPrompt || t.printPrompt || t.files.prompt || t.connectPrompt)) return;
       if (e.ctrlKey && e.key === 'Tab') { e.preventDefault(); ws.cycle(e.shiftKey ? -1 : 1); return; } // most recently used first; works while typing too, like a browser
       if (e.ctrlKey && (e.key === 'PageDown' || e.key === 'PageUp')) { e.preventDefault(); ws.step(e.key === 'PageDown' ? 1 : -1); return; } // in tab order
       if (typing(e.target)) return;
@@ -60,6 +61,7 @@ function useShortcuts(ws: WorkspaceModel) {
       else if (mod && key === 'a') { e.preventDefault(); model.selectAll(); }
       else if (mod && key === 's') { e.preventDefault(); void model.save(e.shiftKey); }
       else if (mod && key === 'o') { e.preventDefault(); void ws.openFile(); }
+      else if (mod && key === 'p') { e.preventDefault(); model.beginPrint(); }
       else if (mod && key === 'n') { e.preventDefault(); ws.newTab(); }
       else if (mod && key === 'w') { e.preventDefault(); void ws.closeTab(model); }
       else if (mod && (key === '=' || key === '+')) { e.preventDefault(); model.zoomBy(1.25); }
@@ -112,6 +114,7 @@ export function App({ ws }: { ws: WorkspaceModel }) {
       <FileConflictDialog model={ws.tabs.find(t=>t.files.prompt?.source==='save') ?? ws.tabs.find(t=>t.files.prompt) ?? model} />
       {ws.tabs.filter(t => t.newDocument.prompt).map(t => <NewDocumentDialog key={t.tabId} model={t} />)}
       {ws.tabs.filter(t=>t.exportPrompt && !ws.tabs.some(x=>x.files.prompt) && !asking && !holder.recoveryReport && !holder.recoveryOffers.length && !ws.tabs.some(x=>x.newDocument.prompt)).slice(0,1).map(t=><ExportImageDialog key={t.tabId} model={t}/>)}
+      {ws.tabs.filter(t=>t.printPrompt && !ws.tabs.some(x=>x.files.prompt) && !asking && !holder.recoveryReport && !holder.recoveryOffers.length && !ws.tabs.some(x=>x.newDocument.prompt)).slice(0,1).map(t=><PrintPreviewDialog key={`${t.tabId}-print`} model={t}/>)}
       {ws.recentPrompt && !ws.tabs.some(t=>t.files.prompt) && !asking && !holder.recoveryReport && !holder.recoveryOffers.length && !ws.tabs.some(t=>t.newDocument.prompt) && <RecentFilesDialog ws={ws} />}
       <HelpDialogs ws={ws} model={model} />
       {ws.tabs.filter(t => t.connectPrompt).map(t => <ConnectDialog key={`${t.tabId}-connect`} model={t} />)}
