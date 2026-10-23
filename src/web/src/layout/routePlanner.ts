@@ -2,6 +2,7 @@ import type { Element, Layer } from '../contracts/generated';
 import { centreOfTerminal, endFor, routeOrthogonal, type End, type Terminal, type V } from './orthogonalRoute';
 import { avoidObstacles, blockedSegments, CLEARANCE, BUDGET, SPACING, STUB, inflate, isClear, search, segmentsOf, type Rect, type Segment } from './obstacleRoute';
 import { selectObstacles, visualRect } from './obstacles';
+import { applyConstraints } from './routeSegments';
 
 /**
  * The route planner (R19). Pure: the same elements, layers and previous routes always give the same routes, whichever surface asks
@@ -182,6 +183,24 @@ export function planRoutes(input: PlanInput): PlanResult {
   };
   const put = (w: Work, r: PlannedRoute) => { routes.set(w.el.id, r); occupied.push(...segmentsOf(r.points)); };
 
+  /**
+   * Guided routes (R21): the router draws the route as for an automatic connector, then holds each pinned run where it was put. If a
+   * held run cannot stay there (it no longer exists, would cross an obstacle, or would change how the route leaves a port), the route
+   * is left as drawn and flagged unresolved rather than moved somewhere the person did not choose.
+   */
+  const guide = (w: Work, r: PlannedRoute): PlannedRoute => {
+    const held = w.el.routing?.constraints;
+    if (!held?.length || r.provenance === 'unresolved') return r;
+    const out = applyConstraints(r.points, held);
+    const moved = out.points.length !== r.points.length || out.points.some((p, i) => !near(p, r.points[i]!));
+    if (out.unmet.length) return make(w, r.points, 'unresolved', 'a pinned run no longer exists on this route');
+    if (!moved) return r;
+    const n = out.points.length;
+    const leaves = same(dirOf(out.points[0]!, out.points[1]!), w.a.dir) && same(dirOf(out.points[n - 1]!, out.points[n - 2]!), w.b.dir);
+    if (routeDefects(out.points).length || !leaves || !isClear(out.points, w.others, w.endRects, 2)) return make(w, r.points, 'unresolved', 'a pinned run cannot be held there without crossing something');
+    return make(w, out.points, r.provenance === 'kept' ? 'repaired' : r.provenance, 'a pinned run was held');
+  };
+
   // Authored and frozen routes are fixed: they claim their tracks first.
   for (const w of work) {
     if (isFrozen(w.el)) put(w, frozenRoute(w, storedRoute(w.el)));
@@ -197,17 +216,17 @@ export function planRoutes(input: PlanInput): PlanResult {
     const unmoved = near(prev.ends.a.anchor, w.a.anchor) && near(prev.ends.b.anchor, w.b.anchor) && same(prev.ends.a.dir, w.a.dir) && same(prev.ends.b.dir, w.b.dir);
     const candidate = unmoved ? [...prev.points] : elastic(prev.points, w.a, w.b);
     if (!candidate) { pending.push({ w, why: 'an end moved and the old route cannot follow it' }); continue; }
-    if (isClear(candidate, w.others, w.endRects, 2) && !(detourPays(candidate, w))) put(w, make(w, candidate, unmoved ? 'kept' : 'elastic', unmoved ? undefined : 'an end moved'));
+    if (isClear(candidate, w.others, w.endRects, 2) && !(detourPays(candidate, w))) put(w, guide(w, make(w, candidate, unmoved ? 'kept' : 'elastic', unmoved ? undefined : 'an end moved')));
     else if (!isClear(candidate, w.others, w.endRects, 2)) pending.push({ w, candidate, why: 'an obstacle is now in the way' });
     else pending.push({ w, why: 'the obstacle that forced a detour is gone and the direct route is much shorter' });
   }
 
   for (const { w, candidate, why } of pending) {
     const fixed = candidate && repair(candidate, w, occupied);
-    if (fixed) { put(w, make(w, fixed, 'repaired', why)); continue; }
+    if (fixed) { put(w, guide(w, make(w, fixed, 'repaired', why))); continue; }
     const r = avoidObstacles(w.a, w.b, w.base, w.others, w.endRects, occupied);
     if (r.blocked) put(w, make(w, candidate ?? r.route, 'unresolved', 'no clear route was found'));
-    else put(w, make(w, r.route, 'rerouted', why));
+    else put(w, guide(w, make(w, r.route, 'rerouted', why)));
   }
 
   const changes: RouteChange[] = [];

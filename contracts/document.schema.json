@@ -263,12 +263,22 @@
         "labelAnchor": { "$ref": "#/$defs/PathAnchor", "description": "where the label sits along the route; absent means the middle, on the line" },
         "routing": {
           "type": "object", "additionalProperties": false,
-          "description": "R20. Orthogonal connectors only. The mode is stored only when it cannot be derived: no routing.mode and no waypoints is automatic, waypoints without a mode is manual, 'frozen' is stored.",
+          "description": "R20. Orthogonal connectors only. The mode is stored only when it cannot be derived: no routing.mode and no waypoints is automatic, waypoints without a mode is manual, 'frozen' is stored. A route with constraints is guided.",
           "properties": {
             "mode": { "enum": ["frozen"] },
+            "constraints": { "type": "array", "items": { "$ref": "#/$defs/RunConstraint" }, "maxItems": 64, "description": "R21. Runs of an automatic route that are held at a position (a guided route). Absent or empty: the router chooses every run. Only for automatic connectors; manual and frozen routes ignore it." },
             "advisory": { "type": "array", "items": { "$ref": "#/$defs/Point" }, "minItems": 2, "maxItems": 512, "description": "The route the router chose, anchors included. Derived: written by the command engine, never by a caller. Automatic: the router keeps it while it is valid. Frozen: it is the route and is never replaced." }
           }
         }
+      }
+    },
+    "RunConstraint": {
+      "type": "object", "additionalProperties": false, "required": ["axis", "index", "at"],
+      "description": "R21. Holds one inner run of an automatic orthogonal route at a place. The run is found by its axis and its position among the inner runs of that axis, counted from the start of the route (the runs that leave a port are never constrained).",
+      "properties": {
+        "axis": { "enum": ["h", "v"], "description": "h: a horizontal run, held at y = at. v: a vertical run, held at x = at." },
+        "index": { "type": "integer", "minimum": 0, "maximum": 255 },
+        "at": { "type": "number" }
       }
     },
     "GroupElement": {
