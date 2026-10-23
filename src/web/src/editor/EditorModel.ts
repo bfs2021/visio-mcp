@@ -91,7 +91,7 @@ export type WorkspaceMemory = { found: false } | { found: true; cleanExit: boole
 export interface RecoveryLossInfo { tornTailDiscarded: boolean; corruptionAfterRevision: number | null; messages: string[] }
 /** Unfinished work from an earlier run (or before a renderer crash), as the host describes it. */
 /** One unfinished session as the host describes it. Sizes are as of the session's last checkpoint. */
-export interface RecoveryOffer { sessionId: string; documentId: string; title: string | null; originalPath: string | null; pageCount: number; objectCount: number; checkpointRevision: number; lastDurableRevision: number; lastWrite: string; loss: RecoveryLossInfo }
+export interface RecoveryOffer { sessionId: string; documentId: string; title: string | null; originalPath: string | null; pageCount: number; objectCount: number; checkpointRevision: number; lastDurableRevision: number; lastWrite: string; loss: RecoveryLossInfo; restoredEarlier?: boolean; unchangedSinceRestore?: boolean }
 export interface DiagnosticItem { severity: 'info' | 'warning' | 'error'; code: string; message: string; elementId?: string; pageId?: string; action?: string }
 export interface NativeOutcome { warning?: string | null; cancelled?: true; path?: string; summary?: string; diagnostics?: DiagnosticItem[]; lossy?: boolean; revision?: number; bytes?: number }
 
@@ -296,6 +296,9 @@ export class EditorModel {
   protectionNote: string | null = null;
   /** Called after a restore replaced the document, so the host learns the new session. */
   afterRecoveryRestore: () => void = () => {};
+  /** The recovery session the document now showing was rebuilt from. Announced with the new session so the host can write it down before anything else; read once. */
+  restoredFromSession: string | null = null;
+  takeRestoredFrom(): string | null { const id = this.restoredFromSession; this.restoredFromSession = null; return id; }
   private protectionTimer: ReturnType<typeof setTimeout> | null = null;
   selection: string[] = [];
   tool: Tool = { kind: 'select' };
@@ -965,7 +968,8 @@ export class EditorModel {
     }
     target.pageId = undefined;
     target.selection = [];
-    target.afterRecoveryRestore(); // the host starts the new session (with its own checkpoint) and announces it
+    target.restoredFromSession = offer.sessionId;
+    target.afterRecoveryRestore(); // the host starts the new session (with its own checkpoint, and a note of the session it replaces) and announces it
     target.showCommittedNow();
     await this.host.recoveryFinish(offer.sessionId, fetched.value.originalPath ?? null);
     void target.readProtection();

@@ -47,6 +47,7 @@ export function RecoveryDialog({ model, onRecover }: { model: EditorModel; onRec
                     {stats ? `${plural(stats.pages, 'page')}, ${plural(stats.objects, 'object')}.` : `${plural(o.pageCount, 'page')}, ${plural(o.objectCount, 'object')} at the last checkpoint.`} The last change that reached disk is revision {o.lastDurableRevision}
                     {Number.isNaN(when.getTime()) ? '' : `, at ${when.toLocaleString()}`}.
                   </div>
+                  {o.restoredEarlier && <div className="muted" data-testid="recovery-restored-earlier">{o.unchangedSinceRestore ? 'Recovered before, and not changed since: this is the work that was recovered.' : 'Recovered before and changed since.'}</div>}
                   {o.loss.messages.length > 0 && <ul>{o.loss.messages.map((m, i) => <li key={i} className="diag diag-warning">{m}</li>)}</ul>}
                   <div className="row recovery-actions">
                     <button type="button" data-testid="recovery-restore" onClick={() => (onRecover ? onRecover(o.sessionId) : void model.restoreOffered(o.sessionId))}>Recover</button>

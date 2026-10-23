@@ -122,6 +122,7 @@ public partial class MainWindow : Window
         RecoveryMgr = new RecoveryManager(host.Router, Recovery, Blobs, () => Services.CurrentPath,
             new RecoveryOptions(CheckpointEvery: TimeSpan.FromSeconds(initialPreferences.Preferences.Recovery.CheckpointSeconds)),
             documentPath: Services.PathOf, timeProvider: options.RecoveryTimeProvider);
+        RecoveryMgr.OnSuperseded = (old, replacement) => Workspace.ReplaceSessionAsync(old, replacement); // a remembered tab follows its work to the session that replaced it
         RecoveryMgr.Start();
         BlobLease = BlobStoreLease.Take(options.BlobDir);
         Maintenance = new BlobMaintenance(BlobLease, Path.GetFullPath(Path.Combine(options.BlobDir, "..", "blob-maintenance.json")),

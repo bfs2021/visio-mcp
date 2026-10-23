@@ -323,19 +323,50 @@ public sealed record RecoveryLoss(bool TornTailDiscarded, int? CorruptionAfterRe
 
 /// <summary>Everything needed to rebuild the last durable state of one unfinished session. The page validates and applies it; the host never replays.</summary>
 public sealed record RecoveryCandidate(
-    string SessionId, string DocumentId, string? OriginalPath, int CheckpointRevision, JsonNode Document, IReadOnlyList<JsonObject> Events, int LastDurableRevision, RecoveryLoss Loss, DateTimeOffset LastWrite, int? SavedRevision = null, bool KeepUnsaved = false);
+    string SessionId, string DocumentId, string? OriginalPath, int CheckpointRevision, JsonNode Document, IReadOnlyList<JsonObject> Events, int LastDurableRevision, RecoveryLoss Loss, DateTimeOffset LastWrite, int? SavedRevision = null, bool KeepUnsaved = false, string? RestoredFrom = null)
+{
+    /// <summary>A session that was rebuilt from another one and has not changed since: it holds exactly what was recovered.</summary>
+    public bool RestoredUnedited => RestoredFrom is not null && Events.Count == 0;
+}
+
+/// <summary>
+/// The lifecycle of a recovered session. A session is <b>pending</b> until the person recovers it. Recovering rebuilds the document into a new session
+/// whose <c>session.json</c> says <c>restoredFrom</c> (written when that session is created); from then on the session it came from is <b>superseded</b>,
+/// because the new one already holds everything it held, with a checkpoint of its own. The old folder is removed when the restore finishes, but a crash
+/// can come first: this finds such leftovers, so the same work is never offered twice and a tab that remembers the old session can follow it to the new one.
+/// </summary>
+public static class RecoveryLineage
+{
+    /// <summary>Every listed session that a listed session was restored from, directly or through a chain, with the newest session that replaces it.</summary>
+    public static IReadOnlyList<(string Old, string Successor)> Superseded(IReadOnlyList<RecoveryCandidate> all)
+    {
+        var ids = all.Select(c => c.SessionId).ToHashSet(StringComparer.Ordinal);
+        var next = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var c in all.OrderBy(c => c.LastWrite)) // if two claim the same source, the later one wins
+            if (c.RestoredFrom is { } from && from != c.SessionId && ids.Contains(from)) next[from] = c.SessionId;
+        var result = new List<(string, string)>();
+        foreach (var old in next.Keys)
+        {
+            var at = old; var seen = new HashSet<string>(StringComparer.Ordinal) { old };
+            while (next.TryGetValue(at, out var n) && seen.Add(n)) at = n;
+            if (at != old) result.Add((old, at));
+        }
+        return result;
+    }
+}
 
 /// <summary>The folder of recovery sessions, one sub-folder per editor session.</summary>
 public sealed class RecoveryStore(string root, BlobStore blobs)
 {
     string SessionDir(string id) => Path.Combine(root, id);
 
-    public async Task<RecoverySession> BeginSessionAsync(string documentId, string sessionId, JsonNode document, int revision, string? originalPath, IEnumerable<string> blobRefs, CancellationToken ct, TimeSpan? flushDelay = null)
+    /// <param name="restoredFrom">The session this one was rebuilt from, when the person recovered it. Recovered work is unsaved work even before it is edited again, so such a session is kept until it is saved or discarded. It is written with the session itself, before anything else about it, so a crash at any later moment still shows which session this one replaces.</param>
+    public async Task<RecoverySession> BeginSessionAsync(string documentId, string sessionId, JsonNode document, int revision, string? originalPath, IEnumerable<string> blobRefs, CancellationToken ct, TimeSpan? flushDelay = null, string? restoredFrom = null)
     {
         var dir = SessionDir(sessionId);
         Directory.CreateDirectory(dir);
         await new AtomicFileWriter().WriteAsync(Path.Combine(dir, "session.json"),
-            Encoding.UTF8.GetBytes(new JsonObject { ["documentId"] = documentId, ["sessionId"] = sessionId, ["originalPath"] = originalPath, ["startedAt"] = DateTimeOffset.UtcNow.ToString("O") }.ToJsonString()), ct).ConfigureAwait(false);
+            Encoding.UTF8.GetBytes(new JsonObject { ["documentId"] = documentId, ["sessionId"] = sessionId, ["originalPath"] = originalPath, ["startedAt"] = DateTimeOffset.UtcNow.ToString("O"), ["restoredFrom"] = restoredFrom, ["keepUnsaved"] = restoredFrom is not null }.ToJsonString()), ct).ConfigureAwait(false);
         var store = new CheckpointStore(dir);
         await store.PublishAsync(documentId, sessionId, revision, document, blobRefs, ct).ConfigureAwait(false); // its own checkpoint first: it never continues another session's chain
         var journal = new RecoveryJournal(Path.Combine(dir, "journal.log"), blobs, revision, flushDelay);
@@ -380,7 +411,7 @@ public sealed class RecoveryStore(string root, BlobStore blobs)
     {
         var cp = new CheckpointStore(dir).ReadLatest();
         if (cp is null) return null; // no usable checkpoint: nothing to rebuild from
-        string? original = null; int? saved = null; bool keepUnsaved = false;
+        string? original = null; int? saved = null; bool keepUnsaved = false; string? restoredFrom = null;
         try
         {
             if (File.Exists(Path.Combine(dir, "session.json")))
@@ -389,6 +420,7 @@ public sealed class RecoveryStore(string root, BlobStore blobs)
                 original = meta?["originalPath"]?.GetValue<string>();
                 saved = meta?["savedRevision"]?.GetValue<int>();
                 keepUnsaved = meta?["keepUnsaved"]?.GetValue<bool>() ?? false;
+                restoredFrom = meta?["restoredFrom"]?.GetValue<string>();
             }
         }
         catch (Exception e) when (e is JsonException or IOException or InvalidOperationException) { }
@@ -407,7 +439,7 @@ public sealed class RecoveryStore(string root, BlobStore blobs)
         if (read.CorruptionAfterRevision is { } after) messages.Add($"the journal is damaged after revision {after}; later changes could not be recovered ({read.Detail})");
         var last = events.Count > 0 ? events[^1]["revision"]!.GetValue<int>() : cp.Revision;
         var write = new[] { "journal.log", "manifest.json" }.Select(f => Path.Combine(dir, f)).Where(File.Exists).Select(File.GetLastWriteTimeUtc).DefaultIfEmpty(Directory.GetLastWriteTimeUtc(dir)).Max();
-        return new RecoveryCandidate(cp.SessionId, cp.DocumentId, original, cp.Revision, cp.Document, events, last, new RecoveryLoss(read.TornTailDiscarded, corruptAfter, messages), new DateTimeOffset(write, TimeSpan.Zero), saved, keepUnsaved);
+        return new RecoveryCandidate(cp.SessionId, cp.DocumentId, original, cp.Revision, cp.Document, events, last, new RecoveryLoss(read.TornTailDiscarded, corruptAfter, messages), new DateTimeOffset(write, TimeSpan.Zero), saved, keepUnsaved, restoredFrom);
     }
 
     /// <summary>Removes a finished session (after a safe save, or after the person chose to discard it).</summary>
