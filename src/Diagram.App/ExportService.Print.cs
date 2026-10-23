@@ -22,6 +22,10 @@ public sealed partial class ExportService
             var media = device?.Media.FirstOrDefault(x => x.Id == job.Device.MediaId);
             if (media is null || Math.Abs(media.WidthPt - job.Device.WidthPt) > .01 || Math.Abs(media.HeightPt - job.Device.HeightPt) > .01)
                 Refuse("printer_unavailable", "The selected printer or paper size is no longer available. Prepare a new preview.");
+            var margins = job.Device.EffectiveMargins;
+            var minimum = media.MinimumMargins;
+            if (minimum.LeftPt > margins.LeftPt + .01 || minimum.TopPt > margins.TopPt + .01 || minimum.RightPt > margins.RightPt + .01 || minimum.BottomPt > margins.BottomPt + .01)
+                Refuse("printer_settings_changed", "The selected printer's printable area changed after preview. Prepare a new preview.");
             await guard(ct);
             var status = await PhysicalPrintDispatcher(job, ct);
             if (status != Microsoft.Web.WebView2.Core.CoreWebView2PrintStatus.Succeeded)

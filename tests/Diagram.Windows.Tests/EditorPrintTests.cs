@@ -164,20 +164,39 @@ public class EditorPrintTests
     {
         await using var h = await Harness.StartAsync();
         h.Window.Exports.PrinterCapabilities = new FakePrinters(new PrintDevice("printer-a", "Printer A", [new PrintMedia("letter", "Letter", 612, 792, new PrintMargins(0, 0, 0, 0))]));
+        var secondPage = Guid.NewGuid().ToString();
+        var unicode = Harness.Shape("unicode-sheet"); unicode["pageId"] = secondPage; unicode["text"] = new JsonObject { ["value"] = "Deployment — café 世界" };
+        Assert.Null((await h.Apply(0, null,
+            new JsonObject { ["op"] = "addPage", ["id"] = secondPage, ["name"] = "Portrait", ["widthPt"] = 300, ["heightPt"] = 600 }, unicode)).Error);
         var path = Path.Combine(h.Root, "print-layout.pdf");
         h.Window.Services.DialogOverride = kind => kind == "printPdf" ? path : null;
-        var prepared = await h.Window.Services.HandleAsync(PrintRequest("preview", PreviewOptions(h)), Harness.Ct(60));
+        var options = PreviewOptions(h); options["pageRange"] = "1-2"; options["expected"]!["baseRevision"] = 1;
+        var prepared = await h.Window.Services.HandleAsync(PrintRequest("preview", options), Harness.Ct(60));
         Assert.Null(prepared.Error);
-        var id = prepared.Result!.Value.GetProperty("jobId").GetString()!;
+        var preview = prepared.Result!.Value;
+        Assert.Equal(2, preview.GetProperty("sourcePageCount").GetInt32());
+        Assert.Equal(new[] { 1, 2 }, preview.GetProperty("sheets").EnumerateArray().Select(x => x.GetProperty("sourcePageNumbers")[0].GetInt32()));
+        var nestedSvg = System.Text.RegularExpressions.Regex.Match(preview.GetProperty("sheets")[1].GetProperty("svg").GetString()!, @"data:image/svg\+xml;base64,([^""]+)");
+        Assert.True(nestedSvg.Success);
+        var sourceSvg = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(nestedSvg.Groups[1].Value));
+        Assert.Contains("Deployment", sourceSvg);
+        var scope = h.Router.CurrentScope!;
+        var rendered = await h.Router.RenderAsync(scope, new JsonObject { ["scope"] = "page", ["pageId"] = secondPage, ["format"] = "svg", ["scale"] = 1, ["background"] = "white", ["mode"] = "clean" }, Harness.Ct(30));
+        Assert.True(rendered.IsOk);
+        Assert.Equal(System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(rendered.Value.GetProperty("base64").GetString()!)), sourceSvg);
+        var id = preview.GetProperty("jobId").GetString()!;
         var response = await h.Window.Services.HandleAsync(PrintRequest("savePdf", new JsonObject { ["action"] = "savePdf", ["jobId"] = id }), Harness.Ct(90));
         Assert.Null(response.Error);
         Assert.Equal(path, response.Result!.Value.GetProperty("path").GetString());
         var pdf = System.Text.Encoding.Latin1.GetString(await File.ReadAllBytesAsync(path));
         Assert.StartsWith("%PDF-", pdf);
-        var box = System.Text.RegularExpressions.Regex.Match(pdf, @"/MediaBox\s*\[\s*0\s+0\s+([0-9.]+)\s+([0-9.]+)\s*\]");
-        Assert.True(box.Success);
-        Assert.InRange(double.Parse(box.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture), 611, 613);
-        Assert.InRange(double.Parse(box.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture), 791, 793);
+        var boxes = System.Text.RegularExpressions.Regex.Matches(pdf, @"/MediaBox\s*\[\s*0\s+0\s+([0-9.]+)\s+([0-9.]+)\s*\]");
+        Assert.Equal(2, boxes.Count);
+        foreach (System.Text.RegularExpressions.Match box in boxes)
+        {
+            Assert.InRange(double.Parse(box.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture), 611, 613);
+            Assert.InRange(double.Parse(box.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture), 791, 793);
+        }
     }
 
     [Fact]
@@ -216,5 +235,19 @@ public class EditorPrintTests
         expanding["margins"] = new JsonObject { ["leftPt"] = 0, ["topPt"] = 0, ["rightPt"] = 0, ["bottomPt"] = 0 };
         Assert.Equal("limit_exceeded", (await h.Window.Services.HandleAsync(PrintRequest("preview", expanding), Harness.Ct(60))).Error?.Code);
         Assert.False(h.Window.Exports.PrintJobs.HasPendingJob);
+    }
+
+    [Fact]
+    public async Task AChangedPrinterImageableAreaInvalidatesTheReviewedPreview()
+    {
+        await using var h = await Harness.StartAsync();
+        h.Window.Exports.PrinterCapabilities = new FakePrinters(new PrintDevice("printer-a", "Printer A", [new PrintMedia("letter", "Letter", 612, 792, new PrintMargins(0, 0, 0, 0))]));
+        var calls = 0;
+        h.Window.Exports.PhysicalPrintDispatcher = (_, _) => { calls++; return Task.FromResult(Microsoft.Web.WebView2.Core.CoreWebView2PrintStatus.Succeeded); };
+        var prepared = await h.Window.Services.HandleAsync(PrintRequest("preview", PreviewOptions(h)), Harness.Ct(60));
+        var id = prepared.Result!.Value.GetProperty("jobId").GetString()!;
+        h.Window.Exports.PrinterCapabilities = new FakePrinters(new PrintDevice("printer-a", "Printer A", [new PrintMedia("letter", "Letter", 612, 792, new PrintMargins(30, 30, 30, 30))]));
+        Assert.Equal("printer_settings_changed", (await h.Window.Services.HandleAsync(PrintRequest("print", new JsonObject { ["action"] = "print", ["jobId"] = id }), Harness.Ct(30))).Error?.Code);
+        Assert.Equal(0, calls);
     }
 }
