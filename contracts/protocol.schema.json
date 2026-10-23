@@ -406,22 +406,30 @@
         }
       }
     },
-    "ConnectorProjection": {
+    "RouteFinding": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "routePoints",
-        "visualBounds"
-      ],
+      "required": ["code", "severity", "message", "elementId"],
+      "properties": {
+        "code": { "enum": ["UNRESOLVED_ROUTE", "ROUTING_AVOIDANCE_VIOLATION", "ROUTE_SIDE_PREFERENCE_RELAXED"] },
+        "severity": { "enum": ["info", "warning", "error"] },
+        "message": { "type": "string", "maxLength": 4096 },
+        "elementId": { "$ref": "document.schema.json#/$defs/Uuid" },
+        "blockerIds": { "type": "array", "items": { "$ref": "document.schema.json#/$defs/Uuid" }, "uniqueItems": true }
+      }
+    },    "ConnectorProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["routePoints", "visualBounds"],
       "properties": {
         "routePoints": {
           "type": "array",
-          "items": {
-            "$ref": "document.schema.json#/$defs/Point"
-          }
+          "items": { "$ref": "document.schema.json#/$defs/Point" }
         },
-        "visualBounds": {
-          "$ref": "document.schema.json#/$defs/Bounds"
+        "visualBounds": { "$ref": "document.schema.json#/$defs/Bounds" },
+        "routeFindings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/RouteFinding" }
         },
         "routeProvenance": {
           "description": "R19: how the router produced an automatic orthogonal route. 'unresolved' means no clear route was found and the best available one is shown.",
@@ -432,8 +440,7 @@
           "description": "R19: why the route is not simply the previous one."
         }
       }
-    },
-    "Projection": {
+    },    "Projection": {
       "type": "object",
       "additionalProperties": false,
       "required": [

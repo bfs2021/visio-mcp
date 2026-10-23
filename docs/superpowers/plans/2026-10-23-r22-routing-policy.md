@@ -48,14 +48,14 @@
 - Adds optional RoutingPolicy to shape, text, and connector elements; adds optional preferredSide to Endpoint and EndpointInput.
 - Adds routeFindings to ConnectorProjection. Each finding has code, severity, message, elementId, and optional blockerIds. Codes are UNRESOLVED_ROUTE, ROUTING_AVOIDANCE_VIOLATION, and ROUTE_SIDE_PREFERENCE_RELAXED.
 
-- [ ] **Step 1: Write schema tests** named routingPolicy_accepts_supported_values_and_rejects_unknown_or_out_of_range_values and endpoint_preferred_side_is_shape_local_enum. Assert 0 and 2,000 are accepted for clearancePt, 2,001 is rejected, all four obstacle values round-trip, and an invalid side is rejected.
-- [ ] **Step 2: Run the tests and verify they fail** with the new fields rejected or missing.
+- [x] **Step 1: Write schema tests** named routingPolicy_accepts_supported_values_and_rejects_unknown_or_out_of_range_values and endpoint_preferred_side_is_shape_local_enum. Assert 0 and 2,000 are accepted for clearancePt, 2,001 is rejected, all four obstacle values round-trip, and an invalid side is rejected.
+- [x] **Step 2: Run the tests and verify they fail** with the new fields rejected or missing.
 
   Run: npm --prefix src/web test -- tests/contracts.test.ts
 
   Expected: FAIL on the new routingPolicy and preferredSide cases.
-- [ ] **Step 3: Add the definitions and optional references** to the three source schemas. Add routingPolicy to shape, text, connector, and set-patch schemas; add preferredSide to document and operation endpoint definitions; add routeFindings to ConnectorProjection. Do not make any field required.
-- [ ] **Step 4: Regenerate and verify parity.**
+- [x] **Step 3: Add the definitions and optional references** to the three source schemas. Add routingPolicy to shape, text, connector, and set-patch schemas; add preferredSide to document and operation endpoint definitions; add routeFindings to ConnectorProjection. Do not make any field required.
+- [x] **Step 4: Regenerate and verify parity.**
 
   Run: npm --prefix src/web run generate
 
@@ -64,7 +64,7 @@
   Run: dotnet test tests/Diagram.Contracts.Tests/Diagram.Contracts.Tests.csproj --no-restore
 
   Expected: generation is clean, schema parity passes, and all new validation cases pass.
-- [ ] **Step 5: Commit** as feat(r22): define routing policy contracts.
+- [x] **Step 5: Commit** as feat(r22): define routing policy contracts.
 
 ### Task 2: Resolve element policy and construct obstacle records
 

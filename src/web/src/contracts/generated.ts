@@ -89,6 +89,12 @@ export interface TextBlock {
   orientation?: "horizontal" | "vertical";
 }
 
+export interface RoutingPolicy {
+  obstacle?: "automatic" | "forbidden" | "avoid" | "passThrough";
+  clearancePt?: number;
+  text?: "ignore" | "avoid";
+}
+
 export interface TextInsets {
   top: number;
   right: number;
@@ -143,6 +149,7 @@ export interface Endpoint {
   port?: string;
   point?: Point;
   glue: "dynamic" | "static" | "none";
+  preferredSide?: "north" | "east" | "south" | "west";
   join?: Join;
 }
 
@@ -155,6 +162,7 @@ export interface ShapeElement {
   id: Uuid;
   alias?: string;
   name?: string;
+  routingPolicy?: RoutingPolicy;
   kind: "shape";
   layerIds: Uuid[];
   zIndex: number;
@@ -174,6 +182,7 @@ export interface TextElement {
   id: Uuid;
   alias?: string;
   name?: string;
+  routingPolicy?: RoutingPolicy;
   kind: "text";
   layerIds: Uuid[];
   zIndex: number;
@@ -216,6 +225,7 @@ export interface ConnectorElement {
   bounds: Bounds;
   rotationDeg: number;
   metadata: Record<string, string>;
+  routingPolicy?: RoutingPolicy;
   from: Endpoint;
   to: Endpoint;
   route: "straight" | "orthogonal" | "curved";
@@ -348,6 +358,7 @@ export interface ElementPatch {
   style?: StylePatch;
   text?: TextBlockPatch;
   geometry?: GeometryPatch;
+  routingPolicy?: RoutingPolicy;
   assetId?: string;
   fit?: "contain" | "cover" | "stretch";
   opacity?: number;
@@ -452,6 +463,7 @@ export interface EndpointInput {
   port?: string;
   point?: Point;
   glue: "dynamic" | "static" | "none";
+  preferredSide?: "north" | "east" | "south" | "west" | null;
   join?: JoinInput;
 }
 
@@ -778,9 +790,18 @@ export interface Snapshot {
   document: DiagramDocument;
 }
 
+export interface RouteFinding {
+  code: "UNRESOLVED_ROUTE" | "ROUTING_AVOIDANCE_VIOLATION" | "ROUTE_SIDE_PREFERENCE_RELAXED";
+  severity: "info" | "warning" | "error";
+  message: string;
+  elementId: Uuid;
+  blockerIds?: Uuid[];
+}
+
 export interface ConnectorProjection {
   routePoints: Point[];
   visualBounds: Bounds;
+  routeFindings?: RouteFinding[];
   routeProvenance?: "authored" | "frozen" | "kept" | "elastic" | "repaired" | "rerouted" | "unresolved";
   routeReason?: string;
 }

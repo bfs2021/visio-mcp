@@ -318,6 +318,7 @@
         "geometry": {
           "$ref": "#/$defs/GeometryPatch"
         },
+        "routingPolicy": { "$ref": "document.schema.json#/$defs/RoutingPolicy" },
         "assetId": {
           "type": "string",
           "minLength": 1,
@@ -764,6 +765,10 @@
             "static",
             "none"
           ]
+        },        "preferredSide": {
+          "type": ["string", "null"],
+          "enum": ["north", "east", "south", "west", null],
+          "description": "R22. Shape-local soft preference for a dynamic endpoint; null clears the preference."
         },
         "join": {
           "$ref": "#/$defs/JoinInput"

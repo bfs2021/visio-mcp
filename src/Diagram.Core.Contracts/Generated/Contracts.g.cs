@@ -112,6 +112,13 @@ public sealed record TextBlock
     [JsonPropertyName("orientation")] public string? Orientation { get; init; }
 }
 
+public sealed record RoutingPolicy
+{
+    [JsonPropertyName("obstacle")] public string? Obstacle { get; init; }
+    [JsonPropertyName("clearancePt")] public double? ClearancePt { get; init; }
+    [JsonPropertyName("text")] public string? Text { get; init; }
+}
+
 public sealed record TextInsets
 {
     [JsonPropertyName("top")] public required double Top { get; init; }
@@ -174,6 +181,7 @@ public sealed record Endpoint
     [JsonPropertyName("port")] public string? Port { get; init; }
     [JsonPropertyName("point")] public Point? Point { get; init; }
     [JsonPropertyName("glue")] public required string Glue { get; init; }
+    [JsonPropertyName("preferredSide")] public string? PreferredSide { get; init; }
     [JsonPropertyName("join")] public Join? Join { get; init; }
 }
 
@@ -188,6 +196,7 @@ public sealed record ShapeElement : Element
     [JsonPropertyName("id")] public required string Id { get; init; }
     [JsonPropertyName("alias")] public string? Alias { get; init; }
     [JsonPropertyName("name")] public string? Name { get; init; }
+    [JsonPropertyName("routingPolicy")] public RoutingPolicy? RoutingPolicy { get; init; }
     [JsonPropertyName("layerIds")] public required IReadOnlyList<string> LayerIds { get; init; }
     [JsonPropertyName("zIndex")] public required int ZIndex { get; init; }
     [JsonPropertyName("locked")] public required bool Locked { get; init; }
@@ -207,6 +216,7 @@ public sealed record TextElement : Element
     [JsonPropertyName("id")] public required string Id { get; init; }
     [JsonPropertyName("alias")] public string? Alias { get; init; }
     [JsonPropertyName("name")] public string? Name { get; init; }
+    [JsonPropertyName("routingPolicy")] public RoutingPolicy? RoutingPolicy { get; init; }
     [JsonPropertyName("layerIds")] public required IReadOnlyList<string> LayerIds { get; init; }
     [JsonPropertyName("zIndex")] public required int ZIndex { get; init; }
     [JsonPropertyName("locked")] public required bool Locked { get; init; }
@@ -248,6 +258,7 @@ public sealed record ConnectorElement : Element
     [JsonPropertyName("bounds")] public required Bounds Bounds { get; init; }
     [JsonPropertyName("rotationDeg")] public required double RotationDeg { get; init; }
     [JsonPropertyName("metadata")] public required IReadOnlyDictionary<string, string> Metadata { get; init; }
+    [JsonPropertyName("routingPolicy")] public RoutingPolicy? RoutingPolicy { get; init; }
     [JsonPropertyName("from")] public required Endpoint From { get; init; }
     [JsonPropertyName("to")] public required Endpoint To { get; init; }
     [JsonPropertyName("route")] public required string Route { get; init; }
@@ -391,6 +402,7 @@ public sealed record ElementPatch
     [JsonPropertyName("style")] public StylePatch? Style { get; init; }
     [JsonPropertyName("text")] public TextBlockPatch? Text { get; init; }
     [JsonPropertyName("geometry")] public GeometryPatch? Geometry { get; init; }
+    [JsonPropertyName("routingPolicy")] public RoutingPolicy? RoutingPolicy { get; init; }
     [JsonPropertyName("assetId")] public string? AssetId { get; init; }
     [JsonPropertyName("fit")] public string? Fit { get; init; }
     [JsonPropertyName("opacity")] public double? Opacity { get; init; }
@@ -487,6 +499,7 @@ public sealed record EndpointInput
     [JsonPropertyName("port")] public string? Port { get; init; }
     [JsonPropertyName("point")] public Point? Point { get; init; }
     [JsonPropertyName("glue")] public required string Glue { get; init; }
+    [JsonPropertyName("preferredSide")] public string? PreferredSide { get; init; }
     [JsonPropertyName("join")] public JoinInput? Join { get; init; }
 }
 
@@ -860,10 +873,20 @@ public sealed record Snapshot
     [JsonPropertyName("document")] public required DiagramDocument Document { get; init; }
 }
 
+public sealed record RouteFinding
+{
+    [JsonPropertyName("code")] public required string Code { get; init; }
+    [JsonPropertyName("severity")] public required string Severity { get; init; }
+    [JsonPropertyName("message")] public required string Message { get; init; }
+    [JsonPropertyName("elementId")] public required string ElementId { get; init; }
+    [JsonPropertyName("blockerIds")] public IReadOnlyList<string>? BlockerIds { get; init; }
+}
+
 public sealed record ConnectorProjection
 {
     [JsonPropertyName("routePoints")] public required IReadOnlyList<Point> RoutePoints { get; init; }
     [JsonPropertyName("visualBounds")] public required Bounds VisualBounds { get; init; }
+    [JsonPropertyName("routeFindings")] public IReadOnlyList<RouteFinding>? RouteFindings { get; init; }
     [JsonPropertyName("routeProvenance")] public string? RouteProvenance { get; init; }
     [JsonPropertyName("routeReason")] public string? RouteReason { get; init; }
 }
