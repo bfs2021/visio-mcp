@@ -88,6 +88,61 @@ describe('startApp', () => {
     return { ...f, app, ready, scope, ask };
   }
 
+  it('accepts bounded native ingress metadata without a path payload', async () => {
+    const f = fakeWebView();
+    const received: unknown[] = [];
+    startApp(f.wv, null, { app: { ingressAvailable: batch => received.push(batch) } });
+    f.fromHost({ protocolVersion: 1, kind: 'request', requestId: 'ingress-1', method: 'app.ingressAvailable', params: {
+      batchId: 'batch-1', items: [{ ticketId: 'opaque-ticket', displayName: 'diagram.diagram.json', kind: 'json' }], rejections: [],
+    } });
+    await flush();
+
+    expect(received).toEqual([{ batchId: 'batch-1', items: [{ ticketId: 'opaque-ticket', displayName: 'diagram.diagram.json', kind: 'json' }], rejections: [] }]);
+    expect(f.toHost.at(-1)).toMatchObject({ kind: 'response', requestId: 'ingress-1', result: { received: true } });
+
+    f.fromHost({ protocolVersion: 1, kind: 'request', requestId: 'ingress-2', method: 'app.ingressAvailable', params: {
+      batchId: 'batch-2', items: [{ ticketId: 'bad', displayName: 'file', kind: 'json', path: 'C:/private/file.diagram.json' }], rejections: [],
+    } });
+    await flush();
+    expect(f.toHost.at(-1)).toMatchObject({ kind: 'response', requestId: 'ingress-2', error: { code: 'invalid_request' } });
+    expect(received).toHaveLength(1);
+  });
+
+  it('pins native drops to a bounded visible editor target and finite page point', async () => {
+    const f = fakeWebView();
+    const received: unknown[] = [];
+    startApp(f.wv, null, { app: { ingressAvailable: batch => received.push(batch) } });
+    const target = { documentId: 'doc', sessionId: 'session', baseRevision: 4, pageId: 'page', x: 120.5, y: 220 };
+    f.fromHost({ protocolVersion: 1, kind: 'request', requestId: 'ingress-target', method: 'app.ingressAvailable', params: {
+      batchId: 'batch-target', items: [{ ticketId: 'opaque', displayName: 'image.png', kind: 'image' }], rejections: [], target,
+    } });
+    await flush();
+    expect(received).toEqual([{ batchId: 'batch-target', items: [{ ticketId: 'opaque', displayName: 'image.png', kind: 'image' }], rejections: [], target }]);
+
+    f.fromHost({ protocolVersion: 1, kind: 'request', requestId: 'ingress-target-bad', method: 'app.ingressAvailable', params: {
+      batchId: 'batch-bad', items: [], rejections: [], target: { ...target, x: Number.NaN },
+    } });
+    await flush();
+    expect(f.toHost.at(-1)).toMatchObject({ error: { code: 'invalid_request' } });
+    expect(received).toHaveLength(1);
+  });
+
+  it('captures a finite native point into the active page target through a bounded request', async () => {
+    const f = fakeWebView();
+    const points: unknown[] = [];
+    const target = { documentId: 'doc', sessionId: 'session', baseRevision: 8, pageId: 'page-2', x: 45, y: 80 };
+    startApp(f.wv, null, { app: { captureIngressTarget: point => { points.push(point); return { ok: true, value: target }; } } });
+    f.fromHost({ protocolVersion: 1, kind: 'request', requestId: 'capture-1', method: 'app.captureIngressTarget', params: { clientX: 320, clientY: 400 } });
+    await flush();
+    expect(points).toEqual([{ clientX: 320, clientY: 400 }]);
+    expect(f.toHost.at(-1)).toMatchObject({ result: target, requestId: 'capture-1' });
+
+    f.fromHost({ protocolVersion: 1, kind: 'request', requestId: 'capture-bad', method: 'app.captureIngressTarget', params: { clientX: Number.NaN, clientY: 400 } });
+    await flush();
+    expect(points).toHaveLength(1);
+    expect(f.toHost.at(-1)).toMatchObject({ error: { code: 'invalid_request' }, requestId: 'capture-bad' });
+  });
+
   it('AppStartsReadyWithA4Snapshot', async () => {
     const { ready, ask, toHost } = boot();
     expect(ready).toMatchObject({ kind: 'event', method: 'editor.ready', params: { protocolVersion: 1, revision: 0 } });

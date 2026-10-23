@@ -18,13 +18,18 @@ public sealed partial class HostServices(MainWindow window)
     readonly object pathGate = new();
     readonly Dictionary<string, string> paths = new();         // the file each open document came from or was last saved to
     readonly Dictionary<string, string> successors = new();    // old document id -> the one that replaced it, for a reply that arrives after the swap
+    internal IngressTicketRegistry IngressTickets { get; } = new();
+    internal string IngressWindowId { get; } = Guid.NewGuid().ToString("N");
 
     /// <summary>Listens for documents being closed or replaced so each one's file follows it. Called once the router exists.</summary>
     internal void Attach(BridgeRouter router)
     {
+        router.ChannelReset += IngressTickets.ClearChannel;
         router.DocumentReplaced += (old, next) => { lock (pathGate) { successors[old.DocumentId] = next.DocumentId; if (paths.Remove(old.DocumentId, out var p)) paths[next.DocumentId] = p; if (diskVersions.Remove(old.DocumentId, out var v)) diskVersions[next.DocumentId] = v; fileOffers.Remove(old.DocumentId); } };
         router.DocumentClosed += s => { lock (pathGate) { paths.Remove(s.DocumentId); diskVersions.Remove(s.DocumentId); fileOffers.Remove(s.DocumentId); } };
     }
+
+    internal void ClearIngressOnShutdown() => IngressTickets.ClearOnShutdown();
 
     /// <summary>Path of the active document's last successful open or save (informational; the editor tracks the saved revision).</summary>
     public string? CurrentPath => window.Router.CurrentScope is { } s ? PathOf(s.DocumentId) : null;
@@ -90,8 +95,8 @@ public sealed partial class HostServices(MainWindow window)
             if (status.Error is { } error) return Err(request, error);
             openExpected = new ExpectedState { DocumentId = target.DocumentId, SessionId = target.SessionId, BaseRevision = status.Result!.Value.GetProperty("revision").GetInt32() };
         }
-        var fileAction = request.Method is "host.newDocument" or "host.openJson" or "host.openVsdx" or "host.saveJson" or "host.exportImage";
-        fileAction = fileAction || request.Method.StartsWith("host.fileConflict.", StringComparison.Ordinal);
+        var fileAction = request.Method is "host.newDocument" or "host.openJson" or "host.openVsdx" or "host.ingress.open" or "host.saveJson" or "host.exportImage";
+        fileAction = fileAction || request.Method.StartsWith("host.fileConflict.", StringComparison.Ordinal) || request.Method == IngressHostMethods.ClipboardImportImage;
         if (fileAction) await newDocumentGate.WaitAsync(ct);
         try
         {
@@ -101,6 +106,12 @@ public sealed partial class HostServices(MainWindow window)
                 "host.newDocument" => await NewDocumentAsync(request, ct),
                 "host.protectNewDocument" => await ProtectNewDocumentAsync(request, ct),
                 "host.openJson" => await OpenAsync(request, openExpected!, ct),
+                IngressHostMethods.Open => await OpenIngressAsync(request, ct),
+                IngressHostMethods.ImportImage => await ImportIngressImageAsync(request, ct),
+                IngressHostMethods.Dismiss => DismissIngress(request),
+                IngressHostMethods.ClipboardDescribe => DescribeClipboard(request),
+                IngressHostMethods.ClipboardMarkInternalCopy => MarkInternalClipboardCopy(request),
+                IngressHostMethods.ClipboardImportImage => await ImportClipboardImageAsync(request, ct),
                 "host.saveJson" => await SaveAsync(request, ct),
                 var m when m.StartsWith("host.recent.", StringComparison.Ordinal) => await RecentAsync(request, ct),
                 "host.fileConflict.check" => await CheckFileAsync(request, ct),
@@ -188,6 +199,11 @@ public sealed partial class HostServices(MainWindow window)
         }
         if (path is null) return Ok(request, new JsonObject { ["cancelled"] = true });
 
+        return await OpenJsonPathAsync(request, expected, path, restored, ct);
+    }
+
+    async Task<ResponseEnvelope> OpenJsonPathAsync(RequestEnvelope request, ExpectedState expected, string path, bool restored, CancellationToken ct)
+    {
         var opened = await window.Coordinator.OpenJsonAsync(path, expected, ct);
         if (!opened.IsOk) return Err(request, opened.Error!);
         SetPath(expected.DocumentId, path);
@@ -216,6 +232,11 @@ public sealed partial class HostServices(MainWindow window)
             return d.ShowDialog(window) == true ? d.FileName : null;
         });
         if (path is null) return Ok(request, new JsonObject { ["cancelled"] = true });
+        return await OpenVsdxPathAsync(request, expected, path, ct);
+    }
+
+    async Task<ResponseEnvelope> OpenVsdxPathAsync(RequestEnvelope request, ExpectedState expected, string path, CancellationToken ct)
+    {
         var opened = await window.Native.OpenAsync(path, expected, ct);
         if (!opened.IsOk) return Err(request, opened.Error!);
         SetPath(expected.DocumentId, null); // the JSON file the person had open is not this document's home any more: Save asks where to put it

@@ -1,4 +1,6 @@
 using System.IO;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Windows;
 using Diagram.Core.Contracts;
 using Diagram.Host.Core;
@@ -45,6 +47,7 @@ public partial class MainWindow : Window
     }
     readonly AppOptions options;
     WebViewHost? host;
+    NativeFileDropAdapter? nativeDropAdapter;
 
     public MainWindow(AppOptions options)
     {
@@ -104,6 +107,9 @@ public partial class MainWindow : Window
         host = new WebViewHost(Web.CoreWebView2, Dispatcher, options.ContentRoot, Blobs, services.HandleAsync);
         Coordinator = new SessionCoordinator(host.Router, Blobs, Preparer, Writer);
         Services = services;
+        nativeDropAdapter = new NativeFileDropAdapter(services.IngressTickets, services.IngressWindowId,
+            () => Router.CurrentScope is { } scope && Router.ChannelOf(scope.DocumentId) == BridgeRouter.User ? BridgeRouter.User : null,
+            NotifyNativeIngressAsync);
         services.Attach(host.Router);
         Native = new NativeFileCoordinator(host.Router, host.Router, Blobs, Writer, new NativeVsdxImporter(), new NativeVsdxExporter(), host.Router);
         Exports = new ExportService(this, options.ExportRoot ?? Path.Combine(Path.GetTempPath(), "AgenticDiagramExports"), options.Offscreen ? null : new ExportConsentWindow(this));
@@ -121,6 +127,7 @@ public partial class MainWindow : Window
         {
             try
             {
+                Services.ClearIngressOnShutdown();
                 if (Live is not null) await Live.DisposeAsync();
                 await Agents.DisposeAsync();
                 try { await RecoveryMgr.CloseCleanlyAsync(); await Workspace.MarkCleanExitAsync(); } catch (Exception e) when (e is IOException or UnauthorizedAccessException) { } // leaving recovery files behind is the safe failure
@@ -188,6 +195,60 @@ public partial class MainWindow : Window
         var files = new System.Text.Json.Nodes.JsonArray(launch.Files.Select(f => (System.Text.Json.Nodes.JsonNode)new System.Text.Json.Nodes.JsonObject { ["path"] = f.Path, ["kind"] = f.Kind }).ToArray());
         var r = await Router.SendAsync(new RequestEnvelope { RequestId = Guid.NewGuid().ToString(), Method = "app.openFiles", Params = new System.Text.Json.Nodes.JsonObject { ["files"] = files } }, ct);
         return r.Error is { } e ? [.. launch.Skipped, e.Message] : launch.Skipped;
+    }
+
+    internal async Task<bool> NotifyIngressAvailableAsync(IngressDropBatch batch, CancellationToken ct = default, IngressDropTarget? target = null)
+    {
+        var message = new IngressAvailableEvent(batch.BatchId, batch.Items, batch.Rejections, target);
+        var response = await Router.SendAsync(new RequestEnvelope
+        {
+            RequestId = Guid.NewGuid().ToString(), Method = "app.ingressAvailable",
+            Params = System.Text.Json.JsonSerializer.SerializeToNode(message, ContractJson.Options)!.AsObject(),
+        }, ct, BridgeRouter.User);
+        return response.Error is null;
+    }
+
+    async Task<bool> NotifyNativeIngressAsync(IngressDropBatch batch, System.Windows.Point point, CancellationToken ct)
+    {
+        var scope = Router.CurrentScope;
+        if (scope is null || Router.ChannelOf(scope.DocumentId) != BridgeRouter.User) return false;
+        var captured = await Router.SendAsync(new RequestEnvelope
+        {
+            RequestId = Guid.NewGuid().ToString(), Method = "app.captureIngressTarget", DocumentId = scope.DocumentId, SessionId = scope.SessionId,
+            Params = new JsonObject { ["clientX"] = point.X, ["clientY"] = point.Y },
+        }, ct, BridgeRouter.User);
+        if (captured.Error is not null || captured.Result is null || Router.CurrentScope != scope) return false;
+        IngressDropTarget? target;
+        try { target = captured.Result.Value.Deserialize<IngressDropTarget>(ContractJson.Options); }
+        catch (JsonException) { return false; }
+        if (target is null || target.DocumentId != scope.DocumentId || target.SessionId != scope.SessionId || target.BaseRevision < 0 ||
+            string.IsNullOrWhiteSpace(target.PageId) || target.PageId.Length > 128 || !double.IsFinite(target.X) || !double.IsFinite(target.Y)) return false;
+        return await NotifyIngressAvailableAsync(batch, ct, target);
+    }
+
+    void OnNativeDragEnter(object sender, DragEventArgs e) => SetNativeDropEffect(e);
+    void OnNativeDragOver(object sender, DragEventArgs e) => SetNativeDropEffect(e);
+
+    void SetNativeDropEffect(DragEventArgs e)
+    {
+        var canDrop = e.Data.GetDataPresent(DataFormats.FileDrop, autoConvert: false) && nativeDropAdapter is not null;
+        if (!canDrop) return; // app-owned HTML palette/asset drags continue through WebView2
+        e.Effects = canDrop ? DragDropEffects.Copy : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    void OnNativeDrop(object sender, DragEventArgs e)
+    {
+        if (nativeDropAdapter is null || !e.Data.GetDataPresent(DataFormats.FileDrop, autoConvert: false)) return;
+        e.Handled = true;
+        e.Effects = DragDropEffects.Copy;
+        _ = ProcessNativeDropAsync(e.Data, e.GetPosition(Web));
+    }
+
+    async Task ProcessNativeDropAsync(IDataObject data, System.Windows.Point point)
+    {
+        try { if (nativeDropAdapter is { } adapter) await adapter.HandleDropAsync(data, point); }
+        catch (Exception ex) when (ex is InvalidOperationException or IOException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException) { }
     }
 
     void BringToFront()

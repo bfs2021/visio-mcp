@@ -1,0 +1,37 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Diagram.Core.Contracts -> C:\Users\claude\.codex\worktrees\w14-file-drop-plan\diagram-app\src\Diagram.Core.Contracts\bin\Debug\net10.0\Diagram.Core.Contracts.dll
+  Diagram.Contracts.Tests -> C:\Users\claude\.codex\worktrees\w14-file-drop-plan\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll
+Test run for C:\Users\claude\.codex\worktrees\w14-file-drop-plan\diagram-app\tests\Diagram.Contracts.Tests\bin\Debug\net10.0\Diagram.Contracts.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:    50, Skipped:     0, Total:    50, Duration: 174 ms - Diagram.Contracts.Tests.dll (net10.0)
+  Diagram.Host.Core -> C:\Users\claude\.codex\worktrees\w14-file-drop-plan\diagram-app\src\Diagram.Host.Core\bin\Debug\net10.0\Diagram.Host.Core.dll
+  Diagram.Host.Tests -> C:\Users\claude\.codex\worktrees\w14-file-drop-plan\diagram-app\tests\Diagram.Host.Tests\bin\Debug\net10.0\Diagram.Host.Tests.dll
+Test run for C:\Users\claude\.codex\worktrees\w14-file-drop-plan\diagram-app\tests\Diagram.Host.Tests\bin\Debug\net10.0\Diagram.Host.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:   202, Skipped:     0, Total:   202, Duration: 4 s - Diagram.Host.Tests.dll (net10.0)
+  Diagram.Ipc -> C:\Users\claude\.codex\worktrees\w14-file-drop-plan\diagram-app\src\Diagram.Ipc\bin\Debug\net10.0\Diagram.Ipc.dll
+  Diagram.Ipc.Tests -> C:\Users\claude\.codex\worktrees\w14-file-drop-plan\diagram-app\tests\Diagram.Ipc.Tests\bin\Debug\net10.0\Diagram.Ipc.Tests.dll
+Test run for C:\Users\claude\.codex\worktrees\w14-file-drop-plan\diagram-app\tests\Diagram.Ipc.Tests\bin\Debug\net10.0\Diagram.Ipc.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:    33, Skipped:     0, Total:    33, Duration: 2 s - Diagram.Ipc.Tests.dll (net10.0)
+  Diagram.Mcp -> C:\Users\claude\.codex\worktrees\w14-file-drop-plan\diagram-app\src\Diagram.Mcp\bin\Debug\net10.0\Diagram.Mcp.dll
+  Diagram.Mcp.Tests -> C:\Users\claude\.codex\worktrees\w14-file-drop-plan\diagram-app\tests\Diagram.Mcp.Tests\bin\Debug\net10.0\Diagram.Mcp.Tests.dll
+Test run for C:\Users\claude\.codex\worktrees\w14-file-drop-plan\diagram-app\tests\Diagram.Mcp.Tests\bin\Debug\net10.0\Diagram.Mcp.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:    14, Skipped:     0, Total:    14, Duration: 1 m 2 s - Diagram.Mcp.Tests.dll (net10.0)
+  Diagram.Visio.Abstractions -> C:\Users\claude\.codex\worktrees\w14-file-drop-plan\diagram-app\src\Diagram.Visio.Abstractions\bin\Debug\net10.0\Diagram.Visio.Abstractions.dll
+  Diagram.Visio -> C:\Users\claude\.codex\worktrees\w14-file-drop-plan\diagram-app\src\Diagram.Visio\bin\Debug\net10.0\Diagram.Visio.dll
+  Diagram.Visio.Tests -> C:\Users\claude\.codex\worktrees\w14-file-drop-plan\diagram-app\tests\Diagram.Visio.Tests\bin\Debug\net10.0\Diagram.Visio.Tests.dll
+Test run for C:\Users\claude\.codex\worktrees\w14-file-drop-plan\diagram-app\tests\Diagram.Visio.Tests\bin\Debug\net10.0\Diagram.Visio.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:   156, Skipped:     0, Total:   156, Duration: 5 s - Diagram.Visio.Tests.dll (net10.0)
+  Diagram.App -> C:\Users\claude\.codex\worktrees\w14-file-drop-plan\diagram-app\src\Diagram.App\bin\Debug\net10.0-windows\Diagram.App.dll
+  Diagram.Windows.Tests -> C:\Users\claude\.codex\worktrees\w14-file-drop-plan\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll
+Test run for C:\Users\claude\.codex\worktrees\w14-file-drop-plan\diagram-app\tests\Diagram.Windows.Tests\bin\Debug\net10.0-windows\Diagram.Windows.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.

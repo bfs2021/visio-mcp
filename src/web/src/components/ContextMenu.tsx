@@ -22,7 +22,7 @@ export function ContextMenu({ model, at, onClose }: { model: EditorModel; at: { 
   const sections: Item[][] = [
     [
       { id: 'copy', label: 'Copy', shortcut: 'Ctrl+C', disabled: !has, run: () => model.copy() },
-      { id: 'paste', label: 'Paste', shortcut: 'Ctrl+V', disabled: false, run: () => void model.paste() },
+      { id: 'paste', label: 'Paste', shortcut: 'Ctrl+V', disabled: false, run: () => void model.pasteFromClipboard() },
       { id: 'duplicate', label: 'Duplicate', shortcut: 'Ctrl+D', disabled: !has, run: () => void model.duplicate() },
       { id: 'delete', label: 'Delete', shortcut: 'Del', disabled: !has, run: () => void model.deleteSelection() },
     ],
