@@ -36,7 +36,7 @@ For visible elements, evaluate a per-element routingPolicy.obstacle first:
 1. forbidden is a hard obstacle. The route must keep the declared clearance from it. If no valid path exists, the planner retains the best prior route, marks the connector unresolved, and reports the blocking element and reason. It never presents a violating path as successful.
 2. avoid is a soft obstacle. The planner prefers a route outside its clearance. If the bounded search cannot find a route that avoids all soft obstacles, the planner may route with those soft obstacles relaxed and emits one stable ROUTING_AVOIDANCE_VIOLATION finding per violated element. A route that also violates a forbidden policy remains unresolved.
 3. passThrough is ignored by obstacle search and crossing diagnostics. Routes may pass through its interior or cross its border.
-4. automatic, or an absent obstacle, uses today's migration heuristic for that element. Existing files are not rewritten and retain current route geometry until a user edits policy or a connector is otherwise changed.
+4. automatic, or an absent obstacle, uses today's migration heuristic for that element. Any candidate selected by that heuristic remains a hard obstacle, as it is today. Existing files are not rewritten and retain current route geometry until a user edits policy or a connector is otherwise changed.
 
 Hidden elements and elements on hidden layers remain ignored, matching current visual routing. Locked elements remain obstacles. An attached endpoint shape is excluded only from the controlled glue stub; the rest of its visible outline is still forbidden/avoided according to its effective policy. A route may not cut through its endpoint shape interior.
 
