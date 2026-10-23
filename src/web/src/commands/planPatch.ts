@@ -43,6 +43,8 @@ export interface Plan {
   freshRoutes?: string[];
   /** R20: filled by settleRoutes. */
   routeChanges?: RouteChange[];
+  /** R22: policy-aware route findings used by transaction preflight. */
+  routeFindings?: import('../contracts/generated').RouteFinding[];
 }
 
 const DEFAULT_SHAPE_STYLE: ShapeStyle = {
@@ -301,6 +303,7 @@ class Planner {
     if ((hit.element.kind === 'shape' || hit.element.kind === 'text') && hit.element.attachment?.connectorId === selfId) stop('invalid_request', 'a connector cannot be glued to an element that rides on it');
     const ep: Endpoint = { elementId: hit.element.id, glue: input.glue };
     if (input.port !== undefined) ep.port = input.port;
+    if (input.preferredSide != null) ep.preferredSide = input.preferredSide;
     return ep;
   }
 
@@ -1004,6 +1007,10 @@ class Planner {
           delete next.routing; // waypoints make the route manual (or, when empty, automatic); a stored route no longer applies
           break;
         case 'routing': need(element.kind === 'connector', key); routingMode = (value as { mode: string }).mode; break;
+        case 'routingPolicy':
+          need(element.kind === 'shape' || element.kind === 'text' || element.kind === 'connector', key);
+          if (value === null) delete next.routingPolicy; else next.routingPolicy = { ...(('routingPolicy' in element && element.routingPolicy) || {}), ...(value as PatchObj) };
+          break;
         case 'from': case 'to': {
           need(element.kind === 'connector', key);
           const ep = value as Endpoint;

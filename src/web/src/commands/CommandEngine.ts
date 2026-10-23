@@ -15,6 +15,7 @@ import { settleRoutes } from './routes';
 import { settleJoins } from './joins';
 import { planPatch } from './planPatch';
 import { readDocumentDefaults } from '../model/documentDefaults';
+import { planRoutes } from '../layout/routePlanner';
 
 export type Projector = (snapshot: Snapshot, diff: ResolvedDiff) => Result<void>;
 export type SnapshotProjector = (snapshot: Snapshot) => Result<Projection>;
@@ -23,6 +24,19 @@ export type ScriptCompiler = (
   snapshot: Snapshot,
   context: { pageId?: string; preparedAssetRefs?: ScriptRequest['preparedAssetRefs'] },
 ) => Result<{ operations: Operation[]; sourceSpans?: unknown }>;
+
+function requestsHardRoutePreflight(operations: readonly Operation[]): boolean {
+  const hardEndpoint = (value: unknown) => !!value && typeof value === 'object' && (value as { glue?: unknown }).glue === 'static';
+  return operations.some(op => {
+    if (op.op === 'set') {
+      const patch = op.patch as Record<string, unknown>;
+      const policy = patch.routingPolicy as { obstacle?: string; text?: string } | undefined;
+      return policy?.obstacle === 'forbidden' || policy?.text === 'avoid' || hardEndpoint(patch.from) || hardEndpoint(patch.to);
+    }
+    if (op.op === 'createConnector') return hardEndpoint(op.from) || hardEndpoint(op.to);
+    return false;
+  });
+}
 
 export interface EngineOptions {
   document: DiagramDocument;
@@ -216,6 +230,17 @@ export class CommandEngine {
     if (!planned.ok) return spans ? withSpan(planned, spans()) : planned;
     const snapshotOf = (doc: DiagramDocument) => ({ ...before, revision: before.revision + 1, document: doc });
     const routed = settleRoutes(before.document, planned.value);
+    if (requestsHardRoutePreflight(ops.value)) {
+      const existing = new Set(before.document.pages.flatMap(page => planRoutes({ elements: page.elements, layers: page.layers, pageArea: page.widthPt * page.heightPt }).routeFindings)
+        .filter(finding => finding.code === 'UNRESOLVED_ROUTE').map(finding => finding.elementId));
+      const introduced = (routed.routeFindings ?? []).filter(finding => finding.code === 'UNRESOLVED_ROUTE' && !existing.has(finding.elementId));
+      if (introduced.length) {
+        const rejected = fail('invalid_request', 'the routing policy would leave one or more connectors without a clear route', {
+          details: { reason: 'routing_policy_unresolved', connectorIds: introduced.map(finding => finding.elementId).sort() },
+        });
+        return spans ? withSpan(rejected, spans()) : rejected;
+      }
+    }
     const joined = settleJoins(before.document, routed, this.snapshotProjector, snapshotOf); // branches first: a pinned shape follows the route as the branches leave it
     const plan = settleAttachments(before.document, joined, this.snapshotProjector, snapshotOf);
     const previousRevision = before.revision;

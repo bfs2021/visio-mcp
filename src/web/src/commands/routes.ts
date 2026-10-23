@@ -1,4 +1,4 @@
-import type { ConnectorElement, DiagramDocument, Element, Page, RouteChange } from '../contracts/generated';
+import type { ConnectorElement, DiagramDocument, Element, Page, RouteChange, RouteFinding } from '../contracts/generated';
 import { planRoutes, STORED_TOLERANCE, storedRoute, type PlannedRoute } from '../layout/routePlanner';
 import { applyDiff, type DiffBody } from './diff';
 import type { Plan } from './planPatch';
@@ -23,7 +23,7 @@ export function settleRoutes(before: DiagramDocument, plan: Plan): Plan {
 
   const forward: DiffBody = { upserts: { ...plan.forward.upserts, elements: plan.forward.upserts.elements.slice() }, deletes: plan.forward.deletes };
   const inverse: DiffBody = { upserts: { ...plan.inverse.upserts, elements: plan.inverse.upserts.elements.slice() }, deletes: plan.inverse.deletes };
-  const changed: string[] = [], pageIds = new Set(plan.changedPageIds), routeChanges: RouteChange[] = [];
+  const changed: string[] = [], pageIds = new Set(plan.changedPageIds), routeChanges: RouteChange[] = [], routeFindings: RouteFinding[] = [];
 
   const put = (page: Page, next: Element) => {
     const old = beforeById.get(next.id);
@@ -53,6 +53,7 @@ export function settleRoutes(before: DiagramDocument, plan: Plan): Plan {
     }
 
     const planned = planRoutes({ elements: page.elements, layers: page.layers, pageArea: area, previous });
+    routeFindings.push(...planned.routeFindings);
     for (const e of page.elements) {
       if (!orthogonal(e)) continue;
       const route = planned.routes.get(e.id);
@@ -73,7 +74,7 @@ export function settleRoutes(before: DiagramDocument, plan: Plan): Plan {
 
   if (!changed.length && !routeChanges.length && forward.upserts.elements.length === plan.forward.upserts.elements.length && forward.upserts.elements.every((u, i) => u === plan.forward.upserts.elements[i])) return plan;
   return {
-    ...plan, forward, inverse, routeChanges,
+    ...plan, forward, inverse, routeChanges, routeFindings,
     changed: [...new Set([...plan.changed, ...changed])], changedPageIds: [...pageIds],
     visuallyAffectedIds: [...new Set([...plan.visuallyAffectedIds, ...changed])],
   };

@@ -566,31 +566,39 @@ class Compiler {
     const explicitAlias = this.raw(`${side}Alias`), explicitPort = this.raw(`${side}Port`);
     const plain = this.raw(side);
     const joined = this.raw(`${side}Join`);
+    const sideValue = this.raw(`${side}Side`);
+    const withSide = (endpoint: EndpointInput): EndpointInput => {
+      if (sideValue) {
+        if (endpoint.glue === 'none') this.err(`${side}Side= applies only to a glued endpoint`, sideValue.keyToken);
+        endpoint.preferredSide = this.enumValue(sideValue, ['north', 'east', 'south', 'west'] as const);
+      }
+      return endpoint;
+    };
     const given = [plain, explicitAlias, fx, joined].filter(Boolean).length;
     if (given === 0) this.err(`connect needs ${side}=`, this.current.span);
     if (given > 1) this.err(`${side}, ${side}Alias, ${side}X/${side}Y and ${side}Join are alternatives`, (plain ?? explicitAlias ?? fx ?? joined)!.keyToken);
-    if (joined) return this.joinInput(side, joined);
+    if (joined) return withSide(this.joinInput(side, joined));
     if (this.has(`${side}At`)) this.err(`${side}At= goes with ${side}Join=`, this.raw(`${side}At`)!.keyToken);
     if (fx || fy) {
       if (!fx || !fy) this.err(`a free end needs both ${side}X= and ${side}Y=`, (fx ?? fy)!.keyToken);
-      return { glue: 'none', point: { x: this.dim(fx), y: this.dim(fy) } };
+      return withSide({ glue: 'none', point: { x: this.dim(fx), y: this.dim(fy) } });
     }
     if (explicitAlias) {
       const known = this.target(explicitAlias.value);
       const e: EndpointInput = { elementId: known.id, glue: explicitPort ? 'static' : 'dynamic' };
       if (explicitPort) e.port = this.str(explicitPort);
-      return e;
+      return withSide(e);
     }
     if (explicitPort) this.err(`${side}Port= goes with ${side}Alias=`, explicitPort.keyToken);
     const tok = plain!.value;
-    if (tok.type === 'string') return { elementId: this.target(tok).id, glue: 'dynamic' }; // a quoted token is a whole alias, id or name
+    if (tok.type === 'string') return withSide({ elementId: this.target(tok).id, glue: 'dynamic' }); // a quoted token is a whole alias, id or name
     if (tok.type !== 'word') return this.err(`${side}= takes an alias or alias.port`, tok);
     const whole = this.tryTarget(tok.text, tok);
     const dot = tok.text.lastIndexOf('.');
     const split = dot > 0 ? this.tryTarget(tok.text.slice(0, dot), tok) : undefined;
     if (whole && split) this.err(`"${tok.text}" could be the alias "${tok.text}" or port "${tok.text.slice(dot + 1)}" of "${tok.text.slice(0, dot)}"`, tok, `write ${side}Alias="..." and ${side}Port="..." to say which`);
-    if (whole) return { elementId: whole.id, glue: 'dynamic' };
-    if (split) return { elementId: split.id, port: tok.text.slice(dot + 1), glue: 'static' };
+    if (whole) return withSide({ elementId: whole.id, glue: 'dynamic' });
+    if (split) return withSide({ elementId: split.id, port: tok.text.slice(dot + 1), glue: 'static' });
     return this.err(`nothing is called "${tok.text}"${dot > 0 ? ` or "${tok.text.slice(0, dot)}"` : ''}`, tok);
   }
 
@@ -609,7 +617,7 @@ class Compiler {
     if (this.args.pos.length) this.err('connect takes only name=value fields', this.args.pos[0]!);
     this.finish(['id', 'uuid', 'from', 'to', 'fromAlias', 'fromPort', 'toAlias', 'toPort', 'fromX', 'fromY', 'toX', 'toY', 'route', 'name', 'layer',
       'stroke', 'strokeWidth', 'dash', 'startArrow', 'endArrow', 'startArrowSize', 'endArrowSize', 'text', 'labelAt', 'labelOffset', 'mode',
-      'fromJoin', 'fromAt', 'toJoin', 'toAt', 'hops']);
+      'fromJoin', 'fromAt', 'toJoin', 'toAt', 'fromSide', 'toSide', 'hops']);
     const pageId = this.pageIdForCreate();
     const { id, alias } = this.identity();
     const op: Operation = { op: 'createConnector', id, pageId, from: this.endpoint('from'), to: this.endpoint('to') };
@@ -694,6 +702,27 @@ class Compiler {
     if (this.has('mode')) {
       if (!isConnector) this.err('mode= applies to connectors only', this.raw('mode')!.keyToken);
       patch.routing = { mode: this.enumValue(this.raw('mode')!, ['automatic', 'manual', 'frozen', 'guided'] as const) }; handled.add('mode');
+    }
+    for (const side of ['from', 'to'] as const) if (this.has(`${side}Side`)) {
+      const token = this.raw(`${side}Side`)!;
+      if (!isConnector) this.err(`${side}Side= applies to connectors only`, token.keyToken);
+      const current = this.ctx.snapshot.document.pages.flatMap(page => page.elements).find(e => e.id === known.id);
+      if (!current || current.kind !== 'connector') this.err(`${side}Side= can only change an existing connector end`, token.keyToken);
+      if (current[side].glue === 'none') this.err(`${side}Side= applies only to a glued endpoint`, token.keyToken);
+      patch[side] = { ...current[side], preferredSide: this.enumValue(token, ['north', 'east', 'south', 'west'] as const) };
+      handled.add(`${side}Side`);
+    }
+    const routingPolicy: Record<string, unknown> = {};
+    if (this.has('obstacle')) { routingPolicy.obstacle = this.enumValue(this.raw('obstacle')!, ['automatic', 'forbidden', 'avoid', 'passThrough'] as const); handled.add('obstacle'); }
+    if (this.has('clearance')) {
+      const clearancePt = this.dim(this.raw('clearance')!);
+      if (clearancePt < 0 || clearancePt > 2000) this.err('clearance= must be between 0pt and 2000pt', this.raw('clearance')!.value);
+      routingPolicy.clearancePt = clearancePt; handled.add('clearance');
+    }
+    if (this.has('textObstacle')) { routingPolicy.text = this.enumValue(this.raw('textObstacle')!, ['ignore', 'avoid'] as const); handled.add('textObstacle'); }
+    if (Object.keys(routingPolicy).length) {
+      if (known.kind === 'image' || known.kind === 'group') this.err('routing obstacle policies apply to shapes, text boxes, and connectors', (this.raw('obstacle') ?? this.raw('clearance') ?? this.raw('textObstacle'))!.keyToken);
+      patch.routingPolicy = routingPolicy;
     }
     if (this.has('on') || this.has('at') || this.has('offset')) {
       if (known.kind !== 'shape' && known.kind !== 'text') this.err('on=, at= and offset= apply to shapes and text boxes', (this.raw('on') ?? this.raw('at') ?? this.raw('offset'))!.keyToken);

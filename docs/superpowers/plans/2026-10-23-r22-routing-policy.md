@@ -140,20 +140,20 @@
 - DrawScript supports obstacle=, clearance=, textObstacle= for routingPolicy and fromSide=/toSide= on connectors; these compile to the same set patch as MCP.
 - Policy-setting operations preflight the resulting plan. If they create a hard unresolved route, reject the whole batch without changing revision, policy, or route. Geometry changes that later invalidate an existing policy retain R19 unresolved behavior.
 
-- [ ] **Step 1: Add tests** named failed_forbidden_policy_edit_is_atomic, set_routing_policy_updates_shape_and_connector, and script_compiles_policy_and_endpoint_side_to_set_operation. Assert a rejected operation preserves revision and object hash; a valid policy changes once and undo restores it; DrawScript produces the same typed set patch as MCP.
-- [ ] **Step 2: Run the focused tests and verify they fail.**
+- [x] **Step 1: Add tests** named failed_forbidden_policy_edit_is_atomic, set_routing_policy_updates_shape_and_connector, and script_compiles_policy_and_endpoint_side_to_set_operation. Assert a rejected operation preserves revision and object hash; a valid policy changes once and undo restores it; DrawScript produces the same typed set patch as MCP.
+- [x] **Step 2: Run the focused tests and verify they fail.**
 
   Run: npm --prefix src/web test -- tests/transactions.test.ts tests/script.test.ts tests/contracts.test.ts
 
   Expected: FAIL on unsupported routingPolicy patches, preferredSide fields, or missing atomic route preflight.
-- [ ] **Step 3: Implement validation and preflight** in planPatch.ts. Limit preflight to operations that add or change hard obstacle policy or fixed-port references; do not reject later geometry edits that R19 should commit as unresolved.
-- [ ] **Step 4: Add DrawScript mapping and examples** using obstacle=, clearance=, textObstacle=, fromSide=, and toSide=; ensure malformed values are compile errors and operation schema validation rejects invalid payloads.
-- [ ] **Step 5: Run focused tests and verify pass.**
+- [x] **Step 3: Implement validation and preflight** in planPatch.ts. Limit preflight to operations that add or change hard obstacle policy or fixed-port references; do not reject later geometry edits that R19 should commit as unresolved.
+- [x] **Step 4: Add DrawScript mapping and examples** using obstacle=, clearance=, textObstacle=, fromSide=, and toSide=; ensure malformed values are compile errors and operation schema validation rejects invalid payloads.
+- [x] **Step 5: Run focused tests and verify pass.**
 
   Run: npm --prefix src/web test -- tests/transactions.test.ts tests/script.test.ts tests/contracts.test.ts
 
-  Expected: PASS with atomic rejection and undo coverage.
-- [ ] **Step 6: Commit** as feat(r22): expose routing policy operations.
+  Expected: PASS with atomic rejection and undo coverage. Final verification: 98/98 focused tests, 606/606 full web tests, typecheck passed, generated-contract check passed.
+- [x] **Step 6: Commit** as feat(r22): expose routing policy operations.
 
 ### Task 5: Surface routing findings in projections and layout inspection
 
