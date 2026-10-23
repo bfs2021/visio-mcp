@@ -3,6 +3,9 @@ import { centreOfTerminal, endFor, routeOrthogonal, type End, type Terminal, typ
 import { avoidObstacles, blockedSegments, CLEARANCE, BUDGET, SPACING, STUB, inflate, isClear, search, segmentsOf, type Rect, type Segment } from './obstacleRoute';
 import { selectObstacles, visualRect } from './obstacles';
 import { applyConstraints } from './routeSegments';
+import type { RouteFinding } from '../contracts/generated';
+import type { TextWidthMeasurer } from './textMeasurement';
+import { measureTextBox } from './textMeasurement';
 
 /**
  * The route planner (R19). Pure: the same elements, layers and previous routes always give the same routes, whichever surface asks
@@ -35,12 +38,15 @@ export interface PlanInput {
   pageArea: number;
   /** Routes planned earlier for this document; absent on a first load. */
   previous?: ReadonlyMap<string, PlannedRoute>;
+  /** Shared canvas text measurement, used for protected text obstacles. */
+  measureWidth?: TextWidthMeasurer;
 }
 export interface RouteChange { id: string; provenance: RouteProvenance; reason?: string }
 export interface PlanResult {
   routes: Map<string, PlannedRoute>;
   /** Connectors whose route differs from `previous` (or that had none), with why. */
   changes: RouteChange[];
+  routeFindings: RouteFinding[];
 }
 
 const EPS = 1e-6;
@@ -103,19 +109,21 @@ interface Work {
   base: V[];
   endRects: Rect[];
   others: Rect[];
+  soft: Rect[];
+  obstacleIds: Map<string, string[]>;
 }
 
 const lengthOf = (r: readonly V[]): number => r.slice(1).reduce((n, p, i) => n + Math.abs(p.x - r[i]!.x) + Math.abs(p.y - r[i]!.y), 0);
 /** Hysteresis has a limit: a previous route is dropped only when the clear default route is shorter by more than this (two turns' worth). */
 const STRAIGHTEN_GAIN = 48;
 const detourPays = (candidate: readonly V[], w: Work): boolean =>
-  lengthOf(candidate) - lengthOf(w.base) > STRAIGHTEN_GAIN && isClear(w.base, w.others, w.endRects, 2);
+  lengthOf(candidate) - lengthOf(w.base) > STRAIGHTEN_GAIN && isClear(w.base, w.others, w.endRects, CLEARANCE);
 
 const pin = (e: End): PinnedEnd | undefined => (e.fraction ? { x: e.fraction.x, y: e.fraction.y, perimeter: SIDE.has(`${e.fraction.x},${e.fraction.y}`) } : undefined);
 
 /** Detours around the blocked run only, keeping the vertices either side; undefined if that is not possible. */
 function repair(route: readonly V[], w: Work, occupied: readonly Segment[]): V[] | undefined {
-  const bad = blockedSegments(route, w.others, w.endRects, 2);
+  const bad = blockedSegments(route, w.others, w.endRects, CLEARANCE);
   if (!bad.length) return undefined;
   const n = route.length;
   const lo = bad[0]!, hi = bad[bad.length - 1]! + 1;
@@ -129,7 +137,7 @@ function repair(route: readonly V[], w: Work, occupied: readonly Segment[]): V[]
   const path = search(start, into, goal, goalDir, blockers, occupied, SPACING, BUDGET);
   if (!path) return undefined;
   const next = tidy([...(lo === 0 ? [route[0]!] : route.slice(0, lo)), ...path, ...(hi === n - 1 ? [route[n - 1]!] : route.slice(hi + 1))]);
-  return routeDefects(next).length || !isClear(next, w.others, w.endRects, 2) ? undefined : next;
+  return routeDefects(next).length || !isClear(next, w.others, w.endRects, CLEARANCE) ? undefined : next;
 }
 
 /** The route stored on a connector (R20), as the planner's memory of it. Absent when there is none. */
@@ -154,6 +162,28 @@ export function planRoutes(input: PlanInput): PlanResult {
   };
   const connectors = input.elements.filter((e): e is Connector => e.kind === 'connector' && e.route === 'orthogonal').sort((x, y) => (x.id < y.id ? -1 : x.id > y.id ? 1 : 0));
 
+  // Protected connector labels use the same measured text metrics and normalized path anchor as the canvas.
+  const connectorLabelRects = new Map<string, Rect>();
+  for (const c of connectors) {
+    if (!c.label || c.routingPolicy?.text !== 'avoid') continue;
+    const ta = terminal(c.from), tb = terminal(c.to);
+    const a = endFor(c.from, ta, c.to.point ?? (tb ? centreOfTerminal(tb) : { x: 0, y: 0 }));
+    const b = endFor(c.to, tb, c.from.point ?? (ta ? centreOfTerminal(ta) : { x: 0, y: 0 }));
+    const route = routeOrthogonal(a, b, c.waypoints.map(p => ({ x: p.x, y: p.y })));
+    const measure = measureTextBox(c.label, 1_000_000, 10_000, input.measureWidth ?? ((value, font) => value.length * font.sizePt * 0.5));
+    const total = route.slice(1).reduce((sum, p, i) => sum + Math.abs(p.x - route[i]!.x) + Math.abs(p.y - route[i]!.y), 0);
+    let distance = total * (c.labelAnchor?.position ?? 0.5), anchor = route[0]!, tangent: V = { x: 1, y: 0 };
+    for (let i = 1; i < route.length; i++) {
+      const p = route[i - 1]!, q = route[i]!, len = Math.abs(q.x - p.x) + Math.abs(q.y - p.y);
+      if (distance <= len || i === route.length - 1) { const sign = Math.sign(q.x - p.x || q.y - p.y) || 1; tangent = Math.abs(q.x - p.x) >= Math.abs(q.y - p.y) ? { x: sign, y: 0 } : { x: 0, y: sign }; anchor = { x: p.x + tangent.x * Math.min(distance, len), y: p.y + tangent.y * Math.min(distance, len) }; break; }
+      distance -= len;
+    }
+    const offset = c.labelAnchor?.offsetPt ?? 0;
+    anchor = { x: anchor.x - tangent.y * offset, y: anchor.y + tangent.x * offset };
+    const width = Math.max(measure.contentWidthPt, 1), height = Math.max(measure.contentHeightPt, c.label.fontSizePt * 1.2);
+    connectorLabelRects.set(c.id, { x: anchor.x - width / 2, y: anchor.y - height / 2, width, height });
+  }
+
   const work: Work[] = connectors.map(el => {
     const ta = terminal(el.from), tb = terminal(el.to);
     const pointOf = (t: Terminal | undefined, ep: Connector['from']) => (t ? centreOfTerminal(t) : ep.point ?? { x: 0, y: 0 });
@@ -163,11 +193,27 @@ export function planRoutes(input: PlanInput): PlanResult {
     const endIds = new Set([el.from.elementId, el.to.elementId].filter((id): id is string => !!id));
     const endRects = [ta, tb].filter((t): t is Terminal => !!t).map(t => visualRect({ bounds: t.box, rotationDeg: t.rotationDeg }));
     const free = [el.from, el.to].filter(ep => ep.glue === 'none' && ep.point).map(ep => ep.point!);
-    const others = wp.length ? [] : selectObstacles(input.elements, input.layers, endIds, endRects, free, input.pageArea);
-    return { el, a, b, base: routeOrthogonal(a, b, wp), endRects, others };
+    const records = wp.length ? [] : selectObstacles(input.elements, input.layers, endIds, endRects, free, input.pageArea, input.measureWidth, el.id, connectorLabelRects);
+    const adjusted = records.map(o => {
+      const obstacle = byId.get(o.id);
+      const stroke = obstacle && 'style' in obstacle && 'strokeWidthPt' in obstacle.style ? Number(obstacle.style.strokeWidthPt) / 2 : 0;
+      // The router supplies its normal 8pt clearance; apply only the policy delta and visible half-stroke here.
+      return { ...o, rect: inflate(o.rect, Math.max(0, o.clearancePt - CLEARANCE) + stroke) };
+    });
+    // Endpoint shapes are represented by endRects; only their glue stubs may cross them.
+    const hard = adjusted.filter(o => o.policy === 'forbidden' && !endIds.has(o.id));
+    const soft = adjusted.filter(o => o.policy === 'avoid' && !endIds.has(o.id));
+    const obstacleIds = new Map<string, string[]>();
+    for (const o of adjusted) {
+      const key = `${o.rect.x},${o.rect.y},${o.rect.width},${o.rect.height}`;
+      obstacleIds.set(key, [...(obstacleIds.get(key) ?? []), o.id]);
+    }
+    return { el, a, b, base: routeOrthogonal(a, b, wp), endRects,
+      others: hard.map(o => o.rect), soft: soft.map(o => o.rect), obstacleIds };
   });
 
   const routes = new Map<string, PlannedRoute>();
+  const relaxedSideIds = new Set<string>();
   const occupied: Segment[] = [];
   const make = (w: Work, points: V[], provenance: RouteProvenance, reason?: string): PlannedRoute => ({
     points, provenance, ...(reason ? { reason } : {}), fixed: { from: pin(w.a), to: pin(w.b) },
@@ -178,7 +224,7 @@ export function planRoutes(input: PlanInput): PlanResult {
     if (!stored) return make(w, w.base, 'unresolved', 'a frozen route has no stored route');
     if (near(stored.ends.a.anchor, w.a.anchor) && near(stored.ends.b.anchor, w.b.anchor) && same(stored.ends.a.dir, w.a.dir) && same(stored.ends.b.dir, w.b.dir)) return make(w, stored.points, 'frozen');
     const follow = elastic(stored.points, w.a, w.b);
-    const safe = follow && (isClear(follow, w.others, w.endRects, 2) || !isClear(stored.points, w.others, w.endRects, 2));
+    const safe = follow && (isClear(follow, w.others, w.endRects, CLEARANCE) || !isClear(stored.points, w.others, w.endRects, CLEARANCE));
     return safe ? make(w, follow, 'frozen', 'an end moved; only its end run followed') : make(w, stored.points, 'unresolved', 'a frozen route cannot follow the moved end safely, so it was kept as stored');
   };
   const put = (w: Work, r: PlannedRoute) => { routes.set(w.el.id, r); occupied.push(...segmentsOf(r.points)); };
@@ -216,24 +262,52 @@ export function planRoutes(input: PlanInput): PlanResult {
     const unmoved = near(prev.ends.a.anchor, w.a.anchor) && near(prev.ends.b.anchor, w.b.anchor) && same(prev.ends.a.dir, w.a.dir) && same(prev.ends.b.dir, w.b.dir);
     const candidate = unmoved ? [...prev.points] : elastic(prev.points, w.a, w.b);
     if (!candidate) { pending.push({ w, why: 'an end moved and the old route cannot follow it' }); continue; }
-    if (isClear(candidate, w.others, w.endRects, 2) && !(detourPays(candidate, w))) put(w, guide(w, make(w, candidate, unmoved ? 'kept' : 'elastic', unmoved ? undefined : 'an end moved')));
-    else if (!isClear(candidate, w.others, w.endRects, 2)) pending.push({ w, candidate, why: 'an obstacle is now in the way' });
+    if (isClear(candidate, [...w.others, ...w.soft], w.endRects, CLEARANCE) && !(detourPays(candidate, w))) put(w, guide(w, make(w, candidate, unmoved ? 'kept' : 'elastic', unmoved ? undefined : 'an end moved')));
+    else if (!isClear(candidate, w.others, w.endRects, CLEARANCE)) pending.push({ w, candidate, why: 'an obstacle is now in the way' });
     else pending.push({ w, why: 'the obstacle that forced a detour is gone and the direct route is much shorter' });
   }
 
   for (const { w, candidate, why } of pending) {
     const fixed = candidate && repair(candidate, w, occupied);
     if (fixed) { put(w, guide(w, make(w, fixed, 'repaired', why))); continue; }
-    const r = avoidObstacles(w.a, w.b, w.base, w.others, w.endRects, occupied);
-    if (r.blocked) put(w, make(w, candidate ?? r.route, 'unresolved', 'no clear route was found'));
-    else put(w, guide(w, make(w, r.route, 'rerouted', why)));
+    const strict = avoidObstacles(w.a, w.b, w.base, [...w.others, ...w.soft], w.endRects, occupied);
+    if (!strict.blocked) { put(w, guide(w, make(w, strict.route, 'rerouted', why))); continue; }
+    // A preferred side is a hint. If its constrained route fails, retry using the automatic side before relaxing soft obstacles.
+    const hasPreference = (w.el.from.glue === 'dynamic' && !!w.el.from.preferredSide) || (w.el.to.glue === 'dynamic' && !!w.el.to.preferredSide);
+    if (hasPreference && !w.el.waypoints.length) {
+      const ta = terminal(w.el.from), tb = terminal(w.el.to);
+      const pointOf = (t: Terminal | undefined, ep: Connector['from']) => (t ? centreOfTerminal(t) : ep.point ?? { x: 0, y: 0 });
+      const autoA = endFor({ ...w.el.from, preferredSide: undefined }, ta, pointOf(tb, w.el.to));
+      const autoB = endFor({ ...w.el.to, preferredSide: undefined }, tb, pointOf(ta, w.el.from));
+      const autoBase = routeOrthogonal(autoA, autoB, []);
+      const auto = avoidObstacles(autoA, autoB, autoBase, [...w.others, ...w.soft], w.endRects, occupied);
+      const autoRelaxed = auto.blocked && w.soft.length ? avoidObstacles(autoA, autoB, autoBase, w.others, w.endRects, occupied) : auto;
+      if (!autoRelaxed.blocked) {
+        w.a = autoA; w.b = autoB; w.base = autoBase; relaxedSideIds.add(w.el.id);
+        put(w, guide(w, make(w, autoRelaxed.route, 'rerouted', 'the preferred side had no clear route; the automatic side was used')));
+        continue;
+      }
+    }
+    // Avoid-policy obstacles are soft: retry once with only forbidden blockers before declaring failure.
+    const relaxed = w.soft.length ? avoidObstacles(w.a, w.b, w.base, w.others, w.endRects, occupied) : strict;
+    if (relaxed.blocked) put(w, make(w, candidate ?? relaxed.route, 'unresolved', 'no clear route was found'));
+    else put(w, guide(w, make(w, relaxed.route, 'rerouted', why)));
   }
 
   const changes: RouteChange[] = [];
+  const routeFindings: RouteFinding[] = [];
   for (const w of work) {
     const now = routes.get(w.el.id)!, was = storedRoute(w.el) ?? input.previous?.get(w.el.id);
     const moved = !was || was.points.length !== now.points.length || now.points.some((p, i) => !near(p, was.points[i]!));
     if (moved || now.provenance === 'unresolved') changes.push({ id: w.el.id, provenance: now.provenance, ...(now.reason ? { reason: now.reason } : {}) });
+    const blockers = (rects: Rect[]) => [...new Set(blockedSegments(now.points, rects, [], CLEARANCE).flatMap(index => {
+      const a = now.points[index]!, b = now.points[index + 1]!;
+      return rects.filter(r => !isClear([a, b], [r], [], CLEARANCE)).flatMap(r => w.obstacleIds.get(`${r.x},${r.y},${r.width},${r.height}`) ?? []);
+    }))].sort();
+    if (now.provenance === 'unresolved') routeFindings.push({ code: 'UNRESOLVED_ROUTE', severity: 'error', message: now.reason ?? 'No clear route was found', elementId: w.el.id, blockerIds: blockers(w.others) });
+    if (relaxedSideIds.has(w.el.id)) routeFindings.push({ code: 'ROUTE_SIDE_PREFERENCE_RELAXED', severity: 'info', message: 'The preferred endpoint side had no clear route; the automatic side was used', elementId: w.el.id });
+    const softIds = blockers(w.soft);
+    if (softIds.length) routeFindings.push({ code: 'ROUTING_AVOIDANCE_VIOLATION', severity: 'warning', message: 'The route crosses one or more avoid-policy obstacles because no clear route was found', elementId: w.el.id, blockerIds: softIds });
   }
-  return { routes, changes };
+  return { routes, changes, routeFindings };
 }

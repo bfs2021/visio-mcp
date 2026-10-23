@@ -18,6 +18,39 @@ async function scene(ops: Parameters<typeof run>[1]) {
 const found = (t: Awaited<ReturnType<typeof scene>>, c: LayoutContext = ctx()) => inspectLayout(t.store.snapshot(), c).issues;
 
 describe('inspect layout', () => {
+  it('layout_reports_hard_and_soft_routing_findings', async () => {
+    const t = await scene([
+      { op: 'createShape', id: id(1), alias: 'a', bounds: box(50, 100) },
+      { op: 'createShape', id: id(2), alias: 'b', bounds: box(450, 100) },
+      { op: 'createShape', id: id(3), alias: 'hard', bounds: box(230, 80, 30, 80) },
+      { op: 'createShape', id: id(4), alias: 'soft', bounds: box(330, 80, 30, 80) },
+      { op: 'createConnector', id: id(10), from: { elementId: 'a', glue: 'dynamic' }, to: { elementId: 'b', glue: 'dynamic' } },
+      { op: 'createConnector', id: id(11), from: { elementId: 'a', glue: 'dynamic' }, to: { elementId: 'b', glue: 'dynamic' } },
+    ]);
+    const projection: Projection = { documentId: t.documentId, sessionId: t.sessionId, revision: t.engine.revision, groupVisualBounds: {}, connectors: {
+      [id(10)]: { routePoints: [{ x: 110, y: 120 }, { x: 480, y: 120 }], visualBounds: box(110, 120, 370, 0), routeFindings: [{ code: 'UNRESOLVED_ROUTE', severity: 'error', message: 'blocked', elementId: id(10), blockerIds: [id(3)] }] },
+      [id(11)]: { routePoints: [{ x: 110, y: 120 }, { x: 480, y: 120 }], visualBounds: box(110, 120, 370, 0), routeFindings: [{ code: 'ROUTING_AVOIDANCE_VIOLATION', severity: 'warning', message: 'soft obstacle relaxed', elementId: id(11), blockerIds: [id(4)] }] },
+    } };
+    const issues = found(t, ctx({ projection }));
+    expect(issues).toContainEqual(expect.objectContaining({ code: 'UNRESOLVED_ROUTE', severity: 'error', elementIds: [id(10), id(3)], evidence: expect.objectContaining({ blockerIds: [id(3)] }) }));
+    expect(issues).toContainEqual(expect.objectContaining({ code: 'ROUTING_AVOIDANCE_VIOLATION', severity: 'warning', elementIds: [id(11), id(4)] }));
+    expect(issues.filter(i => i.code === 'CONNECTOR_CROSSES_SHAPE' && i.elementIds[0] === id(11) && i.elementIds.includes(id(4)))).toHaveLength(0);
+  });
+
+  it('passed_through_regions_are_not_reported_as_crossings', async () => {
+    const t = await scene([
+      { op: 'createShape', id: id(1), alias: 'a', bounds: box(50, 100) },
+      { op: 'createShape', id: id(2), alias: 'b', bounds: box(450, 100) },
+      { op: 'createShape', id: id(3), alias: 'tunnel', bounds: box(250, 90, 40, 60) },
+      { op: 'set', target: 'tunnel', patch: { routingPolicy: { obstacle: 'passThrough' } } },
+      { op: 'createConnector', id: id(10), from: { elementId: 'a', glue: 'dynamic' }, to: { elementId: 'b', glue: 'dynamic' } },
+    ]);
+    const projection: Projection = { documentId: t.documentId, sessionId: t.sessionId, revision: t.engine.revision, groupVisualBounds: {}, connectors: {
+      [id(10)]: { routePoints: [{ x: 110, y: 120 }, { x: 480, y: 120 }], visualBounds: box(110, 120, 370, 0) },
+    } };
+    expect(found(t, ctx({ projection })).filter(i => i.code === 'CONNECTOR_CROSSES_SHAPE')).toHaveLength(0);
+  });
+
   it('reports elements outside the page, partly or entirely, with their bounds', async () => {
     const t = await scene([
       { op: 'createShape', id: id(1), bounds: box(800, 100) },

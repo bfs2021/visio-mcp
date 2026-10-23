@@ -105,7 +105,15 @@
         "orientation": { "enum": ["horizontal", "vertical"], "description": "vertical reads bottom to top; absent means horizontal" }
       }
     },
-    "TextInsets": {
+    "RoutingPolicy": {
+      "type": "object", "additionalProperties": false,
+      "description": "R22. Optional per-element obstacle and text policy. Absent members preserve legacy behavior.",
+      "properties": {
+        "obstacle": { "enum": ["automatic", "forbidden", "avoid", "passThrough"] },
+        "clearancePt": { "type": "number", "minimum": 0, "maximum": 2000 },
+        "text": { "enum": ["ignore", "avoid"] }
+      }
+    },    "TextInsets": {
       "type": "object", "additionalProperties": false, "required": ["top", "right", "bottom", "left"],
       "properties": {
         "top": { "type": "number", "minimum": 0, "maximum": 2000 }, "right": { "type": "number", "minimum": 0, "maximum": 2000 },
@@ -175,6 +183,7 @@
         "port": { "type": "string", "minLength": 1, "maxLength": 64 },
         "point": { "$ref": "#/$defs/Point" },
         "glue": { "enum": ["dynamic", "static", "none"] },
+        "preferredSide": { "enum": ["north", "east", "south", "west"], "description": "R22. Shape-local soft preference for a dynamic endpoint; named static ports take precedence." },
         "join": { "$ref": "#/$defs/Join", "description": "R16: this end is a branch joined to a place on another connector; glue is none and point is kept on that connector's route" }
       }
     },
@@ -192,6 +201,7 @@
         "id": { "$ref": "#/$defs/Uuid" },
         "alias": { "type": "string", "minLength": 1, "maxLength": 128 },
         "name": { "type": "string", "maxLength": 256 },
+        "routingPolicy": { "$ref": "#/$defs/RoutingPolicy" },
         "kind": { "const": "shape" },
         "layerIds": { "type": "array", "items": { "$ref": "#/$defs/Uuid" }, "uniqueItems": true },
         "zIndex": { "type": "integer" },
@@ -214,6 +224,7 @@
         "id": { "$ref": "#/$defs/Uuid" },
         "alias": { "type": "string", "minLength": 1, "maxLength": 128 },
         "name": { "type": "string", "maxLength": 256 },
+        "routingPolicy": { "$ref": "#/$defs/RoutingPolicy" },
         "kind": { "const": "text" },
         "layerIds": { "type": "array", "items": { "$ref": "#/$defs/Uuid" }, "uniqueItems": true },
         "zIndex": { "type": "integer" },
@@ -262,6 +273,7 @@
         "bounds": { "$ref": "#/$defs/Bounds" },
         "rotationDeg": { "type": "number" },
         "metadata": { "type": "object", "additionalProperties": { "type": "string", "maxLength": 4096 } },
+        "routingPolicy": { "$ref": "#/$defs/RoutingPolicy" },
         "from": { "$ref": "#/$defs/Endpoint" },
         "to": { "$ref": "#/$defs/Endpoint" },
         "route": { "enum": ["straight", "orthogonal", "curved"] },

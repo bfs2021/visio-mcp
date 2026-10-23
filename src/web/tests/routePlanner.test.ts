@@ -5,9 +5,9 @@ import { isClear } from '../src/layout/obstacleRoute';
 import { selectObstacles, visualRect } from '../src/layout/obstacles';
 
 const solid = { kind: 'solid', colour: '#fff', opacity: 1 } as const;
-const shape = (id: string, x: number, y: number, w = 100, h = 60): Element => ({
+const shape = (id: string, x: number, y: number, w = 100, h = 60, extra: object = {}): Element => ({
   id, kind: 'shape', layerIds: [], zIndex: 1, locked: false, hidden: false, bounds: { x, y, width: w, height: h }, rotationDeg: 0, metadata: {}, geometry: { preset: 'rectangle' },
-  style: { fill: solid, stroke: solid, strokeWidthPt: 1, dash: 'solid', lineCap: 'butt', lineJoin: 'miter' },
+  style: { fill: solid, stroke: solid, strokeWidthPt: 1, dash: 'solid', lineCap: 'butt', lineJoin: 'miter' }, ...extra,
 }) as Element;
 const conn = (id: string, from: string, to: string, extra: object = {}, fromPort?: string, toPort?: string): Element => ({
   id, kind: 'connector', layerIds: [], zIndex: 2, locked: false, hidden: false, bounds: { x: 0, y: 0, width: 0, height: 0 }, rotationDeg: 0, metadata: {},
@@ -15,7 +15,7 @@ const conn = (id: string, from: string, to: string, extra: object = {}, fromPort
   to: toPort ? { elementId: to, glue: 'static', port: toPort } : { elementId: to, glue: 'dynamic' },
   route: 'orthogonal', waypoints: [], style: { stroke: solid, strokeWidthPt: 1, dash: 'solid', lineCap: 'butt', lineJoin: 'miter' }, ...extra,
 }) as unknown as Element;
-const plan = (elements: Element[], previous?: PlanResult['routes']): PlanResult => planRoutes({ elements, layers: [], pageArea: 1_000_000, previous });
+const plan = (elements: Element[], previous?: PlanResult['routes'], measureWidth?: (text: string, font: { family: string; sizePt: number; bold: boolean; italic: boolean }) => number): PlanResult => planRoutes({ elements, layers: [], pageArea: 1_000_000, previous, measureWidth });
 const moveBy = (els: Element[], id: string, dx: number, dy: number): Element[] => els.map(e => (e.id === id && e.kind !== 'connector' && e.kind !== 'group' ? { ...e, bounds: { ...e.bounds, x: e.bounds.x + dx, y: e.bounds.y + dy } } : e));
 const pts = (r: PlanResult, id: string) => r.routes.get(id)!.points;
 
@@ -66,7 +66,7 @@ describe('route planner', () => {
     expect(['repaired', 'rerouted']).toContain(r.provenance);
     expect(routeDefects(r.points)).toEqual([]);
     const obstacles = selectObstacles([...els, wall], [], new Set(['a', 'b']), [visualRect(els[0] as never), visualRect(els[1] as never)], [], 1_000_000);
-    expect(isClear(r.points, obstacles, [], 2)).toBe(true);
+    expect(isClear(r.points, obstacles.map(o => o.rect), [], 2)).toBe(true);
     expect(r.points[0]).toEqual(pts(first, 'ab')[0]);
   });
 
@@ -119,6 +119,88 @@ describe('route planner', () => {
     expect(r.provenance).toBe('authored');
   });
 
+  it('forbidden_obstacle_is_never_crossed', () => {
+    const wall = shape('wall', 330, 90, 40, 80, { routingPolicy: { obstacle: 'forbidden' } });
+    const r = plan([shape('a', 0, 100), shape('b', 700, 100), wall, conn('ab', 'a', 'b', {}, 'east', 'west')]);
+    const route = pts(r, 'ab');
+    const bounds = visualRect(wall as never);
+    expect(isClear(route, [bounds], [], 8)).toBe(true);
+    expect(r.routeFindings).toEqual([]);
+  });
+
+  it('hard_obstacle_failure_names_blocker_and_keeps_previous_route', () => {
+    const els = [shape('a', 0, 100), shape('b', 700, 100), conn('ab', 'a', 'b', {}, 'east', 'west')];
+    const first = plan(els);
+    const wall = shape('wall', 0, 0, 1000, 700, { routingPolicy: { obstacle: 'forbidden' } });
+    const next = plan([...els, wall], first.routes);
+    expect(next.routes.get('ab')!.provenance).toBe('unresolved');
+    expect(pts(next, 'ab')).toEqual(pts(first, 'ab'));
+    expect(next.routeFindings).toContainEqual(expect.objectContaining({ code: 'UNRESOLVED_ROUTE', elementId: 'ab', blockerIds: ['wall'] }));
+  });
+
+  it('endpoint_shape_is_crossed_only_by_glue_stubs', () => {
+    const a = shape('a', 0, 100, 100, 60, { routingPolicy: { obstacle: 'forbidden' } });
+    const b = shape('b', 500, 100, 100, 60, { routingPolicy: { obstacle: 'forbidden' } });
+    const route = pts(plan([a, b, conn('ab', 'a', 'b', {}, 'east', 'west')]), 'ab');
+    expect(route[0]).toEqual({ x: 100, y: 130 });
+    expect(route[1]!.x).toBeGreaterThan(route[0]!.x);
+    expect(route[route.length - 2]!.x).toBeLessThan(route[route.length - 1]!.x);
+    expect(routeDefects(route)).toEqual([]);
+  });
+
+  it('clearance_includes_visible_stroke', () => {
+    const wall = shape('wall', 300, 90, 50, 31, { routingPolicy: { obstacle: 'forbidden' }, style: { fill: solid, stroke: solid, strokeWidthPt: 8, dash: 'solid', lineCap: 'butt', lineJoin: 'miter' } });
+    const route = pts(plan([shape('a', 0, 100), shape('b', 700, 100), wall, conn('ab', 'a', 'b', {}, 'east', 'west')]), 'ab');
+    expect(isClear(route, [visualRect(wall as never)], [], 12)).toBe(true);
+  });
+
+  it('avoid_is_relaxed_only_after_clear_search_fails', () => {
+    const soft = shape('soft', 0, 0, 1000, 700, { routingPolicy: { obstacle: 'avoid' } });
+    const r = plan([shape('a', 0, 100), shape('b', 700, 100), soft, conn('ab', 'a', 'b', {}, 'east', 'west')]);
+    expect(r.routeFindings).toContainEqual(expect.objectContaining({ code: 'ROUTING_AVOIDANCE_VIOLATION', elementId: 'ab', blockerIds: ['soft'] }));
+    expect(r.routeFindings).not.toContainEqual(expect.objectContaining({ code: 'UNRESOLVED_ROUTE', elementId: 'ab' }));
+  });
+
+  it('pass_through_does_not_change_route', () => {
+    const els = [shape('a', 0, 100), shape('b', 700, 100), conn('ab', 'a', 'b', {}, 'east', 'west')];
+    const baseline = plan(els);
+    const withPassThrough = plan([...els, shape('tunnel', 200, 50, 300, 160, { routingPolicy: { obstacle: 'passThrough' } })]);
+    expect(pts(withPassThrough, 'ab')).toEqual(pts(baseline, 'ab'));
+    expect(withPassThrough.routeFindings).toEqual([]);
+  });
+
+  it('protected_text_is_avoided', () => {
+    const label: Element = { id: 'label', kind: 'text', layerIds: [], zIndex: 1, locked: false, hidden: false, bounds: { x: 320, y: 115, width: 60, height: 30 }, rotationDeg: 0, metadata: {}, text: { value: 'hello', fontFamily: 'Test', fontSizePt: 10, bold: false, italic: false, underline: false, colour: '#000000', horizontalAlign: 'left', verticalAlign: 'top', wrap: false, paddingPt: 0 }, routingPolicy: { text: 'avoid' } };
+    const r = plan([shape('a', 0, 100), shape('b', 700, 100), label, conn('ab', 'a', 'b', {}, 'east', 'west')], undefined, value => value.length * 10);
+    expect(r.routes.get('ab')!.provenance).not.toBe('unresolved');
+    expect(isClear(pts(r, 'ab'), [{ x: 320, y: 115, width: 50, height: 12 }], [], 8)).toBe(true);
+  });
+  it('protected_connector_label_is_measured_from_its_route_anchor', () => {
+    const a = shape('a', 0, 100), b = shape('b', 700, 100), c = shape('c', 350, -100), d = shape('d', 350, 300);
+    const labelled = conn('ab', 'a', 'b', { label: { value: 'hello', fontFamily: 'Test', fontSizePt: 10, bold: false, italic: false, underline: false, colour: '#000000', horizontalAlign: 'center', verticalAlign: 'middle', wrap: false, paddingPt: 0 }, routingPolicy: { text: 'avoid' } }, 'east', 'west');
+    const crossing = conn('cd', 'c', 'd', {}, 'south', 'north');
+    const r = plan([a, b, c, d, labelled, crossing], undefined, value => value.length * 10);
+    expect(pts(r, 'cd')).not.toEqual([{ x: 350, y: -40 }, { x: 350, y: 300 }]);
+    expect(isClear(pts(r, 'cd'), [{ x: 375, y: 124, width: 50, height: 12 }], [], 8)).toBe(true);
+  });
+
+  it('preferred_side_rotates_with_shape', () => {
+    const a = { ...shape('a', 0, 100), rotationDeg: 90 } as Element;
+    const route = pts(plan([a, shape('b', 400, 100), conn('ab', 'a', 'b', { from: { elementId: 'a', glue: 'dynamic', preferredSide: 'north' } }, undefined, 'west')]), 'ab');
+    expect(route[0]).toEqual({ x: 80, y: 130 });
+    expect(route[1]!.x).toBeGreaterThan(route[0]!.x);
+  });
+
+  it('static_port_overrides_preferred_side', () => {
+    const route = pts(plan([shape('a', 0, 100), shape('b', 400, 100), conn('ab', 'a', 'b', { from: { elementId: 'a', glue: 'static', port: 'east', preferredSide: 'north' } }, undefined, 'west')]), 'ab');
+    expect(route[0]).toEqual({ x: 100, y: 130 });
+  });
+  it('falls back and reports when a preferred side has no clear route', () => {
+    const a = shape('a', 0, 100), b = shape('b', 0, 500), wall = shape('wall', 110, 80, 40, 160, { routingPolicy: { obstacle: 'forbidden' } });
+    const r = plan([a, b, wall, conn('ab', 'a', 'b', { from: { elementId: 'a', glue: 'dynamic', preferredSide: 'east' } })]);
+    expect(r.routes.get('ab')!.points[0]).toEqual({ x: 50, y: 160 }); // automatic south side
+    expect(r.routeFindings).toContainEqual(expect.objectContaining({ code: 'ROUTE_SIDE_PREFERENCE_RELAXED', elementId: 'ab' }));
+  });
   it('plans only orthogonal connectors', () => {
     const r = plan([shape('a', 0, 0), shape('b', 300, 0), conn('ab', 'a', 'b', { route: 'straight' })]);
     expect(r.routes.size).toBe(0);

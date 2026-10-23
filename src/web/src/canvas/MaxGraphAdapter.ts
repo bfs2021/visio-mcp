@@ -229,13 +229,15 @@ export class MaxGraphAdapter implements CanvasAdapter {
       // route that is still valid, so a nudge elsewhere leaves unrelated connectors exactly where they were. Stacking order does not
       // affect routes, so it is not part of the signature.
       const sig = canonicalSerialize([...wanted.values()].map(e => e.kind === 'connector'
-        ? { id: e.id, f: e.from, t: e.to, w: e.waypoints, r: e.route, g: e.routing }
-        : { id: e.id, b: e.bounds, rot: e.rotationDeg, h: e.hidden, l: e.layerIds, k: e.kind, fi: e.kind === 'shape' ? [e.style.fill.kind, e.style.stroke.kind] : 0 }).concat(page.layers.map(l => ({ id: l.id, v: l.visible })) as never[]), );
+        ? { id: e.id, f: e.from, t: e.to, w: e.waypoints, r: e.route, g: e.routing, rp: e.routingPolicy, label: e.label, anchor: e.labelAnchor, sw: e.style.widthPt }
+        : { id: e.id, b: e.bounds, rot: e.rotationDeg, h: e.hidden, l: e.layerIds, k: e.kind, rp: 'routingPolicy' in e ? e.routingPolicy : undefined,
+          fi: e.kind === 'shape' ? [e.style.fill.kind, e.style.stroke.kind, e.style.strokeWidthPt, e.text] : e.kind === 'text' ? e.text : 0 }).concat(page.layers.map(l => ({ id: l.id, v: l.visible })) as never[]), );
       if (sig !== this.routingSig) {
         this.routingSig = sig;
         const plan = planRoutes({ elements: [...wanted.values()], layers: page.layers, pageArea: this.pageWidth * this.pageHeight, previous: this.planned });
         this.planned = plan.routes;
         this.routeChanges = plan.changes;
+        this.routeFindings = plan.routeFindings;
         for (const c of plan.changes) this.shown.delete(c.id);
       }
       const parent = this.graph.getDefaultParent();
@@ -313,6 +315,7 @@ export class MaxGraphAdapter implements CanvasAdapter {
   /** R19: the routes the planner chose for the page shown, and what changed in the last planning pass. */
   private planned: ReadonlyMap<string, PlannedRoute> = new Map();
   private routeChanges: RouteChange[] = [];
+  private routeFindings: import('../contracts/generated').RouteFinding[] = [];
   routePlan(): { routes: ReadonlyMap<string, PlannedRoute>; changes: readonly RouteChange[] } { return { routes: this.planned, changes: this.routeChanges }; }
 
   /** Connectors a hopping connector does not hop: the ones it is joined to or that join it, because those meet it on purpose. */
@@ -536,7 +539,8 @@ export class MaxGraphAdapter implements CanvasAdapter {
       const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
       const x = Math.min(...xs), y = Math.min(...ys);
       const planned = this.planned.get(el.id);
-      connectors[el.id] = { routePoints: pts, visualBounds: { x, y, width: Math.max(...xs) - x, height: Math.max(...ys) - y }, ...(planned ? { routeProvenance: planned.provenance, ...(planned.reason ? { routeReason: planned.reason } : {}) } : {}) };
+      const findings = this.routeFindings.filter(finding => finding.elementId === el.id);
+      connectors[el.id] = { routePoints: pts, visualBounds: { x, y, width: Math.max(...xs) - x, height: Math.max(...ys) - y }, ...(planned ? { routeProvenance: planned.provenance, ...(planned.reason ? { routeReason: planned.reason } : {}) } : {}), ...(findings.length ? { routeFindings: findings } : {}) };
     }
     return { documentId: snapshot.documentId, sessionId: snapshot.sessionId, revision: snapshot.revision, connectors, groupVisualBounds: {} };
   }

@@ -219,12 +219,17 @@ function connectorChecks(
     : [el.from.glue === 'none' ? el.from.point : centre(el.from.elementId), ...el.waypoints, el.to.glue === 'none' ? el.to.point : centre(el.to.elementId)].filter((p): p is Point => !!p);
   if (route.length < 2) return;
   const proj = ctx.projection?.connectors[el.id];
-  if (proj?.routeProvenance === 'unresolved') add('UNRESOLVED_ROUTE', 'warning', [el.id], box, 'No clear route was found for this connector; the route shown may cross shapes or run along other connectors.', { provenance: proj.routeProvenance, ...(proj.routeReason ? { reason: proj.routeReason } : {}) });
+  const findings = proj?.routeFindings ?? [];
+  for (const finding of findings) add(finding.code, finding.severity, [el.id, ...(finding.blockerIds ?? [])], box, finding.message, { ...(finding.blockerIds?.length ? { blockerIds: finding.blockerIds } : {}) });
+  if (proj?.routeProvenance === 'unresolved' && !findings.some(finding => finding.code === 'UNRESOLVED_ROUTE')) add('UNRESOLVED_ROUTE', 'warning', [el.id], box, 'No clear route was found for this connector; the route shown may cross shapes or run along other connectors.', { provenance: proj.routeProvenance, ...(proj.routeReason ? { reason: proj.routeReason } : {}) });
+  const softReported = new Set(findings.filter(finding => finding.code === 'ROUTING_AVOIDANCE_VIOLATION').flatMap(finding => finding.blockerIds ?? []));
   const ancestorsOfEnds = new Set<string>();
   for (const id of [el.from.elementId, el.to.elementId]) for (let p = id ? parents.get(id) : undefined; p; p = parents.get(p)) ancestorsOfEnds.add(p);
   const crossed: string[] = [];
   for (const other of shown) {
     if (other.id === el.from.elementId || other.id === el.to.elementId || other.kind !== 'shape' && other.kind !== 'image') continue;
+    if (other.kind === 'shape' && other.routingPolicy?.obstacle === 'passThrough') continue;
+    if (softReported.has(other.id)) continue;
     if (isLaneStructure(other)) continue; // a lane is something a connector runs inside, not a shape in its way
     if (ancestorsOfEnds.has(other.id)) continue;
     const b = visualBounds(other);

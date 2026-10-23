@@ -3,6 +3,43 @@ import type { ConnectorElement, ShapeElement } from '../src/contracts/generated'
 import { createTestEngine, element, exactElementHashes, hashesExcept } from './support/engine';
 
 describe('incremental commit and rollback', () => {
+  it('failed_forbidden_policy_edit_is_atomic', async () => {
+    const { engine, store, request, ids } = createTestEngine();
+    const before = store.snapshot();
+    const wall = '00000000-0000-4000-8000-000000000f10', a = '00000000-0000-4000-8000-000000000f11', b = '00000000-0000-4000-8000-000000000f12', link = '00000000-0000-4000-8000-000000000f13';
+    const result = await engine.execute(request([
+      { op: 'createShape', id: a, bounds: { x: 20, y: 300, width: 40, height: 30 } },
+      { op: 'createShape', id: b, bounds: { x: 700, y: 300, width: 40, height: 30 } },
+      { op: 'createConnector', id: link, from: { elementId: a, glue: 'static', port: 'east' }, to: { elementId: b, glue: 'static', port: 'west' }, route: 'orthogonal' },
+      { op: 'createShape', id: wall, bounds: { x: 0, y: 0, width: 841, height: 595 } },
+      { op: 'set', target: wall, patch: { routingPolicy: { obstacle: 'forbidden' } } },
+    ]), 'mcp');
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.details?.reason).toBe('routing_policy_unresolved');
+    expect(store.snapshot().revision).toBe(before.revision);
+    expect(exactElementHashes(store.snapshot())).toEqual(exactElementHashes(before));
+    expect(store.snapshot().document).toBe(before.document);
+    void ids;
+  });
+
+  it('set_routing_policy_updates_shape_and_connector', async () => {
+    const { engine, store, request, ids } = createTestEngine();
+    const made = await engine.execute(request([{ op: 'createConnector', id: '00000000-0000-4000-8000-000000000f14', from: { elementId: ids.shapes[0]!, glue: 'dynamic' }, to: { elementId: ids.shapes[1]!, glue: 'dynamic' }, route: 'orthogonal' }]), 'mcp');
+    expect(made.ok).toBe(true);
+    const before = store.snapshot(), connectorId = '00000000-0000-4000-8000-000000000f14';
+    const changed = await engine.execute(request([
+      { op: 'set', target: ids.shape, patch: { routingPolicy: { obstacle: 'passThrough', clearancePt: 12 } } },
+      { op: 'set', target: connectorId, patch: { routingPolicy: { text: 'avoid' }, from: { elementId: ids.shapes[0]!, glue: 'dynamic', preferredSide: 'north' } } },
+    ]), 'mcp');
+    expect(changed.ok).toBe(true);
+    expect(store.snapshot().revision).toBe(before.revision + 1);
+    expect((element(store.snapshot(), ids.shape) as ShapeElement).routingPolicy).toEqual({ obstacle: 'passThrough', clearancePt: 12 });
+    expect(element(store.snapshot(), connectorId)).toMatchObject({ routingPolicy: { text: 'avoid' }, from: { preferredSide: 'north' } });
+    const undone = await engine.undo({ ...engine.scope(), transactionId: '00000000-0000-4000-8000-000000000f15', baseRevision: engine.revision });
+    expect(undone.ok).toBe(true);
+    expect(store.snapshot().document.pages[0]!.elements.find(e => e.id === connectorId)).not.toHaveProperty('routingPolicy');
+  });
+
   it('one_logo_patch_changes_one_object_and_leaves_19_byte_identical', async () => {
     const { engine, store, request, ids } = createTestEngine();
     const before = store.snapshot();

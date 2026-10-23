@@ -155,7 +155,7 @@ export function search(start: V, startDir: V, goal: V, goalDir: V, blockers: rea
  */
 export function avoidObstacles(a: End, b: End, base: readonly V[], others: readonly Rect[], ends: readonly Rect[], occupied: readonly Segment[], opts: AvoidOptions = {}): AvoidResult {
   const clearance = opts.clearance ?? CLEARANCE, spacing = opts.spacing ?? SPACING, stub = opts.stub ?? STUB;
-  if (isClear(base, others, ends, 2)) {
+  if (isClear(base, others, ends, clearance)) {
     let overlaps = 0;
     for (let i = 1; i < base.length; i++) overlaps += sharedLength(base[i - 1]!, base[i]!, occupied);
     if (overlaps === 0) return { route: [...base], blocked: false, rerouted: false };
@@ -163,7 +163,7 @@ export function avoidObstacles(a: End, b: End, base: readonly V[], others: reado
   const A1 = { x: a.anchor.x + a.dir.x * stub, y: a.anchor.y + a.dir.y * stub }, B1 = { x: b.anchor.x + b.dir.x * stub, y: b.anchor.y + b.dir.y * stub };
   const blockers = [...others, ...ends].map(r => inflate(r, clearance));
   const path = search(A1, a.dir, B1, b.dir, blockers, occupied, spacing, opts.budget ?? BUDGET);
-  if (!path) return { route: [...base], blocked: !isClear(base, others, ends, 2), rerouted: false };
+  if (!path) return { route: [...base], blocked: !isClear(base, others, ends, clearance), rerouted: false };
   const out: V[] = [a.anchor, ...path, b.anchor];
   const tidy: V[] = [];
   for (const p of out) if (!tidy.length || Math.abs(tidy[tidy.length - 1]!.x - p.x) > EPS || Math.abs(tidy[tidy.length - 1]!.y - p.y) > EPS) tidy.push(p);

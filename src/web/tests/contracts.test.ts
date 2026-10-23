@@ -5,6 +5,36 @@ import { toPoints, validateDocument, validateEnvelope, validateMutationRequest, 
 const fixture = (name: string) => JSON.parse(readFileSync(new URL(`../../../contracts/fixtures/${name}`, import.meta.url), 'utf8'));
 const U = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 
+describe('R22 routing policy contracts', () => {
+  it('routingPolicy_accepts_supported_values_and_rejects_unknown_or_out_of_range_values', () => {
+    for (const obstacle of ['automatic', 'forbidden', 'avoid', 'passThrough']) {
+      expect(validateDef('RoutingPolicy', { obstacle, clearancePt: 0, text: 'avoid' }).valid, obstacle).toBe(true);
+    }
+    expect(validateDef('RoutingPolicy', { obstacle: 'forbidden', clearancePt: 2000, text: 'ignore' }).valid).toBe(true);
+    expect(validateDef('RoutingPolicy', { obstacle: 'forbidden', clearancePt: 2001 }).valid).toBe(false);
+    expect(validateDef('RoutingPolicy', { obstacle: 'invalid' }).valid).toBe(false);
+    expect(validateDef('RoutingPolicy', { text: 'invalid' }).valid).toBe(false);
+  });
+
+  it('route_findings_expose_stable_typed_codes_and_blockers', () => {
+    expect(validateDef('RouteFinding', {
+      code: 'UNRESOLVED_ROUTE', severity: 'error', message: 'blocked', elementId: U(1), blockerIds: [U(2)],
+    }).valid).toBe(true);
+    expect(validateDef('RouteFinding', {
+      code: 'UNKNOWN', severity: 'error', message: 'blocked', elementId: U(1),
+    }).valid).toBe(false);
+    expect(validateOperation({ op: 'set', target: 'shape', patch: { routingPolicy: { obstacle: 'forbidden', clearancePt: 0 } } }).ok).toBe(true);
+    expect(validateOperation({ op: 'set', target: 'shape', patch: { routingPolicy: { clearancePt: 2001 } } }).ok).toBe(false);
+  });
+  it('endpoint_preferred_side_is_shape_local_enum', () => {
+    for (const preferredSide of ['north', 'east', 'south', 'west']) {
+      expect(validateDef('Endpoint', { glue: 'dynamic', preferredSide }).valid, preferredSide).toBe(true);
+      expect(validateDef('EndpointInput', { glue: 'dynamic', preferredSide }).valid, preferredSide).toBe(true);
+    }
+    expect(validateDef('Endpoint', { glue: 'dynamic', preferredSide: 'up' }).valid).toBe(false);
+    expect(validateDef('EndpointInput', { glue: 'dynamic', preferredSide: 'up' }).valid).toBe(false);
+  });
+});
 const validBatch = () => ({
   documentId: U(1), sessionId: U(2), transactionId: U(3), baseRevision: 0, atomic: true as const,
   operations: [{ op: 'move', target: 'box', delta: { xPt: 1, yPt: 2 } }],

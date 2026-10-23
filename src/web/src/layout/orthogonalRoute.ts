@@ -48,7 +48,9 @@ export function endFor(ep: Endpoint, t: Terminal | undefined, towards: V): End {
       return { anchor: { x: c.x + off.x, y: c.y + off.y }, dir: snapAxis(rotate(local.x, local.y, t.rotationDeg)), floating: false, fraction: { x: frac.x, y: frac.y } };
     }
   }
-  const dir = snapAxis({ x: towards.x - c.x, y: towards.y - c.y });
+  const preferred: Record<string, V> = { north: { x: 0, y: -1 }, east: { x: 1, y: 0 }, south: { x: 0, y: 1 }, west: { x: -1, y: 0 } };
+  const localPreference = ep.preferredSide ? preferred[ep.preferredSide] : undefined;
+  const dir = localPreference ? snapAxis(rotate(localPreference.x, localPreference.y, t.rotationDeg)) : snapAxis({ x: towards.x - c.x, y: towards.y - c.y });
   const a = (t.rotationDeg * Math.PI) / 180, ca = Math.abs(Math.cos(a)), sa = Math.abs(Math.sin(a));
   const extent = horizontal(dir) ? (w * ca + h * sa) / 2 : (w * sa + h * ca) / 2;
   return { anchor: { x: c.x + dir.x * extent, y: c.y + dir.y * extent }, dir, floating: true };

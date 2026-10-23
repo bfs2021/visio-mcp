@@ -22,6 +22,8 @@ export interface ElementSummary {
   from?: unknown;
   to?: unknown;
   route?: string;
+  /** R22: connector/shape/text routing obstacle policy, when explicitly set. */
+  routingPolicy?: unknown;
   /** R20: how an orthogonal connector's route is decided: automatic, manual (waypoints) or frozen */
   routeMode?: string;
   /** a connector's label placement along its route; absent means the middle */
@@ -51,6 +53,7 @@ export function summariseElement(el: Element, o: { includeGeometry: boolean; inc
   if (el.locked) s.locked = true;
   if (el.layerIds.length) s.layerIds = el.layerIds;
   s.zIndex = el.zIndex;
+  if ('routingPolicy' in el && el.routingPolicy) s.routingPolicy = el.routingPolicy;
   if (o.includeStyle && (el.kind === 'shape' || el.kind === 'connector')) s.style = el.style;
   if (el.kind === 'connector') { s.from = el.from; s.to = el.to; s.route = el.route; if (el.route === 'orthogonal') s.routeMode = el.routing?.mode ?? (el.waypoints.length ? 'manual' : el.routing?.constraints?.length ? 'guided' : 'automatic'); if (el.labelAnchor) s.labelAnchor = el.labelAnchor; if (el.hops) s.hops = el.hops; }
   if ((el.kind === 'shape' || el.kind === 'text') && el.attachment) s.attachedTo = el.attachment;

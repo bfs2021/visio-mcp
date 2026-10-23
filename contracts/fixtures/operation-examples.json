@@ -3,7 +3,7 @@
   "createText": {"op":"createText","bounds":{"x":72,"y":24,"width":288,"height":36},"text":{"value":"Diagram title","fontSizePt":24,"bold":true}},
   "createImage": {"op":"createImage","assetId":"asset:logo","bounds":{"x":72,"y":72,"width":120,"height":60},"fit":"contain"},
   "createConnector": {"op":"createConnector","from":{"elementId":"00000000-0000-4000-8000-000000000001","glue":"dynamic"},"to":{"elementId":"00000000-0000-4000-8000-000000000002","glue":"dynamic"},"route":"orthogonal"},
-  "set": {"op":"set","target":"00000000-0000-4000-8000-000000000001","patch":{"text":{"value":"Updated label","fontSizePt":18},"style":{"fill":{"kind":"solid","colour":"#EEF2F6","opacity":1}}}},
+  "set": {"op":"set","target":"00000000-0000-4000-8000-000000000001","patch":{"text":{"value":"Updated label","fontSizePt":18},"style":{"fill":{"kind":"solid","colour":"#EEF2F6","opacity":1}},"routingPolicy":{"obstacle":"forbidden","clearancePt":8,"text":"avoid"}}},
   "move": {"op":"move","target":"00000000-0000-4000-8000-000000000001","delta":{"xPt":12,"yPt":0}},
   "resize": {"op":"resize","target":"00000000-0000-4000-8000-000000000001","bounds":{"width":180,"height":80}},
   "rotate": {"op":"rotate","target":"00000000-0000-4000-8000-000000000001","deltaDeg":15},

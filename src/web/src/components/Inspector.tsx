@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { ConnectorElement, Element, ImageElement, Operation, Paint, ShapeElement, TextBlock, TextElement } from '../contracts/generated';
+import type { ConnectorElement, Element, ImageElement, Operation, Paint, RoutingPolicy, ShapeElement, TextBlock, TextElement } from '../contracts/generated';
 import type { EditorModel } from '../editor/EditorModel';
 import { ArrangePanel } from './ArrangePanel';
 import { useModel } from './useModel';
@@ -63,6 +63,32 @@ function PaintField({ label, paint, testId, onCommit, gradients = false }: { lab
           onClick={() => onCommit({ kind: 'linear-gradient', angleDeg: 90, stops: [{ offset: 0, colour, opacity }, { offset: 1, colour: '#ffffff', opacity }] })}>Gradient</button>
       )}
     </div>
+  );
+}
+
+function RoutingPolicyFields({ policy, hasText, setPolicy, includeObstacle }: {
+  policy: RoutingPolicy | undefined;
+  hasText: boolean;
+  setPolicy: (patch: Partial<RoutingPolicy>) => void;
+  includeObstacle: boolean;
+}) {
+  return (
+    <section>
+      <h3>Routing policy</h3>
+      {includeObstacle && <>
+        <label className="field"><span>Obstacle policy</span>
+          <select value={policy?.obstacle ?? 'automatic'} data-testid="field-obstacle-policy" onChange={e => setPolicy({ obstacle: e.target.value as NonNullable<RoutingPolicy['obstacle']> })}>
+            <option value="automatic">Automatic</option><option value="forbidden">Forbidden</option><option value="avoid">Avoid if possible</option><option value="passThrough">Pass through</option>
+          </select>
+        </label>
+        <NumberField label="Route clearance pt" testId="field-route-clearance" value={policy?.clearancePt ?? 0} min={0} onCommit={v => setPolicy({ clearancePt: v })} />
+      </>}
+      {hasText && <label className="field"><span>Text obstacle policy</span>
+        <select value={policy?.text ?? 'ignore'} data-testid={includeObstacle ? 'field-text-obstacle-policy' : 'field-label-obstacle-policy'} onChange={e => setPolicy({ text: e.target.value as NonNullable<RoutingPolicy['text']> })}>
+          <option value="ignore">Ignore nearby text</option><option value="avoid">Avoid nearby text</option>
+        </select>
+      </label>}
+    </section>
   );
 }
 
@@ -148,6 +174,10 @@ export function Inspector({ model }: { model: EditorModel }) {
 
       {el.kind === 'shape' && <ShapeStyle model={model} el={el} set={set} />}
       {el.kind === 'connector' && <ConnectorStyle el={el} set={set} model={model} />}
+      {(el.kind === 'shape' || el.kind === 'text' || el.kind === 'connector') && (
+        <RoutingPolicyFields policy={el.routingPolicy} hasText={Boolean(text?.value.trim())} includeObstacle={el.kind !== 'connector'}
+          setPolicy={patch => set({ routingPolicy: { ...(el.routingPolicy ?? {}), ...patch } })} />
+      )}
       {(el.kind === 'shape' || el.kind === 'text') && el.attachment && <Pin el={el} model={model} set={set} />}
       {el.kind === 'image' && <ImageProps el={el} model={model} set={set} />}
 
@@ -320,6 +350,7 @@ function JoinEnd({ el, end, model, set }: { el: ConnectorElement; end: 'from' | 
 
 function ConnectorStyle({ el, set, model }: { el: ConnectorElement; set: (p: Record<string, unknown>) => void; model: EditorModel }) {
   const arrows = ['none', 'block', 'open', 'diamond', 'oval'];
+  const routeFindings = model.canvas?.readProjection(model.snapshot, model.currentPage.id).connectors[el.id]?.routeFindings ?? [];
   return (
     <section>
       <h3>Connector</h3>
@@ -367,6 +398,16 @@ function ConnectorStyle({ el, set, model }: { el: ConnectorElement; set: (p: Rec
       </label>
       <JoinEnd el={el} end="from" model={model} set={set} />
       <JoinEnd el={el} end="to" model={model} set={set} />
+      {(el.from.glue === 'dynamic' || el.to.glue === 'dynamic') && <div className="grid2">
+        {(['from', 'to'] as const).filter(end => el[end].glue === 'dynamic').map(end => (
+          <label className="field" key={end}><span>{end === 'from' ? 'Start' : 'End'} preferred side</span>
+            <select value={el[end].preferredSide ?? ''} data-testid={`field-${end}-preferred-side`} onChange={e => set({ [end]: { ...el[end], ...(e.target.value ? { preferredSide: e.target.value } : { preferredSide: undefined }) } })}>
+              <option value="">Automatic</option><option value="north">North</option><option value="east">East</option><option value="south">South</option><option value="west">West</option>
+            </select>
+          </label>
+        ))}
+      </div>}
+      {routeFindings.filter(f => f.code === 'ROUTE_SIDE_PREFERENCE_RELAXED').map(f => <p className="muted small" data-testid="route-side-relaxed" key={f.code}>{f.message}</p>)}
       <p className="muted small">From {el.from.join ? 'a connector' : el.from.glue === 'none' ? 'a point' : 'a shape'} to {el.to.join ? 'a connector' : el.to.glue === 'none' ? 'a point' : 'a shape'}</p>
     </section>
   );

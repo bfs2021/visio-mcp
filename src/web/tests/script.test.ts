@@ -489,6 +489,21 @@ describe('compiler: things riding on a connector', () => {
   });
 });
 
+describe('compiler: R22 routing policy fields', () => {
+  it('script_compiles_policy_and_endpoint_side_to_set_operation', async () => {
+    const t = await scene();
+    const set = ops(t, 'set logo obstacle=passThrough clearance=12pt textObstacle=avoid')[0]!;
+    expect(set).toEqual({ op: 'set', target: id(960), patch: { routingPolicy: { obstacle: 'passThrough', clearancePt: 12, text: 'avoid' } } });
+    const connect = ops(t, 'connect id=wire from=logo to=logoimg route=orthogonal fromSide=east toSide=west')[0]!;
+    expect(connect).toMatchObject({ op: 'createConnector', from: { preferredSide: 'east' }, to: { preferredSide: 'west' } });
+    await run(t, [{ op: 'createConnector', id: id(975), alias: 'wire', from: { elementId: id(960), glue: 'dynamic' }, to: { elementId: id(961), glue: 'dynamic' }, route: 'orthogonal' }]);
+    expect(ops(t, 'set wire fromSide=north')[0]).toMatchObject({ op: 'set', patch: { from: { elementId: id(960), glue: 'dynamic', preferredSide: 'north' } } });
+    expect(bad(t, 'set logo obstacle=unknown')).toBeDefined();
+    expect(bad(t, 'set logo textObstacle=unknown')).toBeDefined();
+    expect(bad(t, 'connect id=wire from=logo to=logoimg fromSide=up')).toBeDefined();
+  });
+});
+
 describe('compiler: branches that join a connector, and hops', () => {
   async function bus() {
     const t = await scene();
