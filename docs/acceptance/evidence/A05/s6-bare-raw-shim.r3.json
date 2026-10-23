@@ -1,0 +1,15 @@
+{
+  "scenario": "s6-bare-raw-shim",
+  "question": "No editor; the shim is started with plain Process.Start.",
+  "configuration": "Debug",
+  "observedSeconds": 12,
+  "childStartedAtMs": 2008,
+  "machineCpuBusyPercentOverall": 68,
+  "processStops": [],
+  "poolStarvedWindows": [],
+  "poolTimerLate": [],
+  "uiThreadLate": [],
+  "appPipeSlow": [],
+  "verdict": "no stop",
+  "ran": "2026-10-23T17:58:22.9535908Z"
+}

@@ -96,8 +96,7 @@ Recorded 2026-10-18.
 | `node tools/demo/verify-demo.mjs` | 49 of 49 checks pass |
 
 ## Found while building
-- **A four-second freeze in the test setup.** Starting the shim from the process that hosts the editor froze that whole process for about 4 s, 4 to 7 s later, on this machine. It hit pipe calls, UI dispatches and
-  plain timers alike, and needed no MCP call; a process without the shim never did it. Cause not found; in use the shim is a separate process. The benchmark warms up for 10 s and records the stall.
+- **The "four-second freeze" was thread-pool starvation (A05, #18).** Starting the shim from the editor-hosting test process was followed by a pause of 0.3 to 5 s; probes showed the process never stops as a whole, the pool is starved, the length follows machine load, and any child (not only the shim) triggers it. The benchmark now starts the shim first, waits for a quiet pool and flags runs that overlap a starved stretch. See [shim-startup-pause.md](../acceptance/shim-startup-pause.md).
 - **`inspect_layout` has no alignment check.** The agent found the planted misalignment from the bounds delivered with the preview. Not changed.
 - **Stored connector bounds are not the live extent** (by design: `visualBounds`). A verifier that compared stored connector bounds across a round trip failed until it compared glue instead.
 - The editor's test API (`window.__editor`) is compiled out of the shipped build, so the demo's human finds its targets by label on the canvas, as a person would.

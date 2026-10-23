@@ -1,0 +1,30 @@
+{
+  "scenario": "s7-bare-cmd-child",
+  "question": "No editor; a non-.NET child.",
+  "configuration": "Debug",
+  "observedSeconds": 12,
+  "childStartedAtMs": 2012,
+  "machineCpuBusyPercentOverall": 73,
+  "processStops": [],
+  "poolStarvedWindows": [
+    {
+      "startMs": 6121,
+      "lengthMs": 918,
+      "poolThreadsAtStart": 7,
+      "poolThreadsAtEnd": 7,
+      "maxQueued": 1,
+      "machineCpuBusyPercent": 67,
+      "machineCpuBusyPercentFor2sBefore": 63
+    }
+  ],
+  "poolTimerLate": [
+    {
+      "atMs": 7120,
+      "lateMs": 1028
+    }
+  ],
+  "uiThreadLate": [],
+  "appPipeSlow": [],
+  "verdict": "pool timers late, process not stopped",
+  "ran": "2026-10-23T17:54:28.6770956Z"
+}
