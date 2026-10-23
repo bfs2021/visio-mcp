@@ -107,3 +107,14 @@ Recorded 2026-10-18.
 3. The M0 second-Windows-user pipe check remains open (NOT RUN).
 4. R05 (reference-diagram regression) is still partial: the R02 fixture ran as part of the Windows suite, but the full reproduction workflow was not re-run as a separate I52 acceptance step.
 5. `inspect_layout` does not detect misalignment; the inspector's line, dash, arrowhead and font controls have no browser test.
+
+---
+
+# A05 and A06: the shim pause explained, and the remaining performance scenarios
+
+Recorded 2026-10-23. A04 (inspector controls) is on its own branch and is recorded in definition-of-done item 6.
+
+- **A05 (#18):** the "four-second freeze" is thread-pool starvation in a process that launches a child, scaling with machine load; see [shim-startup-pause.md](../acceptance/shim-startup-pause.md). The benchmark now reports it.
+- **A06 (#21):** ten pages, drag and resize traced frame by frame, eight large pictures, five text-heavy pages, and opening a file Visio saved; see [performance.md](../acceptance/performance.md).
+  Findings: the preview of a page with eight 6-megapixel pictures takes 1.4 to 1.5 s (target 1 s); `.vsdx` export refuses more than 64 MiB of content with a generic `internal_error`; dragging all 500 elements stalls the display for about 0.65 s at release.
+  Everything else measured meets the preferred targets.

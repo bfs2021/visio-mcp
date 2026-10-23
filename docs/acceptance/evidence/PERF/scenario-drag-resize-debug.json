@@ -1,0 +1,157 @@
+{
+  "recorded": "2026-10-23T18:34:58.8344350Z",
+  "machine": {
+    "os": "Microsoft Windows NT 10.0.26300.0",
+    "logicalProcessors": 4,
+    "dotnet": "10.0.13",
+    "configuration": "Debug",
+    "webview2": "155.0.4283.62"
+  },
+  "setup": {
+    "shimStartedBeforeEditor": true,
+    "quietGateReached": true,
+    "quietGateWaitedMs": 11178,
+    "machineCpuBusyPercentOverall": 73,
+    "starvedStretchesSeen": [
+      {
+        "startMs": 6288,
+        "lengthMs": 470,
+        "poolThreadsAtStart": 7,
+        "poolThreadsAtEnd": 7,
+        "maxQueued": 4,
+        "machineCpuBusyPercent": 64,
+        "machineCpuBusyPercentFor2sBefore": 65
+      },
+      {
+        "startMs": 8544,
+        "lengthMs": 762,
+        "poolThreadsAtStart": 7,
+        "poolThreadsAtEnd": 7,
+        "maxQueued": 4,
+        "machineCpuBusyPercent": 71,
+        "machineCpuBusyPercentFor2sBefore": 65
+      },
+      {
+        "startMs": 14450,
+        "lengthMs": 976,
+        "poolThreadsAtStart": 8,
+        "poolThreadsAtEnd": 8,
+        "maxQueued": 5,
+        "machineCpuBusyPercent": 67,
+        "machineCpuBusyPercentFor2sBefore": 74
+      },
+      {
+        "startMs": 22155,
+        "lengthMs": 982,
+        "poolThreadsAtStart": 8,
+        "poolThreadsAtEnd": 8,
+        "maxQueued": 3,
+        "machineCpuBusyPercent": 72,
+        "machineCpuBusyPercentFor2sBefore": 78
+      }
+    ],
+    "wholeProcessStops": []
+  },
+  "statusTrail": [
+    "before any gesture: 0 selected | Ready",
+    "after the single drag: 1 selected | Ready",
+    "after the resize: 1 selected | Ready",
+    "after clicking the empty page: 1 selected | Ready",
+    "Edit menu open: 1 selected | Ready",
+    "after Select all: 500 selected | Ready"
+  ],
+  "statusAfterSelectAll": "500 selected | Ready",
+  "statusAfterGroupDrag": "500 selected | Ready",
+  "scenario": "drag one shape, resize one shape, and drag the whole selected page (Ctrl\u002BA) on the 500-element page (460 shapes, 40 glued connectors), real mouse events through WebView2 about 16 ms apart",
+  "method": "A script in the page records requestAnimationFrame timestamps and, for each pointermove, the time from the event to the next frame callback and to the message that follows the frame (an approximation of \u0027painted\u0027). It is not a photon-to-pixel measurement.",
+  "gestures": {
+    "dragOneShape": {
+      "releaseToCommittedMs": 38,
+      "pointerMoves": 41,
+      "wallMs": 2377,
+      "frames": 153,
+      "effectiveFps": 64.4,
+      "frameIntervalMs": {
+        "n": 152,
+        "p50": 15.6,
+        "p95": 15.7,
+        "max": 15.8
+      },
+      "frameIntervalsOver20ms": 0,
+      "frameIntervalsOver33ms": 0,
+      "frameIntervalsOver50ms": 0,
+      "inputToNextFrameMs": {
+        "n": 41,
+        "p50": 9.4,
+        "p95": 14.6,
+        "max": 16
+      },
+      "inputToAfterFrameMs": {
+        "n": 41,
+        "p50": 12.2,
+        "p95": 16.2,
+        "max": 17.1
+      },
+      "result": "1 shape(s) moved, revision 1 later"
+    },
+    "resizeOneShape": {
+      "releaseToCommittedMs": 35,
+      "pointerMoves": 41,
+      "wallMs": 1417,
+      "frames": 91,
+      "effectiveFps": 64.2,
+      "frameIntervalMs": {
+        "n": 90,
+        "p50": 15.6,
+        "p95": 15.7,
+        "max": 15.7
+      },
+      "frameIntervalsOver20ms": 0,
+      "frameIntervalsOver33ms": 0,
+      "frameIntervalsOver50ms": 0,
+      "inputToNextFrameMs": {
+        "n": 41,
+        "p50": 11.4,
+        "p95": 13.1,
+        "max": 16.2
+      },
+      "inputToAfterFrameMs": {
+        "n": 41,
+        "p50": 14,
+        "p95": 16.4,
+        "max": 20.1
+      },
+      "result": "1 shape(s) resized"
+    },
+    "dragEverythingSelectedWithCtrlA": {
+      "releaseToCommittedMs": 210,
+      "pointerMoves": 41,
+      "wallMs": 2174,
+      "frames": 99,
+      "effectiveFps": 45.5,
+      "frameIntervalMs": {
+        "n": 98,
+        "p50": 15.6,
+        "p95": 15.7,
+        "max": 656.2
+      },
+      "frameIntervalsOver20ms": 1,
+      "frameIntervalsOver33ms": 1,
+      "frameIntervalsOver50ms": 1,
+      "inputToNextFrameMs": {
+        "n": 41,
+        "p50": 8.5,
+        "p95": 17.9,
+        "max": 19.3
+      },
+      "inputToAfterFrameMs": {
+        "n": 41,
+        "p50": 11.4,
+        "p95": 21.4,
+        "max": 23
+      },
+      "result": "460 shapes moved together (460 shapes and 40 glued connectors were selected)"
+    }
+  },
+  "limits": "The window is offscreen, so the compositor may not be vsync-locked as on a desktop; treat the frame rate as that of this harness."
+}
