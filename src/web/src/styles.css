@@ -206,3 +206,16 @@ textarea { width: 100%; resize: vertical; }
 /* W17: the keyboard and accessibility twin of the canvas is out of sight but takes focus; the canvas shows where focus is */
 .object-list { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .canvas-frame:has(.object-list:focus-visible) { outline: 3px solid #2563eb; outline-offset: -3px; }
+.file-ingress-queue { position: fixed; z-index: 40; right: 1rem; top: 1rem; width: min(26rem, calc(100vw - 2rem)); max-height: 45vh; overflow: auto; padding: .75rem; border: 1px solid var(--border, #cbd5e1); border-radius: .75rem; background: var(--panel, #fff); color: var(--text, #0f172a); box-shadow: 0 8px 32px #0f172a22; }
+.file-ingress-preview { display: block; max-width: 10rem; max-height: 6rem; object-fit: contain; margin: .35rem 0; border: 1px solid var(--border, #cbd5e1); border-radius: .25rem; }
+.file-ingress-heading, .file-ingress-actions { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.file-ingress-heading { margin-bottom: .5rem; }
+.file-ingress-heading [role=status] { color: var(--muted, #475569); font-size: .85rem; }
+.file-ingress-batch + .file-ingress-batch { border-top: 1px solid var(--border, #e2e8f0); margin-top: .5rem; padding-top: .5rem; }
+.file-ingress-batch ul { list-style: none; padding: 0; margin: 0; }
+.file-ingress-batch li { display: flex; justify-content: space-between; gap: .75rem; padding: .25rem 0; }
+.file-ingress-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-ingress-status { flex: 0 0 auto; color: var(--muted, #475569); }
+.status-failed { color: var(--danger, #b91c1c); }
+.status-opened { color: var(--success, #15803d); }
+.file-ingress-actions { justify-content: flex-end; margin-top: .4rem; }

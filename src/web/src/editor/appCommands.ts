@@ -60,7 +60,7 @@ export function appCommands(model: EditorModel, ws: WorkspaceModel): AppCommand[
     { id: 'redo', label: 'Redo', group: 'Edit', shortcut: 'Ctrl+Y', run: () => void model.redo() },
     { id: 'copy-image', label: 'Copy as image', group: 'Edit', sepBefore: true, run: () => void model.finishImageExport(true), disabled: !hasSelection },
     { id: 'copy', label: 'Copy', group: 'Edit', shortcut: 'Ctrl+C', run: () => model.copy(), disabled: !hasSelection },
-    { id: 'paste', label: 'Paste', group: 'Edit', shortcut: 'Ctrl+V', run: () => void model.paste() },
+    { id: 'paste', label: 'Paste', group: 'Edit', shortcut: 'Ctrl+V', run: () => void ws.pasteFromClipboard() },
     { id: 'duplicate', label: 'Duplicate', group: 'Edit', shortcut: 'Ctrl+D', run: () => void model.duplicate(), disabled: !hasSelection },
     { id: 'delete', label: 'Delete', group: 'Edit', shortcut: 'Del', run: () => void model.deleteSelection(), disabled: !hasSelection },
     { id: 'find', label: 'Find and replace…', group: 'Edit', shortcut: 'Ctrl+F', sepBefore: true, run: () => model.find.open() },

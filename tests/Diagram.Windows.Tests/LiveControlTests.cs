@@ -267,7 +267,8 @@ public class LiveControlTests
         await using var h = await Harness.StartAsync(pipe: pipe);
         await using var client = new PipeClient(pipe, TimeSpan.FromSeconds(5));
         var scope = h.Router.CurrentScope!;
-        foreach (var method in new[] { "doc.replace", "doc.markSaved", "doc.undo", "doc.status", "host.openJson", "host.saveJson", "host.pickImage", "host.preferences.get", "host.preferences.save", "doc.snapshot" })
+        foreach (var method in new[] { "doc.replace", "doc.markSaved", "doc.undo", "doc.status", "host.openJson", "host.saveJson", "host.pickImage", "host.preferences.get", "host.preferences.save", "doc.snapshot",
+            "host.ingress.available", "host.ingress.open", "host.ingress.importImage", "host.ingress.dismiss", "host.clipboard.describe", "host.clipboard.markInternalCopy", "host.clipboard.importImage" })
         {
             var r = await client.CallAsync(new RequestEnvelope { RequestId = "x", Method = method, DocumentId = scope.DocumentId, SessionId = scope.SessionId, Params = new JsonObject() }, Ct());
             Assert.Equal("method_not_found", r.Error?.Code);

@@ -2,7 +2,7 @@
   "CapturedUtc": "2026-10-18T15:05:42.6716664Z",
   "SourceCommit": "b332aecc3bae5db4c4a0d3118e395be35360a1b9",
   "RendererPolicy": "Each renderer compares only with its own pre-R05 baseline; not source-screenshot or cross-renderer pixel equivalence",
-  "FixtureSha256": "FB38901457D2D06D51928710B1F4D869B042E58AEDC45F06B625252309E9D6EB",
+  "FixtureSha256": "7D50181B0402557EF3B18C353E117E7C72C84C59318F51CD5BEB3D7A45DE68D9",
   "EditorSha256": "66506A868EE4E0CF3D3ACF7EA563C64246CF94AA66F421C63430EF5CEEC1EA30",
   "VisioSha256": "59E93D1D1EC7F5DAC3D28D9E540D71E7165443349A849AA1B844CCD5C74FDB18",
   "Environment": "Windows 11, WebView2 155, installed Visio 16.0 build 20430; fonts/environment changes require explicit reviewed rebaseline"

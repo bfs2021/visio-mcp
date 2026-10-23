@@ -1,0 +1,61 @@
+{
+  "scenario": "s9-standalone-app",
+  "question": "Production topology: the real Diagram.App.exe in its own process, the shim started from another process; the app is observed through its pipe.",
+  "configuration": "Debug",
+  "observedSeconds": 12,
+  "childStartedAtMs": 3147,
+  "machineCpuBusyPercentOverall": 70,
+  "processStops": [],
+  "poolStarvedWindows": [
+    {
+      "startMs": 2040,
+      "lengthMs": 1092,
+      "poolThreadsAtStart": 8,
+      "poolThreadsAtEnd": 8,
+      "maxQueued": 3,
+      "machineCpuBusyPercent": 73,
+      "machineCpuBusyPercentFor2sBefore": 82
+    },
+    {
+      "startMs": 3819,
+      "lengthMs": 882,
+      "poolThreadsAtStart": 8,
+      "poolThreadsAtEnd": 8,
+      "maxQueued": 3,
+      "machineCpuBusyPercent": 67,
+      "machineCpuBusyPercentFor2sBefore": 72
+    },
+    {
+      "startMs": 5080,
+      "lengthMs": 570,
+      "poolThreadsAtStart": 8,
+      "poolThreadsAtEnd": 8,
+      "maxQueued": 2,
+      "machineCpuBusyPercent": 60,
+      "machineCpuBusyPercentFor2sBefore": 70
+    }
+  ],
+  "poolTimerLate": [
+    {
+      "atMs": 3147,
+      "lateMs": 1124
+    },
+    {
+      "atMs": 4671,
+      "lateMs": 851
+    },
+    {
+      "atMs": 5683,
+      "lateMs": 603
+    }
+  ],
+  "uiThreadLate": [],
+  "appPipeSlow": [
+    {
+      "atMs": 3147,
+      "answeredAfterMs": 1117
+    }
+  ],
+  "verdict": "pool timers late, process not stopped",
+  "ran": "2026-10-23T17:55:45.1272065Z"
+}

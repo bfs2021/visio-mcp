@@ -1,0 +1,9 @@
+Command: dotnet test tests/Diagram.Windows.Tests/Diagram.Windows.Tests.csproj --no-build -m:1 -p:NuGetAudit=false --blame-hang-timeout 120s --logger 'console;verbosity=normal'
+Result: Test Run Aborted.
+System.AggregateException: vstest.console process failed to connect to the data collector process after 90 seconds. The runner reported that the test host process remained running.
+
+Follow-up focused command:
+dotnet test tests/Diagram.Windows.Tests/Diagram.Windows.Tests.csproj --no-build -m:1 -p:NuGetAudit=false --filter 'FullyQualifiedName~ClipboardIngressTests'
+Result: Test Run Aborted. vstest.console process failed to connect to the test host process after 90 seconds; the runner reported the test host process remained running.
+
+The focused W14 Windows clipboard/ingress suite had passed 16/16 earlier during Task 5 (see the W14 SDD ledger). This later run is recorded as an environment/test-host failure, not a product test failure or pass.

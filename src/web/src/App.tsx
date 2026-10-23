@@ -25,6 +25,7 @@ import { Toolbar } from './components/Toolbar';
 import { PreferencesDialog } from './components/PreferencesDialog';
 import { HelpDialogs } from './components/HelpDialogs';
 import { ConnectDialog } from './components/ConnectDialog';
+import { FileIngressQueue } from './components/FileIngressQueue';
 
 const typing = (t: EventTarget | null) =>
   t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement || (t instanceof HTMLElement && t.isContentEditable);
@@ -55,7 +56,7 @@ function useShortcuts(ws: WorkspaceModel) {
       else if (mod && e.shiftKey && key === 'f') { e.preventDefault(); void model.reorder('front'); }
       else if (mod && e.shiftKey && key === 'b') { e.preventDefault(); void model.reorder('back'); }
       else if (mod && key === 'c') { e.preventDefault(); model.copy(); }
-      else if (mod && key === 'v') { e.preventDefault(); void model.paste(); }
+      else if (mod && key === 'v') { e.preventDefault(); void model.pasteFromClipboard(); }
       else if (mod && key === 'd') { e.preventDefault(); void model.duplicate(); }
       else if (mod && key === 'a') { e.preventDefault(); model.selectAll(); }
       else if (mod && key === 's') { e.preventDefault(); void model.save(e.shiftKey); }
@@ -84,8 +85,9 @@ function useShortcuts(ws: WorkspaceModel) {
 }
 
 export function App({ ws }: { ws: WorkspaceModel }) {
-  useWorkspace(ws);
+  const workspaceVersion = useWorkspace(ws);
   useShortcuts(ws);
+  useEffect(() => { void ws.processIngress(); }, [ws, workspaceVersion]);
   const model = ws.active;
   const asking = ws.tabs.find(t => t.closePrompt);
   useEffect(()=>{const focus=()=>{if(!ws.preferences.dialogOpen)void ws.checkFiles();};window.addEventListener('focus',focus);return()=>window.removeEventListener('focus',focus);},[ws]);
@@ -119,6 +121,7 @@ export function App({ ws }: { ws: WorkspaceModel }) {
       <DocumentTitle model={model} />
       <StatusBar model={model} />
       <PreferencesDialog ws={ws} />
+      <FileIngressQueue ws={ws} />
     </div>
   );
 }

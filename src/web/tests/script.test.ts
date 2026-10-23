@@ -421,6 +421,24 @@ describe('scripts and the engine', () => {
   });
 });
 
+describe('compiler: route modes (R20)', () => {
+  it('connect mode=, set mode= and reroute compile to the route operations', async () => {
+    const t = await scene();
+    await run(t, [
+      { op: 'createShape', id: id(970), alias: 'p', bounds: { x: 0, y: 200, width: 10, height: 10 } },
+      { op: 'createShape', id: id(971), alias: 'q', bounds: { x: 200, y: 200, width: 10, height: 10 } },
+      { op: 'createConnector', id: id(972), alias: 'wire', from: { elementId: id(970), glue: 'dynamic' }, to: { elementId: id(971), glue: 'dynamic' }, route: 'orthogonal' },
+    ]);
+    const made = ops(t, ['connect id=w2 from=p to=q route=orthogonal mode=frozen', 'set wire mode=manual', 'reroute', 'reroute wire'].join(String.fromCharCode(10)));
+    expect(made[0]).toMatchObject({ op: 'createConnector', route: 'orthogonal', routing: { mode: 'frozen' } });
+    expect(made[1]).toMatchObject({ op: 'set', patch: { routing: { mode: 'manual' } } });
+    expect(made[2]).toEqual({ op: 'reroute' });
+    expect(made[3]).toMatchObject({ op: 'reroute', targets: [id(972)] });
+    expect(bad(t, 'set wire mode=sideways')).toBeDefined();
+    expect(bad(t, 'set p mode=frozen')).toBeDefined();
+  });
+});
+
 describe('compiler: things riding on a connector', () => {
   it('on= at= offset= attach a shape or text box, labelAt= labelOffset= place a connector label', async () => {
     const t = await scene();
@@ -450,5 +468,57 @@ describe('compiler: things riding on a connector', () => {
     expect(bad(t, 'set wire on=wire').message).toMatch(/apply to shapes/);
     expect(bad(t, 'set tag labelAt=0.1').message).toMatch(/apply to connectors/);
     expect(bad(t, 'set p at=0.5').message).toMatch(/go with on=/);
+  });
+
+  it('move-segment compiles to the moveSegment operation and needs exactly one of to= and by=', async () => {
+    const t = await scene();
+    await run(t, [
+      { op: 'createShape', id: id(970), alias: 'p', bounds: { x: 0, y: 200, width: 10, height: 10 } },
+      { op: 'createShape', id: id(971), alias: 'q', bounds: { x: 200, y: 300, width: 10, height: 10 } },
+      { op: 'createConnector', id: id(972), alias: 'wire', from: { elementId: id(970), glue: 'dynamic' }, to: { elementId: id(971), glue: 'dynamic' }, route: 'orthogonal' },
+    ]);
+    const made = ops(t, ['move-segment wire segment=1 by=-10pt', 'move-segment wire segment=2 to=120pt'].join(String.fromCharCode(10)));
+    expect(made[0]).toEqual({ op: 'moveSegment', target: id(972), segment: 1, by: -10 });
+    expect(made[1]).toEqual({ op: 'moveSegment', target: id(972), segment: 2, to: 120 });
+    expect(bad(t, 'move-segment wire segment=1')).toBeDefined();
+    expect(bad(t, 'move-segment wire segment=1 by=1pt to=2pt')).toBeDefined();
+    expect(bad(t, 'move-segment p segment=1 by=1pt')).toBeDefined();
+    const pins = ops(t, ['pin-segment wire segment=1', 'unpin-segment wire segment=1'].join(String.fromCharCode(10)));
+    expect(pins[0]).toEqual({ op: 'pinSegment', target: id(972), segment: 1, pinned: true });
+    expect(pins[1]).toEqual({ op: 'pinSegment', target: id(972), segment: 1, pinned: false });
+  });
+});
+
+describe('compiler: branches that join a connector, and hops', () => {
+  async function bus() {
+    const t = await scene();
+    await run(t, [
+      { op: 'createShape', id: id(980), alias: 'p', bounds: { x: 0, y: 200, width: 10, height: 10 } },
+      { op: 'createShape', id: id(981), alias: 'q', bounds: { x: 200, y: 200, width: 10, height: 10 } },
+      { op: 'createShape', id: id(982), alias: 'r', bounds: { x: 100, y: 400, width: 10, height: 10 } },
+      { op: 'createConnector', id: id(983), alias: 'bus', from: { elementId: id(980), glue: 'dynamic' }, to: { elementId: id(981), glue: 'dynamic' } },
+    ]);
+    return t;
+  }
+
+  it('toJoin= toAt= make the end a branch on a connector, in connect and in set', async () => {
+    const t = await bus();
+    expect(ops(t, 'connect id=tap from=r toJoin=bus toAt=25% hops=arc')[0]).toMatchObject({
+      op: 'createConnector', to: { glue: 'none', join: { connector: id(983), position: 0.25 } }, hops: 'arc',
+    });
+    expect(ops(t, 'connect id=tap from=r toJoin=bus')[0]).toMatchObject({ to: { glue: 'none', join: { connector: id(983) } } });
+    expect(ops(t, 'connect id=tap fromJoin=bus to=r')[0]).toMatchObject({ from: { glue: 'none', join: { connector: id(983) } } });
+    await run(t, [{ op: 'createConnector', id: id(984), alias: 'tap', from: { elementId: id(982), glue: 'dynamic' }, to: { glue: 'none', point: { x: 5, y: 5 } } }]);
+    expect(ops(t, 'set tap toJoin=bus toAt=0.8')[0]).toMatchObject({ op: 'set', patch: { to: { glue: 'none', join: { connector: id(983), position: 0.8 } } } });
+    expect(ops(t, 'set tap hops=arc')[0]).toMatchObject({ patch: { hops: 'arc' } });
+  });
+
+  it('refuses a join to a shape, a join with another end form, a stray At=, and hops on a shape', async () => {
+    const t = await bus();
+    expect(bad(t, 'connect from=r toJoin=p').message).toMatch(/takes a connector/);
+    expect(bad(t, 'connect from=r to=q toJoin=bus').message).toMatch(/alternatives/);
+    expect(bad(t, 'connect from=r to=q toAt=0.5').message).toMatch(/goes with toJoin/);
+    expect(bad(t, 'set p hops=arc').message).toMatch(/applies to connectors/);
+    expect(bad(t, 'set bus toAt=0.5').message).toMatch(/goes with toJoin/);
   });
 });

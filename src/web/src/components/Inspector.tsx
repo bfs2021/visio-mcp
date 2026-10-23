@@ -4,6 +4,8 @@ import type { EditorModel } from '../editor/EditorModel';
 import { ArrangePanel } from './ArrangePanel';
 import { useModel } from './useModel';
 import { textDefaults } from '../model/documentDefaults';
+import { planRoutes } from '../layout/routePlanner';
+import { runIndexOf, segmentsOf } from '../layout/routeSegments';
 
 const round = (v: number) => Math.round(v * 1000) / 1000;
 
@@ -145,7 +147,7 @@ export function Inspector({ model }: { model: EditorModel }) {
       )}
 
       {el.kind === 'shape' && <ShapeStyle model={model} el={el} set={set} />}
-      {el.kind === 'connector' && <ConnectorStyle el={el} set={set} />}
+      {el.kind === 'connector' && <ConnectorStyle el={el} set={set} model={model} />}
       {(el.kind === 'shape' || el.kind === 'text') && el.attachment && <Pin el={el} model={model} set={set} />}
       {el.kind === 'image' && <ImageProps el={el} model={model} set={set} />}
 
@@ -250,7 +252,73 @@ function Pin({ el, model, set }: { el: ShapeElement | TextElement; model: Editor
   );
 }
 
-function ConnectorStyle({ el, set }: { el: ConnectorElement; set: (p: Record<string, unknown>) => void }) {
+/** Numeric position of each inner run, in the document's units. Same operation, same undo as dragging the handle. */
+function RunFields({ el, model }: { el: ConnectorElement; model: EditorModel }) {
+  const page = model.pageOfElement(el.id);
+  const points = planRoutes({ elements: page.elements, layers: page.layers, pageArea: page.widthPt * page.heightPt }).routes.get(el.id)?.points;
+  const runs = points ? segmentsOf(points).filter(s => s.movable && s.length > 0) : [];
+  if (!runs.length) return null;
+  const pinned = new Set((el.routing?.constraints ?? []).map(c => runIndexOf(points!, c.axis, c.index)));
+  const automatic = !el.waypoints.length && el.routing?.mode !== 'frozen';
+  return (
+    <div className="grid2">
+      {runs.map(r => (
+        <div key={r.index} className="run-row">
+          <NumberField label={`Run ${r.index} ${r.axis === 'h' ? 'y' : 'x'} ${model.unit}`} testId={`field-run-${r.index}`} value={model.toUnit(r.coord)}
+            onCommit={v => void model.apply('inspector', [{ op: 'moveSegment', target: el.id, segment: r.index, to: model.fromUnit(v) }] as Operation[])} />
+          {automatic && (
+            <label className="field"><span>Pinned</span>
+              <input type="checkbox" checked={pinned.has(r.index)} data-testid={`run-pin-${r.index}`} title="Hold this run where it is when the router plans the route again"
+                onChange={e => void model.apply('inspector', [{ op: 'pinSegment', target: el.id, segment: r.index, pinned: e.target.checked }] as Operation[])} />
+            </label>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** R16: a connector's end can be a branch joined to another connector. Done from here as well as by dragging, so it needs no pointer. */
+function JoinEnd({ el, end, model, set }: { el: ConnectorElement; end: 'from' | 'to'; model: EditorModel; set: (p: Record<string, unknown>) => void }) {
+  const ep = el[end];
+  const label = end === 'from' ? 'Start' : 'End';
+  const connectors = model.currentPage.elements.filter((e): e is ConnectorElement => e.kind === 'connector');
+  const nameOf = (c: ConnectorElement) => c.alias ?? c.name ?? `connector ${connectors.indexOf(c) + 1}`;
+  const byId = new Map(connectors.map(c => [c.id, c] as const));
+  /** joining it would make a loop when that connector, or one it joins in turn, is joined to this one */
+  const loops = (candidate: ConnectorElement): boolean => {
+    const seen = new Set<string>();
+    for (let c: ConnectorElement | undefined = candidate; c && !seen.has(c.id); ) {
+      if (c.id === el.id) return true;
+      seen.add(c.id);
+      const next: string | undefined = [c.from, c.to].find(e => e.join)?.join?.connectorId;
+      c = next ? byId.get(next) : undefined;
+    }
+    return false;
+  };
+  if (ep.join) {
+    const target = byId.get(ep.join.connectorId);
+    return (
+      <div className="grid2" data-testid={`join-${end}`}>
+        <NumberField label={`${label} joins ${target ? nameOf(target) : 'a connector'} at %`} testId={`field-join-${end}-at`} value={Math.round(ep.join.position * 100)} min={0}
+          onCommit={v => set({ [end]: { glue: 'none', join: { connector: ep.join!.connectorId, position: Math.min(1, Math.max(0, v / 100)) } } })} />
+        <button type="button" data-testid={`join-${end}-release`} onClick={() => set({ [end]: { glue: 'none', point: ep.point } })}>Release {label.toLowerCase()}</button>
+      </div>
+    );
+  }
+  const options = ep.glue === 'none' ? connectors.filter(c => c.id !== el.id && !loops(c)) : [];
+  if (options.length === 0) return null;
+  return (
+    <label className="field"><span>{label} joins a connector</span>
+      <select value="" data-testid={`field-join-${end}`} onChange={e => { if (e.target.value) set({ [end]: { glue: 'none', join: { connector: e.target.value, position: 0.5 } } }); }}>
+        <option value="">not joined</option>
+        {options.map(c => <option key={c.id} value={c.id}>{nameOf(c)}</option>)}
+      </select>
+    </label>
+  );
+}
+
+function ConnectorStyle({ el, set, model }: { el: ConnectorElement; set: (p: Record<string, unknown>) => void; model: EditorModel }) {
   const arrows = ['none', 'block', 'open', 'diamond', 'oval'];
   return (
     <section>
@@ -276,13 +344,30 @@ function ConnectorStyle({ el, set }: { el: ConnectorElement; set: (p: Record<str
         <label className="field"><span>Route</span>
           <select value={el.route} data-testid="field-route" onChange={e => set({ route: e.target.value })}><option>straight</option><option>orthogonal</option><option>curved</option></select>
         </label>
+        {el.route === 'orthogonal' && (
+          <>
+            <label className="field"><span>Route mode</span>
+              <select value={el.routing?.mode ?? (el.waypoints.length ? 'manual' : el.routing?.constraints?.length ? 'guided' : 'automatic')} data-testid="field-route-mode" title="Automatic: the router chooses and keeps the route. Manual: you control the bends. Frozen: the route is kept as it is."
+                onChange={e => set({ routing: { mode: e.target.value } })}><option>automatic</option><option>manual</option><option>frozen</option>{el.routing?.constraints?.length ? <option disabled>guided</option> : null}</select>
+            </label>
+            <RunFields el={el} model={model} />
+            {!el.routing?.mode && !el.waypoints.length && (
+              <button type="button" data-testid="route-reroute" title="Forget the stored route and let the router plan it again" onClick={() => void model.apply('inspector', [{ op: 'reroute', targets: [el.id] }] as Operation[])}>Re-route</button>
+            )}
+          </>
+        )}
       </div>
       <div className="grid2">
         <NumberField label="Label at %" testId="field-label-at" value={Math.round((el.labelAnchor?.position ?? 0.5) * 100)} min={0} onCommit={v => set({ labelAnchor: { position: Math.min(1, Math.max(0, v / 100)), offsetPt: el.labelAnchor?.offsetPt ?? 0 } })} />
         <NumberField label="Label offset pt" testId="field-label-offset" value={el.labelAnchor?.offsetPt ?? 0} onCommit={v => set({ labelAnchor: { position: el.labelAnchor?.position ?? 0.5, offsetPt: v } })} />
       </div>
       <p className="muted small">The offset is to the right of the line's direction; negative is to the left.</p>
-      <p className="muted small">From {el.from.glue === 'none' ? 'a point' : 'a shape'} to {el.to.glue === 'none' ? 'a point' : 'a shape'}</p>
+      <label className="field"><span>Hops over crossings</span>
+        <select value={el.hops ?? 'none'} data-testid="field-hops" disabled={el.route === 'curved'} onChange={e => set({ hops: e.target.value })}><option value="none">none</option><option value="arc">arc</option></select>
+      </label>
+      <JoinEnd el={el} end="from" model={model} set={set} />
+      <JoinEnd el={el} end="to" model={model} set={set} />
+      <p className="muted small">From {el.from.join ? 'a connector' : el.from.glue === 'none' ? 'a point' : 'a shape'} to {el.to.join ? 'a connector' : el.to.glue === 'none' ? 'a point' : 'a shape'}</p>
     </section>
   );
 }

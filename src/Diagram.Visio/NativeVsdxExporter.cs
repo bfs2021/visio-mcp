@@ -657,6 +657,29 @@ public sealed class NativeVsdxExporter : IVsdxExporter
             }
 
             // ------------------------------------------------------------ connectors
+            /// <summary>Which way Visio's ArcTo bulge must be signed for the arc to rise to the left of the direction of travel, as the editor draws it.</summary>
+            const double HopBulgeSign = -1;
+
+            /// <summary>The routes a hopping connector goes over: every other visible connector except the ones it is joined to or that join it, and any hopper that is on top of it.</summary>
+            List<IReadOnlyList<(double X, double Y)>> HoppedRoutes(ConnectorElement self)
+            {
+                var routes = new List<IReadOnlyList<(double X, double Y)>>();
+                foreach (var other in byId.Values.OfType<ConnectorElement>())
+                {
+                    if (other.Id == self.Id || other.Hidden) continue;
+                    if (new[] { self.From, self.To }.Any(ep => ep.Join?.ConnectorId == other.Id) || new[] { other.From, other.To }.Any(ep => ep.Join?.ConnectorId == self.Id)) continue;
+                    if (other.Hops == "arc" && other.ZIndex > self.ZIndex) continue; // two hoppers at one crossing: the one on top hops
+                    if (run.snap.Projection.Connectors.GetValueOrDefault(other.Id)?.RoutePoints is { Count: > 1 } rp) { routes.Add(rp.Select(p => (p.X, p.Y)).ToList()); continue; }
+                    (double X, double Y)? End(Endpoint ep) => ep.Point is { } p ? (p.X, p.Y) : ep.ElementId is not null && byId.ContainsKey(ep.ElementId) ? (Common(byId[ep.ElementId]).B is var b ? (b.X + b.Width / 2, b.Y + b.Height / 2) : null) : null;
+                    var route = new List<(double X, double Y)>();
+                    if (End(other.From) is { } f) route.Add(f);
+                    route.AddRange(other.Waypoints.Select(p => (p.X, p.Y)));
+                    if (End(other.To) is { } t) route.Add(t);
+                    if (route.Count > 1) routes.Add(route);
+                }
+                return routes;
+            }
+
             XElement? Connector(ConnectorElement c)
             {
                 var id = shapeIds[c.Id];
@@ -752,12 +775,44 @@ public sealed class NativeVsdxExporter : IVsdxExporter
                         Warn("label_position_fixed", "The label is placed at its position along the line; Visio keeps it there as a fixed offset, so it may drift if the line is rerouted in Visio.", c.Id, "label placed", "info");
                     }
                 }
+                // R16: Visio cannot glue a connector end to a point along another connector, so a branch is written as an end placed on the line, with the join kept
+                // in a user cell so reopening it in the editor joins it again
+                foreach (var (name, ep) in new[] { ("AgentJoinFrom", c.From), ("AgentJoinTo", c.To) })
+                {
+                    if (ep.Join is not { } join) continue;
+                    cx.Add(UserRow(name, JsonSerializer.Serialize(new { connectorId = join.ConnectorId, position = join.Position })));
+                    Warn("join_not_native", "Visio cannot glue a connector to a point on another connector: the branch ends on the line but will not follow it if the line is moved in Visio. Reopened in the editor it follows again.", c.Id, "end placed on the line", "info");
+                }
+                // R16: a connector that hops is told to jump always, as an arc; the others are told never to, so Visio's page default does not add jumps the editor does not show
+                shape.Add(Cell("ConLineJumpCode", c.Hops == "arc" ? 2 : 1));
+                if (c.Hops == "arc") shape.Add(Cell("ConLineJumpStyle", 1));
                 if (c.Label is not null) cx.Add(UserRow("AgentTextBlock", "1"));
                 if (c.Waypoints.Count > 0) cx.Add(UserRow("AgentWaypoints", JsonSerializer.Serialize(c.Waypoints.Select(w => new { x = w.X, y = w.Y }))));
                 shape.Add(UserSection(c, cx.ToArray()));
 
                 var geo = new XElement(V + "Section", new XAttribute("N", "Geometry"), new XAttribute("IX", 0), Cell("NoFill", 1), Cell("NoLine", c.Hidden ? 1 : 0), Cell("NoShow", c.Hidden ? 1 : 0), Cell("NoSnap", 0), Cell("NoQuickDrag", 0));
-                if (c.Route == "straight")
+                // R16: Visio only jumps a line when it reroutes it, so the arcs are also drawn into the geometry; the jump cells above keep them when it does
+                var hops = c.Hops == "arc" && c.Route != "curved" ? HopMath.Crossings(polyline, HoppedRoutes(c)) : [];
+                if (hops.Any(h => h.Count > 0))
+                {
+                    var ix = 1;
+                    XElement Pt(string kind, (double X, double Y) p) => new(V + "Row", new XAttribute("T", kind), new XAttribute("IX", ix++), Cell("X", p.X / PtPerInch - bx), Cell("Y", Vy(p.Y) - by));
+                    geo.Add(Pt("MoveTo", polyline[0]));
+                    for (var i = 1; i < polyline.Count; i++)
+                    {
+                        var a = polyline[i - 1]; var b = polyline[i]; var len = Math.Sqrt(Math.Pow(b.X - a.X, 2) + Math.Pow(b.Y - a.Y, 2));
+                        double tx = (b.X - a.X) / len, ty = (b.Y - a.Y) / len;
+                        foreach (var h in hops[i - 1])
+                        {
+                            geo.Add(Pt("LineTo", (h.X - tx * HopMath.RadiusPt, h.Y - ty * HopMath.RadiusPt)));
+                            var arc = Pt("ArcTo", (h.X + tx * HopMath.RadiusPt, h.Y + ty * HopMath.RadiusPt));
+                            arc.Add(Cell("A", HopBulgeSign * HopMath.RadiusPt / PtPerInch)); // a half circle: the bulge is the radius
+                            geo.Add(arc);
+                        }
+                        geo.Add(Pt("LineTo", b));
+                    }
+                }
+                else if (c.Route == "straight")
                 {
                     geo.Add(new XElement(V + "Row", new XAttribute("T", "MoveTo"), new XAttribute("IX", 1), Cell("X", 0), Cell("Y", 0)),
                         new XElement(V + "Row", new XAttribute("T", "LineTo"), new XAttribute("IX", 2), Cell("X", ex - bx, "Width"), Cell("Y", ey - by, "Height")));

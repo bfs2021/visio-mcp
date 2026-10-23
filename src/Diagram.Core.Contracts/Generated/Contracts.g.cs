@@ -174,6 +174,13 @@ public sealed record Endpoint
     [JsonPropertyName("port")] public string? Port { get; init; }
     [JsonPropertyName("point")] public Point? Point { get; init; }
     [JsonPropertyName("glue")] public required string Glue { get; init; }
+    [JsonPropertyName("join")] public Join? Join { get; init; }
+}
+
+public sealed record Join
+{
+    [JsonPropertyName("connectorId")] public required string ConnectorId { get; init; }
+    [JsonPropertyName("position")] public required double Position { get; init; }
 }
 
 public sealed record ShapeElement : Element
@@ -248,6 +255,15 @@ public sealed record ConnectorElement : Element
     [JsonPropertyName("style")] public required LineStyle Style { get; init; }
     [JsonPropertyName("label")] public TextBlock? Label { get; init; }
     [JsonPropertyName("labelAnchor")] public PathAnchor? LabelAnchor { get; init; }
+    [JsonPropertyName("hops")] public string? Hops { get; init; }
+    [JsonPropertyName("routing")] public JsonObject? Routing { get; init; }
+}
+
+public sealed record RunConstraint
+{
+    [JsonPropertyName("axis")] public required string Axis { get; init; }
+    [JsonPropertyName("index")] public required int Index { get; init; }
+    [JsonPropertyName("at")] public required double At { get; init; }
 }
 
 public sealed record GroupElement : Element
@@ -381,11 +397,13 @@ public sealed record ElementPatch
     [JsonPropertyName("preserveAspectRatio")] public bool? PreserveAspectRatio { get; init; }
     [JsonPropertyName("route")] public string? Route { get; init; }
     [JsonPropertyName("waypoints")] public IReadOnlyList<Point>? Waypoints { get; init; }
-    [JsonPropertyName("from")] public Endpoint? From { get; init; }
-    [JsonPropertyName("to")] public Endpoint? To { get; init; }
+    [JsonPropertyName("from")] public EndpointInput? From { get; init; }
+    [JsonPropertyName("to")] public EndpointInput? To { get; init; }
+    [JsonPropertyName("hops")] public string? Hops { get; init; }
     [JsonPropertyName("ports")] public IReadOnlyList<Port>? Ports { get; init; }
     [JsonPropertyName("attachment")] public JsonObject? Attachment { get; init; }
     [JsonPropertyName("labelAnchor")] public JsonObject? LabelAnchor { get; init; }
+    [JsonPropertyName("routing")] public JsonObject? Routing { get; init; }
 }
 
 public sealed record CreateShapeOp : Operation
@@ -446,6 +464,8 @@ public sealed record CreateConnectorOp : Operation
     [JsonPropertyName("style")] public StylePatch? Style { get; init; }
     [JsonPropertyName("label")] public TextBlockPatch? Label { get; init; }
     [JsonPropertyName("labelAnchor")] public LabelAnchorInput? LabelAnchor { get; init; }
+    [JsonPropertyName("hops")] public string? Hops { get; init; }
+    [JsonPropertyName("routing")] public JsonObject? Routing { get; init; }
 }
 
 public sealed record AttachmentInput
@@ -467,6 +487,13 @@ public sealed record EndpointInput
     [JsonPropertyName("port")] public string? Port { get; init; }
     [JsonPropertyName("point")] public Point? Point { get; init; }
     [JsonPropertyName("glue")] public required string Glue { get; init; }
+    [JsonPropertyName("join")] public JoinInput? Join { get; init; }
+}
+
+public sealed record JoinInput
+{
+    [JsonPropertyName("connector")] public required string Connector { get; init; }
+    [JsonPropertyName("position")] public double? Position { get; init; }
 }
 
 public sealed record SetOp : Operation
@@ -549,6 +576,7 @@ public sealed record SetPageOp : Operation
 [JsonDerivedType(typeof(DistributeOp), "distribute")]
 [JsonDerivedType(typeof(SetGapOp), "setGap")]
 [JsonDerivedType(typeof(ReorderOp), "reorder")]
+[JsonDerivedType(typeof(RerouteOp), "reroute")]
 [JsonDerivedType(typeof(AddPageOp), "addPage")]
 [JsonDerivedType(typeof(ReorderPageOp), "reorderPage")]
 [JsonDerivedType(typeof(DuplicatePageOp), "duplicatePage")]
@@ -560,6 +588,8 @@ public sealed record SetPageOp : Operation
 [JsonDerivedType(typeof(SetAssetOp), "setAsset")]
 [JsonDerivedType(typeof(RemoveAssetOp), "removeAsset")]
 [JsonDerivedType(typeof(ReplaceAssetOp), "replaceAsset")]
+[JsonDerivedType(typeof(MoveSegmentOp), "moveSegment")]
+[JsonDerivedType(typeof(PinSegmentOp), "pinSegment")]
 public abstract record Operation;
 
 public sealed record DuplicateOp : Operation
@@ -704,6 +734,26 @@ public sealed record ReplaceAssetOp : Operation
     [JsonPropertyName("targets")] public IReadOnlyList<string>? Targets { get; init; }
 }
 
+public sealed record RerouteOp : Operation
+{
+    [JsonPropertyName("targets")] public IReadOnlyList<string>? Targets { get; init; }
+}
+
+public sealed record MoveSegmentOp : Operation
+{
+    [JsonPropertyName("target")] public required string Target { get; init; }
+    [JsonPropertyName("segment")] public required int Segment { get; init; }
+    [JsonPropertyName("to")] public double? To { get; init; }
+    [JsonPropertyName("by")] public double? By { get; init; }
+}
+
+public sealed record PinSegmentOp : Operation
+{
+    [JsonPropertyName("target")] public required string Target { get; init; }
+    [JsonPropertyName("segment")] public required int Segment { get; init; }
+    [JsonPropertyName("pinned")] public required bool Pinned { get; init; }
+}
+
 public sealed record AppError
 {
     [JsonPropertyName("code")] public required string Code { get; init; }
@@ -791,6 +841,14 @@ public sealed record TransactionResult
     [JsonPropertyName("visuallyAffectedIds")] public required IReadOnlyList<string> VisuallyAffectedIds { get; init; }
     [JsonPropertyName("warnings")] public required IReadOnlyList<Diagnostic> Warnings { get; init; }
     [JsonPropertyName("projectionStatus")] public required string ProjectionStatus { get; init; }
+    [JsonPropertyName("routeChanges")] public IReadOnlyList<RouteChange>? RouteChanges { get; init; }
+}
+
+public sealed record RouteChange
+{
+    [JsonPropertyName("id")] public required string Id { get; init; }
+    [JsonPropertyName("provenance")] public required string Provenance { get; init; }
+    [JsonPropertyName("reason")] public string? Reason { get; init; }
 }
 
 public sealed record Snapshot

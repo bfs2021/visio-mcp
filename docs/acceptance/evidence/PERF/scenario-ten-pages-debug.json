@@ -1,0 +1,500 @@
+{
+  "recorded": "2026-10-23T18:35:58.2610853Z",
+  "machine": {
+    "os": "Microsoft Windows NT 10.0.26300.0",
+    "logicalProcessors": 4,
+    "dotnet": "10.0.13",
+    "configuration": "Debug",
+    "webview2": "155.0.4283.62"
+  },
+  "setup": {
+    "shimStartedBeforeEditor": true,
+    "quietGateReached": true,
+    "quietGateWaitedMs": 2097,
+    "machineCpuBusyPercentOverall": 90,
+    "starvedStretchesSeen": [],
+    "wholeProcessStops": []
+  },
+  "scenario": "ten pages, 50 shapes and 5 connectors on each (550 elements), short labels",
+  "fixture": {
+    "pages": 10,
+    "elementsPerPage": 55,
+    "elements": 550,
+    "summaryBytesAllPages": 95206,
+    "vsdxBytesAppExport": 56943,
+    "vsdxBytesVisioSaved": 80034
+  },
+  "build": {
+    "all": {
+      "runs": 1,
+      "samplesMs": [
+        107.7
+      ],
+      "minMs": 107.7,
+      "medianMs": 107.7,
+      "p95Ms": 107.7,
+      "maxMs": 107.7,
+      "preferredMs": null,
+      "meetsPreferred": null
+    },
+    "contaminatedRuns": 0,
+    "clean": {
+      "runs": 1,
+      "samplesMs": [
+        107.7
+      ],
+      "minMs": 107.7,
+      "medianMs": 107.7,
+      "p95Ms": 107.7,
+      "maxMs": 107.7,
+      "preferredMs": null,
+      "meetsPreferred": null
+    }
+  },
+  "summaryAllPages": {
+    "all": {
+      "runs": 10,
+      "samplesMs": [
+        22,
+        19.8,
+        16.4,
+        21.7,
+        17.4,
+        18.3,
+        15.8,
+        24.7,
+        20.6,
+        23.9
+      ],
+      "minMs": 15.8,
+      "medianMs": 20.6,
+      "p95Ms": 24.7,
+      "maxMs": 24.7,
+      "preferredMs": 250,
+      "meetsPreferred": true
+    },
+    "contaminatedRuns": 0,
+    "clean": {
+      "runs": 10,
+      "samplesMs": [
+        22,
+        19.8,
+        16.4,
+        21.7,
+        17.4,
+        18.3,
+        15.8,
+        24.7,
+        20.6,
+        23.9
+      ],
+      "minMs": 15.8,
+      "medianMs": 20.6,
+      "p95Ms": 24.7,
+      "maxMs": 24.7,
+      "preferredMs": 250,
+      "meetsPreferred": true
+    }
+  },
+  "summaryOnePage": {
+    "all": {
+      "runs": 10,
+      "samplesMs": [
+        4.7,
+        3.7,
+        5,
+        3.3,
+        4.1,
+        3.3,
+        3.4,
+        3.5,
+        13.8,
+        4
+      ],
+      "minMs": 3.3,
+      "medianMs": 4,
+      "p95Ms": 13.8,
+      "maxMs": 13.8,
+      "preferredMs": 250,
+      "meetsPreferred": true
+    },
+    "contaminatedRuns": 0,
+    "clean": {
+      "runs": 10,
+      "samplesMs": [
+        4.7,
+        3.7,
+        5,
+        3.3,
+        4.1,
+        3.3,
+        3.4,
+        3.5,
+        13.8,
+        4
+      ],
+      "minMs": 3.3,
+      "medianMs": 4,
+      "p95Ms": 13.8,
+      "maxMs": 13.8,
+      "preferredMs": 250,
+      "meetsPreferred": true
+    }
+  },
+  "editOnPage1ViaScript": {
+    "all": {
+      "runs": 10,
+      "samplesMs": [
+        9.6,
+        7.9,
+        8.8,
+        11.3,
+        6.4,
+        4.8,
+        8.3,
+        5.3,
+        8,
+        4.7
+      ],
+      "minMs": 4.7,
+      "medianMs": 8,
+      "p95Ms": 11.3,
+      "maxMs": 11.3,
+      "preferredMs": 250,
+      "meetsPreferred": true
+    },
+    "contaminatedRuns": 0,
+    "clean": {
+      "runs": 10,
+      "samplesMs": [
+        9.6,
+        7.9,
+        8.8,
+        11.3,
+        6.4,
+        4.8,
+        8.3,
+        5.3,
+        8,
+        4.7
+      ],
+      "minMs": 4.7,
+      "medianMs": 8,
+      "p95Ms": 11.3,
+      "maxMs": 11.3,
+      "preferredMs": 250,
+      "meetsPreferred": true
+    }
+  },
+  "editOnPage10ViaScript": {
+    "all": {
+      "runs": 10,
+      "samplesMs": [
+        5.6,
+        5.7,
+        7.9,
+        4.2,
+        4.4,
+        7,
+        12.7,
+        12.6,
+        4.2,
+        3.7
+      ],
+      "minMs": 3.7,
+      "medianMs": 5.7,
+      "p95Ms": 12.7,
+      "maxMs": 12.7,
+      "preferredMs": 250,
+      "meetsPreferred": true
+    },
+    "contaminatedRuns": 0,
+    "clean": {
+      "runs": 10,
+      "samplesMs": [
+        5.6,
+        5.7,
+        7.9,
+        4.2,
+        4.4,
+        7,
+        12.7,
+        12.6,
+        4.2,
+        3.7
+      ],
+      "minMs": 3.7,
+      "medianMs": 5.7,
+      "p95Ms": 12.7,
+      "maxMs": 12.7,
+      "preferredMs": 250,
+      "meetsPreferred": true
+    }
+  },
+  "renderPage1": {
+    "all": {
+      "runs": 5,
+      "samplesMs": [
+        104.6,
+        88.1,
+        98.6,
+        97.6,
+        71.9
+      ],
+      "minMs": 71.9,
+      "medianMs": 97.6,
+      "p95Ms": 104.6,
+      "maxMs": 104.6,
+      "preferredMs": 1000,
+      "meetsPreferred": true
+    },
+    "contaminatedRuns": 0,
+    "clean": {
+      "runs": 5,
+      "samplesMs": [
+        104.6,
+        88.1,
+        98.6,
+        97.6,
+        71.9
+      ],
+      "minMs": 71.9,
+      "medianMs": 97.6,
+      "p95Ms": 104.6,
+      "maxMs": 104.6,
+      "preferredMs": 1000,
+      "meetsPreferred": true
+    }
+  },
+  "renderPage5": {
+    "all": {
+      "runs": 5,
+      "samplesMs": [
+        88.6,
+        70.1,
+        62.7,
+        67.1,
+        58.3
+      ],
+      "minMs": 58.3,
+      "medianMs": 67.1,
+      "p95Ms": 88.6,
+      "maxMs": 88.6,
+      "preferredMs": 1000,
+      "meetsPreferred": true
+    },
+    "contaminatedRuns": 0,
+    "clean": {
+      "runs": 5,
+      "samplesMs": [
+        88.6,
+        70.1,
+        62.7,
+        67.1,
+        58.3
+      ],
+      "minMs": 58.3,
+      "medianMs": 67.1,
+      "p95Ms": 88.6,
+      "maxMs": 88.6,
+      "preferredMs": 1000,
+      "meetsPreferred": true
+    }
+  },
+  "renderPage10": {
+    "all": {
+      "runs": 5,
+      "samplesMs": [
+        63.2,
+        65.1,
+        72.1,
+        72.7,
+        87.3
+      ],
+      "minMs": 63.2,
+      "medianMs": 72.1,
+      "p95Ms": 87.3,
+      "maxMs": 87.3,
+      "preferredMs": 1000,
+      "meetsPreferred": true
+    },
+    "contaminatedRuns": 0,
+    "clean": {
+      "runs": 5,
+      "samplesMs": [
+        63.2,
+        65.1,
+        72.1,
+        72.7,
+        87.3
+      ],
+      "minMs": 63.2,
+      "medianMs": 72.1,
+      "p95Ms": 87.3,
+      "maxMs": 87.3,
+      "preferredMs": 1000,
+      "meetsPreferred": true
+    }
+  },
+  "switchPageInEditor": {
+    "all": {
+      "runs": 15,
+      "samplesMs": [
+        22.2,
+        29.4,
+        31.3,
+        29.8,
+        29.5,
+        32.7,
+        31.3,
+        32.1,
+        29.9,
+        30.5,
+        32.9,
+        30.6,
+        33.2,
+        29.7,
+        30.3
+      ],
+      "minMs": 22.2,
+      "medianMs": 30.5,
+      "p95Ms": 33.2,
+      "maxMs": 33.2,
+      "preferredMs": null,
+      "meetsPreferred": null
+    },
+    "contaminatedRuns": 0,
+    "clean": {
+      "runs": 15,
+      "samplesMs": [
+        22.2,
+        29.4,
+        31.3,
+        29.8,
+        29.5,
+        32.7,
+        31.3,
+        32.1,
+        29.9,
+        30.5,
+        32.9,
+        30.6,
+        33.2,
+        29.7,
+        30.3
+      ],
+      "minMs": 22.2,
+      "medianMs": 30.5,
+      "p95Ms": 33.2,
+      "maxMs": 33.2,
+      "preferredMs": null,
+      "meetsPreferred": null
+    }
+  },
+  "exportVsdx10Pages": {
+    "all": {
+      "runs": 5,
+      "samplesMs": [
+        136.4,
+        150.9,
+        150.5,
+        105.5,
+        108.2
+      ],
+      "minMs": 105.5,
+      "medianMs": 136.4,
+      "p95Ms": 150.9,
+      "maxMs": 150.9,
+      "preferredMs": 3000,
+      "meetsPreferred": true
+    },
+    "contaminatedRuns": 0,
+    "clean": {
+      "runs": 5,
+      "samplesMs": [
+        136.4,
+        150.9,
+        150.5,
+        105.5,
+        108.2
+      ],
+      "minMs": 105.5,
+      "medianMs": 136.4,
+      "p95Ms": 150.9,
+      "maxMs": 150.9,
+      "preferredMs": 3000,
+      "meetsPreferred": true
+    }
+  },
+  "openAppExport10Pages": {
+    "all": {
+      "runs": 5,
+      "samplesMs": [
+        73,
+        61.7,
+        48.4,
+        56.8,
+        55.6
+      ],
+      "minMs": 48.4,
+      "medianMs": 56.8,
+      "p95Ms": 73,
+      "maxMs": 73,
+      "preferredMs": null,
+      "meetsPreferred": null
+    },
+    "contaminatedRuns": 0,
+    "clean": {
+      "runs": 5,
+      "samplesMs": [
+        73,
+        61.7,
+        48.4,
+        56.8,
+        55.6
+      ],
+      "minMs": 48.4,
+      "medianMs": 56.8,
+      "p95Ms": 73,
+      "maxMs": 73,
+      "preferredMs": null,
+      "meetsPreferred": null
+    }
+  },
+  "openVisioSaved10Pages": {
+    "all": {
+      "runs": 5,
+      "samplesMs": [
+        91.7,
+        78.8,
+        53.9,
+        52.6,
+        64.2
+      ],
+      "minMs": 52.6,
+      "medianMs": 64.2,
+      "p95Ms": 91.7,
+      "maxMs": 91.7,
+      "preferredMs": null,
+      "meetsPreferred": null
+    },
+    "contaminatedRuns": 0,
+    "clean": {
+      "runs": 5,
+      "samplesMs": [
+        91.7,
+        78.8,
+        53.9,
+        52.6,
+        64.2
+      ],
+      "minMs": 52.6,
+      "medianMs": 64.2,
+      "p95Ms": 91.7,
+      "maxMs": 91.7,
+      "preferredMs": null,
+      "meetsPreferred": null
+    }
+  },
+  "note": "Edits on a page are DrawScript transactions (execute_script) because apply_operations does not name a page; their time includes compiling the script."
+}

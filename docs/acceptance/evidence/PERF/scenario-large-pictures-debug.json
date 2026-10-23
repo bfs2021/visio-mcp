@@ -1,0 +1,324 @@
+{
+  "recorded": "2026-10-23T18:35:33.6716273Z",
+  "machine": {
+    "os": "Microsoft Windows NT 10.0.26300.0",
+    "logicalProcessors": 4,
+    "dotnet": "10.0.13",
+    "configuration": "Debug",
+    "webview2": "155.0.4283.62"
+  },
+  "setup": {
+    "shimStartedBeforeEditor": true,
+    "quietGateReached": true,
+    "quietGateWaitedMs": 11044,
+    "machineCpuBusyPercentOverall": 87,
+    "starvedStretchesSeen": [
+      {
+        "startMs": 6104,
+        "lengthMs": 693,
+        "poolThreadsAtStart": 7,
+        "poolThreadsAtEnd": 7,
+        "maxQueued": 3,
+        "machineCpuBusyPercent": 65,
+        "machineCpuBusyPercentFor2sBefore": 74
+      },
+      {
+        "startMs": 8175,
+        "lengthMs": 667,
+        "poolThreadsAtStart": 7,
+        "poolThreadsAtEnd": 7,
+        "maxQueued": 4,
+        "machineCpuBusyPercent": 62,
+        "machineCpuBusyPercentFor2sBefore": 67
+      }
+    ],
+    "wholeProcessStops": []
+  },
+  "exportLimitProbe": {
+    "picturesInDocument": 12,
+    "pngBytesInDocument": 68545319,
+    "refused": true,
+    "errorCode": "internal_error",
+    "errorMessage": "the exported file could not be read back, so it was not saved: the file is larger than 67108864 bytes",
+    "msToRefusal": 1503,
+    "fileLeftBehind": false,
+    "note": "A document whose pictures add up to more than the 64 MiB the exporter will read back cannot be saved as .vsdx; the application refuses and writes nothing. Native JSON has the same 64 MiB budget."
+  },
+  "scenario": "8 PNG pictures of 2400 x 1600 pixels (pseudo-photographic, seeded noise), imported to the library, placed by one script on one A4 page, plus a caption",
+  "fixture": {
+    "pictures": 8,
+    "pixelsEach": "2400 x 1600",
+    "pngBytesEach": [
+      5614046,
+      5613163,
+      5613303,
+      5608069,
+      5600468,
+      5600186,
+      5703509,
+      5826307
+    ],
+    "pngBytesTotal": 45179051,
+    "previewBytes": 1152946,
+    "vsdxBytes": 45200525
+  },
+  "prepareAndImportToLibrary": {
+    "all": {
+      "runs": 8,
+      "samplesMs": [
+        23.4,
+        24.4,
+        20.8,
+        26.8,
+        37.3,
+        30.5,
+        25.9,
+        24
+      ],
+      "minMs": 20.8,
+      "medianMs": 25.9,
+      "p95Ms": 37.3,
+      "maxMs": 37.3,
+      "preferredMs": null,
+      "meetsPreferred": null
+    },
+    "contaminatedRuns": 0,
+    "clean": {
+      "runs": 8,
+      "samplesMs": [
+        23.4,
+        24.4,
+        20.8,
+        26.8,
+        37.3,
+        30.5,
+        25.9,
+        24
+      ],
+      "minMs": 20.8,
+      "medianMs": 25.9,
+      "p95Ms": 37.3,
+      "maxMs": 37.3,
+      "preferredMs": null,
+      "meetsPreferred": null
+    }
+  },
+  "placeEightPicturesInOneScript": {
+    "all": {
+      "runs": 1,
+      "samplesMs": [
+        220.5
+      ],
+      "minMs": 220.5,
+      "medianMs": 220.5,
+      "p95Ms": 220.5,
+      "maxMs": 220.5,
+      "preferredMs": null,
+      "meetsPreferred": null
+    },
+    "contaminatedRuns": 0,
+    "clean": {
+      "runs": 1,
+      "samplesMs": [
+        220.5
+      ],
+      "minMs": 220.5,
+      "medianMs": 220.5,
+      "p95Ms": 220.5,
+      "maxMs": 220.5,
+      "preferredMs": null,
+      "meetsPreferred": null
+    }
+  },
+  "pictureDecodeAndDrawInEditor": {
+    "all": {
+      "runs": 1,
+      "samplesMs": [
+        175.6
+      ],
+      "minMs": 175.6,
+      "medianMs": 175.6,
+      "p95Ms": 175.6,
+      "maxMs": 175.6,
+      "preferredMs": null,
+      "meetsPreferred": null
+    },
+    "contaminatedRuns": 0,
+    "clean": {
+      "runs": 1,
+      "samplesMs": [
+        175.6
+      ],
+      "minMs": 175.6,
+      "medianMs": 175.6,
+      "p95Ms": 175.6,
+      "maxMs": 175.6,
+      "preferredMs": null,
+      "meetsPreferred": null
+    }
+  },
+  "summary": {
+    "all": {
+      "runs": 5,
+      "samplesMs": [
+        20.8,
+        4.9,
+        2.9,
+        2,
+        2
+      ],
+      "minMs": 2,
+      "medianMs": 2.9,
+      "p95Ms": 20.8,
+      "maxMs": 20.8,
+      "preferredMs": 250,
+      "meetsPreferred": true
+    },
+    "contaminatedRuns": 0,
+    "clean": {
+      "runs": 5,
+      "samplesMs": [
+        20.8,
+        4.9,
+        2.9,
+        2,
+        2
+      ],
+      "minMs": 2,
+      "medianMs": 2.9,
+      "p95Ms": 20.8,
+      "maxMs": 20.8,
+      "preferredMs": 250,
+      "meetsPreferred": true
+    }
+  },
+  "renderPage1600x1200": {
+    "all": {
+      "runs": 5,
+      "samplesMs": [
+        1293.6,
+        1386.9,
+        1246.9,
+        1529,
+        1523
+      ],
+      "minMs": 1246.9,
+      "medianMs": 1386.9,
+      "p95Ms": 1529,
+      "maxMs": 1529,
+      "preferredMs": 1000,
+      "meetsPreferred": false
+    },
+    "contaminatedRuns": 0,
+    "clean": {
+      "runs": 5,
+      "samplesMs": [
+        1293.6,
+        1386.9,
+        1246.9,
+        1529,
+        1523
+      ],
+      "minMs": 1246.9,
+      "medianMs": 1386.9,
+      "p95Ms": 1529,
+      "maxMs": 1529,
+      "preferredMs": 1000,
+      "meetsPreferred": false
+    }
+  },
+  "inspectLayout": {
+    "all": {
+      "runs": 3,
+      "samplesMs": [
+        286.8,
+        20.6,
+        2.4
+      ],
+      "minMs": 2.4,
+      "medianMs": 20.6,
+      "p95Ms": 286.8,
+      "maxMs": 286.8,
+      "preferredMs": null,
+      "meetsPreferred": null
+    },
+    "contaminatedRuns": 0,
+    "clean": {
+      "runs": 3,
+      "samplesMs": [
+        286.8,
+        20.6,
+        2.4
+      ],
+      "minMs": 2.4,
+      "medianMs": 20.6,
+      "p95Ms": 286.8,
+      "maxMs": 286.8,
+      "preferredMs": null,
+      "meetsPreferred": null
+    }
+  },
+  "exportVsdx": {
+    "all": {
+      "runs": 3,
+      "samplesMs": [
+        1212.4,
+        1331.6,
+        1162.6
+      ],
+      "minMs": 1162.6,
+      "medianMs": 1212.4,
+      "p95Ms": 1331.6,
+      "maxMs": 1331.6,
+      "preferredMs": 3000,
+      "meetsPreferred": true
+    },
+    "contaminatedRuns": 0,
+    "clean": {
+      "runs": 3,
+      "samplesMs": [
+        1212.4,
+        1331.6,
+        1162.6
+      ],
+      "minMs": 1162.6,
+      "medianMs": 1212.4,
+      "p95Ms": 1331.6,
+      "maxMs": 1331.6,
+      "preferredMs": 3000,
+      "meetsPreferred": true
+    }
+  },
+  "openAppExportWithPictures": {
+    "all": {
+      "runs": 3,
+      "samplesMs": [
+        169.3,
+        177,
+        198.5
+      ],
+      "minMs": 169.3,
+      "medianMs": 177,
+      "p95Ms": 198.5,
+      "maxMs": 198.5,
+      "preferredMs": null,
+      "meetsPreferred": null
+    },
+    "contaminatedRuns": 0,
+    "clean": {
+      "runs": 3,
+      "samplesMs": [
+        169.3,
+        177,
+        198.5
+      ],
+      "minMs": 169.3,
+      "medianMs": 177,
+      "p95Ms": 198.5,
+      "maxMs": 198.5,
+      "preferredMs": null,
+      "meetsPreferred": null
+    }
+  },
+  "limits": "Pictures are generated, not photographs; their compression ratio differs from real photos. Memory use of the editor was not measured."
+}

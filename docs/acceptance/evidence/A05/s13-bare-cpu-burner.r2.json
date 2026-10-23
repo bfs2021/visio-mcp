@@ -1,0 +1,30 @@
+{
+  "scenario": "s13-bare-cpu-burner",
+  "question": "No editor; the same CPU-saturating child.",
+  "configuration": "Debug",
+  "observedSeconds": 12,
+  "childStartedAtMs": 2017,
+  "machineCpuBusyPercentOverall": 79,
+  "processStops": [],
+  "poolStarvedWindows": [
+    {
+      "startMs": 7665,
+      "lengthMs": 761,
+      "poolThreadsAtStart": 7,
+      "poolThreadsAtEnd": 7,
+      "maxQueued": 3,
+      "machineCpuBusyPercent": 72,
+      "machineCpuBusyPercentFor2sBefore": 76
+    }
+  ],
+  "poolTimerLate": [
+    {
+      "atMs": 8443,
+      "lateMs": 813
+    }
+  ],
+  "uiThreadLate": [],
+  "appPipeSlow": [],
+  "verdict": "pool timers late, process not stopped",
+  "ran": "2026-10-23T17:53:44.7216814Z"
+}

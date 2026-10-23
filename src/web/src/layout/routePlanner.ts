@@ -2,6 +2,7 @@ import type { Element, Layer } from '../contracts/generated';
 import { centreOfTerminal, endFor, routeOrthogonal, type End, type Terminal, type V } from './orthogonalRoute';
 import { avoidObstacles, blockedSegments, CLEARANCE, BUDGET, SPACING, STUB, inflate, isClear, search, segmentsOf, type Rect, type Segment } from './obstacleRoute';
 import { selectObstacles, visualRect } from './obstacles';
+import { applyConstraints } from './routeSegments';
 
 /**
  * The route planner (R19). Pure: the same elements, layers and previous routes always give the same routes, whichever surface asks
@@ -16,7 +17,7 @@ import { selectObstacles, visualRect } from './obstacles';
  * Connectors with author waypoints are `authored`: their route is computed from the waypoints and never searched.
  */
 type Connector = Extract<Element, { kind: 'connector' }>;
-export type RouteProvenance = 'authored' | 'kept' | 'elastic' | 'repaired' | 'rerouted' | 'unresolved';
+export type RouteProvenance = 'authored' | 'frozen' | 'kept' | 'elastic' | 'repaired' | 'rerouted' | 'unresolved';
 export interface PinnedEnd { x: number; y: number; perimeter: boolean }
 export interface PlannedRoute {
   /** The whole route including both anchors. */
@@ -45,6 +46,9 @@ export interface PlanResult {
 const EPS = 1e-6;
 const SIDE = new Set(['0.5,0', '0.5,1', '0,0.5', '1,0.5']);
 const same = (p: V, q: V): boolean => Math.abs(p.x - q.x) < EPS && Math.abs(p.y - q.y) < EPS;
+/** Stored routes are rounded, so "the same place" for a stored route is a hundredth of a point. */
+export const STORED_TOLERANCE = 0.01;
+const near = (p: V, q: V): boolean => Math.abs(p.x - q.x) < STORED_TOLERANCE && Math.abs(p.y - q.y) < STORED_TOLERANCE;
 const horizontalSeg = (p: V, q: V): boolean => Math.abs(p.y - q.y) < EPS;
 const dot = (p: V, q: V): number => p.x * q.x + p.y * q.y;
 const dirOf = (p: V, q: V): V => ({ x: Math.sign(q.x - p.x), y: Math.sign(q.y - p.y) });
@@ -77,7 +81,13 @@ export function routeDefects(points: readonly V[]): string[] {
 /** The previous route with its first and last runs moved to the new anchors; interior tracks stay. Undefined when it cannot be adapted. */
 function elastic(prev: readonly V[], a: End, b: End): V[] | undefined {
   const n = prev.length;
-  if (n < 3) return undefined;
+  if (n < 2) return undefined;
+  if (n === 2) { // a straight run whose ends are no longer aligned takes one short jog, half way along
+    const h = horizontalSeg(prev[0]!, prev[1]!);
+    const A = a.anchor, B = b.anchor, mx = (A.x + B.x) / 2, my = (A.y + B.y) / 2;
+    const jog = tidy(h ? [A, { x: mx, y: A.y }, { x: mx, y: B.y }, B] : [A, { x: A.x, y: my }, { x: B.x, y: my }, B]);
+    return dot(dirOf(jog[0]!, jog[1]!), a.dir) > 0 && dot(dirOf(jog[jog.length - 1]!, jog[jog.length - 2]!), b.dir) > 0 && !routeDefects(jog).length ? jog : undefined;
+  }
   const r = prev.map(p => ({ ...p }));
   r[0] = { ...a.anchor }; r[n - 1] = { ...b.anchor };
   if (horizontalSeg(prev[0]!, prev[1]!)) r[1]!.y = a.anchor.y; else r[1]!.x = a.anchor.x;
@@ -122,6 +132,19 @@ function repair(route: readonly V[], w: Work, occupied: readonly Segment[]): V[]
   return routeDefects(next).length || !isClear(next, w.others, w.endRects, 2) ? undefined : next;
 }
 
+/** The route stored on a connector (R20), as the planner's memory of it. Absent when there is none. */
+export function storedRoute(el: Connector): PlannedRoute | undefined {
+  const pts = el.routing?.advisory;
+  if (!pts || pts.length < 2) return undefined;
+  const points = pts.map(p => ({ x: p.x, y: p.y }));
+  const n = points.length;
+  return {
+    points, provenance: el.routing?.mode === 'frozen' ? 'frozen' : 'kept', fixed: {},
+    ends: { a: { anchor: points[0]!, dir: dirOf(points[0]!, points[1]!) }, b: { anchor: points[n - 1]!, dir: dirOf(points[n - 1]!, points[n - 2]!) } },
+  };
+}
+export const isFrozen = (el: Connector): boolean => el.routing?.mode === 'frozen';
+
 export function planRoutes(input: PlanInput): PlanResult {
   const byId = new Map(input.elements.map(e => [e.id, e]));
   const terminal = (ep: Connector['from']): Terminal | undefined => {
@@ -150,37 +173,66 @@ export function planRoutes(input: PlanInput): PlanResult {
     points, provenance, ...(reason ? { reason } : {}), fixed: { from: pin(w.a), to: pin(w.b) },
     ends: { a: { anchor: w.a.anchor, dir: w.a.dir }, b: { anchor: w.b.anchor, dir: w.b.dir } },
   });
+  /** A frozen route is the stored one. Only its end runs may move, and only to keep the glue; otherwise it stays and is flagged. */
+  const frozenRoute = (w: Work, stored: PlannedRoute | undefined): PlannedRoute => {
+    if (!stored) return make(w, w.base, 'unresolved', 'a frozen route has no stored route');
+    if (near(stored.ends.a.anchor, w.a.anchor) && near(stored.ends.b.anchor, w.b.anchor) && same(stored.ends.a.dir, w.a.dir) && same(stored.ends.b.dir, w.b.dir)) return make(w, stored.points, 'frozen');
+    const follow = elastic(stored.points, w.a, w.b);
+    const safe = follow && (isClear(follow, w.others, w.endRects, 2) || !isClear(stored.points, w.others, w.endRects, 2));
+    return safe ? make(w, follow, 'frozen', 'an end moved; only its end run followed') : make(w, stored.points, 'unresolved', 'a frozen route cannot follow the moved end safely, so it was kept as stored');
+  };
   const put = (w: Work, r: PlannedRoute) => { routes.set(w.el.id, r); occupied.push(...segmentsOf(r.points)); };
 
-  // Authored routes are fixed: they claim their tracks first.
-  for (const w of work) if (w.el.waypoints.length) put(w, make(w, w.base, 'authored'));
+  /**
+   * Guided routes (R21): the router draws the route as for an automatic connector, then holds each pinned run where it was put. If a
+   * held run cannot stay there (it no longer exists, would cross an obstacle, or would change how the route leaves a port), the route
+   * is left as drawn and flagged unresolved rather than moved somewhere the person did not choose.
+   */
+  const guide = (w: Work, r: PlannedRoute): PlannedRoute => {
+    const held = w.el.routing?.constraints;
+    if (!held?.length || r.provenance === 'unresolved') return r;
+    const out = applyConstraints(r.points, held);
+    const moved = out.points.length !== r.points.length || out.points.some((p, i) => !near(p, r.points[i]!));
+    if (out.unmet.length) return make(w, r.points, 'unresolved', 'a pinned run no longer exists on this route');
+    if (!moved) return r;
+    const n = out.points.length;
+    const leaves = same(dirOf(out.points[0]!, out.points[1]!), w.a.dir) && same(dirOf(out.points[n - 1]!, out.points[n - 2]!), w.b.dir);
+    if (routeDefects(out.points).length || !leaves || !isClear(out.points, w.others, w.endRects, 2)) return make(w, r.points, 'unresolved', 'a pinned run cannot be held there without crossing something');
+    return make(w, out.points, r.provenance === 'kept' ? 'repaired' : r.provenance, 'a pinned run was held');
+  };
+
+  // Authored and frozen routes are fixed: they claim their tracks first.
+  for (const w of work) {
+    if (isFrozen(w.el)) put(w, frozenRoute(w, storedRoute(w.el)));
+    else if (w.el.waypoints.length) put(w, make(w, w.base, 'authored'));
+  }
 
   // Routes that survive (kept or elastic) claim theirs next, so only the connectors that need it are searched.
   const pending: Array<{ w: Work; candidate?: V[]; why: string }> = [];
   for (const w of work) {
-    if (w.el.waypoints.length) continue;
-    const prev = input.previous?.get(w.el.id);
+    if (w.el.waypoints.length || isFrozen(w.el)) continue;
+    const prev = storedRoute(w.el) ?? input.previous?.get(w.el.id);
     if (!prev || prev.provenance === 'authored') { pending.push({ w, why: 'no previous route' }); continue; }
-    const unmoved = same(prev.ends.a.anchor, w.a.anchor) && same(prev.ends.b.anchor, w.b.anchor) && same(prev.ends.a.dir, w.a.dir) && same(prev.ends.b.dir, w.b.dir);
+    const unmoved = near(prev.ends.a.anchor, w.a.anchor) && near(prev.ends.b.anchor, w.b.anchor) && same(prev.ends.a.dir, w.a.dir) && same(prev.ends.b.dir, w.b.dir);
     const candidate = unmoved ? [...prev.points] : elastic(prev.points, w.a, w.b);
     if (!candidate) { pending.push({ w, why: 'an end moved and the old route cannot follow it' }); continue; }
-    if (isClear(candidate, w.others, w.endRects, 2) && !(detourPays(candidate, w))) put(w, make(w, candidate, unmoved ? 'kept' : 'elastic', unmoved ? undefined : 'an end moved'));
+    if (isClear(candidate, w.others, w.endRects, 2) && !(detourPays(candidate, w))) put(w, guide(w, make(w, candidate, unmoved ? 'kept' : 'elastic', unmoved ? undefined : 'an end moved')));
     else if (!isClear(candidate, w.others, w.endRects, 2)) pending.push({ w, candidate, why: 'an obstacle is now in the way' });
     else pending.push({ w, why: 'the obstacle that forced a detour is gone and the direct route is much shorter' });
   }
 
   for (const { w, candidate, why } of pending) {
     const fixed = candidate && repair(candidate, w, occupied);
-    if (fixed) { put(w, make(w, fixed, 'repaired', why)); continue; }
+    if (fixed) { put(w, guide(w, make(w, fixed, 'repaired', why))); continue; }
     const r = avoidObstacles(w.a, w.b, w.base, w.others, w.endRects, occupied);
     if (r.blocked) put(w, make(w, candidate ?? r.route, 'unresolved', 'no clear route was found'));
-    else put(w, make(w, r.route, 'rerouted', why));
+    else put(w, guide(w, make(w, r.route, 'rerouted', why)));
   }
 
   const changes: RouteChange[] = [];
   for (const w of work) {
-    const now = routes.get(w.el.id)!, was = input.previous?.get(w.el.id);
-    const moved = !was || was.points.length !== now.points.length || now.points.some((p, i) => !same(p, was.points[i]!));
+    const now = routes.get(w.el.id)!, was = storedRoute(w.el) ?? input.previous?.get(w.el.id);
+    const moved = !was || was.points.length !== now.points.length || now.points.some((p, i) => !near(p, was.points[i]!));
     if (moved || now.provenance === 'unresolved') changes.push({ id: w.el.id, provenance: now.provenance, ...(now.reason ? { reason: now.reason } : {}) });
   }
   return { routes, changes };

@@ -353,10 +353,16 @@
           "maxItems": 256
         },
         "from": {
-          "$ref": "document.schema.json#/$defs/Endpoint"
+          "$ref": "#/$defs/EndpointInput"
         },
         "to": {
-          "$ref": "document.schema.json#/$defs/Endpoint"
+          "$ref": "#/$defs/EndpointInput"
+        },
+        "hops": {
+          "enum": [
+            "none",
+            "arc"
+          ]
         },
         "ports": {
           "type": "array",
@@ -408,6 +414,24 @@
               "type": "number",
               "minimum": -2000,
               "maximum": 2000
+            }
+          }
+        },
+        "routing": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode"
+          ],
+          "description": "Route mode of an orthogonal connector. automatic: the router chooses and remembers the route (also clears waypoints). manual: keep the route as drawn now as waypoints. frozen: keep the route as drawn now and never replace it. guided is reserved (R21) and refused.",
+          "properties": {
+            "mode": {
+              "enum": [
+                "automatic",
+                "manual",
+                "frozen",
+                "guided"
+              ]
             }
           }
         }
@@ -645,6 +669,30 @@
         },
         "labelAnchor": {
           "$ref": "#/$defs/LabelAnchorInput"
+        },
+        "hops": {
+          "enum": [
+            "none",
+            "arc"
+          ]
+        },
+        "routing": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode"
+          ],
+          "description": "Route mode of an orthogonal connector. automatic: the router chooses and remembers the route (also clears waypoints). manual: keep the route as drawn now as waypoints. frozen: keep the route as drawn now and never replace it. guided is reserved (R21) and refused.",
+          "properties": {
+            "mode": {
+              "enum": [
+                "automatic",
+                "manual",
+                "frozen",
+                "guided"
+              ]
+            }
+          }
         }
       }
     },
@@ -716,6 +764,27 @@
             "static",
             "none"
           ]
+        },
+        "join": {
+          "$ref": "#/$defs/JoinInput"
+        }
+      }
+    },
+    "JoinInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "connector"
+      ],
+      "description": "Makes the end a branch that joins another connector. glue must be none and there is no point: the end sits on the connector's route at position (0 to 1 of its length from the start; default 0.5) and follows it. connector is a Target on the same page, including one created earlier in the batch.",
+      "properties": {
+        "connector": {
+          "$ref": "#/$defs/Target"
+        },
+        "position": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
         }
       }
     },
@@ -987,6 +1056,9 @@
           "$ref": "#/$defs/Reorder"
         },
         {
+          "$ref": "#/$defs/Reroute"
+        },
+        {
           "$ref": "#/$defs/AddPage"
         },
         {
@@ -1018,6 +1090,12 @@
         },
         {
           "$ref": "#/$defs/ReplaceAsset"
+        },
+        {
+          "$ref": "#/$defs/MoveSegment"
+        },
+        {
+          "$ref": "#/$defs/PinSegment"
         }
       ],
       "x-discriminator": "op"
@@ -1588,6 +1666,89 @@
           "description": "Explicit targets in input order. Input order breaks ties in arrangement."
         }
       }
+    },
+    "Reroute": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op"
+      ],
+      "properties": {
+        "op": {
+          "const": "reroute"
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Target"
+          },
+          "minItems": 1,
+          "maxItems": 1000,
+          "uniqueItems": true,
+          "description": "Automatic orthogonal connectors to route again from scratch, forgetting their stored route. Absent: every automatic orthogonal connector on the page. Manual and frozen connectors are refused when named, skipped otherwise."
+        }
+      }
+    },
+    "MoveSegment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "target",
+        "segment"
+      ],
+      "properties": {
+        "op": {
+          "const": "moveSegment"
+        },
+        "target": {
+          "$ref": "#/$defs/Target"
+        },
+        "segment": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 511,
+          "description": "Index of the run in the route as drawn now (the run from point n to point n+1). Read it from the connector projection's route. Only inner runs move; the runs that leave a port are refused with segment_fixed."
+        },
+        "to": {
+          "type": "number",
+          "description": "Where the run goes on its perpendicular axis, in page points: y for a horizontal run, x for a vertical one. Give exactly one of to and by."
+        },
+        "by": {
+          "type": "number",
+          "description": "How far the run moves on its perpendicular axis, in page points (positive is down or right)."
+        }
+      },
+      "description": "Moves one run of an orthogonal connector sideways. The neighbouring runs lengthen or shorten, both ends and the other runs stay, and a run moved level with a parallel neighbour merges into it. An automatic connector pins that run (it becomes guided: only that run is held and the router plans the rest); a manual one keeps its waypoints; a frozen one stays frozen with the new route."
+    },
+    "PinSegment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "target",
+        "segment",
+        "pinned"
+      ],
+      "properties": {
+        "op": {
+          "const": "pinSegment"
+        },
+        "target": {
+          "$ref": "#/$defs/Target"
+        },
+        "segment": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 511,
+          "description": "Index of the run in the route as drawn now."
+        },
+        "pinned": {
+          "type": "boolean",
+          "description": "true holds the run where it is now, so the router keeps it there when it replans (a guided route). false releases it. Automatic connectors only."
+        }
+      },
+      "description": "Pins or unpins one inner run of an automatic orthogonal connector. Moving a run with moveSegment pins it as well."
     }
   }
 }

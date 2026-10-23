@@ -143,6 +143,12 @@ export interface Endpoint {
   port?: string;
   point?: Point;
   glue: "dynamic" | "static" | "none";
+  join?: Join;
+}
+
+export interface Join {
+  connectorId: Uuid;
+  position: number;
 }
 
 export interface ShapeElement {
@@ -217,6 +223,18 @@ export interface ConnectorElement {
   style: LineStyle;
   label?: TextBlock;
   labelAnchor?: PathAnchor;
+  hops?: "none" | "arc";
+  routing?: {
+    mode?: "frozen";
+    constraints?: RunConstraint[];
+    advisory?: Point[];
+  };
+}
+
+export interface RunConstraint {
+  axis: "h" | "v";
+  index: number;
+  at: number;
 }
 
 export interface GroupElement {
@@ -336,8 +354,9 @@ export interface ElementPatch {
   preserveAspectRatio?: boolean;
   route?: "straight" | "orthogonal" | "curved";
   waypoints?: Point[];
-  from?: Endpoint;
-  to?: Endpoint;
+  from?: EndpointInput;
+  to?: EndpointInput;
+  hops?: "none" | "arc";
   ports?: Port[];
   attachment?: {
   connector: Target;
@@ -348,6 +367,9 @@ export interface ElementPatch {
   position?: number;
   offsetPt?: number;
 } | null;
+  routing?: {
+    mode: "automatic" | "manual" | "frozen" | "guided";
+  };
 }
 
 export interface CreateShapeOp {
@@ -408,6 +430,10 @@ export interface CreateConnectorOp {
   style?: StylePatch;
   label?: TextBlockPatch;
   labelAnchor?: LabelAnchorInput;
+  hops?: "none" | "arc";
+  routing?: {
+    mode: "automatic" | "manual" | "frozen" | "guided";
+  };
 }
 
 export interface AttachmentInput {
@@ -426,6 +452,12 @@ export interface EndpointInput {
   port?: string;
   point?: Point;
   glue: "dynamic" | "static" | "none";
+  join?: JoinInput;
+}
+
+export interface JoinInput {
+  connector: Target;
+  position?: number;
 }
 
 export interface SetOp {
@@ -487,7 +519,7 @@ export interface SetPageOp {
   patch: PagePatch;
 }
 
-export type Operation = CreateShapeOp | CreateTextOp | CreateImageOp | CreateConnectorOp | SetOp | MoveOp | ResizeOp | RotateOp | DeleteOp | RegisterAssetOp | SetPageOp | DuplicateOp | GroupOp | UngroupOp | AlignOp | DistributeOp | SetGapOp | ReorderOp | AddPageOp | ReorderPageOp | DuplicatePageOp | DeletePageOp | AddLayerOp | SetLayerOp | AssignLayersOp | DeleteLayerOp | SetAssetOp | RemoveAssetOp | ReplaceAssetOp;
+export type Operation = CreateShapeOp | CreateTextOp | CreateImageOp | CreateConnectorOp | SetOp | MoveOp | ResizeOp | RotateOp | DeleteOp | RegisterAssetOp | SetPageOp | DuplicateOp | GroupOp | UngroupOp | AlignOp | DistributeOp | SetGapOp | ReorderOp | RerouteOp | AddPageOp | ReorderPageOp | DuplicatePageOp | DeletePageOp | AddLayerOp | SetLayerOp | AssignLayersOp | DeleteLayerOp | SetAssetOp | RemoveAssetOp | ReplaceAssetOp | MoveSegmentOp | PinSegmentOp;
 
 export interface DuplicateOp {
   op: "duplicate";
@@ -629,6 +661,26 @@ export interface ReplaceAssetOp {
   targets?: Target[];
 }
 
+export interface RerouteOp {
+  op: "reroute";
+  targets?: Target[];
+}
+
+export interface MoveSegmentOp {
+  op: "moveSegment";
+  target: Target;
+  segment: number;
+  to?: number;
+  by?: number;
+}
+
+export interface PinSegmentOp {
+  op: "pinSegment";
+  target: Target;
+  segment: number;
+  pinned: boolean;
+}
+
 export type ErrorCode = "not_running" | "not_ready" | "no_document" | "session_mismatch" | "document_mismatch" | "unsupported_version" | "invalid_request" | "not_found" | "ambiguous_target" | "revision_conflict" | "locked_target" | "limit_exceeded" | "history_unavailable" | "transaction_id_conflict" | "timeout_unknown" | "io_error" | "compatibility_loss" | "projection_failed" | "busy" | "busy_user_editing" | "path_not_permitted" | "consent_denied" | "dependency_conflict" | "method_not_found" | "internal_error";
 
 export interface AppError {
@@ -709,6 +761,13 @@ export interface TransactionResult {
   visuallyAffectedIds: Uuid[];
   warnings: Diagnostic[];
   projectionStatus: "applied" | "failed";
+  routeChanges?: RouteChange[];
+}
+
+export interface RouteChange {
+  id: Uuid;
+  provenance: "authored" | "frozen" | "kept" | "elastic" | "repaired" | "rerouted" | "unresolved";
+  reason?: string;
 }
 
 export interface Snapshot {
@@ -722,7 +781,7 @@ export interface Snapshot {
 export interface ConnectorProjection {
   routePoints: Point[];
   visualBounds: Bounds;
-  routeProvenance?: "authored" | "kept" | "elastic" | "repaired" | "rerouted" | "unresolved";
+  routeProvenance?: "authored" | "frozen" | "kept" | "elastic" | "repaired" | "rerouted" | "unresolved";
   routeReason?: string;
 }
 

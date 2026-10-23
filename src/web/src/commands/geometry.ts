@@ -72,7 +72,25 @@ export type PointMap = (p: Point) => Point;
 /** Applies `f` to a connector's free endpoints and waypoints. Glued endpoints keep their references. The caller recomputes bounds. */
 export function mapConnectorPoints(c: ConnectorElement, f: PointMap): ConnectorElement {
   const mapEnd = (ep: Endpoint): Endpoint => (ep.glue === 'none' && ep.point ? { ...ep, point: f(ep.point) } : ep);
-  return { ...c, from: mapEnd(c.from), to: mapEnd(c.to), waypoints: c.waypoints.map(f) };
+  const next: ConnectorElement = { ...c, from: mapEnd(c.from), to: mapEnd(c.to), waypoints: c.waypoints.map(f) };
+  if (c.routing) next.routing = mapRouting(c.routing, f);
+  return next;
+}
+
+/**
+ * The stored route and pinned runs of a connector carried through a point map. A pinned run keeps its meaning only if the map keeps
+ * the axes (a move or a scale); a turn drops the pins and leaves the route to be planned again.
+ */
+export function mapRouting(routing: NonNullable<ConnectorElement['routing']>, f: PointMap): NonNullable<ConnectorElement['routing']> {
+  const out = { ...routing };
+  if (routing.advisory) out.advisory = routing.advisory.map(f);
+  if (routing.constraints) {
+    const o = f({ x: 0, y: 0 }), ex = f({ x: 1, y: 0 }), ey = f({ x: 0, y: 1 });
+    const keepsAxes = Math.abs(ex.y - o.y) < 1e-9 && Math.abs(ey.x - o.x) < 1e-9 && ex.x - o.x > 0 && ey.y - o.y > 0;
+    const kept = keepsAxes ? routing.constraints.map(c => ({ ...c, at: c.axis === 'h' ? f({ x: 0, y: c.at }).y : f({ x: c.at, y: 0 }).x })) : [];
+    if (kept.length) out.constraints = kept; else delete out.constraints;
+  }
+  return out;
 }
 
 export const translateBounds = (b: Bounds, dx: number, dy: number): Bounds => ({ ...b, x: b.x + dx, y: b.y + dy });

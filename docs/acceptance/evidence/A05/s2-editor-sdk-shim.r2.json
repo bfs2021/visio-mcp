@@ -1,0 +1,47 @@
+{
+  "scenario": "s2-editor-sdk-shim",
+  "question": "I52\u0027s setup: editor in the process, shim started through the MCP client library.",
+  "configuration": "Debug",
+  "observedSeconds": 12,
+  "childStartedAtMs": 2360,
+  "machineCpuBusyPercentOverall": 68,
+  "processStops": [],
+  "poolStarvedWindows": [
+    {
+      "startMs": 2835,
+      "lengthMs": 725,
+      "poolThreadsAtStart": 7,
+      "poolThreadsAtEnd": 7,
+      "maxQueued": 2,
+      "machineCpuBusyPercent": 64,
+      "machineCpuBusyPercentFor2sBefore": 75
+    },
+    {
+      "startMs": 7430,
+      "lengthMs": 703,
+      "poolThreadsAtStart": 7,
+      "poolThreadsAtEnd": 7,
+      "maxQueued": 4,
+      "machineCpuBusyPercent": 64,
+      "machineCpuBusyPercentFor2sBefore": 65
+    }
+  ],
+  "poolTimerLate": [
+    {
+      "atMs": 2306,
+      "lateMs": 313
+    },
+    {
+      "atMs": 3560,
+      "lateMs": 776
+    },
+    {
+      "atMs": 8133,
+      "lateMs": 735
+    }
+  ],
+  "uiThreadLate": [],
+  "appPipeSlow": [],
+  "verdict": "pool timers late, process not stopped",
+  "ran": "2026-10-23T17:57:13.2360421Z"
+}

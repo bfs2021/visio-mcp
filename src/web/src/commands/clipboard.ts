@@ -52,15 +52,24 @@ export function pasteOperations(clip: ClipboardData, target: Page, offsetPt: num
       });
     }
   }
-  for (const e of clip.elements) {
-    if (e.kind !== 'connector') continue;
-    const c: ConnectorElement = e;
-    const remap = (ep: Endpoint) => ep.glue === 'none'
-      ? { glue: 'none' as const, point: { x: ep.point!.x + offsetPt, y: ep.point!.y + offsetPt } }
-      : { glue: ep.glue, elementId: idMap.get(ep.elementId!)!, ...(ep.port ? { port: ep.port } : {}) };
+  // A branch is created after the connector it joins, so order the connectors by how deep their joins run.
+  const connectors = clip.elements.filter((e): e is ConnectorElement => e.kind === 'connector');
+  const byId = new Map(connectors.map(c => [c.id, c] as const));
+  const depth = (c: ConnectorElement, seen = new Set<string>()): number => {
+    seen.add(c.id);
+    const ids = [c.from, c.to].map(ep => ep.join?.connectorId).filter((id): id is string => !!id && byId.has(id) && !seen.has(id));
+    return ids.length ? 1 + Math.max(...ids.map(id => depth(byId.get(id)!, new Set(seen)))) : 0;
+  };
+  for (const c of connectors.map(c => [depth(c), c] as const).sort((a, b) => a[0] - b[0]).map(x => x[1])) {
+    const remap = (ep: Endpoint) => ep.join && idMap.has(ep.join.connectorId)
+      ? { glue: 'none' as const, join: { connector: idMap.get(ep.join.connectorId)!, position: ep.join.position } }
+      : ep.glue === 'none'
+        ? { glue: 'none' as const, point: { x: ep.point!.x + offsetPt, y: ep.point!.y + offsetPt } }
+        : { glue: ep.glue, elementId: idMap.get(ep.elementId!)!, ...(ep.port ? { port: ep.port } : {}) };
     operations.push({
       op: 'createConnector', ...base(c), from: remap(c.from), to: remap(c.to), route: c.route,
       waypoints: c.waypoints.map(p => ({ x: p.x + offsetPt, y: p.y + offsetPt })), style: { ...c.style }, ...(c.label ? { label: { ...c.label } } : {}),
+      ...(c.hops ? { hops: c.hops } : {}),
     });
   }
   return { operations, newIds: [...idMap.values()] };

@@ -1,0 +1,88 @@
+{
+  "feature": "W14 file drop and clipboard picture ingress",
+  "date": "2026-10-21",
+  "branch": "codex/w14-file-drop",
+  "base": {
+    "branch": "codex/w13-preferences",
+    "commit": "a9a746e",
+    "reason": "W13 PR #71 remains open; W14 is intentionally stacked on its head."
+  },
+  "checks": [
+    {
+      "name": "frontend unit",
+      "command": "npm test",
+      "status": "passed",
+      "passed": 516,
+      "total": 516,
+      "log": "frontend-unit.log"
+    },
+    {
+      "name": "typecheck",
+      "command": "npm run typecheck",
+      "status": "passed",
+      "log": "typecheck.log"
+    },
+    {
+      "name": "generated contracts",
+      "command": "npm run generate:check",
+      "status": "passed",
+      "log": "generated-contracts.log"
+    },
+    {
+      "name": "production build",
+      "command": "npm run build",
+      "status": "passed_with_existing_notices",
+      "notices": ["maxgraph direct eval", "bundle chunk exceeds 500 kB"],
+      "log": "frontend-build.log"
+    },
+    {
+      "name": "full browser suite, two workers",
+      "status": "failed_then_retried",
+      "failed": 4,
+      "passed": 162,
+      "cause": "Vite failed to fetch a dynamically imported src/main.tsx module during page startup.",
+      "log": "full-browser.log"
+    },
+    {
+      "name": "full browser suite, serial retry",
+      "command": "npm run test:browser -- --workers=1",
+      "status": "passed",
+      "passed": 166,
+      "total": 166,
+      "log": "full-browser-serial.log",
+      "screenshot": "../screenshots/clipboard-picture-offer.png"
+    },
+    {
+      "name": "native Windows clipboard and ingress focused suite",
+      "status": "passed_in_task_5",
+      "passed": 16,
+      "total": 16,
+      "details": "See the Task 5 evidence entry in .superpowers/sdd/2026-10-20-w14-file-drop/progress.md."
+    },
+    {
+      "name": "Windows solution with corrected child PATH",
+      "command": "dotnet test Diagram.Windows.slnx -m:1 -p:NuGetAudit=false",
+      "status": "incomplete_windows_ui_suite_stalled",
+      "passed_before_windows_ui": {
+        "contracts": 50,
+        "host": 202,
+        "ipc": 33,
+        "mcp": 14,
+        "visio": 156
+      },
+      "log": "windows-solution-path-fixed.log"
+    },
+    {
+      "name": "standalone Windows UI suite diagnostic retry",
+      "status": "aborted_testhost_connection_timeout",
+      "timeout_seconds": 90,
+      "log": "windows-ui-standalone-output.txt"
+    }
+  ],
+  "manual_acceptance": {
+    "explorer_drawing_drop": "not_run",
+    "explorer_picture_drop_and_placement": "not_run",
+    "interactive_external_clipboard_picture": "not_run",
+    "native_visio_acceptance": "not_run"
+  }
+}

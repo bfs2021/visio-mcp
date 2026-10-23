@@ -7,6 +7,7 @@ import type { Element, Snapshot } from '../contracts/generated';
 import { canonicalSerialize } from '../model/canonical';
 import { ok, type Result } from '../model/result';
 import type { AdapterCallbacks, CanvasAdapter, Tool, ViewportInfo } from './CanvasAdapter';
+import { findJoinTarget, type DrawnRoute } from './joinTarget';
 import { edgeStyle, effectiveState, labelOf, registerCustomShapes, vertexStyle } from './cellMapping';
 import { planRoutes, type PlannedRoute, type RouteChange } from '../layout/routePlanner';
 import { installGestureHooks } from './gestureHooks';
@@ -164,9 +165,36 @@ export class MaxGraphAdapter implements CanvasAdapter {
       return edge;
     };
     edgeProto.changeTerminalPoint = function (this: object, edge: Cell, point: Point, isSource: boolean) {
-      if (adapter.activeFor(this)) emit({ type: 'reconnect', id: idOf(edge), end: isSource ? 'from' : 'to', point: { x: point.x, y: point.y } });
+      if (adapter.activeFor(this)) {
+        const join = adapter.joinTargetAt(idOf(edge), { x: point.x, y: point.y });
+        emit({ type: 'reconnect', id: idOf(edge), end: isSource ? 'from' : 'to', point: { x: point.x, y: point.y }, ...(join ? { join } : {}) });
+      }
       return edge;
     };
+  }
+
+  /** R16: a connector end dropped on another connector's line joins it there. Tolerance is a few screen pixels, whatever the zoom. */
+  joinTargetAt(selfId: string, at: { x: number; y: number }): { connectorId: string; position: number } | null {
+    const view = this.graph.view, s = view.scale, t = view.translate;
+    const routes: DrawnRoute[] = [];
+    for (const el of this.pageElements.values()) {
+      if (el.kind !== 'connector' || el.hidden) continue;
+      const cell = this.graph.getDataModel().getCell(el.id);
+      const state = cell && view.getState(cell);
+      const pts = ((state && state.absolutePoints) ?? []).filter((p): p is Point => !!p).map(p => ({ x: p.x / s - t.x, y: p.y / s - t.y }));
+      if (pts.length > 1) routes.push({ id: el.id, route: pts });
+    }
+    const loops = (candidate: string): boolean => {
+      const seen = new Set<string>();
+      for (let id: string | undefined = candidate; id && !seen.has(id); ) {
+        if (id === selfId) return true;
+        seen.add(id);
+        const c = this.pageElements.get(id);
+        id = c && c.kind === 'connector' ? [c.from, c.to].find(ep => ep.join)?.join?.connectorId : undefined;
+      }
+      return false;
+    };
+    return findJoinTarget(routes, selfId, at, 8 / s, loops);
   }
 
   private activeFor(handler: object): boolean {
@@ -201,7 +229,7 @@ export class MaxGraphAdapter implements CanvasAdapter {
       // route that is still valid, so a nudge elsewhere leaves unrelated connectors exactly where they were. Stacking order does not
       // affect routes, so it is not part of the signature.
       const sig = canonicalSerialize([...wanted.values()].map(e => e.kind === 'connector'
-        ? { id: e.id, f: e.from, t: e.to, w: e.waypoints, r: e.route }
+        ? { id: e.id, f: e.from, t: e.to, w: e.waypoints, r: e.route, g: e.routing }
         : { id: e.id, b: e.bounds, rot: e.rotationDeg, h: e.hidden, l: e.layerIds, k: e.kind, fi: e.kind === 'shape' ? [e.style.fill.kind, e.style.stroke.kind] : 0 }).concat(page.layers.map(l => ({ id: l.id, v: l.visible })) as never[]), );
       if (sig !== this.routingSig) {
         this.routingSig = sig;
@@ -229,9 +257,21 @@ export class MaxGraphAdapter implements CanvasAdapter {
       model.endUpdate();
       this.projecting = false;
     }
+    this.redrawHops();
     this.restoreSelection(selected);
     this.layoutWorld();
     return ok(undefined);
+  }
+
+  /** A hop depends on the other connectors, which may have moved while this one did not change, so a hopping connector is always repainted. */
+  private redrawHops(): void {
+    const model = this.graph.getDataModel();
+    for (const el of this.pageElements.values()) {
+      if (el.kind !== 'connector' || el.hops !== 'arc') continue;
+      const cell = model.getCell(el.id);
+      const state = cell && this.graph.view.getState(cell);
+      if (state) this.graph.cellRenderer.redraw(state, true);
+    }
   }
 
   private restoreSelection(ids: string[]): void {
@@ -275,10 +315,18 @@ export class MaxGraphAdapter implements CanvasAdapter {
   private routeChanges: RouteChange[] = [];
   routePlan(): { routes: ReadonlyMap<string, PlannedRoute>; changes: readonly RouteChange[] } { return { routes: this.planned, changes: this.routeChanges }; }
 
+  /** Connectors a hopping connector does not hop: the ones it is joined to or that join it, because those meet it on purpose. */
+  private hopIgnoreOf(el: Extract<Element, { kind: 'connector' }>): string[] {
+    const ids = new Set<string>();
+    for (const ep of [el.from, el.to]) if (ep.join) ids.add(ep.join.connectorId);
+    for (const o of this.pageElements.values()) if (o.kind === 'connector' && [o.from, o.to].some(ep => ep.join?.connectorId === el.id)) ids.add(o.id);
+    return [...ids].sort();
+  }
+
   private upsertEdge(el: Extract<Element, { kind: 'connector' }>, layers: readonly import('../contracts/generated').Layer[]): void {
     const model = this.graph.getDataModel();
     const state = effectiveState(el, layers);
-    const key = this.keyFor(el, state) + [el.from.elementId, el.to.elementId].map(id => (id ? this.shown.get(id) ?? '' : '')).join('|');
+    const key = this.keyFor(el, state) + [el.from.elementId, el.to.elementId].map(id => (id ? this.shown.get(id) ?? '' : '')).join('|') + (el.hops === 'arc' ? this.hopIgnoreOf(el).join(',') : '');
     let cell = model.getCell(el.id);
     if (cell && this.shown.get(el.id) === key) return;
     const geo = new Geometry();
@@ -287,7 +335,7 @@ export class MaxGraphAdapter implements CanvasAdapter {
     if (el.labelAnchor) { geo.x = el.labelAnchor.position * 2 - 1; geo.y = -el.labelAnchor.offsetPt; } // maxGraph: x runs -1 (start) to 1 (end) along the line; its y is positive to the left of travel, ours to the right
     if (el.from.glue === 'none' && el.from.point) geo.setTerminalPoint(new Point(el.from.point.x, el.from.point.y), true);
     if (el.to.glue === 'none' && el.to.point) geo.setTerminalPoint(new Point(el.to.point.x, el.to.point.y), false);
-    const style = edgeStyle(el, state.locked);
+    const style = edgeStyle(el, state.locked, this.hopIgnoreOf(el));
     if (el.route === 'orthogonal') {
       const r = this.planned.get(el.id);
       if (r) {

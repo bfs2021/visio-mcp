@@ -12,6 +12,7 @@ import { createSnapshotRenderer } from './render/SnapshotRenderer';
 import { createBrowserLayoutContext } from './layout/browserContext';
 import { WorkspaceModel } from './workspace/WorkspaceModel';
 import type { DocumentState } from './workspace/Workspace';
+import { fail } from './model/result';
 
 function hostApi(host: HostServices | null): HostApi {
   if (!host) return noHost;
@@ -20,6 +21,12 @@ function hostApi(host: HostServices | null): HostApi {
     editorPrint: (action, params = {}) => host.call('host.print', { action, ...params }),
     pickImage: () => host.call('host.pickImage'),
     openJson: (path, recentId, scope) => host.call('host.openJson', { ...(recentId ? { recentId } : path ? { path } : {}), ...(scope ? { documentId: scope.documentId, sessionId: scope.sessionId } : {}) }),
+    openIngress: (ticketId, expected) => host.call('host.ingress.open', { ticketId, ...expected }),
+    importIngressImage: (ticketId, scope) => host.call('host.ingress.importImage', { ticketId, ...scope }),
+    clipboardDescribe: () => host.call('host.clipboard.describe', {}),
+    markInternalCopy: copyId => host.call('host.clipboard.markInternalCopy', { copyId }),
+    importClipboardImage: (expectedSequence, scope) => host.call('host.clipboard.importImage', { expectedSequence, ...scope }),
+    dismissIngress: ticketIds => host.call('host.ingress.dismiss', { ticketIds }),
     recentList: () => host.call('host.recent.list'),
     recentRemove: id => host.call('host.recent.remove', { id }),
     recentClear: () => host.call('host.recent.clear'),
@@ -66,10 +73,15 @@ const app = startApp(window.chrome?.webview, null, {
   render: renderer.render, rasterise: renderer.rasterise, layoutContext: createBrowserLayoutContext(assetUrl as never),
   beforeClose: async () => ws!.beginClose(),
   app: {
+    captureIngressTarget: point => {
+      const captured = ws?.captureIngressTarget(point);
+      return captured ? { ok: true, value: captured } : fail('not_ready', 'The canvas is not ready to receive a picture.', { retryable: true });
+    },
     adoptDocument: (document, activate) => ws!.adoptDocument(document, activate),
     activateDocument: documentId => ws!.activateById(documentId),
     agentDocuments: list => ws!.setAgentDocs(list),
     openFiles: files => ws!.openFromShell(files),
+    ingressAvailable: batch => ws!.enqueueIngress(batch),
   },
 });
 const { engine, host, router, sessionChanged, workspace } = app;
@@ -134,8 +146,13 @@ if (import.meta.env.VITE_TEST_API === '1') {
       if (text !== null) ed.textarea.innerText = text;
       g.stopEditing(text === null);
     },
+    startTextEditing: (id: string) => {
+      const g = cur().canvas!.graph;
+      g.startEditingAtCell(g.getDataModel().getCell(id)!);
+    },
     callTool: (method: string, params: Record<string, unknown>) => router!.dispatch({ protocolVersion: 1, kind: 'request', requestId: crypto.randomUUID(), method, ...cur().engine.scope(), params } as never),
     setHost: (h: Partial<HostApi>) => { shell.host = { ...noHost, ...h }; },
+    pasteFromClipboard: () => shell.pasteFromClipboard(),
     exportSnapshot: async () => { const m = cur(); const r = await m.engine.exportSnapshot(m.engine.scope()); return r.ok ? JSON.parse(JSON.stringify(r.value)) : { error: r.error }; },
     changesSince: async (revision: number) => { const m = cur(); const r = await m.engine.getChanges(m.engine.scope(), revision); return r.ok ? JSON.parse(JSON.stringify(r.value)) : { error: r.error }; },
     targets: () => [...cur().targets],
@@ -148,6 +165,10 @@ if (import.meta.env.VITE_TEST_API === '1') {
     tabs: () => shell.tabs.map(t => ({ label: t.tabLabel, unsaved: t.engine.status().unsaved, documentId: t.engine.scope().documentId, active: t === shell.active })),
     newTab: () => { shell.newTab(); },
     openFile: (kind?: 'json' | 'vsdx') => shell.openFile(kind),
+    enqueueIngress: (batch: import('./workspace/FileIngressModel').IngressBatch) => shell.enqueueIngress(batch),
+    captureIngressTarget: (clientX: number, clientY: number) => shell.captureIngressTarget({ clientX, clientY }),
+    cancelIngress: (batchId: string) => shell.cancelIngress(batchId),
+    processIngress: () => shell.processIngress(),
     closeTab: (index?: number) => shell.closeTab(index === undefined ? shell.active : shell.tabs[index]!),
     activateTab: (index: number) => shell.activate(shell.tabs[index]!),
     moveTab: (from: number, to: number) => shell.moveTab(shell.tabs[from]!, to),
