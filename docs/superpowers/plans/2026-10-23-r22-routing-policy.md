@@ -248,7 +248,7 @@
 **Interfaces:**
 - Evidence names exact commands and separates automated checks from manual Visio behavior, which R22 does not claim to validate.
 
-- [ ] **Step 1: Run web unit, type, generated-contract, build, browser, and Windows suites.**
+- [x] **Step 1: Run web unit, type, generated-contract, build, browser, and Windows suites.**
 
   Run: npm --prefix src/web test
 
@@ -263,5 +263,5 @@
   Run: dotnet test Diagram.Windows.slnx --no-restore
 
   Expected: all pass; report any existing or environment-only failures separately.
-- [ ] **Step 2: Record evidence** in docs/m5/R22-routing-policy.md: policies and precedence, focused route coordinates, route findings, atomic rejection proof, route stability baseline result, VSDX diagnostic, exact commands and counts. Mark manual Visio behavior NOT RUN and explain R27 owns native routing semantics.
-- [ ] **Step 3: Commit** as docs(r22): record routing policy verification.
+- [x] **Step 2: Record evidence** in docs/m5/R22-routing-policy.md: policies and precedence, focused route coordinates, route findings, atomic rejection proof, route stability baseline result, VSDX diagnostic, exact commands and counts. Mark manual Visio behavior NOT RUN and explain R27 owns native routing semantics.
+- [x] **Step 3: Commit** as docs(r22): record routing policy verification.
