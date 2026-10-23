@@ -1,7 +1,9 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.IO;
 using Diagram.Core.Contracts;
 using Diagram.Host.Core;
+using Microsoft.Win32;
 
 namespace Diagram.App;
 
@@ -9,7 +11,50 @@ public sealed partial class ExportService
 {
     public PrintJobStore PrintJobs { get; } = new();
     public IPrinterCapabilities PrinterCapabilities { get; set; } = new WindowsPrinterCapabilities();
+    public Func<PreparedPrintJob, CancellationToken, Task<Microsoft.Web.WebView2.Core.CoreWebView2PrintStatus>> PhysicalPrintDispatcher { get; set; }
     public Func<PreparedPrintJob, string, Func<CancellationToken, Task>, CancellationToken, Task<JsonNode>>? PrintOutputHandler { get; set; }
+
+    async Task<JsonNode> HandlePreparedPrintOutputAsync(PreparedPrintJob job, string action, Func<CancellationToken, Task> guard, CancellationToken ct)
+    {
+        if (action == "print")
+        {
+            var device = PrinterCapabilities.GetDevices().FirstOrDefault(x => x.Id == job.Device.PrinterName);
+            var media = device?.Media.FirstOrDefault(x => x.Id == job.Device.MediaId);
+            if (media is null || Math.Abs(media.WidthPt - job.Device.WidthPt) > .01 || Math.Abs(media.HeightPt - job.Device.HeightPt) > .01)
+                Refuse("printer_unavailable", "The selected printer or paper size is no longer available. Prepare a new preview.");
+            await guard(ct);
+            var status = await PhysicalPrintDispatcher(job, ct);
+            if (status != Microsoft.Web.WebView2.Core.CoreWebView2PrintStatus.Succeeded)
+                Refuse(status == Microsoft.Web.WebView2.Core.CoreWebView2PrintStatus.PrinterUnavailable ? "printer_unavailable" : "print_failed", $"WebView2 print dispatch returned {status}. No alternate printer was selected.");
+            return new JsonObject { ["printed"] = true, ["printer"] = job.Device.PrinterName, ["sheets"] = job.Sheets.Count };
+        }
+
+        if (action != "savePdf") Refuse("invalid_request", "Choose print or savePdf output.");
+        var snapshot = await CheckExportAsync(job.Expected, ct);
+        var path = await window.Dispatcher.InvokeAsync(() =>
+        {
+            if (window.Services.DialogOverride is { } dialogOverride) return dialogOverride("printPdf");
+            var dialog = new SaveFileDialog { Title = "Save print layout as PDF", Filter = "PDF document (*.pdf)|*.pdf", DefaultExt = ".pdf", AddExtension = true, FileName = $"{snapshot.Document.Title}.pdf" };
+            return dialog.ShowDialog(window) == true ? dialog.FileName : null;
+        });
+        if (path is null) return new JsonObject { ["cancelled"] = true };
+        await guard(ct);
+        var scope = new Scope { DocumentId = job.Expected.DocumentId, SessionId = job.Expected.SessionId };
+        var policy = new ExportPathPolicy(ExportRoot, ApprovedRoots, () => window.Router.CurrentScope,
+            new ChosenDestination(path), editorFormats: true);
+        var destination = await policy.ResolveAsync(path, "pdf", snapshot.Document.Title, scope, job.Expected.BaseRevision, "Print to PDF", ct);
+        if (!destination.IsOk) throw new ExportRejected(destination.Error!);
+        var bytes = await PdfExport.CreatePrintSheetsAsync(window, job.Sheets, ct);
+        async Task FinalGuard(CancellationToken token)
+        {
+            await guard(token);
+            var valid = policy.Revalidate(destination.Value, scope);
+            if (!valid.IsOk) throw new ExportRejected(valid.Error!);
+        }
+        await FinalGuard(ct);
+        await window.Writer.WriteAsync(destination.Value.Path, bytes, ct, FinalGuard);
+        return new JsonObject { ["path"] = destination.Value.Path, ["sheets"] = job.Sheets.Count, ["bytes"] = bytes.Length, ["revision"] = job.Expected.BaseRevision };
+    }
 
     public async Task<ResponseEnvelope> HandlePrintEditorAsync(RequestEnvelope request, CancellationToken ct)
     {
@@ -98,5 +143,7 @@ public sealed partial class ExportService
         catch (OperationCanceledException) { return new ResponseEnvelope { RequestId = request.RequestId, Error = new AppError { Code = "cancelled", Message = "Print preview timed out or was cancelled.", Retryable = false } }; }
         catch (Exception e) when (e is JsonException or InvalidOperationException or FormatException or ArgumentException or KeyNotFoundException)
         { return new ResponseEnvelope { RequestId = request.RequestId, Error = new AppError { Code = "invalid_request", Message = e.Message, Retryable = false } }; }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Printing.PrintSystemException or TimeoutException)
+        { return new ResponseEnvelope { RequestId = request.RequestId, Error = new AppError { Code = "print_failed", Message = e.Message, Retryable = false } }; }
     }
 }

@@ -22,6 +22,8 @@ public sealed partial class ExportService
         Policy = new ExportPathPolicy(exportRoot,
             () => window.Services?.CurrentPath is { } p && Path.GetDirectoryName(p) is { Length: > 0 } dir ? [Path.GetFullPath(dir)] : [],
             () => window.Router.CurrentScope, consent);
+        PhysicalPrintDispatcher = (job, ct) => PdfExport.PrintAsync(window, job, ct);
+        PrintOutputHandler = HandlePreparedPrintOutputAsync;
     }
 
     public ExportPathPolicy Policy { get; }

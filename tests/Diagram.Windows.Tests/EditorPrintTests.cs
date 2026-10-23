@@ -2,6 +2,7 @@ using Diagram.Core.Contracts;
 using Diagram.App;
 using Diagram.Host.Core;
 using Xunit;
+using System.IO;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -154,5 +155,50 @@ public class EditorPrintTests
         Assert.Null((await h.Apply(h.Router.CurrentRevision, null, Harness.Shape("change-after-preview"))).Error);
         Assert.Equal("revision_conflict", (await h.Window.Services.HandleAsync(PrintRequest("print", new JsonObject { ["action"] = "print", ["jobId"] = id }), Harness.Ct(30))).Error?.Code);
         Assert.Equal(1, calls);
+    }
+
+    [Fact]
+    public async Task SavePrintPdfUsesThePreparedSheetDimensionsAndHostSelectedPath()
+    {
+        await using var h = await Harness.StartAsync();
+        h.Window.Exports.PrinterCapabilities = new FakePrinters(new PrintDevice("printer-a", "Printer A", [new PrintMedia("letter", "Letter", 612, 792, new PrintMargins(0, 0, 0, 0))]));
+        var path = Path.Combine(h.Root, "print-layout.pdf");
+        h.Window.Services.DialogOverride = kind => kind == "printPdf" ? path : null;
+        var prepared = await h.Window.Services.HandleAsync(PrintRequest("preview", PreviewOptions(h)), Harness.Ct(60));
+        Assert.Null(prepared.Error);
+        var id = prepared.Result!.Value.GetProperty("jobId").GetString()!;
+        var response = await h.Window.Services.HandleAsync(PrintRequest("savePdf", new JsonObject { ["action"] = "savePdf", ["jobId"] = id }), Harness.Ct(90));
+        Assert.Null(response.Error);
+        Assert.Equal(path, response.Result!.Value.GetProperty("path").GetString());
+        var pdf = System.Text.Encoding.Latin1.GetString(await File.ReadAllBytesAsync(path));
+        Assert.StartsWith("%PDF-", pdf);
+        var box = System.Text.RegularExpressions.Regex.Match(pdf, @"/MediaBox\s*\[\s*0\s+0\s+([0-9.]+)\s+([0-9.]+)\s*\]");
+        Assert.True(box.Success);
+        Assert.InRange(double.Parse(box.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture), 611, 613);
+        Assert.InRange(double.Parse(box.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture), 791, 793);
+    }
+
+    [Fact]
+    public async Task PhysicalDispatchUsesThePreparedDeviceAndDoesNotFallBack()
+    {
+        await using var h = await Harness.StartAsync();
+        h.Window.Exports.PrinterCapabilities = new FakePrinters(new PrintDevice("printer-a", "Printer A", [new PrintMedia("letter", "Letter", 612, 792, new PrintMargins(0, 0, 0, 0))]));
+        PreparedPrintJob? dispatched = null;
+        var attempts = 0;
+        h.Window.Exports.PhysicalPrintDispatcher = (job, _) =>
+        {
+            attempts++;
+            dispatched = job;
+            return Task.FromResult(Microsoft.Web.WebView2.Core.CoreWebView2PrintStatus.PrinterUnavailable);
+        };
+        var prepared = await h.Window.Services.HandleAsync(PrintRequest("preview", PreviewOptions(h)), Harness.Ct(60));
+        var id = prepared.Result!.Value.GetProperty("jobId").GetString()!;
+        var response = await h.Window.Services.HandleAsync(PrintRequest("print", new JsonObject { ["action"] = "print", ["jobId"] = id }), Harness.Ct(30));
+        Assert.Equal("printer_unavailable", response.Error?.Code);
+        Assert.Equal(1, attempts);
+        Assert.Equal("printer-a", dispatched!.Device.PrinterName);
+        Assert.Equal("letter", dispatched.Device.MediaId);
+        Assert.Equal(612, dispatched.Sheets[0].PaperWidthPt);
+        Assert.Equal(792, dispatched.Sheets[0].PaperHeightPt);
     }
 }
