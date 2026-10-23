@@ -143,6 +143,12 @@ export interface Endpoint {
   port?: string;
   point?: Point;
   glue: "dynamic" | "static" | "none";
+  join?: Join;
+}
+
+export interface Join {
+  connectorId: Uuid;
+  position: number;
 }
 
 export interface ShapeElement {
@@ -217,6 +223,7 @@ export interface ConnectorElement {
   style: LineStyle;
   label?: TextBlock;
   labelAnchor?: PathAnchor;
+  hops?: "none" | "arc";
   routing?: {
     mode?: "frozen";
     constraints?: RunConstraint[];
@@ -347,8 +354,9 @@ export interface ElementPatch {
   preserveAspectRatio?: boolean;
   route?: "straight" | "orthogonal" | "curved";
   waypoints?: Point[];
-  from?: Endpoint;
-  to?: Endpoint;
+  from?: EndpointInput;
+  to?: EndpointInput;
+  hops?: "none" | "arc";
   ports?: Port[];
   attachment?: {
   connector: Target;
@@ -422,6 +430,7 @@ export interface CreateConnectorOp {
   style?: StylePatch;
   label?: TextBlockPatch;
   labelAnchor?: LabelAnchorInput;
+  hops?: "none" | "arc";
   routing?: {
     mode: "automatic" | "manual" | "frozen" | "guided";
   };
@@ -443,6 +452,12 @@ export interface EndpointInput {
   port?: string;
   point?: Point;
   glue: "dynamic" | "static" | "none";
+  join?: JoinInput;
+}
+
+export interface JoinInput {
+  connector: Target;
+  position?: number;
 }
 
 export interface SetOp {

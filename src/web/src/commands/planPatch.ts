@@ -13,6 +13,7 @@ import {
 } from './geometry';
 import { ancestorsOf, groupBoundsFrom, leavesUnder } from './groups';
 import { lookupTarget } from './resolveTarget';
+import { pointOnRoute } from './pathAnchor';
 import { parsePath } from '../geometry/svgPath';
 import { isOutlinePreset, PRESET_PORTS } from '../geometry/presetOutlines';
 import { paintProblem } from '../model/paint';
@@ -245,12 +246,48 @@ class Planner {
 
   // ---------------------------------------------------------------- endpoint handling
   private endpointPoint(ep: Endpoint | EndpointInput, resolvedId?: string): Point {
-    if (ep.glue === 'none') return ep.point!;
+    if (ep.glue === 'none') return ep.point ?? this.joinPoint(ep as Endpoint);
     const hit = this.findById(resolvedId ?? (ep as Endpoint).elementId!)!;
     return centreOf(hit.element.bounds);
   }
 
+  /** Where a joined end starts out: the place on the target's straight-line route; the engine then moves it onto the drawn route. */
+  private joinPoint(ep: Endpoint): Point {
+    const hit = ep.join && this.findById(ep.join.connectorId);
+    if (!hit || hit.element.kind !== 'connector') return { x: 0, y: 0 };
+    const c = hit.element as ConnectorElement;
+    const pts = [c.from.point ?? this.endpointPoint(c.from), ...c.waypoints, c.to.point ?? this.endpointPoint(c.to)];
+    return pointOnRoute(pts, ep.join!.position, 0)?.point ?? pts[0]!;
+  }
+
+  private resolveJoin(input: NonNullable<EndpointInput['join']>, pageId: string, selfId: string): NonNullable<Endpoint['join']> {
+    const hit = this.resolve(input.connector, pageId);
+    if (hit.page.id !== pageId) stop('invalid_request', 'a connector can only join a connector on its own page');
+    if (hit.element.kind !== 'connector') stop('invalid_request', `${input.connector} is not a connector: only a connector can be joined`);
+    if (hit.element.id === selfId) stop('invalid_request', 'a connector cannot join itself');
+    // A chain of joins is fine; a loop (this joins that, that already joins this, directly or through others) has no place to stand.
+    const seen = new Set<string>();
+    for (let c: ConnectorElement | undefined = hit.element as ConnectorElement; c && !seen.has(c.id);) {
+      seen.add(c.id);
+      if ([c.from, c.to].some(ep => ep.join?.connectorId === selfId)) stop('invalid_request', 'these connectors would join each other in a loop');
+      const next: string | undefined = [c.from, c.to].find(ep => ep.join)?.join?.connectorId;
+      const n: { element: Element } | undefined = next ? this.findById(next) : undefined;
+      c = n && n.element.kind === 'connector' ? n.element as ConnectorElement : undefined;
+    }
+    const position = input.position ?? 0.5;
+    this.assertFinite(position, 'position');
+    if (position < 0 || position > 1) stop('invalid_request', `position ${position} is outside 0 to 1 (the fraction of the connector's length from its start)`);
+    return { connectorId: hit.element.id, position };
+  }
+
   private resolveEndpoint(input: EndpointInput, pageId: string, selfId: string): Endpoint {
+    if (input.join) {
+      if (input.glue !== 'none' || input.point || input.elementId !== undefined || input.port !== undefined) stop('invalid_request', 'a joined end has glue none and no point, elementId or port');
+      const join = this.resolveJoin(input.join, pageId, selfId);
+      const ep: Endpoint = { glue: 'none', join };
+      ep.point = this.joinPoint(ep);
+      return ep;
+    }
     if (input.glue === 'none') {
       if (!input.point || input.elementId !== undefined || input.port !== undefined) stop('invalid_request', 'a free endpoint needs a point and no elementId or port');
       const point = input.point;
@@ -515,6 +552,7 @@ class Planner {
         if (op.name !== undefined) el.name = op.name;
         if (op.label) el.label = mergeText(textDefaults(this.doc), op.label as PatchObj);
         if (op.labelAnchor) el.labelAnchor = this.anchorOf(op.labelAnchor);
+        if (op.hops && op.hops !== 'none') el.hops = op.hops;
         this.addElement(pageIdx, el);
         if (op.routing) this.applyRouting(pageIdx, id, op.routing.mode);
         return;
@@ -814,6 +852,11 @@ class Planner {
     const idMap = new Map(source.map(e => [e.id, this.newElementId(e.id === ids[0] ? op.id : undefined)] as const));
     const shiftPoint: PointMap = p => ({ x: p.x + dx, y: p.y + dy });
     const remapEnd = (ep: Endpoint, connectorId: string): Endpoint => {
+      if (ep.join) { // joins the copied connector, or stays where it is put when that connector is not copied
+        const to = idMap.get(ep.join.connectorId);
+        const { join: _released, ...free } = ep;
+        return to ? { ...ep, join: { ...ep.join, connectorId: to }, point: shiftPoint(ep.point!) } : { ...free, point: shiftPoint(ep.point!) };
+      }
       if (ep.glue === 'none') return { ...ep, point: shiftPoint(ep.point!) };
       const copy = idMap.get(ep.elementId!);
       if (copy) return { ...ep, elementId: copy };
@@ -879,7 +922,7 @@ class Planner {
     if (this.pages.some(p => p.id === id)) stop('invalid_request', `page id ${id} already exists`, { id });
     const layerMap = new Map(src.layers.map(l => [l.id, this.ctx.newId()] as const));
     const idMap = new Map(src.elements.map(e => [e.id, this.newElementId(undefined)] as const));
-    const end = (ep: Endpoint): Endpoint => (ep.glue === 'none' ? ep : { ...ep, elementId: idMap.get(ep.elementId!)! });
+    const end = (ep: Endpoint): Endpoint => (ep.join ? { ...ep, join: { ...ep.join, connectorId: idMap.get(ep.join.connectorId) ?? ep.join.connectorId } } : ep.glue === 'none' ? ep : { ...ep, elementId: idMap.get(ep.elementId!)! });
     const elements = src.elements.map(e => {
       const copy: Record<string, unknown> = { ...e, id: idMap.get(e.id)!, layerIds: e.layerIds.map(l => layerMap.get(l)!) };
       if (e.kind === 'group') copy.childIds = e.childIds.map(c => idMap.get(c)!);
@@ -953,6 +996,7 @@ class Planner {
           break;
         }
         case 'route': need(element.kind === 'connector', key); next.route = value; if (value !== 'orthogonal') delete next.routing; break;
+        case 'hops': need(element.kind === 'connector', key); if (value === 'none') delete next.hops; else next.hops = value; break;
         case 'waypoints':
           need(element.kind === 'connector', key);
           if (element.kind === 'connector' && element.routing?.mode === 'frozen' && !('routing' in patch)) refuse('route_frozen', 'the route of this connector is frozen: set routing.mode to automatic or manual before editing its waypoints', { target: element.id });

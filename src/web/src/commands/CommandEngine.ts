@@ -12,6 +12,7 @@ import { applyDiff, type DiffBody } from './diff';
 import { History } from './history';
 import { settleAttachments } from './attachments';
 import { settleRoutes } from './routes';
+import { settleJoins } from './joins';
 import { planPatch } from './planPatch';
 import { readDocumentDefaults } from '../model/documentDefaults';
 
@@ -213,7 +214,10 @@ export class CommandEngine {
     if (!ops.ok) return ops;
     const planned = planPatch(before.document, ops.value, { newId: this.newId, ...(req.pageId ? { pageId: req.pageId } : {}) });
     if (!planned.ok) return spans ? withSpan(planned, spans()) : planned;
-    const plan = settleAttachments(before.document, settleRoutes(before.document, planned.value), this.snapshotProjector, doc => ({ ...before, revision: before.revision + 1, document: doc }));
+    const snapshotOf = (doc: DiagramDocument) => ({ ...before, revision: before.revision + 1, document: doc });
+    const routed = settleRoutes(before.document, planned.value);
+    const joined = settleJoins(before.document, routed, this.snapshotProjector, snapshotOf); // branches first: a pinned shape follows the route as the branches leave it
+    const plan = settleAttachments(before.document, joined, this.snapshotProjector, snapshotOf);
     const previousRevision = before.revision;
 
     if (plan.noChange) {

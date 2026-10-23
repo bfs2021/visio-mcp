@@ -552,13 +552,25 @@ class Compiler {
    * `alias` is a dynamic glue; `alias.port` is a static glue to that port. The whole token is tried as an alias first, then split at
    * its last dot. A token that could be read both ways must be written with fromAlias=/fromPort= (or toAlias=/toPort=) instead.
    */
+  /** `toJoin=bus toAt=60%`: the end is a branch joined to another connector, a fraction of the way along it (default the middle). */
+  private joinInput(side: 'from' | 'to', joined: Named): EndpointInput {
+    const known = this.target(joined.value);
+    if (known.kind !== 'connector') this.err(`${side}Join= takes a connector`, joined.keyToken, `"${joined.value.type === 'word' ? joined.value.text : 'that'}" is a ${known.kind}`);
+    const join: { connector: string; position?: number } = { connector: known.id };
+    if (this.has(`${side}At`)) join.position = this.num(this.raw(`${side}At`)!, 0, 1);
+    return { glue: 'none', join };
+  }
+
   private endpoint(side: 'from' | 'to'): EndpointInput {
     const fx = this.raw(`${side}X`), fy = this.raw(`${side}Y`);
     const explicitAlias = this.raw(`${side}Alias`), explicitPort = this.raw(`${side}Port`);
     const plain = this.raw(side);
-    const given = [plain, explicitAlias, fx].filter(Boolean).length;
+    const joined = this.raw(`${side}Join`);
+    const given = [plain, explicitAlias, fx, joined].filter(Boolean).length;
     if (given === 0) this.err(`connect needs ${side}=`, this.current.span);
-    if (given > 1) this.err(`${side}, ${side}Alias and ${side}X/${side}Y are alternatives`, (plain ?? explicitAlias ?? fx)!.keyToken);
+    if (given > 1) this.err(`${side}, ${side}Alias, ${side}X/${side}Y and ${side}Join are alternatives`, (plain ?? explicitAlias ?? fx ?? joined)!.keyToken);
+    if (joined) return this.joinInput(side, joined);
+    if (this.has(`${side}At`)) this.err(`${side}At= goes with ${side}Join=`, this.raw(`${side}At`)!.keyToken);
     if (fx || fy) {
       if (!fx || !fy) this.err(`a free end needs both ${side}X= and ${side}Y=`, (fx ?? fy)!.keyToken);
       return { glue: 'none', point: { x: this.dim(fx), y: this.dim(fy) } };
@@ -596,7 +608,8 @@ class Compiler {
     this.begin(cmd);
     if (this.args.pos.length) this.err('connect takes only name=value fields', this.args.pos[0]!);
     this.finish(['id', 'uuid', 'from', 'to', 'fromAlias', 'fromPort', 'toAlias', 'toPort', 'fromX', 'fromY', 'toX', 'toY', 'route', 'name', 'layer',
-      'stroke', 'strokeWidth', 'dash', 'startArrow', 'endArrow', 'startArrowSize', 'endArrowSize', 'text', 'labelAt', 'labelOffset', 'mode']);
+      'stroke', 'strokeWidth', 'dash', 'startArrow', 'endArrow', 'startArrowSize', 'endArrowSize', 'text', 'labelAt', 'labelOffset', 'mode',
+      'fromJoin', 'fromAt', 'toJoin', 'toAt', 'hops']);
     const pageId = this.pageIdForCreate();
     const { id, alias } = this.identity();
     const op: Operation = { op: 'createConnector', id, pageId, from: this.endpoint('from'), to: this.endpoint('to') };
@@ -609,6 +622,7 @@ class Compiler {
     if (Object.keys(style).length) op.style = style as never;
     if (this.has('text')) op.label = { value: this.str(this.raw('text')!) };
     const anchor = this.labelAnchorInput(); if (anchor) op.labelAnchor = anchor;
+    if (this.has('hops')) op.hops = this.enumValue(this.raw('hops')!, ['none', 'arc'] as const);
     this.emit(op);
     this.register(alias, { id, kind: 'connector' }, this.raw('id')?.value ?? cmd.span);
   }
@@ -695,6 +709,16 @@ class Compiler {
     if (this.has('labelAt') || this.has('labelOffset')) {
       if (!isConnector) this.err('labelAt= and labelOffset= apply to connectors', (this.raw('labelAt') ?? this.raw('labelOffset'))!.keyToken);
       patch.labelAnchor = this.labelAnchorInput(); handled.add('labelAt'); handled.add('labelOffset');
+    }
+    for (const side of ['from', 'to'] as const) {
+      if (!this.has(`${side}Join`) && !this.has(`${side}At`)) continue;
+      if (!isConnector) this.err(`${side}Join= applies to connectors`, (this.raw(`${side}Join`) ?? this.raw(`${side}At`))!.keyToken);
+      if (!this.has(`${side}Join`)) this.err(`${side}At= goes with ${side}Join=`, this.raw(`${side}At`)!.keyToken);
+      patch[side] = this.joinInput(side, this.raw(`${side}Join`)!); handled.add(`${side}Join`); handled.add(`${side}At`);
+    }
+    if (this.has('hops')) {
+      if (!isConnector) this.err('hops= applies to connectors', this.raw('hops')!.keyToken);
+      patch.hops = this.enumValue(this.raw('hops')!, ['none', 'arc'] as const); handled.add('hops');
     }
     for (const n of cmd.named) {
       if (!handled.has(n.key)) this.err(`unknown field "${n.key}" for set`, n.keyToken, 'to change position or size use move, resize, rotate');

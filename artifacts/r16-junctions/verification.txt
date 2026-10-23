@@ -1,0 +1,1 @@
+Visio drew the branch on the bus and the hop (visio.png), kept the jump settings and re-saved the file; the join and the hops read back unchanged

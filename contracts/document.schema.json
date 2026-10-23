@@ -174,7 +174,15 @@
         "elementId": { "$ref": "#/$defs/Uuid" },
         "port": { "type": "string", "minLength": 1, "maxLength": 64 },
         "point": { "$ref": "#/$defs/Point" },
-        "glue": { "enum": ["dynamic", "static", "none"] }
+        "glue": { "enum": ["dynamic", "static", "none"] },
+        "join": { "$ref": "#/$defs/Join", "description": "R16: this end is a branch joined to a place on another connector; glue is none and point is kept on that connector's route" }
+      }
+    },
+    "Join": {
+      "type": "object", "additionalProperties": false, "required": ["connectorId", "position"],
+      "properties": {
+        "connectorId": { "$ref": "#/$defs/Uuid" },
+        "position": { "type": "number", "minimum": 0, "maximum": 1, "description": "fraction of the target connector's drawn length from its start" }
       }
     },
     "ShapeElement": {
@@ -261,6 +269,7 @@
         "style": { "$ref": "#/$defs/LineStyle" },
         "label": { "$ref": "#/$defs/TextBlock" },
         "labelAnchor": { "$ref": "#/$defs/PathAnchor", "description": "where the label sits along the route; absent means the middle, on the line" },
+        "hops": { "enum": ["none", "arc"], "description": "R16: arc draws a small hop where this connector crosses another; absent means none" },
         "routing": {
           "type": "object", "additionalProperties": false,
           "description": "R20. Orthogonal connectors only. The mode is stored only when it cannot be derived: no routing.mode and no waypoints is automatic, waypoints without a mode is manual, 'frozen' is stored. A route with constraints is guided.",

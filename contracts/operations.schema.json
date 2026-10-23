@@ -353,10 +353,16 @@
           "maxItems": 256
         },
         "from": {
-          "$ref": "document.schema.json#/$defs/Endpoint"
+          "$ref": "#/$defs/EndpointInput"
         },
         "to": {
-          "$ref": "document.schema.json#/$defs/Endpoint"
+          "$ref": "#/$defs/EndpointInput"
+        },
+        "hops": {
+          "enum": [
+            "none",
+            "arc"
+          ]
         },
         "ports": {
           "type": "array",
@@ -664,6 +670,12 @@
         "labelAnchor": {
           "$ref": "#/$defs/LabelAnchorInput"
         },
+        "hops": {
+          "enum": [
+            "none",
+            "arc"
+          ]
+        },
         "routing": {
           "type": "object",
           "additionalProperties": false,
@@ -752,6 +764,27 @@
             "static",
             "none"
           ]
+        },
+        "join": {
+          "$ref": "#/$defs/JoinInput"
+        }
+      }
+    },
+    "JoinInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "connector"
+      ],
+      "description": "Makes the end a branch that joins another connector. glue must be none and there is no point: the end sits on the connector's route at position (0 to 1 of its length from the start; default 0.5) and follows it. connector is a Target on the same page, including one created earlier in the batch.",
+      "properties": {
+        "connector": {
+          "$ref": "#/$defs/Target"
+        },
+        "position": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
         }
       }
     },

@@ -174,6 +174,13 @@ public sealed record Endpoint
     [JsonPropertyName("port")] public string? Port { get; init; }
     [JsonPropertyName("point")] public Point? Point { get; init; }
     [JsonPropertyName("glue")] public required string Glue { get; init; }
+    [JsonPropertyName("join")] public Join? Join { get; init; }
+}
+
+public sealed record Join
+{
+    [JsonPropertyName("connectorId")] public required string ConnectorId { get; init; }
+    [JsonPropertyName("position")] public required double Position { get; init; }
 }
 
 public sealed record ShapeElement : Element
@@ -248,6 +255,7 @@ public sealed record ConnectorElement : Element
     [JsonPropertyName("style")] public required LineStyle Style { get; init; }
     [JsonPropertyName("label")] public TextBlock? Label { get; init; }
     [JsonPropertyName("labelAnchor")] public PathAnchor? LabelAnchor { get; init; }
+    [JsonPropertyName("hops")] public string? Hops { get; init; }
     [JsonPropertyName("routing")] public JsonObject? Routing { get; init; }
 }
 
@@ -389,8 +397,9 @@ public sealed record ElementPatch
     [JsonPropertyName("preserveAspectRatio")] public bool? PreserveAspectRatio { get; init; }
     [JsonPropertyName("route")] public string? Route { get; init; }
     [JsonPropertyName("waypoints")] public IReadOnlyList<Point>? Waypoints { get; init; }
-    [JsonPropertyName("from")] public Endpoint? From { get; init; }
-    [JsonPropertyName("to")] public Endpoint? To { get; init; }
+    [JsonPropertyName("from")] public EndpointInput? From { get; init; }
+    [JsonPropertyName("to")] public EndpointInput? To { get; init; }
+    [JsonPropertyName("hops")] public string? Hops { get; init; }
     [JsonPropertyName("ports")] public IReadOnlyList<Port>? Ports { get; init; }
     [JsonPropertyName("attachment")] public JsonObject? Attachment { get; init; }
     [JsonPropertyName("labelAnchor")] public JsonObject? LabelAnchor { get; init; }
@@ -455,6 +464,7 @@ public sealed record CreateConnectorOp : Operation
     [JsonPropertyName("style")] public StylePatch? Style { get; init; }
     [JsonPropertyName("label")] public TextBlockPatch? Label { get; init; }
     [JsonPropertyName("labelAnchor")] public LabelAnchorInput? LabelAnchor { get; init; }
+    [JsonPropertyName("hops")] public string? Hops { get; init; }
     [JsonPropertyName("routing")] public JsonObject? Routing { get; init; }
 }
 
@@ -477,6 +487,13 @@ public sealed record EndpointInput
     [JsonPropertyName("port")] public string? Port { get; init; }
     [JsonPropertyName("point")] public Point? Point { get; init; }
     [JsonPropertyName("glue")] public required string Glue { get; init; }
+    [JsonPropertyName("join")] public JoinInput? Join { get; init; }
+}
+
+public sealed record JoinInput
+{
+    [JsonPropertyName("connector")] public required string Connector { get; init; }
+    [JsonPropertyName("position")] public double? Position { get; init; }
 }
 
 public sealed record SetOp : Operation
