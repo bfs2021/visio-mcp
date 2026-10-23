@@ -67,6 +67,7 @@ export function selectObstacles(
   pageArea: number,
   measureWidth: TextWidthMeasurer = defaultMeasureWidth,
   connectorId?: string,
+  connectorLabelRects: ReadonlyMap<string, Rect> = new Map(),
 ): RoutingObstacle[] {
   const legacyCandidates: Array<{ id: string; rect: Rect }> = [];
   const explicit: RoutingObstacle[] = [];
@@ -79,7 +80,7 @@ export function selectObstacles(
     if (policy?.text === 'avoid' && el.id !== connectorId) {
       const text = el.kind === 'shape' || el.kind === 'text' ? el.text : el.kind === 'connector' ? el.label : undefined;
       if (text && el.kind !== 'image') {
-        const rect = textRect(el, text, measureWidth);
+        const rect = el.kind === 'connector' ? connectorLabelRects.get(el.id) : textRect(el, text, measureWidth);
         if (rect) textRecords.push({ id: el.id, rect, policy: 'forbidden', clearancePt: policy.clearancePt ?? 8, source: 'text' });
       }
     }

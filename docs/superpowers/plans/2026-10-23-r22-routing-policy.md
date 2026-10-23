@@ -110,19 +110,19 @@
 - Search first treats forbidden and avoid obstacles as blockers. If no route is found, it retries with avoid obstacles relaxed while forbidden obstacles remain blocking; each phase is capped at the existing BUDGET, so one connector uses at most 2 × BUDGET search expansions.
 - Relaxing a soft policy emits ROUTING_AVOIDANCE_VIOLATION. Failing a hard policy emits UNRESOLVED_ROUTE. Falling back from a preferred side emits ROUTE_SIDE_PREFERENCE_RELAXED.
 
-- [ ] **Step 1: Add planner tests** named forbidden_obstacle_is_never_crossed, hard_obstacle_failure_names_blocker_and_keeps_previous_route, endpoint_shape_is_crossed_only_by_glue_stubs, clearance_includes_visible_stroke, avoid_is_relaxed_only_after_clear_search_fails, pass_through_does_not_change_route, protected_text_is_avoided, preferred_side_rotates_with_shape, and static_port_overrides_preferred_side. Assert route geometry, provenance, codes, and blocker IDs.
-- [ ] **Step 2: Run the focused planner tests and verify they fail.**
+- [x] **Step 1: Add planner tests** named forbidden_obstacle_is_never_crossed, hard_obstacle_failure_names_blocker_and_keeps_previous_route, endpoint_shape_is_crossed_only_by_glue_stubs, clearance_includes_visible_stroke, avoid_is_relaxed_only_after_clear_search_fails, pass_through_does_not_change_route, protected_text_is_avoided, preferred_side_rotates_with_shape, and static_port_overrides_preferred_side. Assert route geometry, provenance, codes, and blocker IDs. Added blocked-side fallback and measured connector-label regressions as additional coverage.
+- [x] **Step 2: Run the focused planner tests and verify they fail.**
 
   Run: npm --prefix src/web test -- tests/routePlanner.test.ts tests/routeModes.test.ts
 
   Expected: FAIL because route planning currently accepts rectangle-only obstacles and does not return routeFindings.
-- [ ] **Step 3: Adapt obstacleRoute helpers and routePlanner** to use policy-aware obstacle bounds; attempt the preferred side first, then retry automatic side only when necessary. Keep Frozen, Manual, Guided pins, stored advisories, and joins consistent with R19–R21.
-- [ ] **Step 4: Run planner and mode tests.**
+- [x] **Step 3: Adapt obstacleRoute helpers and routePlanner** to use policy-aware obstacle bounds; attempt the preferred side first, then retry automatic side only when necessary. Keep Frozen, Manual, Guided pins, stored advisories, and joins consistent with R19–R21.
+- [x] **Step 4: Run planner and mode tests.**
 
   Run: npm --prefix src/web test -- tests/routePlanner.test.ts tests/routeModes.test.ts
 
   Expected: PASS, including the existing 60-shape/60-connector route baseline and the 5-second unit budget.
-- [ ] **Step 5: Commit** as feat(r22): plan routes with explicit obstacle policy.
+- [x] **Step 5: Commit** as feat(r22): plan routes with explicit obstacle policy. Verified focused suites (37/37), full web suite (603/603), and typecheck.
 
 ### Task 4: Enforce policy edits atomically and expose operation/DrawScript fields
 
