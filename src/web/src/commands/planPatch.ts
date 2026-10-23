@@ -17,6 +17,7 @@ import { parsePath } from '../geometry/svgPath';
 import { isOutlinePreset, PRESET_PORTS } from '../geometry/presetOutlines';
 import { paintProblem } from '../model/paint';
 import { planRoutes } from '../layout/routePlanner';
+import { moveSegment, segmentsOf } from '../layout/routeSegments';
 import { readDocumentDefaults, textDefaults } from '../model/documentDefaults';
 
 export interface PlanContext {
@@ -609,6 +610,7 @@ class Planner {
       case 'align': case 'distribute': case 'setGap': return this.applyArrange(op);
       case 'reorder': return this.applyReorder(op.targets, op.to);
       case 'reroute': return this.applyReroute(op.targets);
+      case 'moveSegment': return this.applyMoveSegment(op);
       case 'addPage': return this.applyAddPage(op);
       case 'reorderPage': {
         const from = this.pageIndex(op.pageId);
@@ -1013,6 +1015,36 @@ class Planner {
     }
     next.bounds = this.connectorBounds(next.from, next.to, next.waypoints);
     this.store(pageIdx, index, next);
+  }
+
+  /**
+   * Slides one inner run of the drawn route sideways. Automatic becomes manual (the route as moved is kept as waypoints), manual keeps
+   * its waypoints, frozen stays frozen with the moved route. The runs that leave a port are refused.
+   */
+  private applyMoveSegment(op: Extract<Operation, { op: 'moveSegment' }>): void {
+    const hit = this.resolve(op.target, this.ctx.pageId);
+    const el = hit.element;
+    if (el.kind !== 'connector' || el.route !== 'orthogonal') stop('invalid_request', 'moveSegment applies to orthogonal connectors', { target: el.id });
+    this.assertEditable(hit.page, el, 'edit');
+    if ((op.to === undefined) === (op.by === undefined)) stop('invalid_request', 'give exactly one of to and by', { target: el.id });
+    const drawn = this.drawnRoute(hit.pageIdx, el.id);
+    const seg = segmentsOf(drawn).find(s => s.index === op.segment);
+    const target = op.to ?? (seg ? seg.coord + op.by! : 0);
+    const moved = moveSegment(drawn, op.segment, target);
+    if (!moved.ok) {
+      if (moved.code === 'no_movement') return;
+      refuse(moved.code, moved.message, { target: el.id, segment: op.segment });
+    }
+    const points = moved.points.map(p => ({ x: Math.round(p.x * 1000) / 1000, y: Math.round(p.y * 1000) / 1000 }));
+    const next: ConnectorElement = { ...el };
+    if (el.routing?.mode === 'frozen') next.routing = { mode: 'frozen', advisory: points };
+    else {
+      const inner = points.slice(1, -1);
+      next.waypoints = inner.length ? inner : [{ x: (points[0]!.x + points[1]!.x) / 2, y: (points[0]!.y + points[1]!.y) / 2 }];
+      delete next.routing;
+    }
+    next.bounds = this.connectorBounds(next.from, next.to, next.waypoints);
+    this.store(hit.pageIdx, hit.index, next);
   }
 
   /** Forgets the stored route of automatic orthogonal connectors so the router plans them from scratch. Explicit, undoable, reports what changed. */

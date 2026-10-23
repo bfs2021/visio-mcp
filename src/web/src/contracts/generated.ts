@@ -497,7 +497,7 @@ export interface SetPageOp {
   patch: PagePatch;
 }
 
-export type Operation = CreateShapeOp | CreateTextOp | CreateImageOp | CreateConnectorOp | SetOp | MoveOp | ResizeOp | RotateOp | DeleteOp | RegisterAssetOp | SetPageOp | DuplicateOp | GroupOp | UngroupOp | AlignOp | DistributeOp | SetGapOp | ReorderOp | RerouteOp | AddPageOp | ReorderPageOp | DuplicatePageOp | DeletePageOp | AddLayerOp | SetLayerOp | AssignLayersOp | DeleteLayerOp | SetAssetOp | RemoveAssetOp | ReplaceAssetOp;
+export type Operation = CreateShapeOp | CreateTextOp | CreateImageOp | CreateConnectorOp | SetOp | MoveOp | ResizeOp | RotateOp | DeleteOp | RegisterAssetOp | SetPageOp | DuplicateOp | GroupOp | UngroupOp | AlignOp | DistributeOp | SetGapOp | ReorderOp | RerouteOp | AddPageOp | ReorderPageOp | DuplicatePageOp | DeletePageOp | AddLayerOp | SetLayerOp | AssignLayersOp | DeleteLayerOp | SetAssetOp | RemoveAssetOp | ReplaceAssetOp | MoveSegmentOp;
 
 export interface DuplicateOp {
   op: "duplicate";
@@ -642,6 +642,14 @@ export interface ReplaceAssetOp {
 export interface RerouteOp {
   op: "reroute";
   targets?: Target[];
+}
+
+export interface MoveSegmentOp {
+  op: "moveSegment";
+  target: Target;
+  segment: number;
+  to?: number;
+  by?: number;
 }
 
 export type ErrorCode = "not_running" | "not_ready" | "no_document" | "session_mismatch" | "document_mismatch" | "unsupported_version" | "invalid_request" | "not_found" | "ambiguous_target" | "revision_conflict" | "locked_target" | "limit_exceeded" | "history_unavailable" | "transaction_id_conflict" | "timeout_unknown" | "io_error" | "compatibility_loss" | "projection_failed" | "busy" | "busy_user_editing" | "path_not_permitted" | "consent_denied" | "dependency_conflict" | "method_not_found" | "internal_error";

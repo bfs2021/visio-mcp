@@ -564,6 +564,7 @@ public sealed record SetPageOp : Operation
 [JsonDerivedType(typeof(SetAssetOp), "setAsset")]
 [JsonDerivedType(typeof(RemoveAssetOp), "removeAsset")]
 [JsonDerivedType(typeof(ReplaceAssetOp), "replaceAsset")]
+[JsonDerivedType(typeof(MoveSegmentOp), "moveSegment")]
 public abstract record Operation;
 
 public sealed record DuplicateOp : Operation
@@ -711,6 +712,14 @@ public sealed record ReplaceAssetOp : Operation
 public sealed record RerouteOp : Operation
 {
     [JsonPropertyName("targets")] public IReadOnlyList<string>? Targets { get; init; }
+}
+
+public sealed record MoveSegmentOp : Operation
+{
+    [JsonPropertyName("target")] public required string Target { get; init; }
+    [JsonPropertyName("segment")] public required int Segment { get; init; }
+    [JsonPropertyName("to")] public double? To { get; init; }
+    [JsonPropertyName("by")] public double? By { get; init; }
 }
 
 public sealed record AppError

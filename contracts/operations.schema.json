@@ -1057,6 +1057,9 @@
         },
         {
           "$ref": "#/$defs/ReplaceAsset"
+        },
+        {
+          "$ref": "#/$defs/MoveSegment"
         }
       ],
       "x-discriminator": "op"
@@ -1649,6 +1652,38 @@
           "description": "Automatic orthogonal connectors to route again from scratch, forgetting their stored route. Absent: every automatic orthogonal connector on the page. Manual and frozen connectors are refused when named, skipped otherwise."
         }
       }
+    },
+    "MoveSegment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "target",
+        "segment"
+      ],
+      "properties": {
+        "op": {
+          "const": "moveSegment"
+        },
+        "target": {
+          "$ref": "#/$defs/Target"
+        },
+        "segment": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 511,
+          "description": "Index of the run in the route as drawn now (the run from point n to point n+1). Read it from the connector projection's route. Only inner runs move; the runs that leave a port are refused with segment_fixed."
+        },
+        "to": {
+          "type": "number",
+          "description": "Where the run goes on its perpendicular axis, in page points: y for a horizontal run, x for a vertical one. Give exactly one of to and by."
+        },
+        "by": {
+          "type": "number",
+          "description": "How far the run moves on its perpendicular axis, in page points (positive is down or right)."
+        }
+      },
+      "description": "Moves one run of an orthogonal connector sideways. The neighbouring runs lengthen or shorten, both ends and the other runs stay, and a run moved level with a parallel neighbour merges into it. An automatic connector becomes manual; a frozen one stays frozen with the new route."
     }
   }
 }

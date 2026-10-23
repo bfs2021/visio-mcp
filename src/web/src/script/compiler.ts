@@ -427,10 +427,11 @@ class Compiler {
       case 'set-gap': return this.cmdSetGap(cmd);
       case 'z': return this.cmdZ(cmd);
       case 'reroute': return this.cmdReroute(cmd);
+      case 'move-segment': return this.cmdMoveSegment(cmd);
       case 'layer': return this.cmdLayer(cmd);
       case 'asset': return this.cmdAsset(cmd);
       default:
-        return this.err(`unknown command "${cmd.verb}"`, cmd.verbToken, 'commands: page, add, connect, group, set, move, resize, rotate, delete, duplicate, align, distribute, set-gap, z, reroute, layer, asset');
+        return this.err(`unknown command "${cmd.verb}"`, cmd.verbToken, 'commands: page, add, connect, group, set, move, resize, rotate, delete, duplicate, align, distribute, set-gap, z, reroute, move-segment, layer, asset');
     }
   }
 
@@ -842,6 +843,20 @@ class Compiler {
     this.begin(cmd);
     this.finish([]);
     this.emit(this.args.pos.length ? { op: 'reroute', targets: this.ids(this.args.pos, 1, 'reroute') } : { op: 'reroute' });
+  }
+
+  /** move-segment CONNECTOR segment=N to=DIM | by=DIM: slides one inner run of an orthogonal connector sideways. */
+  private cmdMoveSegment(cmd: Command): void {
+    this.begin(cmd);
+    this.finish(['segment', 'to', 'by']);
+    const known = this.single(cmd, 'move-segment');
+    if (known.kind !== 'connector') this.err('move-segment takes a connector', cmd.span);
+    if (this.has('to') === this.has('by')) this.err('give exactly one of to= and by=', cmd.span, 'to= is where the run goes, by= is how far it moves');
+    const segment = this.num(this.need('segment'), 0, 511);
+    if (!Number.isInteger(segment)) this.err('segment= takes a whole number', this.raw('segment')!.value);
+    this.emit(this.has('to')
+      ? { op: 'moveSegment', target: known.id, segment, to: this.signedDim(this.raw('to')!) }
+      : { op: 'moveSegment', target: known.id, segment, by: this.signedDim(this.raw('by')!) });
   }
 
   private cmdZ(cmd: Command): void {

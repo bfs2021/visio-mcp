@@ -469,4 +469,19 @@ describe('compiler: things riding on a connector', () => {
     expect(bad(t, 'set tag labelAt=0.1').message).toMatch(/apply to connectors/);
     expect(bad(t, 'set p at=0.5').message).toMatch(/go with on=/);
   });
+
+  it('move-segment compiles to the moveSegment operation and needs exactly one of to= and by=', async () => {
+    const t = await scene();
+    await run(t, [
+      { op: 'createShape', id: id(970), alias: 'p', bounds: { x: 0, y: 200, width: 10, height: 10 } },
+      { op: 'createShape', id: id(971), alias: 'q', bounds: { x: 200, y: 300, width: 10, height: 10 } },
+      { op: 'createConnector', id: id(972), alias: 'wire', from: { elementId: id(970), glue: 'dynamic' }, to: { elementId: id(971), glue: 'dynamic' }, route: 'orthogonal' },
+    ]);
+    const made = ops(t, ['move-segment wire segment=1 by=-10pt', 'move-segment wire segment=2 to=120pt'].join(String.fromCharCode(10)));
+    expect(made[0]).toEqual({ op: 'moveSegment', target: id(972), segment: 1, by: -10 });
+    expect(made[1]).toEqual({ op: 'moveSegment', target: id(972), segment: 2, to: 120 });
+    expect(bad(t, 'move-segment wire segment=1')).toBeDefined();
+    expect(bad(t, 'move-segment wire segment=1 by=1pt to=2pt')).toBeDefined();
+    expect(bad(t, 'move-segment p segment=1 by=1pt')).toBeDefined();
+  });
 });
