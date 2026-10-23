@@ -107,4 +107,4 @@ Recorded 2026-10-18.
 2. One machine; the live fixture is one page of 500 elements, not ten pages. No frame-rate or input-latency trace for drag and resize.
 3. The M0 second-Windows-user pipe check remains open (NOT RUN).
 4. R05 (reference-diagram regression) is still partial: the R02 fixture ran as part of the Windows suite, but the full reproduction workflow was not re-run as a separate I52 acceptance step.
-5. `inspect_layout` does not detect misalignment; the inspector's line, dash, arrowhead and font controls have no browser test.
+5. `inspect_layout` does not detect misalignment; the inspector's line, dash, arrowhead and font controls had no browser test (closed by A04, `inspector-styling.spec.ts`; see definition-of-done item 6).
