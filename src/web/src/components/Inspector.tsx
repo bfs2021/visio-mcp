@@ -145,7 +145,7 @@ export function Inspector({ model }: { model: EditorModel }) {
       )}
 
       {el.kind === 'shape' && <ShapeStyle model={model} el={el} set={set} />}
-      {el.kind === 'connector' && <ConnectorStyle el={el} set={set} />}
+      {el.kind === 'connector' && <ConnectorStyle el={el} set={set} model={model} />}
       {(el.kind === 'shape' || el.kind === 'text') && el.attachment && <Pin el={el} model={model} set={set} />}
       {el.kind === 'image' && <ImageProps el={el} model={model} set={set} />}
 
@@ -250,7 +250,7 @@ function Pin({ el, model, set }: { el: ShapeElement | TextElement; model: Editor
   );
 }
 
-function ConnectorStyle({ el, set }: { el: ConnectorElement; set: (p: Record<string, unknown>) => void }) {
+function ConnectorStyle({ el, set, model }: { el: ConnectorElement; set: (p: Record<string, unknown>) => void; model: EditorModel }) {
   const arrows = ['none', 'block', 'open', 'diamond', 'oval'];
   return (
     <section>
@@ -276,6 +276,17 @@ function ConnectorStyle({ el, set }: { el: ConnectorElement; set: (p: Record<str
         <label className="field"><span>Route</span>
           <select value={el.route} data-testid="field-route" onChange={e => set({ route: e.target.value })}><option>straight</option><option>orthogonal</option><option>curved</option></select>
         </label>
+        {el.route === 'orthogonal' && (
+          <>
+            <label className="field"><span>Route mode</span>
+              <select value={el.routing?.mode ?? (el.waypoints.length ? 'manual' : 'automatic')} data-testid="field-route-mode" title="Automatic: the router chooses and keeps the route. Manual: you control the bends. Frozen: the route is kept as it is."
+                onChange={e => set({ routing: { mode: e.target.value } })}><option>automatic</option><option>manual</option><option>frozen</option></select>
+            </label>
+            {!el.routing?.mode && !el.waypoints.length && (
+              <button type="button" data-testid="route-reroute" title="Forget the stored route and let the router plan it again" onClick={() => void model.apply('inspector', [{ op: 'reroute', targets: [el.id] }] as Operation[])}>Re-route</button>
+            )}
+          </>
+        )}
       </div>
       <div className="grid2">
         <NumberField label="Label at %" testId="field-label-at" value={Math.round((el.labelAnchor?.position ?? 0.5) * 100)} min={0} onCommit={v => set({ labelAnchor: { position: Math.min(1, Math.max(0, v / 100)), offsetPt: el.labelAnchor?.offsetPt ?? 0 } })} />

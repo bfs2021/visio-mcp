@@ -17,6 +17,7 @@
   "distribute": {"op":"distribute","targets":["00000000-0000-4000-8000-000000000001","00000000-0000-4000-8000-000000000002","00000000-0000-4000-8000-000000000003"],"axis":"horizontal"},
   "setGap": {"op":"setGap","targets":["00000000-0000-4000-8000-000000000001","00000000-0000-4000-8000-000000000002"],"axis":"horizontal","gapPt":24},
   "reorder": {"op":"reorder","targets":["00000000-0000-4000-8000-000000000001"],"to":"front"},
+  "reroute": {"op":"reroute","targets":["00000000-0000-4000-8000-000000000001"]},
   "addPage": {"op":"addPage","name":"Architecture","widthPt":1220,"heightPt":950},
   "reorderPage": {"op":"reorderPage","pageId":"00000000-0000-4000-8000-000000000010","index":0},
   "duplicatePage": {"op":"duplicatePage","pageId":"00000000-0000-4000-8000-000000000010","name":"Architecture copy"},

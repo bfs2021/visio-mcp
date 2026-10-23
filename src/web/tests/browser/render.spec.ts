@@ -349,6 +349,32 @@ test('R19: nudging an unrelated shape leaves every connector route exactly as it
   expect(after[U(67)].routePoints).toEqual(before[U(67)].routePoints);
 });
 
+test('R20: the inspector freezes a route, which then stays put when a shape lands in its way; Automatic and Re-route work', async ({ page }) => {
+  await openEditor(page);
+  await apply(page, [
+    { op: 'createShape', id: U(80), bounds: box(100, 120), style: { fill: RED, stroke: { kind: 'none' } } },
+    { op: 'createShape', id: U(81), bounds: box(600, 120), style: { fill: BLUE, stroke: { kind: 'none' } } },
+    { op: 'createConnector', id: U(82), from: { elementId: U(80), port: 'east', glue: 'static' }, to: { elementId: U(81), port: 'west', glue: 'static' }, route: 'orthogonal' },
+  ]);
+  const conn = async () => (await elements(page)).find(e => e.id === U(82)) as any;
+  expect((await conn()).routing.advisory.length).toBe(2);
+  const c = await centre(page, U(82));
+  await page.mouse.click(c.x, c.y);
+  await expect(page.getByTestId('field-route-mode')).toHaveValue('automatic');
+  await page.getByTestId('field-route-mode').selectOption('frozen');
+  expect((await conn()).routing.mode).toBe('frozen');
+  await expect(page.getByTestId('route-reroute')).toHaveCount(0);
+  await apply(page, [{ op: 'createShape', id: U(83), bounds: box(330, 100, 40, 80), style: { fill: RED, stroke: { kind: 'none' } } }]);
+  const after = (await conn()).routing.advisory;
+  expect(after.length).toBe(2); // the frozen route did not detour
+  const routes = (await call(page, 'doc.exportSnapshot', {})).result.projection.connectors;
+  expect(routes[U(82)].routePoints).toEqual(after);
+  await page.getByTestId('field-route-mode').selectOption('automatic');
+  expect((await conn()).routing.mode).toBeUndefined();
+  expect((await conn()).routing.advisory.length).toBeGreaterThan(2); // now it goes around the shape
+  await expect(page.getByTestId('route-reroute')).toHaveCount(1);
+});
+
 test('automatic routing stays quick and deterministic on a dense page', async ({ page }) => {
   await openEditor(page);
   const ops: unknown[] = [];

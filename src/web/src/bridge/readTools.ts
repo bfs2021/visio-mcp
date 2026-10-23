@@ -22,6 +22,8 @@ export interface ElementSummary {
   from?: unknown;
   to?: unknown;
   route?: string;
+  /** R20: how an orthogonal connector's route is decided: automatic, manual (waypoints) or frozen */
+  routeMode?: string;
   /** a connector's label placement along its route; absent means the middle */
   labelAnchor?: unknown;
   /** a shape or text pinned to a connector: which connector, how far along its route and how far to its right */
@@ -49,7 +51,7 @@ export function summariseElement(el: Element, o: { includeGeometry: boolean; inc
   if (el.layerIds.length) s.layerIds = el.layerIds;
   s.zIndex = el.zIndex;
   if (o.includeStyle && (el.kind === 'shape' || el.kind === 'connector')) s.style = el.style;
-  if (el.kind === 'connector') { s.from = el.from; s.to = el.to; s.route = el.route; if (el.labelAnchor) s.labelAnchor = el.labelAnchor; }
+  if (el.kind === 'connector') { s.from = el.from; s.to = el.to; s.route = el.route; if (el.route === 'orthogonal') s.routeMode = el.routing?.mode ?? (el.waypoints.length ? 'manual' : 'automatic'); if (el.labelAnchor) s.labelAnchor = el.labelAnchor; }
   if ((el.kind === 'shape' || el.kind === 'text') && el.attachment) s.attachedTo = el.attachment;
   if (el.kind === 'image') s.assetId = el.assetId;
   if (el.kind === 'group') s.childIds = el.childIds;

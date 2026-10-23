@@ -1,6 +1,6 @@
 import type {
   Asset, Attachment, Bounds, ConnectorElement, DiagramDocument, Element, Endpoint, EndpointInput, GroupElement, ImageElement, Layer, LineStyle,
-  Operation, Page, PathAnchor, Point, ShapeElement, ShapeStyle, TextBlock, TextElement,
+  Operation, Page, PathAnchor, Point, RouteChange, ShapeElement, ShapeStyle, TextBlock, TextElement,
 } from '../contracts/generated';
 import { canonicalSerialize } from '../model/canonical';
 import { fail, ok, type Result } from '../model/result';
@@ -16,6 +16,7 @@ import { lookupTarget } from './resolveTarget';
 import { parsePath } from '../geometry/svgPath';
 import { isOutlinePreset, PRESET_PORTS } from '../geometry/presetOutlines';
 import { paintProblem } from '../model/paint';
+import { planRoutes } from '../layout/routePlanner';
 import { readDocumentDefaults, textDefaults } from '../model/documentDefaults';
 
 export interface PlanContext {
@@ -36,6 +37,10 @@ export interface Plan {
   visuallyAffectedIds: string[];
   description: string;
   noChange: boolean;
+  /** R20: connectors whose stored route is forgotten by this plan, so the router plans them from scratch. */
+  freshRoutes?: string[];
+  /** R20: filled by settleRoutes. */
+  routeChanges?: RouteChange[];
 }
 
 const DEFAULT_SHAPE_STYLE: ShapeStyle = {
@@ -92,6 +97,8 @@ interface Transform {
 }
 
 class Planner {
+  /** Connectors whose stored route this plan forgets (route mode reset, reroute). */
+  private fresh = new Set<string>();
   private pages: Page[];
   private assets: Asset[];
   private readonly origElements = new Map<string, { pageId: string; index: number; element: Element }>();
@@ -508,6 +515,7 @@ class Planner {
         if (op.label) el.label = mergeText(textDefaults(this.doc), op.label as PatchObj);
         if (op.labelAnchor) el.labelAnchor = this.anchorOf(op.labelAnchor);
         this.addElement(pageIdx, el);
+        if (op.routing) this.applyRouting(pageIdx, id, op.routing.mode);
         return;
       }
       case 'set': return this.applySet(op.target, op.patch as PatchObj);
@@ -525,6 +533,7 @@ class Planner {
           if (!freeFrom && !freeTo && element.waypoints.length === 0) return stop('invalid_request', 'a glued connector is positioned by its endpoints', { target: element.id });
           const shift = (ep: Endpoint): Endpoint => (ep.glue === 'none' ? { ...ep, point: { x: ep.point!.x + dx, y: ep.point!.y + dy } } : ep);
           const next: ConnectorElement = { ...element, from: shift(element.from), to: shift(element.to), waypoints: element.waypoints.map(p => ({ x: p.x + dx, y: p.y + dy })) };
+          if (element.routing?.advisory) next.routing = { ...element.routing, advisory: element.routing.advisory.map(p => ({ x: p.x + dx, y: p.y + dy })) };
           next.bounds = this.connectorBounds(next.from, next.to, next.waypoints);
           this.store(pageIdx, index, next);
           return;
@@ -599,6 +608,7 @@ class Planner {
       case 'duplicate': return this.applyDuplicate(op);
       case 'align': case 'distribute': case 'setGap': return this.applyArrange(op);
       case 'reorder': return this.applyReorder(op.targets, op.to);
+      case 'reroute': return this.applyReroute(op.targets);
       case 'addPage': return this.applyAddPage(op);
       case 'reorderPage': {
         const from = this.pageIndex(op.pageId);
@@ -834,6 +844,7 @@ class Planner {
           copy.from = remapEnd(e.from, e.id);
           copy.to = remapEnd(e.to, e.id);
           copy.waypoints = e.waypoints.map(shiftPoint);
+          if (e.routing?.advisory) copy.routing = { ...e.routing, advisory: e.routing.advisory.map(shiftPoint) };
         }
       }
       copies.push(copy as unknown as Element);
@@ -888,6 +899,7 @@ class Planner {
     const keys = Object.keys(patch);
     if (!(keys.length === 1 && keys[0] === 'locked')) this.assertEditable(page, element, 'edit');
     const next: Record<string, unknown> = { ...element };
+    let routingMode: string | undefined;
     const need = (cond: boolean, key: string) => { if (!cond) stop('invalid_request', `patch.${key} does not apply to a ${element.kind}`, { target: element.id, key }); };
 
     for (const [key, value] of Object.entries(patch)) {
@@ -937,8 +949,14 @@ class Planner {
           if (value === null) delete next.labelAnchor; else next.labelAnchor = this.anchorOf({ ...((element as ConnectorElement).labelAnchor ?? {}), ...(value as object) });
           break;
         }
-        case 'route': need(element.kind === 'connector', key); next.route = value; break;
-        case 'waypoints': need(element.kind === 'connector', key); next.waypoints = (value as Point[]).map(p => ({ ...p })); break;
+        case 'route': need(element.kind === 'connector', key); next.route = value; if (value !== 'orthogonal') delete next.routing; break;
+        case 'waypoints':
+          need(element.kind === 'connector', key);
+          if (element.kind === 'connector' && element.routing?.mode === 'frozen' && !('routing' in patch)) refuse('route_frozen', 'the route of this connector is frozen: set routing.mode to automatic or manual before editing its waypoints', { target: element.id });
+          next.waypoints = (value as Point[]).map(p => ({ ...p }));
+          delete next.routing; // waypoints make the route manual (or, when empty, automatic); a stored route no longer applies
+          break;
+        case 'routing': need(element.kind === 'connector', key); routingMode = (value as { mode: string }).mode; break;
         case 'from': case 'to': {
           need(element.kind === 'connector', key);
           const ep = value as Endpoint;
@@ -953,6 +971,70 @@ class Planner {
       next.bounds = this.connectorBounds(c.from, c.to, c.waypoints);
     }
     this.store(pageIdx, index, next as unknown as Element);
+    if (routingMode) this.applyRouting(pageIdx, element.id, routingMode);
+  }
+
+  // ---------------------------------------------------------------- route modes (R20)
+  /** The route the router draws for a connector in the document as it stands in this plan, anchors included. */
+  private drawnRoute(pageIdx: number, id: string): Point[] {
+    const page = this.pages[pageIdx]!;
+    const route = planRoutes({ elements: page.elements, layers: page.layers, pageArea: page.widthPt * page.heightPt }).routes.get(id);
+    if (!route) stop('invalid_request', 'this connector has no route to keep', { target: id });
+    return route.points.map(p => ({ x: Math.round(p.x * 1000) / 1000, y: Math.round(p.y * 1000) / 1000 }));
+  }
+
+  /**
+   * automatic: forget waypoints and the stored route; the router plans again. manual: keep the route as drawn now as waypoints.
+   * frozen: keep the route as drawn now and never replace it. Only `frozen` is stored as a mode; the others follow from the waypoints.
+   */
+  private applyRouting(pageIdx: number, id: string, mode: string): void {
+    const index = this.pages[pageIdx]!.elements.findIndex(e => e.id === id);
+    const el = this.pages[pageIdx]!.elements[index];
+    if (!el || el.kind !== 'connector') stop('invalid_request', 'routing applies to connectors', { target: id });
+    this.assertEditable(this.pages[pageIdx]!, el, 'edit');
+    if (el.route !== 'orthogonal') stop('invalid_request', 'route modes apply to orthogonal connectors', { target: id });
+    if (mode === 'guided') refuse('routing_mode_unavailable', 'guided routing is not available yet: it arrives with segment constraints (R21, issue #60)', { target: id, mode });
+    const frozen = el.routing?.mode === 'frozen', manual = !frozen && el.waypoints.length > 0;
+    const next: ConnectorElement = { ...el };
+    if (mode === 'automatic') {
+      next.waypoints = [];
+      delete next.routing;
+      this.fresh.add(id);
+    } else if (mode === 'manual') {
+      if (manual) return;
+      const pts = this.drawnRoute(pageIdx, id);
+      const inner = pts.slice(1, -1);
+      next.waypoints = inner.length ? inner : [{ x: (pts[0]!.x + pts[1]!.x) / 2, y: (pts[0]!.y + pts[1]!.y) / 2 }]; // a straight run still needs one point to be manual
+      delete next.routing;
+    } else {
+      if (frozen) return;
+      next.routing = { mode: 'frozen', advisory: this.drawnRoute(pageIdx, id) };
+      next.waypoints = [];
+    }
+    next.bounds = this.connectorBounds(next.from, next.to, next.waypoints);
+    this.store(pageIdx, index, next);
+  }
+
+  /** Forgets the stored route of automatic orthogonal connectors so the router plans them from scratch. Explicit, undoable, reports what changed. */
+  private applyReroute(targets: readonly string[] | undefined): void {
+    const pageIdx = this.defaultPage(this.ctx.pageId);
+    const explicit = !!targets;
+    const hits = explicit ? targets!.map(t => this.resolve(t, this.ctx.pageId)) : this.pages[pageIdx]!.elements.map((element, index) => ({ page: this.pages[pageIdx]!, pageIdx, index, element }));
+    for (const { pageIdx: pi, index, element } of hits) {
+      if (element.kind !== 'connector' || element.route !== 'orthogonal') {
+        if (explicit) stop('invalid_request', 'only orthogonal connectors can be rerouted', { target: element.id });
+        continue;
+      }
+      if (element.routing?.mode === 'frozen' || element.waypoints.length > 0) {
+        if (explicit) refuse('route_not_automatic', 'the route of this connector is frozen or manual: set routing.mode to automatic first', { target: element.id });
+        continue;
+      }
+      this.assertEditable(this.pages[pi]!, element, 'edit');
+      const next: ConnectorElement = { ...element };
+      delete next.routing;
+      this.fresh.add(element.id);
+      this.store(pi, index, next);
+    }
   }
 
   // ---------------------------------------------------------------- validation and diffing
@@ -1105,7 +1187,7 @@ class Planner {
     const description = operations.map(o => o.op).join(', ').slice(0, 1000);
     return {
       forward, inverse, created, changed, deleted, changedPageIds, changedLayerIds, changedAssetIds,
-      visuallyAffectedIds: [...visually], description, noChange,
+      visuallyAffectedIds: [...visually], description, noChange, freshRoutes: [...this.fresh],
     };
   }
 }

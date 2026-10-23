@@ -83,10 +83,12 @@ DrawScript: `route=orthogonal mode=automatic|manual|frozen`; MCP: `routing.mode`
 - **Store track ids / segment ids now:** needs the segment model of R21 first; deferred.
 - **Frozen as promoted waypoints:** simple, but every bend becomes an authored waypoint, which is the problem R20 exists to remove, and Manual and Frozen would be indistinguishable.
 
-## 8. Questions for the owner
+## 8. Owner decisions (2026-10-22) and how they changed the contract
 
-1. Is `frozen` as "advisory is the authority, planner never searches" right, rather than promoting the route to waypoints?
-2. Stage A without `guided` and segment constraints (they land with R21), correct?
-3. When the planner changes in a later release, stored routes stay as they are until the user resets or optimises them (R24). Acceptable?
-4. Report route updates of neighbouring connectors in a separate `routeChanges` list rather than in `changed`?
-5. No schema version bump, accepting that older app versions cannot open files saved with `routing`?
+1. **Frozen** is authoritative: the planner never searches for a replacement and never repairs around obstacles. It may adjust only the end runs, and only to keep the glue. If it cannot do that safely (the result is not exact, leaves the wrong way, or newly crosses a shape the stored route did not), the stored route is kept and flagged `unresolved`. Frozen is never turned into manual waypoints.
+2. **Guided** is deferred to R21 #60. Setting it is refused with a structured error (`routing_mode_unavailable`) and is never stored: the document schema accepts only `frozen`.
+3. **Stored routes stay put until the user asks.** Optimisation is an explicit, undoable operation, `reroute`, which forgets the stored route of automatic orthogonal connectors and reports what changed.
+4. **`routeChanges` is in addition to `changed`.** A stored-route update changes the persisted connector, so its id stays in `changed` and in the diff; `routeChanges` carries the provenance and reason.
+5. **No schema version bump.** The schema is strict, so an older app rejects a file that has `routing`, even though the field is optional. This is the same limit accepted for the R16 fields. No versioning policy exists yet; if the version field should signal incompatibility, that policy must be set first, and a bump alone would not make old apps read the file.
+
+Contract details settled during implementation: `mode` is stored only when it cannot be derived (`frozen`); automatic and manual follow from the waypoints. A connector with no stored route yet keeps the route it was drawn with before the edit, so the first edit of an older document does not rearrange it. A straight stored route whose ends stop lining up takes one short jog half way along.

@@ -72,7 +72,9 @@ export type PointMap = (p: Point) => Point;
 /** Applies `f` to a connector's free endpoints and waypoints. Glued endpoints keep their references. The caller recomputes bounds. */
 export function mapConnectorPoints(c: ConnectorElement, f: PointMap): ConnectorElement {
   const mapEnd = (ep: Endpoint): Endpoint => (ep.glue === 'none' && ep.point ? { ...ep, point: f(ep.point) } : ep);
-  return { ...c, from: mapEnd(c.from), to: mapEnd(c.to), waypoints: c.waypoints.map(f) };
+  const next: ConnectorElement = { ...c, from: mapEnd(c.from), to: mapEnd(c.to), waypoints: c.waypoints.map(f) };
+  if (c.routing?.advisory) next.routing = { ...c.routing, advisory: c.routing.advisory.map(f) };
+  return next;
 }
 
 export const translateBounds = (b: Bounds, dx: number, dy: number): Bounds => ({ ...b, x: b.x + dx, y: b.y + dy });
