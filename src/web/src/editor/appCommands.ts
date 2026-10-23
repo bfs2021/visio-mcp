@@ -53,6 +53,7 @@ export function appCommands(model: EditorModel, ws: WorkspaceModel): AppCommand[
     { id: 'close-tab', label: 'Close tab', group: 'File', shortcut: 'Ctrl+W', run: () => void ws.closeTab(model) },
     { id: 'export-image', label: 'Export image…', group: 'File', run: () => model.beginImageExport() },
     { id: 'export-pdf', label: 'Export PDF (all pages)…', group: 'File', run: () => model.beginImageExport('pdf') },
+    { id: 'print', label: 'Print…', group: 'File', shortcut: 'Ctrl+P', run: () => model.beginPrint() },
     { id: 'export-visio', label: 'Export to Visio (.vsdx)…', group: 'File', run: () => void model.exportVsdx() },
 
     { id: 'undo', label: 'Undo', group: 'Edit', shortcut: 'Ctrl+Z', run: () => void model.undo() },

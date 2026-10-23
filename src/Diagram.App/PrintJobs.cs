@@ -18,10 +18,12 @@ public sealed class PrintJobStore(TimeProvider? timeProvider = null)
     PreparedPrintJob? current;
     public bool HasPendingJob { get { lock (gate) return current is not null && clock.GetUtcNow() < current.ExpiresAt; } }
 
-    public PreparedPrintJob Prepare(ExpectedState expected, IReadOnlyList<PrintSheet> sheets, PrintLayoutOptions? layout = null, PrintDeviceSettings? device = null)
+    public PreparedPrintJob Prepare(ExpectedState expected, IReadOnlyList<PrintSheet> sheets, PrintLayoutOptions layout, PrintDeviceSettings device)
     {
         ArgumentNullException.ThrowIfNull(expected);
         ArgumentNullException.ThrowIfNull(sheets);
+        ArgumentNullException.ThrowIfNull(layout);
+        ArgumentNullException.ThrowIfNull(device);
         if (string.IsNullOrWhiteSpace(expected.DocumentId) || string.IsNullOrWhiteSpace(expected.SessionId) || expected.BaseRevision < 0 || sheets.Count is < 1 or > 32)
             throw new PrintLayoutException("invalid_request", "The prepared print job has invalid drawing identity or sheet count.");
         long total = 0;
@@ -32,7 +34,7 @@ public sealed class PrintJobStore(TimeProvider? timeProvider = null)
             if (total > MaximumBytes) throw new PrintLayoutException("limit_exceeded", "Prepared print sheets exceed 64 MiB.");
         }
         var id = Convert.ToHexString(RandomNumberGenerator.GetBytes(32)).ToLowerInvariant();
-        var job = new PreparedPrintJob(id, expected with { }, Array.AsReadOnly(sheets.ToArray()), layout!, device!, clock.GetUtcNow() + Lifetime);
+        var job = new PreparedPrintJob(id, expected with { }, Array.AsReadOnly(sheets.ToArray()), layout, device, clock.GetUtcNow() + Lifetime);
         lock (gate) current = job;
         return job;
     }

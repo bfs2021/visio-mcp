@@ -15,12 +15,14 @@ public class EditorPrintTests
 
     static IReadOnlyList<PrintSheet> Sheets(string svg = "<svg/>") =>
         [new PrintSheet(1, 612, 792, [1], svg)];
+    static PrintLayoutOptions Layout => new(612, 792, "portrait", "fit", new PrintMargins(36, 36, 36, 36), new PrintMargins(0, 0, 0, 0));
+    static PrintDeviceSettings Device => new("printer-a", "letter", 612, 792, "portrait", new PrintMargins(36, 36, 36, 36));
 
     [Fact]
     public void PreparedJobsAreOpaqueBoundedAndOneUse()
     {
         var store = new PrintJobStore();
-        var job = store.Prepare(State(), Sheets());
+        var job = store.Prepare(State(), Sheets(), Layout, Device);
         Assert.NotEmpty(job.Id);
         Assert.DoesNotContain("doc", job.Id);
         Assert.True(store.TryTake(job.Id, State(), out var taken));
@@ -35,7 +37,7 @@ public class EditorPrintTests
     public void WrongScopeOrRevisionConsumesAndRejectsJob(string document, string session, int revision, string error)
     {
         var store = new PrintJobStore();
-        var job = store.Prepare(State(), Sheets());
+        var job = store.Prepare(State(), Sheets(), Layout, Device);
         Assert.False(store.TryTake(job.Id, State(document, session, revision), out _, out var code));
         Assert.Equal(error, code);
         Assert.False(store.TryTake(job.Id, State(), out _));
@@ -45,8 +47,8 @@ public class EditorPrintTests
     public void NewPreviewReplacesOldAndCanBeClearedByDocument()
     {
         var store = new PrintJobStore();
-        var first = store.Prepare(State(), Sheets());
-        var second = store.Prepare(State("next", "session-2"), Sheets());
+        var first = store.Prepare(State(), Sheets(), Layout, Device);
+        var second = store.Prepare(State("next", "session-2"), Sheets(), Layout, Device);
         Assert.False(store.TryTake(first.Id, State(), out _));
         store.Clear("next");
         Assert.False(store.TryTake(second.Id, State("next", "session-2"), out _));
@@ -57,11 +59,11 @@ public class EditorPrintTests
     {
         var time = new MutableTimeProvider(DateTimeOffset.UtcNow);
         var store = new PrintJobStore(time);
-        var job = store.Prepare(State(), Sheets());
+        var job = store.Prepare(State(), Sheets(), Layout, Device);
         time.Advance(TimeSpan.FromMinutes(6));
         Assert.False(store.TryTake(job.Id, State(), out _, out var code));
         Assert.Equal("job_expired", code);
-        Assert.Throws<PrintLayoutException>(() => { store.Prepare(State(), Sheets(new string('x', 65 * 1024 * 1024))); });
+        Assert.Throws<PrintLayoutException>(() => { store.Prepare(State(), Sheets(new string('x', 65 * 1024 * 1024)), Layout, Device); });
     }
 
     sealed class MutableTimeProvider(DateTimeOffset initial) : TimeProvider
@@ -200,5 +202,19 @@ public class EditorPrintTests
         Assert.Equal("letter", dispatched.Device.MediaId);
         Assert.Equal(612, dispatched.Sheets[0].PaperWidthPt);
         Assert.Equal(792, dispatched.Sheets[0].PaperHeightPt);
+    }
+
+    [Fact]
+    public async Task InvalidRangesAndTileExpansionFailBeforePreparingAJob()
+    {
+        await using var h = await Harness.StartAsync();
+        h.Window.Exports.PrinterCapabilities = new FakePrinters(new PrintDevice("printer-a", "Printer A", [new PrintMedia("tiny", "Tiny", 10, 10, new PrintMargins(0, 0, 0, 0))]));
+        var invalid = PreviewOptions(h); invalid["pageRange"] = "1,";
+        Assert.Equal("invalid_range", (await h.Window.Services.HandleAsync(PrintRequest("preview", invalid), Harness.Ct(60))).Error?.Code);
+        Assert.False(h.Window.Exports.PrintJobs.HasPendingJob);
+        var expanding = PreviewOptions(h); expanding["mediaId"] = "tiny"; expanding["layout"] = "tile";
+        expanding["margins"] = new JsonObject { ["leftPt"] = 0, ["topPt"] = 0, ["rightPt"] = 0, ["bottomPt"] = 0 };
+        Assert.Equal("limit_exceeded", (await h.Window.Services.HandleAsync(PrintRequest("preview", expanding), Harness.Ct(60))).Error?.Code);
+        Assert.False(h.Window.Exports.PrintJobs.HasPendingJob);
     }
 }
