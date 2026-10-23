@@ -1,0 +1,15 @@
+{
+  "scenario": "s11-editor-apphost-shim",
+  "question": "Editor in the process; the shim started through its native launcher Diagram.Mcp.exe instead of the dotnet host.",
+  "configuration": "Debug",
+  "observedSeconds": 12,
+  "childStartedAtMs": 2023,
+  "machineCpuBusyPercentOverall": 68,
+  "processStops": [],
+  "poolStarvedWindows": [],
+  "poolTimerLate": [],
+  "uiThreadLate": [],
+  "appPipeSlow": [],
+  "verdict": "no stop",
+  "ran": "2026-10-23T17:59:38.0028713Z"
+}

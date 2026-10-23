@@ -1,0 +1,15 @@
+{
+  "scenario": "s8-editor-shim-from-other-process",
+  "question": "Editor in the process; the shim is started by a separate PowerShell process, the way an agent host would.",
+  "configuration": "Debug",
+  "observedSeconds": 12,
+  "childStartedAtMs": 2517,
+  "machineCpuBusyPercentOverall": 70,
+  "processStops": [],
+  "poolStarvedWindows": [],
+  "poolTimerLate": [],
+  "uiThreadLate": [],
+  "appPipeSlow": [],
+  "verdict": "no stop",
+  "ran": "2026-10-23T18:01:44.4259656Z"
+}

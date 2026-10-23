@@ -1,0 +1,15 @@
+{
+  "scenario": "s2-editor-sdk-shim",
+  "question": "I52\u0027s setup: editor in the process, shim started through the MCP client library.",
+  "configuration": "Debug",
+  "observedSeconds": 12,
+  "childStartedAtMs": 2357,
+  "machineCpuBusyPercentOverall": 71,
+  "processStops": [],
+  "poolStarvedWindows": [],
+  "poolTimerLate": [],
+  "uiThreadLate": [],
+  "appPipeSlow": [],
+  "verdict": "no stop",
+  "ran": "2026-10-23T17:57:33.9141500Z"
+}

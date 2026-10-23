@@ -1,0 +1,30 @@
+{
+  "scenario": "s3-editor-raw-shim",
+  "question": "Same, but the shim is started with plain Process.Start and no MCP library.",
+  "configuration": "Debug",
+  "observedSeconds": 12,
+  "childStartedAtMs": 2075,
+  "machineCpuBusyPercentOverall": 70,
+  "processStops": [],
+  "poolStarvedWindows": [
+    {
+      "startMs": 2100,
+      "lengthMs": 2220,
+      "poolThreadsAtStart": 7,
+      "poolThreadsAtEnd": 7,
+      "maxQueued": 2,
+      "machineCpuBusyPercent": 86,
+      "machineCpuBusyPercentFor2sBefore": 75
+    }
+  ],
+  "poolTimerLate": [
+    {
+      "atMs": 4320,
+      "lateMs": 2276
+    }
+  ],
+  "uiThreadLate": [],
+  "appPipeSlow": [],
+  "verdict": "pool timers late, process not stopped",
+  "ran": "2026-10-23T17:52:44.3790876Z"
+}

@@ -1,0 +1,275 @@
+{
+  "recorded": "2026-10-23T18:30:22.9667519Z",
+  "machine": {
+    "os": "Microsoft Windows NT 10.0.26300.0",
+    "logicalProcessors": 4,
+    "dotnet": "10.0.13",
+    "configuration": "Release",
+    "webview2": "155.0.4283.62"
+  },
+  "setup": {
+    "shimStartedBeforeEditor": true,
+    "quietGateReached": true,
+    "quietGateWaitedMs": 2778,
+    "machineCpuBusyPercentOverall": 85,
+    "starvedStretchesSeen": [
+      {
+        "startMs": 4214,
+        "lengthMs": 485,
+        "poolThreadsAtStart": 22,
+        "poolThreadsAtEnd": 22,
+        "maxQueued": 4,
+        "machineCpuBusyPercent": 79,
+        "machineCpuBusyPercentFor2sBefore": 74
+      },
+      {
+        "startMs": 5679,
+        "lengthMs": 3137,
+        "poolThreadsAtStart": 22,
+        "poolThreadsAtEnd": 22,
+        "maxQueued": 2,
+        "machineCpuBusyPercent": 84,
+        "machineCpuBusyPercentFor2sBefore": 90
+      }
+    ],
+    "wholeProcessStops": []
+  },
+  "scenario": "five pages, each with 40 wrapped text boxes of 300 characters (7 pt, 198 x 48 pt) and 20 shapes labelled with 60 characters (9 pt)",
+  "fixture": {
+    "pages": 5,
+    "textBoxes": 200,
+    "labelledShapes": 100,
+    "totalCharacters": 65970,
+    "summaryBytes": 112124,
+    "layoutIssuesReported": 850,
+    "vsdxBytes": 42129
+  },
+  "buildFivePages": {
+    "all": {
+      "runs": 1,
+      "samplesMs": [
+        109.6
+      ],
+      "minMs": 109.6,
+      "medianMs": 109.6,
+      "p95Ms": 109.6,
+      "maxMs": 109.6,
+      "preferredMs": null,
+      "meetsPreferred": null
+    },
+    "contaminatedRuns": 0,
+    "clean": {
+      "runs": 1,
+      "samplesMs": [
+        109.6
+      ],
+      "minMs": 109.6,
+      "medianMs": 109.6,
+      "p95Ms": 109.6,
+      "maxMs": 109.6,
+      "preferredMs": null,
+      "meetsPreferred": null
+    }
+  },
+  "summary": {
+    "all": {
+      "runs": 5,
+      "samplesMs": [
+        14.8,
+        13.2,
+        12.1,
+        12.3,
+        12.9
+      ],
+      "minMs": 12.1,
+      "medianMs": 12.9,
+      "p95Ms": 14.8,
+      "maxMs": 14.8,
+      "preferredMs": 250,
+      "meetsPreferred": true
+    },
+    "contaminatedRuns": 0,
+    "clean": {
+      "runs": 5,
+      "samplesMs": [
+        14.8,
+        13.2,
+        12.1,
+        12.3,
+        12.9
+      ],
+      "minMs": 12.1,
+      "medianMs": 12.9,
+      "p95Ms": 14.8,
+      "maxMs": 14.8,
+      "preferredMs": 250,
+      "meetsPreferred": true
+    }
+  },
+  "inspectLayout": {
+    "all": {
+      "runs": 5,
+      "samplesMs": [
+        649.5,
+        152,
+        107.2,
+        99.7,
+        111.8
+      ],
+      "minMs": 99.7,
+      "medianMs": 111.8,
+      "p95Ms": 649.5,
+      "maxMs": 649.5,
+      "preferredMs": null,
+      "meetsPreferred": null
+    },
+    "contaminatedRuns": 1,
+    "clean": {
+      "runs": 4,
+      "samplesMs": [
+        152,
+        107.2,
+        99.7,
+        111.8
+      ],
+      "minMs": 99.7,
+      "medianMs": 111.8,
+      "p95Ms": 152,
+      "maxMs": 152,
+      "preferredMs": null,
+      "meetsPreferred": null
+    }
+  },
+  "getTextLayoutFiftyElements": {
+    "all": {
+      "runs": 5,
+      "samplesMs": [
+        19.2,
+        11.8,
+        11.1,
+        10.6,
+        11.8
+      ],
+      "minMs": 10.6,
+      "medianMs": 11.8,
+      "p95Ms": 19.2,
+      "maxMs": 19.2,
+      "preferredMs": null,
+      "meetsPreferred": null
+    },
+    "contaminatedRuns": 0,
+    "clean": {
+      "runs": 5,
+      "samplesMs": [
+        19.2,
+        11.8,
+        11.1,
+        10.6,
+        11.8
+      ],
+      "minMs": 10.6,
+      "medianMs": 11.8,
+      "p95Ms": 19.2,
+      "maxMs": 19.2,
+      "preferredMs": null,
+      "meetsPreferred": null
+    }
+  },
+  "renderPage1600x1200": {
+    "all": {
+      "runs": 5,
+      "samplesMs": [
+        126.6,
+        170.2,
+        3239.1,
+        104.7,
+        137.3
+      ],
+      "minMs": 104.7,
+      "medianMs": 137.3,
+      "p95Ms": 3239.1,
+      "maxMs": 3239.1,
+      "preferredMs": 1000,
+      "meetsPreferred": true
+    },
+    "contaminatedRuns": 1,
+    "clean": {
+      "runs": 4,
+      "samplesMs": [
+        126.6,
+        170.2,
+        104.7,
+        137.3
+      ],
+      "minMs": 104.7,
+      "medianMs": 137.3,
+      "p95Ms": 170.2,
+      "maxMs": 170.2,
+      "preferredMs": 1000,
+      "meetsPreferred": true
+    }
+  },
+  "exportVsdx": {
+    "all": {
+      "runs": 3,
+      "samplesMs": [
+        96,
+        101.6,
+        101.4
+      ],
+      "minMs": 96,
+      "medianMs": 101.4,
+      "p95Ms": 101.6,
+      "maxMs": 101.6,
+      "preferredMs": 3000,
+      "meetsPreferred": true
+    },
+    "contaminatedRuns": 0,
+    "clean": {
+      "runs": 3,
+      "samplesMs": [
+        96,
+        101.6,
+        101.4
+      ],
+      "minMs": 96,
+      "medianMs": 101.4,
+      "p95Ms": 101.6,
+      "maxMs": 101.6,
+      "preferredMs": 3000,
+      "meetsPreferred": true
+    }
+  },
+  "openAppExport": {
+    "all": {
+      "runs": 3,
+      "samplesMs": [
+        40.7,
+        46.2,
+        27.8
+      ],
+      "minMs": 27.8,
+      "medianMs": 40.7,
+      "p95Ms": 46.2,
+      "maxMs": 46.2,
+      "preferredMs": null,
+      "meetsPreferred": null
+    },
+    "contaminatedRuns": 0,
+    "clean": {
+      "runs": 3,
+      "samplesMs": [
+        40.7,
+        46.2,
+        27.8
+      ],
+      "minMs": 27.8,
+      "medianMs": 40.7,
+      "p95Ms": 46.2,
+      "maxMs": 46.2,
+      "preferredMs": null,
+      "meetsPreferred": null
+    }
+  },
+  "limits": "The shapes at the bottom of each page overlap by construction, so inspect_layout reports many issues; that is the workload, not a defect. Words are drawn from a 16-word list."
+}

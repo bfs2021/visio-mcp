@@ -1,0 +1,35 @@
+{
+  "scenario": "s12-editor-cpu-burner",
+  "question": "Editor in the process; the child is a PowerShell that keeps every logical processor busy for three seconds, so machine-wide CPU saturation is the only thing it does.",
+  "configuration": "Debug",
+  "observedSeconds": 12,
+  "childStartedAtMs": 2024,
+  "machineCpuBusyPercentOverall": 80,
+  "processStops": [],
+  "poolStarvedWindows": [
+    {
+      "startMs": 7393,
+      "lengthMs": 591,
+      "poolThreadsAtStart": 7,
+      "poolThreadsAtEnd": 7,
+      "maxQueued": 3,
+      "machineCpuBusyPercent": 68,
+      "machineCpuBusyPercentFor2sBefore": 80
+    }
+  ],
+  "poolTimerLate": [
+    {
+      "atMs": 7984,
+      "lateMs": 591
+    }
+  ],
+  "uiThreadLate": [
+    {
+      "atMs": 7984,
+      "answeredAfterMs": 591
+    }
+  ],
+  "appPipeSlow": [],
+  "verdict": "pool timers late, process not stopped",
+  "ran": "2026-10-23T17:56:05.4526873Z"
+}
