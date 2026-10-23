@@ -163,7 +163,7 @@ export function planRoutes(input: PlanInput): PlanResult {
     const endIds = new Set([el.from.elementId, el.to.elementId].filter((id): id is string => !!id));
     const endRects = [ta, tb].filter((t): t is Terminal => !!t).map(t => visualRect({ bounds: t.box, rotationDeg: t.rotationDeg }));
     const free = [el.from, el.to].filter(ep => ep.glue === 'none' && ep.point).map(ep => ep.point!);
-    const others = wp.length ? [] : selectObstacles(input.elements, input.layers, endIds, endRects, free, input.pageArea);
+    const others = wp.length ? [] : selectObstacles(input.elements, input.layers, endIds, endRects, free, input.pageArea).map(o => o.rect);
     return { el, a, b, base: routeOrthogonal(a, b, wp), endRects, others };
   });
 

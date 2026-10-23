@@ -66,7 +66,7 @@ describe('route planner', () => {
     expect(['repaired', 'rerouted']).toContain(r.provenance);
     expect(routeDefects(r.points)).toEqual([]);
     const obstacles = selectObstacles([...els, wall], [], new Set(['a', 'b']), [visualRect(els[0] as never), visualRect(els[1] as never)], [], 1_000_000);
-    expect(isClear(r.points, obstacles, [], 2)).toBe(true);
+    expect(isClear(r.points, obstacles.map(o => o.rect), [], 2)).toBe(true);
     expect(r.points[0]).toEqual(pts(first, 'ab')[0]);
   });
 

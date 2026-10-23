@@ -76,23 +76,23 @@
 
 **Interfaces:**
 - Defines RoutingObstacle with id, rect, policy (forbidden or avoid), clearancePt, and source (element or text).
-- Exports effectiveObstaclePolicy(element, endIds, endRects, freePoints, pageArea) and selectObstacles(elements, layers, endIds, endRects, freePoints, pageArea): RoutingObstacle[].
+- Exports effectiveObstaclePolicy(element, endIds, endRects, freePoints, pageArea) and selectObstacles(elements, layers, endIds, endRects, freePoints, pageArea, measureWidth?, connectorId?): RoutingObstacle[]. Text bounds use the shared TextWidthMeasurer; the current connector ID prevents its own label from becoming an obstacle.
 - Explicit passThrough is omitted from the result; explicit forbidden and avoid bypass backdrop and containment heuristics. automatic and absent policy use the current heuristic exactly; each selected candidate remains a hard obstacle, matching today.
 - Text bounds are selected only when routingPolicy.text is avoid, use the existing text measurement/layout helpers, and are omitted for the connector’s own route.
 
-- [ ] **Step 1: Add tests** named legacy_policy_matches_existing_obstacle_selection, automatic_legacy_obstacles_keep_hard_behavior, explicit_forbidden_large_region_is_not_filtered, pass_through_is_omitted, and protected_text_uses_measured_bounds. Assert legacy obstacle IDs match the current results, explicit forbidden keeps a region over 20% of page area, passThrough creates no obstacle record, and text is ignored by default but included when requested.
-- [ ] **Step 2: Run the focused tests and verify they fail.**
+- [x] **Step 1: Add tests** named legacy_policy_matches_existing_obstacle_selection, automatic_legacy_obstacles_keep_hard_behavior, explicit_forbidden_large_region_is_not_filtered, pass_through_is_omitted, and protected_text_uses_measured_bounds. Assert legacy obstacle IDs match the current results, explicit forbidden keeps a region over 20% of page area, passThrough creates no obstacle record, and text is ignored by default but included when requested.
+- [x] **Step 2: Run the focused tests and verify they fail.**
 
   Run: npm --prefix src/web test -- tests/routingPolicy.test.ts tests/obstacles.test.ts
 
   Expected: FAIL because structured policy records and explicit override handling do not exist.
-- [ ] **Step 3: Implement the policy resolver** in routingPolicy.ts and make obstacles.ts return identified records. Preserve the existing hidden, hidden-layer, invisible, containment, lane and 20% rules only for absent/automatic policy.
-- [ ] **Step 4: Run focused tests and verify they pass.**
+- [x] **Step 3: Implement the policy resolver** in routingPolicy.ts and make obstacles.ts return identified records. Preserve the existing hidden, hidden-layer, invisible, containment, lane and 20% rules only for absent/automatic policy.
+- [x] **Step 4: Run focused tests and verify they pass.**
 
   Run: npm --prefix src/web test -- tests/routingPolicy.test.ts tests/obstacles.test.ts
 
   Expected: PASS with existing obstacle-selection tests updated to assert IDs/records.
-- [ ] **Step 5: Commit** as feat(r22): resolve explicit obstacle policies.
+- [x] **Step 5: Commit** as feat(r22): resolve explicit obstacle policies.
 
 ### Task 3: Route around hard/soft obstacles and honor endpoint preferences
 
@@ -104,7 +104,7 @@
 - Test: src/web/tests/routeModes.test.ts
 
 **Interfaces:**
-- Search and clearance helpers consume RoutingObstacle records from Task 2.
+- Search and clearance helpers consume RoutingObstacle records from Task 2. PlanInput carries the shared TextWidthMeasurer and current connector ID to obstacle selection; connector-label bounds are measured from their route and label anchor, excluding the routed connector itself.
 - planRoutes returns routeFindings on PlanResult and each finding identifies its connector and any blocking element IDs.
 - Preferred side is shape-local, rotated by the endpoint shape’s rotation, and used only for dynamic glue. Static named ports remain authoritative.
 - Search first treats forbidden and avoid obstacles as blockers. If no route is found, it retries with avoid obstacles relaxed while forbidden obstacles remain blocking; each phase is capped at the existing BUDGET, so one connector uses at most 2 × BUDGET search expansions.

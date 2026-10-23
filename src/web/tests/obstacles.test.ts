@@ -11,21 +11,21 @@ const pick = (els: Element[], ends: string[], endRects = [{ x: 0, y: 0, width: 1
   selectObstacles(els, [], new Set(ends), endRects, free, 1_000_000);
 
 describe('obstacle selection', () => {
-  it('excludes the end shapes, text boxes, invisible shapes and hidden elements', () => {
+  it('excludes legacy end shapes, text boxes, invisible shapes and hidden elements', () => {
     const els = [
       shape('a', 0, 0, 10, 10), shape('t', 100, 100, 20, 20, { kind: 'text' }), shape('ghost', 200, 200, 20, 20, { style: { fill: { kind: 'none' }, stroke: { kind: 'none' }, strokeWidthPt: 1, dash: 'solid', lineCap: 'butt', lineJoin: 'miter' } }),
       shape('hid', 300, 300, 20, 20, { hidden: true }), shape('wall', 400, 400, 20, 20),
     ];
-    expect(pick(els, ['a'])).toEqual([{ x: 400, y: 400, width: 20, height: 20 }]);
+    expect(pick(els, ['a'])).toEqual([{ id: 'wall', rect: { x: 400, y: 400, width: 20, height: 20 }, policy: 'forbidden', clearancePt: 8, source: 'element' }]);
   });
 
-  it('treats a shape holding an end shape, a free end, or another shape as a container', () => {
+  it('treats a shape holding an end shape, a free end, or another shape as a legacy container', () => {
     const els = [shape('frame', -50, -50, 200, 200), shape('lane', 300, 0, 200, 100), shape('inner', 320, 20, 20, 20), shape('free', 600, 0, 50, 50)];
-    // frame holds the end rect, lane holds `inner`, and a free end sits inside `free`
-    expect(pick(els, [], undefined, [{ x: 620, y: 20 }]).map(r => r.x)).toEqual([320]);
+    const records = pick(els, [], undefined, [{ x: 620, y: 20 }]);
+    expect(records.map(r => r.id)).toEqual(['inner']);
   });
 
-  it('treats a very large shape as a backdrop', () => {
+  it('treats a very large legacy shape as a backdrop', () => {
     expect(pick([shape('bg', 0, 100, 900, 900)], [])).toEqual([]);
   });
 
