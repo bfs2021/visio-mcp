@@ -25,7 +25,7 @@ Add an optional routingPolicy object to shapes, text elements, and connectors. I
 - text: ignore or avoid, controlling whether the element's own text or connector label bounds are considered an obstacle. Omission remains ignore.
 - On connector endpoints, optional preferredSide: north, east, south, or west.
 
-The exact fixed-port path already exists: a static endpoint with a named port resolves to that shape port and keeps it. preferredSide is a soft preference for dynamic glue only; an explicitly named static port wins. The planner may choose another side if the preferred side cannot satisfy hard constraints, and emits a stable ROUTE_SIDE_PREFERENCE_RELAXED finding. Endpoint geometry is rotated with its shape. No new port identity or port-definition model is introduced.
+The exact fixed-port path already exists: a static endpoint with a named port resolves to that shape port and keeps it. preferredSide is a soft preference for dynamic glue only; an explicitly named static port wins. The planner may choose another side if the preferred side cannot satisfy hard constraints, and emits a stable ROUTE_SIDE_PREFERENCE_RELAXED finding. The preferredSide enum names the shape-local side; the side is rotated with the shape before planning. No new port identity or port-definition model is introduced.
 
 The optional routingPolicy is distinct from connector routing (R20 mode, constraints and advisory route) and style. automatic preserves the legacy obstacle-selection behavior for that element; it does not mean “always an obstacle.”
 
@@ -66,7 +66,7 @@ Visio export keeps visible geometry and preserves existing custom-port behavior.
 
 ## Failure handling
 
-A forbidden obstacle conflict or invalid port reference does not mutate the document. The route planner returns a structured unresolved finding and retains a previous route when available. A soft avoid violation is allowed only as a reported result. Bounded-search exhaustion remains observable and cannot be reported as a clean route.
+When a transaction adds or changes a hard policy or fixed-port reference and its resulting routes cannot satisfy that policy, reject the transaction without changing the document. If a later geometry edit makes an existing route impossible to satisfy, commit the geometry edit, retain the prior route, and report UNRESOLVED_ROUTE with blocker IDs and a reason. A soft avoid violation is allowed only as a reported result. Bounded-search exhaustion remains observable and cannot be reported as a clean route.
 
 Malformed or unknown policy values fail contract validation before transaction application. Hidden elements retain the current visual-routing default; R22 does not add a hidden-technical-layer override.
 
