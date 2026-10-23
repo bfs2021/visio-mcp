@@ -1,0 +1,48 @@
+{
+  "scenario": "s4-editor-cmd-child",
+  "question": "Editor in the process; the child is not .NET at all (cmd running ping).",
+  "configuration": "Debug",
+  "observedSeconds": 12,
+  "childStartedAtMs": 2039,
+  "machineCpuBusyPercentOverall": 68,
+  "processStops": [],
+  "poolStarvedWindows": [
+    {
+      "startMs": 2086,
+      "lengthMs": 992,
+      "poolThreadsAtStart": 6,
+      "poolThreadsAtEnd": 6,
+      "maxQueued": 4,
+      "machineCpuBusyPercent": 80,
+      "machineCpuBusyPercentFor2sBefore": 73
+    },
+    {
+      "startMs": 9421,
+      "lengthMs": 791,
+      "poolThreadsAtStart": 6,
+      "poolThreadsAtEnd": 6,
+      "maxQueued": 4,
+      "machineCpuBusyPercent": 69,
+      "machineCpuBusyPercentFor2sBefore": 66
+    }
+  ],
+  "poolTimerLate": [
+    {
+      "atMs": 3096,
+      "lateMs": 1062
+    },
+    {
+      "atMs": 10227,
+      "lateMs": 805
+    }
+  ],
+  "uiThreadLate": [
+    {
+      "atMs": 10227,
+      "answeredAfterMs": 805
+    }
+  ],
+  "appPipeSlow": [],
+  "verdict": "pool timers late, process not stopped",
+  "ran": "2026-10-23T18:00:24.3182689Z"
+}

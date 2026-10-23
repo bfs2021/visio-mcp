@@ -1,5 +1,5 @@
 {
-  "recorded": "2026-10-19T07:53:38.7315516Z",
+  "recorded": "2026-10-23T18:07:49.9849392Z",
   "machine": {
     "os": "Microsoft Windows NT 10.0.26300.0",
     "cpus": 4,
@@ -7,160 +7,351 @@
     "configuration": "Debug",
     "webview2": "155.0.4283.62"
   },
-  "warmup": {
-    "seconds": 10,
-    "longestCallMs": 65.3,
-    "note": "the shim start-up freeze of the test process, kept out of the measurements"
+  "setup": {
+    "shimStartedBeforeEditor": true,
+    "quietGateReached": true,
+    "quietGateWaitedMs": 3679,
+    "machineCpuBusyPercentOverall": 84,
+    "starvedStretchesSeen": [
+      {
+        "startMs": 88,
+        "lengthMs": 1076,
+        "poolThreadsAtStart": 4,
+        "poolThreadsAtEnd": 4,
+        "maxQueued": 1,
+        "machineCpuBusyPercent": 74,
+        "machineCpuBusyPercentFor2sBefore": 100
+      },
+      {
+        "startMs": 6566,
+        "lengthMs": 1380,
+        "poolThreadsAtStart": 6,
+        "poolThreadsAtEnd": 6,
+        "maxQueued": 3,
+        "machineCpuBusyPercent": 87,
+        "machineCpuBusyPercentFor2sBefore": 78
+      }
+    ],
+    "wholeProcessStops": [],
+    "note": "starved stretch = work queued for the thread pool for 300 ms or more (A05); a timed run that overlaps one is counted in contaminatedRuns and left out of \u0060clean\u0060"
   },
   "fixture": {
     "visibleElements": 500,
     "shapes": 460,
     "connectors": 40,
     "pages": 1,
-    "buildMs": 139.3,
+    "buildMs": 245.3,
     "canvasGroups": 1425,
     "summaryBytes": 82732,
     "previewBytes": 196786,
-    "vsdxBytes": 43035
+    "vsdxBytes": 43152
   },
   "singleEditAgent": {
-    "runs": 10,
-    "samplesMs": [
-      10.8,
-      7.7,
-      7.7,
-      8.5,
-      10,
-      16.4,
-      11.3,
-      7.2,
-      8.6,
-      8
-    ],
-    "minMs": 7.2,
-    "medianMs": 8.6,
-    "p95Ms": 16.4,
-    "maxMs": 16.4,
-    "preferredMs": 100,
-    "acceptableMs": 250,
-    "meetsPreferred": true
+    "all": {
+      "runs": 10,
+      "samplesMs": [
+        19,
+        9.7,
+        19.8,
+        9.6,
+        10.4,
+        12.5,
+        16,
+        24.2,
+        9.4,
+        12.6
+      ],
+      "minMs": 9.4,
+      "medianMs": 12.6,
+      "p95Ms": 24.2,
+      "maxMs": 24.2,
+      "preferredMs": 100,
+      "acceptableMs": 250,
+      "meetsPreferred": true
+    },
+    "contaminatedRuns": 0,
+    "contaminatedIndexes": [],
+    "clean": {
+      "runs": 10,
+      "samplesMs": [
+        19,
+        9.7,
+        19.8,
+        9.6,
+        10.4,
+        12.5,
+        16,
+        24.2,
+        9.4,
+        12.6
+      ],
+      "minMs": 9.4,
+      "medianMs": 12.6,
+      "p95Ms": 24.2,
+      "maxMs": 24.2,
+      "preferredMs": 100,
+      "acceptableMs": 250,
+      "meetsPreferred": true
+    }
   },
   "singleEditPainted": {
-    "runs": 10,
-    "samplesMs": [
-      35.6,
-      30.9,
-      30.9,
-      32.3,
-      29.7,
-      48.1,
-      30.9,
-      30.6,
-      32,
-      31.1
-    ],
-    "minMs": 29.7,
-    "medianMs": 31.1,
-    "p95Ms": 48.1,
-    "maxMs": 48.1,
-    "preferredMs": 100,
-    "acceptableMs": 250,
-    "meetsPreferred": true
+    "all": {
+      "runs": 10,
+      "samplesMs": [
+        41.6,
+        31.7,
+        45.2,
+        31.1,
+        31.8,
+        33.1,
+        48.3,
+        42.8,
+        32.5,
+        29.5
+      ],
+      "minMs": 29.5,
+      "medianMs": 33.1,
+      "p95Ms": 48.3,
+      "maxMs": 48.3,
+      "preferredMs": 100,
+      "acceptableMs": 250,
+      "meetsPreferred": true
+    },
+    "contaminatedRuns": 0,
+    "contaminatedIndexes": [],
+    "clean": {
+      "runs": 10,
+      "samplesMs": [
+        41.6,
+        31.7,
+        45.2,
+        31.1,
+        31.8,
+        33.1,
+        48.3,
+        42.8,
+        32.5,
+        29.5
+      ],
+      "minMs": 29.5,
+      "medianMs": 33.1,
+      "p95Ms": 48.3,
+      "maxMs": 48.3,
+      "preferredMs": 100,
+      "acceptableMs": 250,
+      "meetsPreferred": true
+    }
   },
   "batch100": {
-    "runs": 5,
-    "samplesMs": [
-      36.3,
-      35.9,
-      34.3,
-      37.6,
-      38.9
+    "all": {
+      "runs": 5,
+      "samplesMs": [
+        1473,
+        67,
+        65.8,
+        60.2,
+        67.5
+      ],
+      "minMs": 60.2,
+      "medianMs": 67,
+      "p95Ms": 1473,
+      "maxMs": 1473,
+      "preferredMs": 500,
+      "acceptableMs": null,
+      "meetsPreferred": true
+    },
+    "contaminatedRuns": 1,
+    "contaminatedIndexes": [
+      0
     ],
-    "minMs": 34.3,
-    "medianMs": 36.3,
-    "p95Ms": 38.9,
-    "maxMs": 38.9,
-    "preferredMs": 500,
-    "acceptableMs": null,
-    "meetsPreferred": true
+    "clean": {
+      "runs": 4,
+      "samplesMs": [
+        67,
+        65.8,
+        60.2,
+        67.5
+      ],
+      "minMs": 60.2,
+      "medianMs": 67,
+      "p95Ms": 67.5,
+      "maxMs": 67.5,
+      "preferredMs": 500,
+      "acceptableMs": null,
+      "meetsPreferred": true
+    }
   },
   "summaryOverMcp": {
-    "runs": 10,
-    "samplesMs": [
-      15.4,
-      13.2,
-      10.6,
-      9.1,
-      9.2,
-      8.6,
-      7.2,
-      10.1,
-      8.5,
-      8.1
-    ],
-    "minMs": 7.2,
-    "medianMs": 9.2,
-    "p95Ms": 15.4,
-    "maxMs": 15.4,
-    "preferredMs": 250,
-    "acceptableMs": null,
-    "meetsPreferred": true
+    "all": {
+      "runs": 10,
+      "samplesMs": [
+        48.6,
+        17.6,
+        14.7,
+        13.4,
+        15,
+        10.4,
+        13,
+        10.9,
+        10.7,
+        15.1
+      ],
+      "minMs": 10.4,
+      "medianMs": 14.7,
+      "p95Ms": 48.6,
+      "maxMs": 48.6,
+      "preferredMs": 250,
+      "acceptableMs": null,
+      "meetsPreferred": true
+    },
+    "contaminatedRuns": 0,
+    "contaminatedIndexes": [],
+    "clean": {
+      "runs": 10,
+      "samplesMs": [
+        48.6,
+        17.6,
+        14.7,
+        13.4,
+        15,
+        10.4,
+        13,
+        10.9,
+        10.7,
+        15.1
+      ],
+      "minMs": 10.4,
+      "medianMs": 14.7,
+      "p95Ms": 48.6,
+      "maxMs": 48.6,
+      "preferredMs": 250,
+      "acceptableMs": null,
+      "meetsPreferred": true
+    }
   },
   "summaryHostOnly": {
-    "runs": 10,
-    "samplesMs": [
-      2.8,
-      2.1,
-      1.3,
-      1.7,
-      1.1,
-      1.2,
-      1.9,
-      1.2,
-      2.1,
-      1.2
-    ],
-    "minMs": 1.1,
-    "medianMs": 1.7,
-    "p95Ms": 2.8,
-    "maxMs": 2.8,
-    "preferredMs": 250,
-    "acceptableMs": null,
-    "meetsPreferred": true
+    "all": {
+      "runs": 10,
+      "samplesMs": [
+        3.9,
+        1.4,
+        1.5,
+        1.1,
+        1.1,
+        1.1,
+        1.1,
+        1.1,
+        1.2,
+        1.1
+      ],
+      "minMs": 1.1,
+      "medianMs": 1.1,
+      "p95Ms": 3.9,
+      "maxMs": 3.9,
+      "preferredMs": 250,
+      "acceptableMs": null,
+      "meetsPreferred": true
+    },
+    "contaminatedRuns": 0,
+    "contaminatedIndexes": [],
+    "clean": {
+      "runs": 10,
+      "samplesMs": [
+        3.9,
+        1.4,
+        1.5,
+        1.1,
+        1.1,
+        1.1,
+        1.1,
+        1.1,
+        1.2,
+        1.1
+      ],
+      "minMs": 1.1,
+      "medianMs": 1.1,
+      "p95Ms": 3.9,
+      "maxMs": 3.9,
+      "preferredMs": 250,
+      "acceptableMs": null,
+      "meetsPreferred": true
+    }
   },
   "previewPage1600x1200": {
-    "runs": 5,
-    "samplesMs": [
-      204,
-      51.2,
-      79,
-      48.1,
-      49
-    ],
-    "minMs": 48.1,
-    "medianMs": 51.2,
-    "p95Ms": 204,
-    "maxMs": 204,
-    "preferredMs": 1000,
-    "acceptableMs": null,
-    "meetsPreferred": true
+    "all": {
+      "runs": 5,
+      "samplesMs": [
+        204.1,
+        53.8,
+        54.1,
+        63.3,
+        61.7
+      ],
+      "minMs": 53.8,
+      "medianMs": 61.7,
+      "p95Ms": 204.1,
+      "maxMs": 204.1,
+      "preferredMs": 1000,
+      "acceptableMs": null,
+      "meetsPreferred": true
+    },
+    "contaminatedRuns": 0,
+    "contaminatedIndexes": [],
+    "clean": {
+      "runs": 5,
+      "samplesMs": [
+        204.1,
+        53.8,
+        54.1,
+        63.3,
+        61.7
+      ],
+      "minMs": 53.8,
+      "medianMs": 61.7,
+      "p95Ms": 204.1,
+      "maxMs": 204.1,
+      "preferredMs": 1000,
+      "acceptableMs": null,
+      "meetsPreferred": true
+    }
   },
   "vsdxSave": {
-    "runs": 5,
-    "samplesMs": [
-      228.1,
-      140.1,
-      134.4,
-      125.9,
-      148.3
-    ],
-    "minMs": 125.9,
-    "medianMs": 140.1,
-    "p95Ms": 228.1,
-    "maxMs": 228.1,
-    "preferredMs": 3000,
-    "acceptableMs": null,
-    "meetsPreferred": true
+    "all": {
+      "runs": 5,
+      "samplesMs": [
+        225.4,
+        152.2,
+        145.6,
+        159.8,
+        132.6
+      ],
+      "minMs": 132.6,
+      "medianMs": 152.2,
+      "p95Ms": 225.4,
+      "maxMs": 225.4,
+      "preferredMs": 3000,
+      "acceptableMs": null,
+      "meetsPreferred": true
+    },
+    "contaminatedRuns": 0,
+    "contaminatedIndexes": [],
+    "clean": {
+      "runs": 5,
+      "samplesMs": [
+        225.4,
+        152.2,
+        145.6,
+        159.8,
+        132.6
+      ],
+      "minMs": 132.6,
+      "medianMs": 152.2,
+      "p95Ms": 225.4,
+      "maxMs": 225.4,
+      "preferredMs": 3000,
+      "acceptableMs": null,
+      "meetsPreferred": true
+    }
   },
   "note": "Each figure is the median of repeated runs on one machine; preferred targets are spec section 18. summaryOverMcp includes the stdio transport, summaryHostOnly does not."
 }

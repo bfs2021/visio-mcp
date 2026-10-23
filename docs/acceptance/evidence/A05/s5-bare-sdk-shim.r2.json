@@ -1,0 +1,15 @@
+{
+  "scenario": "s5-bare-sdk-shim",
+  "question": "No editor in the process; the shim is started through the MCP client library.",
+  "configuration": "Debug",
+  "observedSeconds": 12,
+  "childStartedAtMs": 2297,
+  "machineCpuBusyPercentOverall": 71,
+  "processStops": [],
+  "poolStarvedWindows": [],
+  "poolTimerLate": [],
+  "uiThreadLate": [],
+  "appPipeSlow": [],
+  "verdict": "no stop",
+  "ran": "2026-10-23T17:58:57.7756554Z"
+}

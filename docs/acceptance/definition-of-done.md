@@ -72,7 +72,7 @@ These descriptions preserve the acceptance snapshot. Current work status and own
    of agent-created output. These are useful human evidence, but do not prove every current editor gesture or dialog: the WPF consent window, recovery dialog
    and library import dialog in the I52 suite were exercised through automation only. See the supplementary sign-off below.
 3. **Alignment diagnostics are conservative heuristics** (item 13). R05 detects nearby comparable peer boxes; grouped, rotated, custom-vector and free-text arrangements remain outside this check. See [R05](../m5/R05-regression.md).
-4. **Shim start-up freeze in the test setup** (see [performance.md](performance.md)): cause not found; not seen outside the test process.
+4. **Thread-pool starvation when a test process launches a child** (A05, [shim-startup-pause.md](shim-startup-pause.md)): not a freeze of the application and not specific to the shim; it scales with machine load (2 s at about 70 % busy, 5 s at 96 %) and the product never launches a process. The exact mechanism was not isolated.
 5. **One machine and one Office version.** Visio 16.0 build 20430 and the installed Word; no other builds.
 6. Library picture bytes are not garbage-collected on a schedule (I51 gap 4), and a recovered session that is not edited before a second crash is offered again (I51 gap 3).
 7. Connector `bounds` in the canonical document are authored fallback geometry, not the live extent (design decision; `visualBounds` carries the extent). An

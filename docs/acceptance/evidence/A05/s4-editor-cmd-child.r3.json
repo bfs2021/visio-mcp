@@ -1,0 +1,15 @@
+{
+  "scenario": "s4-editor-cmd-child",
+  "question": "Editor in the process; the child is not .NET at all (cmd running ping).",
+  "configuration": "Debug",
+  "observedSeconds": 12,
+  "childStartedAtMs": 2035,
+  "machineCpuBusyPercentOverall": 67,
+  "processStops": [],
+  "poolStarvedWindows": [],
+  "poolTimerLate": [],
+  "uiThreadLate": [],
+  "appPipeSlow": [],
+  "verdict": "no stop",
+  "ran": "2026-10-23T18:00:55.1313706Z"
+}

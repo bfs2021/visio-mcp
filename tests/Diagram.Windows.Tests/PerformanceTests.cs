@@ -22,7 +22,7 @@ public class PerformanceTests
     static CancellationToken Ct(int s = 120) => new CancellationTokenSource(TimeSpan.FromSeconds(s)).Token;
     static JsonElement Body(CallToolResult r) => r.StructuredContent!.Value;
 
-    static object Stats(List<double> ms, double preferred, double? acceptable = null)
+    static object Plain(List<double> ms, double preferred, double? acceptable = null)
     {
         var s = ms.OrderBy(x => x).ToList();
         double At(double q) => s[Math.Min(s.Count - 1, (int)(q * s.Count))];
@@ -35,13 +35,28 @@ public class PerformanceTests
         var pipe = $"perf-{Guid.NewGuid():N}";
         var work = Path.Combine(Path.GetTempPath(), "perf-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(work);
-        await using var h = await Harness.StartAsync(pipe: pipe, exportRoot: Path.Combine(work, "exports"));
         var cfg = AppContext.BaseDirectory.Contains($"{Path.DirectorySeparatorChar}Release{Path.DirectorySeparatorChar}") ? "Release" : "Debug";
+        using var sampler = new PoolSampler();
+        // A05: starting a child process starves this process's thread pool for a second or two on this (loaded) machine, whether or not the editor is in the process.
+        // The shim connects to the pipe only when first called, so it is started first, before the editor exists and before anything is timed.
         await using var client = await McpClient.CreateAsync(new StdioClientTransport(new StdioClientTransportOptions
         {
             Name = "perf", Command = "dotnet", Arguments = [Path.Combine(Harness.RepoRoot, "src", "Diagram.Mcp", "bin", cfg, "net10.0", "Diagram.Mcp.dll")],
             EnvironmentVariables = new Dictionary<string, string?> { ["DIAGRAM_PIPE"] = pipe },
         }), cancellationToken: Ct());
+        await using var h = await Harness.StartAsync(pipe: pipe, exportRoot: Path.Combine(work, "exports"));
+
+        var spans = new Dictionary<List<double>, List<(double From, double To)>>(ReferenceEqualityComparer.Instance);
+        double Now() => sampler.Clock.Elapsed.TotalMilliseconds;
+        void Mark(List<double> series, double from) { if (!spans.TryGetValue(series, out var l)) spans[series] = l = []; l.Add((from, Now())); }
+        /// <summary>All runs, how many overlapped a starved stretch of this process, and the figures for the runs that did not.</summary>
+        object Stats(List<double> ms, double preferred, double? acceptable = null)
+        {
+            var hit = spans[ms].Select(x => sampler.StarvedBetween(x.From, x.To)).ToList();
+            var clean = ms.Where((_, i) => !hit[i]).ToList();
+            var all = Plain(ms, preferred, acceptable);
+            return new { all, contaminatedRuns = hit.Count(x => x), contaminatedIndexes = hit.Select((x, i) => (x, i)).Where(t => t.x).Select(t => t.i).ToArray(), clean = clean.Count > 0 ? Plain(clean, preferred, acceptable) : null };
+        }
 
         async Task<(string Doc, string Session, int Revision, string Page, JsonElement Body)> Summary(bool geometry = true)
         {
@@ -59,17 +74,10 @@ public class PerformanceTests
             return Body(r).Clone();
         }
 
-        // ---------------------------------------------------------------- warm-up. Starting the shim from the process that hosts the editor freezes that process for about four seconds,
-        // somewhere between four and seven seconds later, on this machine (isolated with probes: no MCP call is needed, and a process without the shim never does it).
-        // In use the shim is a separate process started by the agent's host, so this is a property of the test setup; the warm-up keeps it out of the measurements and records it.
-        var warmup = Stopwatch.StartNew(); double worstWarmupMs = 0;
-        while (warmup.Elapsed < TimeSpan.FromSeconds(10))
-        {
-            var w = Stopwatch.StartNew();
-            await client.CallToolAsync("get_document_summary", cancellationToken: Ct());
-            worstWarmupMs = Math.Max(worstWarmupMs, w.Elapsed.TotalMilliseconds);
-            await Task.Delay(30);
-        }
+        // ---------------------------------------------------------------- quiet gate. Not a fixed sleep: timing starts when the thread pool has been idle for three seconds
+        // (or after a minute, recorded as not reached). The wait is reported, and every timed run is later checked against the starved stretches the sampler saw.
+        var settled = await sampler.WaitQuietAsync(TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(60));
+        var quietReached = settled is not null;
 
         // ---------------------------------------------------------------- the fixture: 500 visible elements (460 shapes and 40 connectors) on one A4 page
         var first = await Summary();
@@ -96,12 +104,12 @@ public class PerformanceTests
         var edit = new List<double>(); var painted = new List<double>();
         for (var i = 0; i < Runs; i++)
         {
-            var sw = Stopwatch.StartNew();
+            var sw = Stopwatch.StartNew(); var from = Now();
             var res = await Apply(first.Doc, first.Session, rev, new { op = "move", target = "n200", delta = new { xPt = 1, yPt = 0 } });
-            edit.Add(sw.Elapsed.TotalMilliseconds);
+            edit.Add(sw.Elapsed.TotalMilliseconds); Mark(edit, from);
             rev = res.GetProperty("transaction").GetProperty("revision").GetInt32();
             await h.Eval("new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(true))))");
-            painted.Add(sw.Elapsed.TotalMilliseconds);
+            painted.Add(sw.Elapsed.TotalMilliseconds); Mark(painted, from);
         }
 
         // ---------------------------------------------------------------- 2. a 100-operation batch
@@ -109,9 +117,9 @@ public class PerformanceTests
         for (var i = 0; i < 5; i++)
         {
             var ops = Enumerable.Range(0, 100).Select(k => (object)new { op = "move", target = $"n{k}", delta = new { xPt = i % 2 == 0 ? 1 : -1, yPt = 0 } }).ToArray();
-            var sw = Stopwatch.StartNew();
+            var sw = Stopwatch.StartNew(); var from = Now();
             var res = await Apply(first.Doc, first.Session, rev, ops);
-            batch.Add(sw.Elapsed.TotalMilliseconds);
+            batch.Add(sw.Elapsed.TotalMilliseconds); Mark(batch, from);
             rev = res.GetProperty("transaction").GetProperty("revision").GetInt32();
         }
 
@@ -119,27 +127,27 @@ public class PerformanceTests
         var summary = new List<double>(); var summaryBytes = 0;
         for (var i = 0; i < Runs; i++)
         {
-            var sw = Stopwatch.StartNew();
+            var sw = Stopwatch.StartNew(); var from = Now();
             var r = await client.CallToolAsync("get_document_summary", new Dictionary<string, object?> { ["includeGeometry"] = true }, cancellationToken: Ct());
-            summary.Add(sw.Elapsed.TotalMilliseconds);
+            summary.Add(sw.Elapsed.TotalMilliseconds); Mark(summary, from);
             Assert.True(r.IsError != true);
             summaryBytes = Body(r).GetRawText().Length;
         }
         var hostSummary = new List<double>();
         for (var i = 0; i < Runs; i++)
         {
-            var sw = Stopwatch.StartNew();
+            var sw = Stopwatch.StartNew(); var from = Now();
             var r = await h.Send("doc.summary", new JsonObject { ["includeGeometry"] = true });
-            hostSummary.Add(sw.Elapsed.TotalMilliseconds);
+            hostSummary.Add(sw.Elapsed.TotalMilliseconds); Mark(hostSummary, from);
             Assert.Null(r.Error);
         }
         var render = new List<double>(); var pngBytes = 0;
         for (var i = 0; i < 5; i++)
         {
-            var sw = Stopwatch.StartNew();
+            var sw = Stopwatch.StartNew(); var from = Now();
             var r = await client.CallToolAsync("render_page", new Dictionary<string, object?>
             { ["documentId"] = first.Doc, ["sessionId"] = first.Session, ["pageId"] = first.Page, ["maxWidth"] = 1600, ["maxHeight"] = 1200 }, cancellationToken: Ct());
-            render.Add(sw.Elapsed.TotalMilliseconds);
+            render.Add(sw.Elapsed.TotalMilliseconds); Mark(render, from);
             Assert.True(r.IsError != true, r.StructuredContent?.ToString());
             pngBytes = r.Content.OfType<ImageContentBlock>().Sum(c => c.DecodedData.Length);
             Assert.True(pngBytes > 5_000, "the preview is not an empty image");
@@ -149,10 +157,10 @@ public class PerformanceTests
         var save = new List<double>(); long vsdxBytes = 0;
         for (var i = 0; i < 5; i++)
         {
-            var sw = Stopwatch.StartNew();
+            var sw = Stopwatch.StartNew(); var from = Now();
             var r = await client.CallToolAsync("export_document", new Dictionary<string, object?>
             { ["documentId"] = first.Doc, ["sessionId"] = first.Session, ["format"] = "vsdx", ["path"] = $"perf-{i}.vsdx" }, cancellationToken: Ct());
-            save.Add(sw.Elapsed.TotalMilliseconds);
+            save.Add(sw.Elapsed.TotalMilliseconds); Mark(save, from);
             Assert.True(r.IsError != true, r.StructuredContent?.ToString());
             vsdxBytes = new FileInfo(Body(r).GetProperty("path").GetString()!).Length;
         }
@@ -164,7 +172,8 @@ public class PerformanceTests
         {
             recorded = DateTime.UtcNow.ToString("o"),
             machine = new { os = Environment.OSVersion.VersionString, cpus = Environment.ProcessorCount, dotnet = Environment.Version.ToString(), configuration = cfg, webview2 = Microsoft.Web.WebView2.Core.CoreWebView2Environment.GetAvailableBrowserVersionString() },
-            warmup = new { seconds = 10, longestCallMs = Math.Round(worstWarmupMs, 1), note = "the shim start-up freeze of the test process, kept out of the measurements" },
+            setup = new { shimStartedBeforeEditor = true, quietGateReached = quietReached, quietGateWaitedMs = settled is { } w ? Math.Round(w.TotalMilliseconds) : (double?)null, machineCpuBusyPercentOverall = sampler.OverallBusyPercent(), starvedStretchesSeen = sampler.StarvationJson(), wholeProcessStops = sampler.StopsJson(),
+                note = "starved stretch = work queued for the thread pool for 300 ms or more (A05); a timed run that overlaps one is counted in contaminatedRuns and left out of `clean`" },
             fixture = new { visibleElements = Elements, shapes = 460, connectors = 40, pages = 1, buildMs = Math.Round(buildMs, 1), canvasGroups = nodes, summaryBytes, previewBytes = pngBytes, vsdxBytes },
             singleEditAgent = Stats(edit, 100, 250),
             singleEditPainted = Stats(painted, 100, 250),
@@ -180,6 +189,7 @@ public class PerformanceTests
         File.WriteAllText(Path.Combine(dir, $"live-timings-{cfg.ToLowerInvariant()}.json"), JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true }));
 
         // generous ceilings: only a real regression crosses these
+        Assert.True(sampler.StopsJson().Count == 0, "the process stopped as a whole during the benchmark");
         Assert.True(Median(painted) < 1000, "a single edit took over a second to be painted");
         Assert.True(Median(batch) < 3000);
         Assert.True(Median(render) < 5000);

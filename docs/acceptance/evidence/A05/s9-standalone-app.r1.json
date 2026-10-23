@@ -1,0 +1,35 @@
+{
+  "scenario": "s9-standalone-app",
+  "question": "Production topology: the real Diagram.App.exe in its own process, the shim started from another process; the app is observed through its pipe.",
+  "configuration": "Debug",
+  "observedSeconds": 12,
+  "childStartedAtMs": 2360,
+  "machineCpuBusyPercentOverall": 72,
+  "processStops": [],
+  "poolStarvedWindows": [
+    {
+      "startMs": 2750,
+      "lengthMs": 964,
+      "poolThreadsAtStart": 7,
+      "poolThreadsAtEnd": 7,
+      "maxQueued": 4,
+      "machineCpuBusyPercent": 69,
+      "machineCpuBusyPercentFor2sBefore": 90
+    }
+  ],
+  "poolTimerLate": [
+    {
+      "atMs": 3714,
+      "lateMs": 965
+    }
+  ],
+  "uiThreadLate": [],
+  "appPipeSlow": [
+    {
+      "atMs": 3715,
+      "answeredAfterMs": 965
+    }
+  ],
+  "verdict": "pool timers late, process not stopped",
+  "ran": "2026-10-23T17:54:59.6572146Z"
+}
