@@ -42,6 +42,7 @@ public sealed class BlobStore
 {
     readonly string directory;
     readonly AtomicFileWriter writer = new();
+    readonly SemaphoreSlim gate = new(1, 1); // a picture handed out again and a collection deciding it is unused never interleave
 
     public BlobStore(string directory)
     {
@@ -76,12 +77,41 @@ public sealed class BlobStore
         return true;
     }
 
+    /// <summary>
+    /// Stores the bytes and returns their hash. A picture already here is touched instead, so it counts as new again: its next user may not
+    /// have pinned it yet, and garbage collection leaves recently touched pictures alone.
+    /// </summary>
     public async Task<string> PutDurableAsync(ReadOnlyMemory<byte> bytes, CancellationToken ct)
     {
         var sha = HashOf(bytes.Span);
         var path = PathFor(sha);
-        if (!File.Exists(path)) await writer.WriteAsync(path, bytes, ct).ConfigureAwait(false);
+        await gate.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            if (!File.Exists(path)) await writer.WriteAsync(path, bytes, ct).ConfigureAwait(false);
+            else File.SetLastWriteTimeUtc(path, DateTime.UtcNow);
+        }
+        finally { gate.Release(); }
         return sha;
+    }
+
+    /// <summary>
+    /// Deletes a picture only if nothing has stored or touched it since <paramref name="idleSince"/>, checked under the same lock as
+    /// <see cref="PutDurableAsync"/>. Returns the bytes freed, or null if it was kept or already gone.
+    /// </summary>
+    public async Task<long?> DeleteIfIdleAsync(string sha, DateTime idleSince, CancellationToken ct)
+    {
+        var file = new FileInfo(PathFor(sha));
+        await gate.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            file.Refresh();
+            if (!file.Exists || file.LastWriteTimeUtc >= idleSince) return null;
+            var length = file.Length;
+            file.Delete();
+            return length;
+        }
+        finally { gate.Release(); }
     }
 
     /// <summary>Synchronous read for callers that must answer on a UI thread (serving an asset to the page). Never block on <see cref="ReadAsync"/> there.</summary>
@@ -98,4 +128,41 @@ public sealed class BlobStore
         if (HashOf(bytes) != sha) throw new IOException($"blob {sha} is corrupt");
         return bytes;
     }
+}
+
+/// <summary>
+/// Marks a picture folder as in use by this process for as long as the lease is held. One window per user and logon session is enforced
+/// elsewhere, but the same user signed in twice runs two processes over the same folder, and neither can see the other's documents. A process
+/// that holds the only live lease knows nobody else needs the pictures; a lease left by a process that ended is removed when found.
+/// </summary>
+public sealed class BlobStoreLease : IDisposable
+{
+    const string Folder = ".holders";
+    readonly string holders;
+    readonly FileStream held;
+
+    BlobStoreLease(string holders, FileStream held) { this.holders = holders; this.held = held; }
+
+    public static BlobStoreLease Take(string blobDirectory)
+    {
+        var holders = Path.Combine(Path.GetFullPath(blobDirectory), Folder);
+        Directory.CreateDirectory(holders);
+        var file = Path.Combine(holders, $"{Environment.ProcessId}-{Guid.NewGuid():N}.lease");
+        // Open with no sharing and delete-on-close: another process cannot remove it while this one runs, and it goes when the process does.
+        return new BlobStoreLease(holders, new FileStream(file, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None, 1, FileOptions.DeleteOnClose));
+    }
+
+    /// <summary>True if no other running process holds a lease on the folder. Leases of processes that ended are cleared on the way.</summary>
+    public bool IsSoleHolder()
+    {
+        foreach (var other in Directory.EnumerateFiles(holders, "*.lease"))
+        {
+            if (string.Equals(other, held.Name, StringComparison.OrdinalIgnoreCase)) continue;
+            try { File.Delete(other); }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return false; } // still open: that process is alive
+        }
+        return true;
+    }
+
+    public void Dispose() => held.Dispose();
 }

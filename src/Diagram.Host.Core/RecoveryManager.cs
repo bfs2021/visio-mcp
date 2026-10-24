@@ -329,19 +329,19 @@ public sealed class RecoveryManager : IAsyncDisposable
     /// Removes picture bytes that no document, library entry, undo history or recovery session needs. Recent uploads are left alone.
     /// Every open document is asked what it still holds; a document that cannot answer means nothing can be proven unused.
     /// </summary>
-    public async Task<int> CollectGarbageAsync(IEnumerable<string> libraryHashes, TimeSpan grace, CancellationToken ct)
+    public async Task<BlobGcResult> CollectGarbageAsync(IEnumerable<string> libraryHashes, TimeSpan grace, CancellationToken ct)
     {
         var live = new HashSet<string>(store.ReferencedBlobs(), StringComparer.Ordinal);
         foreach (var h in libraryHashes) live.Add(h);
         var open = router.Documents;
-        if (open.Count == 0) return 0;
+        if (open.Count == 0) return BlobGcResult.None;
         foreach (var scope in open)
         {
             var r = await router.SendAsync(new RequestEnvelope { RequestId = Guid.NewGuid().ToString(), Method = "doc.retainedBlobs", DocumentId = scope.DocumentId, SessionId = scope.SessionId, Params = new JsonObject() }, ct).ConfigureAwait(false);
-            if (r.Error is not null || r.Result is not { } res) return 0; // without the editor's answer nothing can be proven unused
+            if (r.Error is not null || r.Result is not { } res) return BlobGcResult.None; // without the editor's answer nothing can be proven unused
             foreach (var h in res.GetProperty("hashes").EnumerateArray()) live.Add(h.GetString()!);
         }
-        return BlobGc.Collect(blobs, live, grace);
+        return await BlobGc.CollectAsync(blobs, live, grace, ct).ConfigureAwait(false);
     }
 
     public async ValueTask DisposeAsync()

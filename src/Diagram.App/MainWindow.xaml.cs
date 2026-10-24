@@ -18,7 +18,8 @@ namespace Diagram.App;
 /// <param name="Offscreen">Place the window out of sight (automated tests).</param>
 /// <param name="PipeName">Pipe the MCP shim connects to; null leaves live control off.</param>
 /// <param name="ExportRoot">Folder a client may export into (besides the open document's own folder).</param>
-public sealed record AppOptions(string ContentRoot, string UserDataDir, string BlobDir, bool Offscreen = false, string? PipeName = null, string? ExportRoot = null, string? LibraryDir = null, string? RecoveryDir = null, bool PromptOnClose = false, TimeProvider? RecoveryTimeProvider = null)
+/// <param name="BlobMaintenance">When unused picture bytes are reclaimed (H02); null uses <see cref="BlobMaintenanceOptions.Default"/>.</param>
+public sealed record AppOptions(string ContentRoot, string UserDataDir, string BlobDir, bool Offscreen = false, string? PipeName = null, string? ExportRoot = null, string? LibraryDir = null, string? RecoveryDir = null, bool PromptOnClose = false, TimeProvider? RecoveryTimeProvider = null, BlobMaintenanceOptions? BlobMaintenance = null)
 {
     public static AppOptions Default()
     {
@@ -82,6 +83,9 @@ public partial class MainWindow : Window
     public WorkspaceStore Workspace { get; }
     public PreferencesStore Preferences { get; }
     public RecoveryManager RecoveryMgr { get; private set; } = null!;
+    /// <summary>Reclaims picture bytes nothing needs (H02). Held with the lease that tells other processes this folder is in use.</summary>
+    public BlobMaintenance Maintenance { get; private set; } = null!;
+    BlobStoreLease? BlobLease;
     public WebViewHost Host => host ?? throw new InvalidOperationException("call InitializeAsync first");
     public BridgeRouter Router => Host.Router;
     public SessionCoordinator Coordinator { get; private set; } = null!;
@@ -119,6 +123,11 @@ public partial class MainWindow : Window
             new RecoveryOptions(CheckpointEvery: TimeSpan.FromSeconds(initialPreferences.Preferences.Recovery.CheckpointSeconds)),
             documentPath: Services.PathOf, timeProvider: options.RecoveryTimeProvider);
         RecoveryMgr.Start();
+        BlobLease = BlobStoreLease.Take(options.BlobDir);
+        Maintenance = new BlobMaintenance(BlobLease, Path.GetFullPath(Path.Combine(options.BlobDir, "..", "blob-maintenance.json")),
+            async ct => (await Library.ListAsync(null, null, ct)).SelectMany(a => a.History.Append(a.Sha256)).Concat(Preparer.LiveHashes()),
+            RecoveryMgr.CollectGarbageAsync, options.BlobMaintenance);
+        Maintenance.Start();
         Agents = new AgentView(() => Dispatcher, () => Task.FromResult(webEnvironment!), () => host!.Router, options.ContentRoot, Blobs);
         Documents = new DocumentService(this);
         Comparisons = new ReferenceComparisonService(this);
@@ -127,11 +136,13 @@ public partial class MainWindow : Window
         {
             try
             {
+                await Maintenance.DisposeAsync(); // first: no pass may run while documents close and recovery sessions are completed
                 Services.ClearIngressOnShutdown();
                 if (Live is not null) await Live.DisposeAsync();
                 await Agents.DisposeAsync();
                 try { await RecoveryMgr.CloseCleanlyAsync(); await Workspace.MarkCleanExitAsync(); } catch (Exception e) when (e is IOException or UnauthorizedAccessException) { } // leaving recovery files behind is the safe failure
                 await RecoveryMgr.DisposeAsync();
+                BlobLease?.Dispose();
             }
             finally { shutdownCompleted.TrySetResult(); }
         };

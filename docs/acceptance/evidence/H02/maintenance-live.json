@@ -1,0 +1,33 @@
+{
+  "recordedUtc": "2026-10-24T01:56:59.0072472Z",
+  "test": "TheWindowsPassKeepsWhatTheEditorTheLibraryAndUploadsHoldAndReclaimsTheRest",
+  "blobFilesBefore": 5,
+  "blobFilesAfter": 3,
+  "firstPass": {
+    "AtUtc": "2026-10-24T01:56:58.9638506\u002B00:00",
+    "Outcome": "collected",
+    "Removed": 2,
+    "BytesFreed": 60035,
+    "Detail": null,
+    "LastCollectedUtc": "2026-10-24T01:56:58.9638506\u002B00:00"
+  },
+  "secondPass": {
+    "AtUtc": "2026-10-24T01:56:58.9979525\u002B00:00",
+    "Outcome": "collected",
+    "Removed": 0,
+    "BytesFreed": 0,
+    "Detail": null,
+    "LastCollectedUtc": "2026-10-24T01:56:58.9979525\u002B00:00"
+  },
+  "kept": {
+    "placedOnPageOnly": "480862f38f73bf47a2c5e970677fc2c3bee0bffadf1776e17fefe9356c3b6ada",
+    "inLibraryOnly": "438bfd347251ccf489170d4e5b343943c39af3d4de4403172af76e2b960a0ea8",
+    "recentUnreferenced": "4be103a9f5b2edaa922a1af9f4ed142f43ffbe5fdad09b150565483b4b023e90"
+  },
+  "reclaimed": [
+    "46bcc8a93d424d13933728259bd9c0850e566768157b1573e44380adcacdb960",
+    "e2bb7339a7b9c8f39a1703a439fa71190e91d8589c0a5d2459b86a21fed43234"
+  ],
+  "reclaimedBytes": 60035,
+  "grace": "7.00:00:00"
+}

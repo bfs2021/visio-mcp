@@ -124,6 +124,13 @@ public sealed class AssetPreparer
     public string? Resolve(string preparationId) =>
         preparations.TryGetValue(preparationId, out var p) && p.Expires > now() ? p.Sha : null;
 
+    /// <summary>The pictures of every preparation that can still be used: garbage collection must keep them until they are pinned or expire.</summary>
+    public IReadOnlyCollection<string> LiveHashes()
+    {
+        var at = now();
+        return preparations.Values.Where(p => p.Expires > at).Select(p => p.Sha).ToHashSet(StringComparer.Ordinal);
+    }
+
     /// <summary>Natural size in CSS pixels: header dimensions for rasters, width/height or viewBox for SVG, else 100 x 100.</summary>
     static (int Width, int Height) Dimensions(string mime, byte[] bytes)
     {

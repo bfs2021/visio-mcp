@@ -225,12 +225,58 @@ public class MultiDocumentTests
         env.Page.Docs[D2] = (S2, 0, [kept]);
         await env.OpenBothAsync();
         var removed = await env.Recovery.CollectGarbageAsync([], TimeSpan.Zero, default);
-        Assert.Equal(1, removed);
+        Assert.Equal(1, removed.Removed);
         Assert.True(env.Blobs.Contains(kept));
         Assert.True(env.Blobs.Contains(active));
         Assert.False(env.Blobs.Contains(orphan));
         Assert.Contains($"doc.retainedBlobs:{D1}", env.Page.Seen);
         Assert.Contains($"doc.retainedBlobs:{D2}", env.Page.Seen);
+    }
+
+    [Fact]
+    public async Task AMaintenancePassKeepsEveryHolderAndReclaimsTheRest()
+    {
+        await using var env = new Env();
+        var root = env.Dir.File("blobs");
+        async Task<string> Old(string content)
+        {
+            var sha = await env.Blobs.PutDurableAsync(System.Text.Encoding.UTF8.GetBytes(content), default);
+            File.SetLastWriteTimeUtc(Path.Combine(root, sha), DateTime.UtcNow - TimeSpan.FromDays(30));
+            return sha;
+        }
+        var inActive = await Old("the active tab uses this");
+        var inBackground = await Old("a background tab (or its undo) uses this");
+        var library = new AssetLibrary(env.Dir.File("library"), env.Blobs);
+        var preparer = new AssetPreparer(env.Blobs);
+        var v1 = await preparer.PrepareAsync(new MemoryStream(Bytes.PngHeader(3, 3)), "image/png", "logo.png", default);
+        var imported = await library.ImportAsync(v1.Value, [], default);
+        var v2 = await preparer.PrepareAsync(new MemoryStream(Bytes.PngHeader(5, 5)), "image/png", "logo.png", default);
+        Assert.True((await library.ReplaceSourceAsync(imported.Value.Asset.Id, v2.Value, default)).IsOk);
+        var libraryOld = v1.Value.Ref.Asset.Sha256; var libraryNew = v2.Value.Ref.Asset.Sha256;
+        foreach (var sha in new[] { libraryOld, libraryNew }) File.SetLastWriteTimeUtc(Path.Combine(root, sha), DateTime.UtcNow - TimeSpan.FromDays(30));
+        var orphan = await Old("deleted from every document long ago");
+        // a picture abandoned long ago, which an agent has just uploaded again and not placed yet
+        var png = Bytes.PngHeader(7, 7);
+        var abandoned = await env.Blobs.PutDurableAsync(png, default);
+        File.SetLastWriteTimeUtc(Path.Combine(root, abandoned), DateTime.UtcNow - TimeSpan.FromDays(30));
+        var uploadedAgain = await preparer.PrepareAsync(new MemoryStream(png), "image/png", "again.png", default);
+        Assert.True(uploadedAgain.IsOk, uploadedAgain.Error?.Message);
+        Assert.Equal(abandoned, uploadedAgain.Value.Ref.Asset.Sha256);
+        env.Page.Docs[D1] = (S1, 0, [inActive]);
+        env.Page.Docs[D2] = (S2, 0, [inBackground]);
+        await env.OpenBothAsync();
+
+        using var lease = BlobStoreLease.Take(root);
+        await using var maintenance = new BlobMaintenance(lease, env.Dir.File("blob-maintenance.json"),
+            async ct => (await library.ListAsync(null, null, ct)).SelectMany(a => a.History.Append(a.Sha256)).Concat(preparer.LiveHashes()),
+            env.Recovery.CollectGarbageAsync);
+        var run = await maintenance.RunOnceAsync(default);
+
+        Assert.Equal(BlobMaintenanceRun.Collected, run.Outcome);
+        Assert.Equal(1, run.Removed);
+        Assert.Equal("deleted from every document long ago".Length, run.BytesFreed);
+        Assert.False(env.Blobs.Contains(orphan));
+        foreach (var sha in new[] { inActive, inBackground, libraryOld, libraryNew, abandoned }) Assert.True(env.Blobs.Contains(sha), sha);
     }
 
     [Fact]
@@ -241,9 +287,9 @@ public class MultiDocumentTests
         await env.OpenBothAsync();
         env.Page.Docs.Remove(D2); // the second page stops answering (here: it no longer knows the document)
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(300));
-        var removed = 0;
+        var removed = BlobGcResult.None;
         try { removed = await env.Recovery.CollectGarbageAsync([], TimeSpan.Zero, cts.Token); } catch (OperationCanceledException) { }
-        Assert.Equal(0, removed);
+        Assert.Equal(BlobGcResult.None, removed);
         Assert.True(env.Blobs.Contains(picture));
     }
 }
