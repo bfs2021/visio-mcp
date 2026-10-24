@@ -196,7 +196,7 @@ public sealed class DiagramTools(PipeClient app)
         return Finish(await Send("docs.show", null, null, Obj(("documentId", documentId)), Render, ct));
     }
 
-    [McpServerTool(Name = "get_objects"), Description("Complete canonical objects for the given ids (UUIDs, or aliases when the document has one page), including optional stacking level (missing means 0). The response also includes routeDiagnostics for requested connectors when projection is ready; provenance and findings are derived from the same returned revision and do not mutate the document. " + Identity)]
+    [McpServerTool(Name = "get_objects"), Description("Complete canonical objects for the given ids (UUIDs, or aliases when the document has one page), including optional stacking level (missing means 0). The response also includes routeDiagnostics for requested connectors when projection is ready; provenance and findings are derived from the same returned revision and do not mutate the document. If projection is unavailable, canonical objects remain available and routeDiagnosticsStatus explains why diagnostics are unavailable. " + Identity)]
     public async Task<CallToolResult> GetObjects(
         [Description("The document id from get_document_summary.")] string documentId,
         [Description("The session id from get_document_summary.")] string sessionId,

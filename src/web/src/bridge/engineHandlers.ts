@@ -211,12 +211,17 @@ export function createEngineHandler(source: CommandEngine | EngineResolver, opts
           });
           return respond(ok({ revision: exportSnapshot.value.revision, objects: objects.value, routeDiagnostics }));
         }
-        if (exportSnapshot.error.code !== 'projection_failed' || exportSnapshot.error.message !== 'no snapshot projector is registered') return respond(exportSnapshot);
-        // Keep canonical object reads available in headless/uninitialized sessions; route diagnostics are empty until projection is ready.
+        if (exportSnapshot.error.code !== 'projection_failed') return respond(exportSnapshot);
+        // Keep canonical object reads available when the derived projection is unavailable; mark diagnostics unavailable rather than returning stale data.
         const snapshot = await engine.snapshot(scope);
         if (!snapshot.ok) return respond(snapshot);
         const objects = readObjects(snapshot.value, p.ids as string[], typeof p.pageId === 'string' ? p.pageId : undefined);
-        return respond(objects.ok ? ok({ revision: snapshot.value.revision, objects: objects.value, routeDiagnostics: [] }) : objects);
+        return respond(objects.ok ? ok({
+          revision: snapshot.value.revision,
+          objects: objects.value,
+          routeDiagnostics: [],
+          routeDiagnosticsStatus: { status: 'unavailable', reason: exportSnapshot.error.message },
+        }) : objects);
       }
       case 'assets.list': {
         const s = await engine.snapshot(scope);

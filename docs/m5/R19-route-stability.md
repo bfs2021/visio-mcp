@@ -8,7 +8,7 @@ Issue #58. This report covers the R19 planner from PR #72, route persistence and
 
 For each automatic orthogonal connector, planning tries to keep a clear prior route, elastically adjust endpoint runs, repair the blocked portion locally, search for a new route, and finally retain the best available points with an explicit unresolved finding. Frozen connectors never search. If a Frozen route crosses a hard obstacle, its points remain exactly as stored and the planner reports `UNRESOLVED_ROUTE` with blocker IDs.
 
-Transaction results include `routeChanges` for connectors whose route provenance changed and `routeFindings` for structured diagnostics. `get_objects` returns canonical objects with `routeDiagnostics` from the same revision-bound projection; `inspect_layout`, projection/export, and MCP therefore report the same unresolved route without mutating the document. When the projection has not been initialized, `get_objects` still returns canonical objects and an empty diagnostics list.
+Transaction results include `routeChanges` for connectors whose route provenance changed and `routeFindings` for structured diagnostics. `get_objects` returns canonical objects with `routeDiagnostics` from the same revision-bound projection; `inspect_layout`, projection/export, and MCP therefore report the same unresolved route without mutating the document. If projection is unavailable, `get_objects` still returns canonical objects, an empty diagnostics list, and `routeDiagnosticsStatus` explaining why diagnostics could not be produced.
 
 ## Acceptance evidence
 
@@ -19,14 +19,14 @@ Transaction results include `routeChanges` for connectors whose route provenance
 | Moving an endpoint preserves interior tracks while maintaining glue | **PASS** | `routePlanner.test.ts` checks elastic endpoint movement and unchanged interior route coordinates; `routeModes.test.ts` checks persisted advisory endpoints and undo. |
 | A hard obstacle yields a valid detour or explicit bounded unresolved failure | **PASS** | Unit coverage exercises local repair, impossible routes, hard blockers, and frozen-route unresolved behavior. The seeded 60/60 planner test has a 5 s bound; its measured segment-commit browser check completed in **75 ms** against the 1.5 s target. |
 | One planner gives consistent geometry for canvas, hidden projection, inspection, export, and MCP | **PASS** | Browser test `R20: the inspector freezes a route...` verifies the same frozen route and unresolved finding in transaction output, export projection, `inspect_layout`, and `get_objects` at one revision. The canvas and hidden projector both call `MaxGraphAdapter.project`, which uses `planRoutes`. |
-| Provenance and structured failures are available in projection, `get_objects` / `inspect_layout`, and transaction result | **PASS** | `routeModes.test.ts`, `readtools.test.ts`, and the browser cross-surface test assert provenance, reason, blocker IDs, and unchanged document hashes for reads. |
+| Provenance and structured failures are available in projection, `get_objects` / `inspect_layout`, and transaction result | **PASS** | `routeModes.test.ts`, `readtools.test.ts`, and the browser cross-surface test assert provenance, reason, blocker IDs, and unchanged document hashes for reads. A projection-failure regression confirms `get_objects` preserves canonical reads and reports diagnostics as unavailable. |
 | Drag latency and routing time remain within measured budgets | **PASS** | 60/60 segment move: **75 ms**, below the browser target of 1,500 ms. The planner’s 60/60 fresh-plan fixture remains deterministic and exact with a 5,000 ms unit-test bound. |
 
 ## Fresh verification
 
 | Check | Result |
 |---|---|
-| Web unit suite | **632 passed**, 67 test files |
+| Web unit suite | **633 passed**, 67 test files |
 | TypeScript | `tsc --noEmit` passed |
 | Generated contracts | `tools/generate-contracts.mjs --check` passed |
 | Browser: frozen route transaction / projection / inspection / MCP diagnostics | **1 passed** |

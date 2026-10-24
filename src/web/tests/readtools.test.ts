@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Projection, RequestEnvelope, RouteFinding } from '../src/contracts/generated';
 import { createEngineHandler } from '../src/bridge/engineHandlers';
 import { listAssets, readObjects, readSummary } from '../src/bridge/readTools';
-import { ok } from '../src/model/result';
+import { fail, ok } from '../src/model/result';
 import { createTestEngine, exactElementHashes } from './support/engine';
 import { id, run } from './support/ops';
 
@@ -132,6 +132,23 @@ describe('request handler: tool methods', () => {
       revision: t.engine.revision,
       objects: [expect.objectContaining({ id: id(950), route: 'orthogonal' })],
       routeDiagnostics: [{ id: id(950), routeProvenance: 'unresolved', routeReason: 'No clear route was found', routeFindings: findings }],
+    });
+    expect(exactElementHashes(t.store.snapshot())).toEqual(before);
+  });
+
+  it('get_objects keeps canonical reads available when route projection fails', async () => {
+    const t = createTestEngine();
+    t.engine.setSnapshotProjector(() => fail('projection_failed', 'projection is temporarily unavailable'));
+    const before = exactElementHashes(t.store.snapshot());
+
+    const response = await call(t, 'doc.getObjects', { ids: ['s0'] });
+
+    expect(response.error).toBeUndefined();
+    expect(response.result).toMatchObject({
+      revision: t.engine.revision,
+      objects: [expect.objectContaining({ alias: 's0' })],
+      routeDiagnostics: [],
+      routeDiagnosticsStatus: { status: 'unavailable', reason: 'projection is temporarily unavailable' },
     });
     expect(exactElementHashes(t.store.snapshot())).toEqual(before);
   });

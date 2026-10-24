@@ -77,14 +77,14 @@
 
 **Interfaces:**
 - Consumes: `CommandEngine.exportSnapshot(scope): Promise<Result<ExportSnapshot>>`, which returns the canonical snapshot and projection tied to the same document, session, and revision. `doc.getObjects` will read canonical objects from this returned snapshot, avoiding a second, potentially newer snapshot.
-- Produces: additive `routeDiagnostics` in `doc.getObjects` responses, containing requested connector IDs with `routeProvenance`, optional `routeReason`, and `routeFindings`; canonical `objects` stay unchanged.
+- Produces: additive `routeDiagnostics` in `doc.getObjects` responses, containing requested connector IDs with `routeProvenance`, optional `routeReason`, and `routeFindings`; canonical `objects` stay unchanged. If projection fails, canonical reads remain available and `routeDiagnosticsStatus` explicitly reports diagnostics as unavailable.
 
 - [x] **Step 1: Write a failing handler test** that calls `doc.getObjects` for an unresolved connector and asserts the response contains its canonical object plus the matching projection diagnostics at the same revision; also assert the document hash is unchanged.
 - [x] **Step 2: Run the focused test and confirm failure**; the response included canonical objects and revision but had no `routeDiagnostics` field.
-- [x] **Step 3: Extend the `doc.getObjects` handler** to obtain the revision-bound export snapshot, read canonical objects from that same snapshot, filter projection diagnostics to requested connector IDs, and add `routeDiagnostics` beside the existing `objects` response. Preserve canonical-only reads when projection is not initialized.
-- [x] **Step 4: Update the `get_objects` MCP description** to document the additive diagnostics and their read-only, revision-bound nature.
-- [x] **Step 5: Run the read-tool suite**; 9/9 passed, including the headless-read fallback. MCP suite verification remains in Task 4.
-- [ ] **Step 6: Commit** as `feat: expose route diagnostics in get_objects`.
+- [x] **Step 3: Extend the `doc.getObjects` handler** to obtain the revision-bound export snapshot, read canonical objects from that same snapshot, filter projection diagnostics to requested connector IDs, and add `routeDiagnostics` beside the existing `objects` response. Preserve canonical-only reads whenever projection is unavailable and include an explicit unavailable status with the projection error reason.
+- [x] **Step 4: Update the `get_objects` MCP description** to document the additive diagnostics, read-only revision binding, and canonical-read fallback when diagnostics are unavailable.
+- [x] **Step 5: Run the read-tool suite**; 10/10 passed, including projector-unavailable fallback and unchanged canonical hashes. MCP suite verification is included in Task 4.
+- [x] **Step 6: Commit** as `feat: expose route diagnostics in get_objects`.
 
 ### Task 4: Verify cross-surface stability and record evidence
 
@@ -100,9 +100,9 @@
 
 - [x] **Step 1: Add missing assertions** that an already-planned document returns no changes, a 1 pt unrelated nudge preserves unaffected stored routes and IDs, unresolved findings agree across projection/inspection/MCP/transaction response, and export uses the same route points for the same revision.
 - [x] **Step 2: Run the focused route and surface tests**; exact route points and changed IDs passed, including transaction/MCP findings and the browser cross-surface check.
-- [x] **Step 3: Run the full web suite, generated contract checks, MCP/.NET suites, `segments.spec.ts` 60/60 routing-latency case, and available Visio checks**; web 632/632, generated contracts passed, portable .NET 479/479, browser diagnostics passed, and segment edit measured 75 ms. Manual Visio was unavailable/not run.
+- [x] **Step 3: Run the full web suite, generated contract checks, MCP/.NET suites, `segments.spec.ts` 60/60 routing-latency case, and available Visio checks**; final web 633/633, generated contracts passed, portable .NET 479/479, browser diagnostics passed, and segment edit measured 75 ms. Manual Visio was unavailable/not run.
 - [x] **Step 4: Update `docs/m5/R19-route-stability.md`** with fresh results, baseline fixture status, and explicit `NOT RUN` limits for original PSGL/Lego files and manual Visio. The issue remains open only for those evidence items.
-- [ ] **Step 5: Commit** as `test: record R19 route stability evidence`.
+- [x] **Step 5: Commit** as `test: record R19 route stability evidence`.
 
 ## Coverage gaps to report
 
