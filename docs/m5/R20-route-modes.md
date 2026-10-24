@@ -9,7 +9,7 @@ Issue #59 (with the persistence part of #58). Contract: `docs/design/routing-con
 - The canvas, the hidden projection, `inspect_layout`, export and the command engine all plan from the stored route (`layout/routePlanner.ts`), so one document gives one geometry on every surface.
 - Operations (GUI Inspector, DrawScript, MCP): `routing.mode` on `createConnector` and `set` (`automatic`, `manual`, `frozen`; `guided` is refused with `routing_mode_unavailable`), and `reroute` (all automatic orthogonal connectors on the page, or named ones). DrawScript: `connect ... mode=`, `set <c> mode=`, `reroute [connector...]`.
 - `TransactionResult.routeChanges` lists connectors whose route changed or is unresolved, with provenance and reason, in addition to `changed`.
-- Frozen: end runs follow a moved end only when that is exact and safe; otherwise the stored route is kept and flagged `unresolved`. A frozen connector refuses waypoint edits (`route_frozen`).
+- Frozen: end runs follow a moved end only when exact and safe. A route that already crosses an obstacle may still follow its moved end if this introduces no new hard-obstacle crossing; it stays flagged `unresolved` with blocker diagnostics. If following would introduce a new crossing or cannot preserve the route safely, the stored points are kept. A frozen connector refuses waypoint edits (`route_frozen`).
 
 ## Evidence
 

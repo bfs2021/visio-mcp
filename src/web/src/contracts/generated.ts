@@ -784,6 +784,7 @@ export interface TransactionResult {
   warnings: Diagnostic[];
   projectionStatus: "applied" | "failed";
   routeChanges?: RouteChange[];
+  routeFindings?: RouteFinding[];
 }
 
 export interface RouteChange {

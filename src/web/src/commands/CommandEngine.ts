@@ -229,7 +229,8 @@ export class CommandEngine {
     const planned = planPatch(before.document, ops.value, { newId: this.newId, ...(req.pageId ? { pageId: req.pageId } : {}) });
     if (!planned.ok) return spans ? withSpan(planned, spans()) : planned;
     const snapshotOf = (doc: DiagramDocument) => ({ ...before, revision: before.revision + 1, document: doc });
-    const routed = settleRoutes(before.document, planned.value);
+    const joined = settleJoins(before.document, planned.value, this.snapshotProjector, snapshotOf);
+    const routed = settleRoutes(before.document, joined);
     if (requestsHardRoutePreflight(ops.value)) {
       const existing = new Set(before.document.pages.flatMap(page => planRoutes({ elements: page.elements, layers: page.layers, pageArea: page.widthPt * page.heightPt }).routeFindings)
         .filter(finding => finding.code === 'UNRESOLVED_ROUTE').map(finding => finding.elementId));
@@ -241,8 +242,7 @@ export class CommandEngine {
         return spans ? withSpan(rejected, spans()) : rejected;
       }
     }
-    const joined = settleJoins(before.document, routed, this.snapshotProjector, snapshotOf); // branches first: a pinned shape follows the route as the branches leave it
-    const plan = settleAttachments(before.document, joined, this.snapshotProjector, snapshotOf);
+    const plan = settleAttachments(before.document, routed, this.snapshotProjector, snapshotOf);
     const previousRevision = before.revision;
 
     if (plan.noChange) {
@@ -265,6 +265,7 @@ export class CommandEngine {
       changedLayerIds: plan.changedLayerIds, changedAssetIds: plan.changedAssetIds, visuallyAffectedIds: plan.visuallyAffectedIds,
       warnings: diagnostic ? [{ severity: 'warning', code: 'DOCUMENT_DEFAULTS_INVALID', message: diagnostic }] : [], projectionStatus,
       ...(plan.routeChanges?.length ? { routeChanges: plan.routeChanges } : {}),
+      ...(plan.routeFindings?.length ? { routeFindings: plan.routeFindings } : {}),
     };
   }
 
@@ -423,7 +424,7 @@ export class CommandEngine {
   }
 }
 
-const emptyPlan = (): { created: string[]; changed: string[]; deleted: string[]; changedPageIds: string[]; changedLayerIds: string[]; changedAssetIds: string[]; visuallyAffectedIds: string[]; routeChanges?: import('../contracts/generated').RouteChange[] } => ({
+const emptyPlan = (): { created: string[]; changed: string[]; deleted: string[]; changedPageIds: string[]; changedLayerIds: string[]; changedAssetIds: string[]; visuallyAffectedIds: string[]; routeChanges?: import('../contracts/generated').RouteChange[]; routeFindings?: import('../contracts/generated').RouteFinding[] } => ({
   created: [] as string[], changed: [] as string[], deleted: [] as string[], changedPageIds: [] as string[],
   changedLayerIds: [] as string[], changedAssetIds: [] as string[], visuallyAffectedIds: [] as string[],
 });
