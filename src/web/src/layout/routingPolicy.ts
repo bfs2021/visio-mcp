@@ -4,6 +4,7 @@ import { measureTextBox, textInsets, type TextWidthMeasurer } from './textMeasur
 import type { Rect } from './obstacleRoute';
 import { isLaneStructure } from './swimlane';
 import { BACKGROUND_SHARE, visualRect } from './obstacleGeometry';
+import { effectiveLevel } from '../model/elementOrder';
 
 export type EffectiveObstaclePolicy = 'forbidden' | 'avoid' | 'passThrough';
 export interface RoutingObstacle {
@@ -19,6 +20,18 @@ const contains = (outer: Rect, inner: Rect, tol = 0.5): boolean =>
 const holds = (r: Rect, p: { x: number; y: number }): boolean => p.x > r.x && p.x < r.x + r.width && p.y > r.y && p.y < r.y + r.height;
 const defaultMeasureWidth: TextWidthMeasurer = (value, font) => value.length * font.sizePt * 0.5;
 const policyOf = (element: Element): RoutingPolicy | undefined => 'routingPolicy' in element ? element.routingPolicy : undefined;
+
+const isExplicitObstacle = (p: RoutingPolicy['obstacle'] | undefined): boolean => p === 'forbidden' || p === 'avoid' || p === 'passThrough';
+
+/**
+ * R23: a shape on a lower level than the connector is behind it, so the connector runs over it instead of around it (a background
+ * colour, a container, a frame). Same or higher level stays an obstacle, which keeps level-0 documents routing as before. An explicit
+ * per-element obstacle policy beats this rule; `automatic` does not.
+ */
+export function passesBehind(element: Element, connectorLevel: number): boolean {
+  if (element.kind === 'connector' || element.kind === 'group') return false;
+  return !isExplicitObstacle(policyOf(element)?.obstacle) && effectiveLevel(element) < connectorLevel;
+}
 
 /** Resolves an explicit policy first; legacy-selected obstacles remain hard obstacles. */
 export function effectiveObstaclePolicy(
@@ -69,9 +82,11 @@ export function selectObstacles(
   connectorId?: string,
   connectorLabelRects: ReadonlyMap<string, Rect> = new Map(),
 ): RoutingObstacle[] {
-  const legacyCandidates: Array<{ id: string; rect: Rect }> = [];
+  const legacyCandidates: Array<{ id: string; rect: Rect; behind: boolean }> = [];
   const explicit: RoutingObstacle[] = [];
   const textRecords: RoutingObstacle[] = [];
+  const connector = connectorId === undefined ? undefined : elements.find(e => e.id === connectorId);
+  const connectorLevel = connector ? effectiveLevel(connector) : undefined;
   for (const el of elements) {
     if (el.kind === 'group') continue;
     const policy = policyOf(el);
@@ -85,8 +100,9 @@ export function selectObstacles(
       }
     }
     if (el.kind === 'connector') continue;
+    const behind = connectorLevel !== undefined && passesBehind(el, connectorLevel);
     const requested = policy?.obstacle;
-    const isExplicit = requested === 'forbidden' || requested === 'avoid' || requested === 'passThrough';
+    const isExplicit = isExplicitObstacle(requested);
     if (isExplicit && requested === 'passThrough') continue;
     const effective = effectiveObstaclePolicy(el, endIds, endRects, freePoints, pageArea);
     if (!effective || effective === 'passThrough') continue;
@@ -97,10 +113,11 @@ export function selectObstacles(
     }
     if (el.kind !== 'shape' || isLaneStructure(el)) continue;
     if (el.style.fill.kind === 'none' && el.style.stroke.kind === 'none') continue;
-    legacyCandidates.push({ id: el.id, rect });
+    legacyCandidates.push({ id: el.id, rect, behind });
   }
+  // A shape behind the connector still marks the shape around it as a container, as it did before levels existed.
   const legacy = legacyCandidates
-    .filter(c => !legacyCandidates.some(o => o.id !== c.id && o.rect.width * o.rect.height < c.rect.width * c.rect.height && contains(c.rect, o.rect)))
+    .filter(c => !c.behind && !legacyCandidates.some(o => o.id !== c.id && o.rect.width * o.rect.height < c.rect.width * c.rect.height && contains(c.rect, o.rect)))
     .map(c => ({ id: c.id, rect: c.rect, policy: 'forbidden' as const, clearancePt: policyOf(elements.find(e => e.id === c.id)!)?.clearancePt ?? 8, source: 'element' as const }));
   return [...explicit, ...legacy, ...textRecords];
 }

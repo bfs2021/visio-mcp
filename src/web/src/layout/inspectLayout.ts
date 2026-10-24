@@ -5,6 +5,8 @@ import { effectiveState } from '../canvas/cellMapping';
 import { measureTextBox, TextMeasurementLimitError, type TextMeasurement } from './textMeasurement';
 import { parsePath } from '../geometry/svgPath';
 import { inspectNearAlignments, isVisibleThinRule } from './inspectAlignment';
+import { passesBehind } from './routingPolicy';
+import { effectiveLevel } from '../model/elementOrder';
 import { findSwimlanes, isLaneStructure, isPartOfSwimlane, lanesCrossed, membershipOf } from './swimlane';
 
 export type Severity = 'info' | 'warning' | 'error';
@@ -225,7 +227,8 @@ function connectorChecks(
   const softReported = new Set(findings.filter(finding => finding.code === 'ROUTING_AVOIDANCE_VIOLATION').flatMap(finding => finding.blockerIds ?? []));
   const ancestorsOfEnds = new Set<string>();
   for (const id of [el.from.elementId, el.to.elementId]) for (let p = id ? parents.get(id) : undefined; p; p = parents.get(p)) ancestorsOfEnds.add(p);
-  const crossed: string[] = [];
+  const crossed: string[] = [], over: string[] = [];
+  const level = effectiveLevel(el);
   for (const other of shown) {
     if (other.id === el.from.elementId || other.id === el.to.elementId || other.kind !== 'shape' && other.kind !== 'image') continue;
     if (other.kind === 'shape' && other.routingPolicy?.obstacle === 'passThrough') continue;
@@ -233,8 +236,11 @@ function connectorChecks(
     if (isLaneStructure(other)) continue; // a lane is something a connector runs inside, not a shape in its way
     if (ancestorsOfEnds.has(other.id)) continue;
     const b = visualBounds(other);
-    for (let i = 0; i + 1 < route.length; i++) if (segmentCrosses(route[i]!, route[i + 1]!, b)) { crossed.push(other.id); break; }
+    const into = passesBehind(other, level) ? over : crossed; // R23: a shape on a lower level is behind the connector, not in its way
+    for (let i = 0; i + 1 < route.length; i++) if (segmentCrosses(route[i]!, route[i + 1]!, b)) { into.push(other.id); break; }
   }
+  if (over.length) add('CONNECTOR_PASSES_OVER_SHAPE', 'info', [el.id, ...over.sort()], box, 'The connector runs over shapes on a lower level; they are behind it, so the route does not avoid them.',
+    { passedOverElementIds: over, rule: 'lower_level', connectorLevel: level, levels: Object.fromEntries(over.map(id => [id, effectiveLevel(byId.get(id)!)])) });
   if (crossed.length) add('CONNECTOR_CROSSES_SHAPE', 'warning', [el.id, ...crossed.sort()], union([box, ...crossed.map(id => visualBounds(byId.get(id)!))]), 'The connector passes through shapes it is not attached to.', { crossedElementIds: crossed.sort(), routeFrom: ctx.projection?.connectors[el.id] ? 'resolved route' : 'straight line between ends' });
 }
 
