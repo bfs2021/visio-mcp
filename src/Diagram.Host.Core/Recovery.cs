@@ -435,16 +435,27 @@ public sealed class RecoveryStore(string root, BlobStore blobs)
 }
 
 /// <summary>Removes picture bytes nobody needs any more. "Needs" is decided by the caller: documents, the library, undo history and recovery.</summary>
+/// <summary>What one collection freed.</summary>
+public readonly record struct BlobGcResult(int Removed, long Bytes)
+{
+    public static readonly BlobGcResult None = new(0, 0);
+}
+
 public static class BlobGc
 {
-    public static int Collect(BlobStore blobs, IEnumerable<string> live, TimeSpan grace)
+    /// <summary>Deletes every picture outside <paramref name="live"/> that nothing has stored or touched within <paramref name="grace"/>.</summary>
+    public static async Task<BlobGcResult> CollectAsync(BlobStore blobs, IEnumerable<string> live, TimeSpan grace, CancellationToken ct = default)
     {
         var keep = new HashSet<string>(live, StringComparer.Ordinal);
         var cutoff = DateTime.UtcNow - grace;
-        var removed = 0;
+        int removed = 0; long bytes = 0;
         foreach (var (sha, written) in blobs.Enumerate().ToList())
-            if (!keep.Contains(sha) && written < cutoff && blobs.Delete(sha)) removed++;
-        return removed;
+        {
+            if (keep.Contains(sha) || written >= cutoff) continue;
+            // touched again since it was listed (handed to a new upload): kept, the store checks under its own lock
+            if (await blobs.DeleteIfIdleAsync(sha, cutoff, ct).ConfigureAwait(false) is { } freed) { removed++; bytes += freed; }
+        }
+        return new BlobGcResult(removed, bytes);
     }
 }
 
