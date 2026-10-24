@@ -58,7 +58,32 @@ Issue #12. Design: [docs/design/R17-nested-containers.md](../design/R17-nested-c
 | `npx playwright test` | 188/188 pass |
 | .NET | not re-run: stage 2 changes no C# |
 
+## Stage 3: editor
+
+**What it delivers:**
+- **Commands:** Arrange > Make container, Add to container, Remove from container and Disband container. They come from the shared `arrangeActions`, so the menu, context menu, command palette and Arrange panel all show them.
+  - Make container draws a frame round the selection, 12 pt margin, `fit: "grow"`, behind its members. It joins the container they shared, if any, and is selected afterwards.
+- **Inspector:** a Container section with fit, margin, member count and Disband. A member shows which container it is inside, with Remove from container.
+- **Canvas (`canvas/intents.ts`, `canvas/selection.ts`, `MaxGraphAdapter.ts`):**
+  - Dragging, nudging, aligning or deleting a container together with things inside it acts on the container once.
+  - The Delete key deletes a container with its contents (decision 2).
+  - Group includes a container's contents.
+  - Members move with the frame in the live drag preview.
+  - Drag-in and drag-out membership (decision 3) joins the move's transaction.
+  - The canvas routing signature includes whether a container has members, so routes re-plan when membership changes.
+- **Screenshot:** `artifacts/r17-containers/editor-nested-containers.png` (nested containers selected in the editor, with the inspector's Container section).
+
+**Verification (fresh):**
+| Check | Result |
+|---|---|
+| `npx vitest run` | 680/680 pass (`containerEditing.test.ts` 4: outermost targets, drag in/out rules, locked containers, one-step undo) |
+| `npx playwright test` | 189/189 pass. `containers.spec.ts` drives the real editor: rubber band, Arrange > Make container, drag the frame (members in the drag preview, one revision, members moved by the same delta), drop a shape in, drag a member out, inspector fit and Disband, undo, Delete |
+| Mutation check: disable the drag-preview override | the browser test fails, then passes again when restored |
+| `npx tsc --noEmit`, `vite build` | pass |
+| Manual check in the editor by the owner | NOT RUN |
+
+**Limits:** no drop-target highlight while dragging. Rotating a container with members is refused, so the angle field reports it.
+
 ## Remaining stages
 
-3. Editor commands, inspector and drag-in/drag-out.
 4. Native VSDX export and import, after the Visio feasibility check; the four-level Lego build.

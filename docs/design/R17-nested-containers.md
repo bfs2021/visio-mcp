@@ -108,7 +108,8 @@ This section answers the 2026-10-20 comment on #12. R17 provides one read-only h
   - **Disband container**.
 - Inspector: a Container section with fit, margin and the member count.
 - Dragging a selection moves the container's subtree once. Members whose container is also selected are dropped from the drag set, as for groups.
-- **Proposed (decision 3):** dropping a shape wholly inside a container adds it, and dragging it fully out removes it, as Visio does. The editor emits explicit `contain` operations in the same transaction and highlights the target container while dragging. Engine and MCP edits never do this implicitly.
+- **Drag in and out (decision 3):** dropping a top-level object wholly inside a container adds it to the smallest such container. A member dragged completely clear of its container leaves it. A member still touching its container stays, unless it was dropped wholly into a container nested inside that one. Locked containers are left alone. The editor emits explicit `contain` operations in the move's transaction, so one undo reverses both. Engine and MCP edits never do this implicitly. A drop target is not highlighted yet.
+- **Dragging a container:** the members join maxGraph's drag preview, so they visibly move with the frame before the drop.
 
 ## VSDX export and import
 
