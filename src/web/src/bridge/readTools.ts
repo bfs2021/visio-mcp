@@ -17,6 +17,8 @@ export interface ElementSummary {
   locked?: boolean;
   layerIds?: string[];
   zIndex?: number;
+  /** R29: logical stacking level; absent in storage means 0. */
+  level?: number;
   style?: unknown;
   /** connector relationships */
   from?: unknown;
@@ -53,6 +55,7 @@ export function summariseElement(el: Element, o: { includeGeometry: boolean; inc
   if (el.locked) s.locked = true;
   if (el.layerIds.length) s.layerIds = el.layerIds;
   s.zIndex = el.zIndex;
+  s.level = el.level ?? 0;
   if ('routingPolicy' in el && el.routingPolicy) s.routingPolicy = el.routingPolicy;
   if (o.includeStyle && (el.kind === 'shape' || el.kind === 'connector')) s.style = el.style;
   if (el.kind === 'connector') { s.from = el.from; s.to = el.to; s.route = el.route; if (el.route === 'orthogonal') s.routeMode = el.routing?.mode ?? (el.waypoints.length ? 'manual' : el.routing?.constraints?.length ? 'guided' : 'automatic'); if (el.labelAnchor) s.labelAnchor = el.labelAnchor; if (el.hops) s.hops = el.hops; }
@@ -104,7 +107,8 @@ export function readObjects(snapshot: Snapshot, ids: readonly string[], pageId?:
   for (const ref of ids) {
     const hit = lookupTarget(doc.pages, ref, scope);
     if (!hit.ok) return fail(hit.code, hit.message, { details: hit.details });
-    out.push(doc.pages[hit.pageIdx]!.elements[hit.index]!);
+    const element = doc.pages[hit.pageIdx]!.elements[hit.index]!;
+    out.push({ ...element, level: element.level ?? 0 } as Element);
   }
   return ok(out);
 }

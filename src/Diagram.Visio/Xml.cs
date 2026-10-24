@@ -41,13 +41,13 @@ static class Vx
     /// <summary>Canonical colours are lower-case #rrggbb; Visio writes them the same way.</summary>
     public static string Colour(string c) => c.ToLowerInvariant();
 
-    public static (string? Id, string? Alias, string? Name, IReadOnlyList<string> LayerIds, int Z, bool Locked, bool Hidden, Bounds B, double Rot, IReadOnlyDictionary<string, string> Meta) Common(Element e) => e switch
+    public static (string? Id, string? Alias, string? Name, IReadOnlyList<string> LayerIds, int Z, int? Level, bool Locked, bool Hidden, Bounds B, double Rot, IReadOnlyDictionary<string, string> Meta) Common(Element e) => e switch
     {
-        ShapeElement s => (s.Id, s.Alias, s.Name, s.LayerIds, s.ZIndex, s.Locked, s.Hidden, s.Bounds, s.RotationDeg, s.Metadata),
-        TextElement t => (t.Id, t.Alias, t.Name, t.LayerIds, t.ZIndex, t.Locked, t.Hidden, t.Bounds, t.RotationDeg, t.Metadata),
-        ImageElement i => (i.Id, i.Alias, i.Name, i.LayerIds, i.ZIndex, i.Locked, i.Hidden, i.Bounds, i.RotationDeg, i.Metadata),
-        ConnectorElement c => (c.Id, c.Alias, c.Name, c.LayerIds, c.ZIndex, c.Locked, c.Hidden, c.Bounds, c.RotationDeg, c.Metadata),
-        GroupElement g => (g.Id, g.Alias, g.Name, g.LayerIds, g.ZIndex, g.Locked, g.Hidden, g.Bounds, g.RotationDeg, g.Metadata),
+        ShapeElement s => (s.Id, s.Alias, s.Name, s.LayerIds, s.ZIndex, s.Level, s.Locked, s.Hidden, s.Bounds, s.RotationDeg, s.Metadata),
+        TextElement t => (t.Id, t.Alias, t.Name, t.LayerIds, t.ZIndex, t.Level, t.Locked, t.Hidden, t.Bounds, t.RotationDeg, t.Metadata),
+        ImageElement i => (i.Id, i.Alias, i.Name, i.LayerIds, i.ZIndex, i.Level, i.Locked, i.Hidden, i.Bounds, i.RotationDeg, i.Metadata),
+        ConnectorElement c => (c.Id, c.Alias, c.Name, c.LayerIds, c.ZIndex, c.Level, c.Locked, c.Hidden, c.Bounds, c.RotationDeg, c.Metadata),
+        GroupElement g => (g.Id, g.Alias, g.Name, g.LayerIds, g.ZIndex, g.Level, g.Locked, g.Hidden, g.Bounds, g.RotationDeg, g.Metadata),
         _ => throw new InvalidOperationException("unknown element kind"),
     };
 

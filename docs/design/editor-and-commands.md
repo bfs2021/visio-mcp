@@ -233,6 +233,12 @@ before compiling catalogue changes. It offers no general-purpose file reads.
 `asset replace` defaults to a selected image's asset reference; global catalogue
 replacement is a distinct explicit action with affected-reference preview.
 
+DrawScript `add shape`, `add text`, `add image`, and `connect` accept `level=n`; `set`
+accepts `level=n` for every element kind. Levels are integers from -127 to 127 and sort before
+z-order. Missing level means 0; setting level to 0 removes the stored field. Moving a
+group changes every descendant leaf by the same level delta and preserves their
+relative stacking.
+
 ## D4. Rendering and layout
 
 Render an immutable model snapshot using the same CanvasAdapter style/geometry

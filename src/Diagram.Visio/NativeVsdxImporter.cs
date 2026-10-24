@@ -393,6 +393,7 @@ public sealed class NativeVsdxImporter : IVsdxImporter
                 }
                 // group bounds are derived from their members; groups stack with their topmost member
                 foreach (var (group, _, _) in groups.AsEnumerable().Reverse()) FinishGroup(group);
+                NormalizeStackingLevels();
                 _ = pageUser;
             }
 
@@ -464,6 +465,14 @@ public sealed class NativeVsdxImporter : IVsdxImporter
                     ["id"] = id, ["kind"] = kind, ["layerIds"] = LayerIds(s), ["zIndex"] = 0, ["locked"] = false, ["hidden"] = false, ["bounds"] = kind is "shape" or "image" ? Hairline(Bounds(xf), id, sid) : Bounds(xf),
                     ["rotationDeg"] = NormaliseDeg(-TotalAngle(xf) * 180 / Math.PI), ["metadata"] = new JsonObject(),
                 };
+                if (u.TryGetValue("AgentLevel", out var rawLevel))
+                {
+                    if (int.TryParse(rawLevel, System.Globalization.NumberStyles.AllowLeadingSign, System.Globalization.CultureInfo.InvariantCulture, out var level) && level is >= -127 and <= 127)
+                    {
+                        if (level != 0) o["level"] = level;
+                    }
+                    else Note("level_invalid", $"The saved level '{rawLevel}' is outside the supported integer range; level 0 was used.", id, sid, "level reset");
+                }
                 var alias = u.GetValueOrDefault("AgentAlias");
                 if (alias is { Length: > 0 and <= 128 })
                 {
@@ -1188,6 +1197,39 @@ public sealed class NativeVsdxImporter : IVsdxImporter
                 }
                 g["bounds"] = new JsonObject { ["x"] = boxes.Min(b => b.X0), ["y"] = boxes.Min(b => b.Y0), ["width"] = boxes.Max(b => b.X1) - boxes.Min(b => b.X0), ["height"] = boxes.Max(b => b.Y1) - boxes.Min(b => b.Y0) };
                 g["zIndex"] = kids.Max(k => k["zIndex"]!.GetValue<int>());
+            }
+
+            void NormalizeStackingLevels()
+            {
+                int Level(JsonObject e) => e["level"]?.GetValue<int>() ?? 0;
+                int Z(JsonObject e) => e["zIndex"]!.GetValue<int>();
+                IEnumerable<JsonObject> Leaves(JsonObject group)
+                {
+                    foreach (var childId in ((JsonArray)group["childIds"]!).Select(n => n!.GetValue<string>()))
+                    {
+                        var child = elementById[childId];
+                        if (child["kind"]!.GetValue<string>() == "group") foreach (var leaf in Leaves(child)) yield return leaf;
+                        else yield return child;
+                    }
+                }
+
+                var leaves = elements.Where(e => e["kind"]!.GetValue<string>() != "group").ToList();
+                var inFileOrder = leaves.OrderBy(Z).ToList();
+                if (inFileOrder.Zip(inFileOrder.Skip(1)).Any(pair => Level(pair.First) > Level(pair.Second)))
+                    Note("level_order_conflict", "The file's drawn order conflicts with saved stacking levels; levels take precedence and the order within each level follows the file.", action: "stacking order resolved", severity: "info");
+
+                if (leaves.Any(e => Level(e) != 0))
+                {
+                    var ordered = leaves.OrderBy(Level).ThenBy(Z).ToList();
+                    for (var i = 0; i < ordered.Count; i++) ordered[i]["zIndex"] = i + 1;
+                }
+                foreach (var (group, _, _) in groups.AsEnumerable().Reverse())
+                {
+                    var top = Leaves(group).OrderBy(Level).ThenBy(Z).LastOrDefault();
+                    if (top is null) continue;
+                    group["zIndex"] = Z(top);
+                    if (Level(top) == 0) group.Remove("level"); else group["level"] = Level(top);
+                }
             }
 
             // ------------------------------------------------------------ guides

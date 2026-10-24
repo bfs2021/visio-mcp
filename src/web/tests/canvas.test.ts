@@ -101,6 +101,19 @@ describe('delete', () => {
 });
 
 describe('copy and paste', () => {
+  it('preserves effective stacking order across levels on paste', async () => {
+    const t = createTestEngine();
+    await t.engine.execute(t.request([
+      { op: 'createShape', id: '00000000-0000-4000-8000-000000000970', level: 2, alias: 'upper', bounds: { x: 1, y: 1, width: 10, height: 10 } },
+      { op: 'createShape', id: '00000000-0000-4000-8000-000000000971', level: -1, alias: 'lower', bounds: { x: 20, y: 1, width: 10, height: 10 } },
+    ]), 'gui');
+    const snapshot = t.engine.store.snapshot(), page = snapshot.document.pages[0]!;
+    const clip = copyElements(snapshot, ['00000000-0000-4000-8000-000000000970', '00000000-0000-4000-8000-000000000971'])!;
+    expect(clip.elements.map(e => e.alias)).toEqual(['lower', 'upper']);
+    const { operations } = pasteOperations(clip, page, 12, sequenceIds('4'));
+    expect(operations.map(o => o.op === 'createShape' ? o.level : undefined)).toEqual([-1, 2]);
+  });
+
   it('remaps identities, uniquifies aliases and re-attaches connectors between copied shapes', async () => {
     const t = createTestEngine();
     await t.engine.execute(t.request([{ op: 'createConnector', alias: 'link', from: { elementId: t.ids.shapes[0]!, glue: 'dynamic' }, to: { elementId: t.ids.shapes[1]!, glue: 'dynamic' }, waypoints: [{ x: 150, y: 20 }] }]), 'gui');

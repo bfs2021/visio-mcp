@@ -98,6 +98,34 @@ describe('groups', () => {
     expect(group(t, G1).childIds).toHaveLength(2);
   });
 
+  it('moving_a_group_preserves_member_level_offsets_and_mirrors_its_top_leaf', async () => {
+    const t = createTestEngine();
+    await run(t, [
+      { op: 'set', target: s(t, 0), patch: { level: -2 } },
+      { op: 'set', target: s(t, 1), patch: { level: 1 } },
+      { op: 'group', targets: [s(t, 0), s(t, 1)], id: G1 },
+    ]);
+    expect(group(t, G1)).toMatchObject({ level: 1, zIndex: byId(t, s(t, 1)).zIndex });
+    await run(t, [{ op: 'set', target: G1, patch: { level: 3 } }]);
+    expect(byId(t, s(t, 0))).not.toHaveProperty('level');
+    expect(byId(t, s(t, 1))).toMatchObject({ level: 3 });
+    expect(group(t, G1)).toMatchObject({ level: 3, zIndex: byId(t, s(t, 1)).zIndex });
+  });
+
+  it('rejects_a_group_level_shift_atomically_when_any_leaf_would_overflow', async () => {
+    const t = createTestEngine();
+    await run(t, [
+      { op: 'set', target: s(t, 0), patch: { level: 127 } },
+      { op: 'set', target: s(t, 1), patch: { level: 0 } },
+      { op: 'group', targets: [s(t, 0), s(t, 1)], id: G1 },
+    ]);
+    const before = exactElementHashes(t.store.snapshot());
+    const err = await refused(t, [{ op: 'set', target: G1, patch: { level: -1 } }]);
+    expect(err.code).toBe('invalid_request');
+    expect(exactElementHashes(t.store.snapshot())).toEqual(before);
+    expect(group(t, G1).level).toBe(127);
+  });
+
   it('deleting_a_group_requires_an_explicit_subtree_choice', async () => {
     const t = createTestEngine();
     await run(t, [{ op: 'group', targets: [s(t, 0), s(t, 1)], id: G1 }]);

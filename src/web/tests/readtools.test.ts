@@ -6,6 +6,14 @@ import { createTestEngine, exactElementHashes } from './support/engine';
 import { id, run } from './support/ops';
 
 describe('read tools', () => {
+  it('reports effective level 0 for legacy objects and explicit levels for edited objects', async () => {
+    const t = createTestEngine();
+    await run(t, [{ op: 'set', target: 's0', patch: { level: 5 } }]);
+    const summary = readSummary(t.store.snapshot());
+    expect(summary.ok && (summary.value as { pages: Array<{ elements: Array<{ alias?: string; level: number }> }> }).pages[0]!.elements.find(e => e.alias === 's0')!.level).toBe(5);
+    expect(summary.ok && (summary.value as { pages: Array<{ elements: Array<{ alias?: string; level: number }> }> }).pages[0]!.elements.find(e => e.alias === 's1')!.level).toBe(0);
+  });
+
   it('summary is compact by default and opt-in for style, hidden elements and geometry', async () => {
     const t = createTestEngine();
     await run(t, [
@@ -43,6 +51,7 @@ describe('read tools', () => {
     const snap = t.store.snapshot();
     const r = readObjects(snap, [t.ids.shapes[1]!, 's2']);
     expect(r.ok && r.value.map(e => e.id)).toEqual([t.ids.shapes[1], t.ids.shapes[2]]);
+    expect(r.ok && r.value.map(e => e.level ?? 0)).toEqual([0, 0]);
     expect(r.ok && (r.value[0] as { style: unknown }).style).toBeDefined(); // everything, not a summary
     const missing = readObjects(snap, ['nothing']);
     expect(!missing.ok && missing.error.code).toBe('not_found');

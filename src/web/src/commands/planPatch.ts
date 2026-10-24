@@ -20,6 +20,7 @@ import { paintProblem } from '../model/paint';
 import { planRoutes } from '../layout/routePlanner';
 import { addressOf, moveSegment, readdress, segmentsOf, type RunConstraint } from '../layout/routeSegments';
 import { readDocumentDefaults, textDefaults } from '../model/documentDefaults';
+import { compareElementOrder, effectiveLevel } from '../model/elementOrder';
 
 export interface PlanContext {
   newId(): string;
@@ -82,6 +83,12 @@ function mergeText(base: TextBlock, patch: PatchObj): TextBlock {
 }
 const plusZero = (n: number): number => n + 0; // turns -0 into 0, so right-angle maths never leaves a negative zero behind
 const sameBounds = (a: Bounds, b: Bounds): boolean => a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height;
+const storedLevel = (level: number | undefined): { level?: number } => level === undefined || level === 0 ? {} : { level };
+function withStoredLevel<T extends Element>(element: T, level: number): T {
+  const next = { ...element } as T & { level?: number };
+  if (level === 0) delete next.level; else next.level = level;
+  return next;
+}
 
 /** Plans a batch against `doc` without touching it. All-or-nothing: any failure returns an error and no plan. */
 export function planPatch(doc: DiagramDocument, operations: Operation[], ctx: PlanContext): Result<Plan> {
@@ -389,8 +396,14 @@ class Planner {
     for (const gid of groups) {
       const hit = this.findById(gid);
       if (!hit || hit.element.kind !== 'group' || hit.element.childIds.length === 0) continue;
-      const bounds = groupBoundsFrom(this.byIdMap(hit.pageIdx), hit.element);
-      if (!sameBounds(bounds, hit.element.bounds)) this.store(hit.pageIdx, hit.index, { ...hit.element, bounds });
+      const byId = this.byIdMap(hit.pageIdx);
+      const bounds = groupBoundsFrom(byId, hit.element);
+      const leaves = leavesUnder(byId, gid).map(id => byId.get(id)!).sort(compareElementOrder);
+      const top = leaves[leaves.length - 1]!;
+      const derivedLevel = storedLevel(effectiveLevel(top));
+      if (!sameBounds(bounds, hit.element.bounds) || hit.element.zIndex !== top.zIndex || hit.element.level !== derivedLevel.level) {
+        this.store(hit.pageIdx, hit.index, withStoredLevel({ ...hit.element, zIndex: top.zIndex, bounds }, effectiveLevel(top)));
+      }
     }
   }
 
@@ -478,6 +491,7 @@ class Planner {
         if (op.style) for (const k of Object.keys(op.style)) if (LINE_ONLY_STYLE.includes(k)) stop('invalid_request', `style.${k} does not apply to a shape`);
         const el: ShapeElement = {
           id, kind: 'shape', layerIds: [...layerIds], zIndex: this.nextZ(page), locked: false, hidden: false,
+          ...storedLevel(op.level),
           bounds: { ...op.bounds }, rotationDeg: op.rotationDeg ?? 0, metadata: {},
           geometry: merge({ preset: 'rectangle' } as ShapeElement['geometry'], (op.geometry ?? {}) as PatchObj),
           style: merge(DEFAULT_SHAPE_STYLE, (op.style ?? {}) as PatchObj),
@@ -504,6 +518,7 @@ class Planner {
         this.assertLayers(page, layerIds);
         const el: TextElement = {
           id, kind: 'text', layerIds: [...layerIds], zIndex: this.nextZ(page), locked: false, hidden: false,
+          ...storedLevel(op.level),
           bounds: { ...op.bounds }, rotationDeg: op.rotationDeg ?? 0, metadata: {}, text: mergeText(textDefaults(this.doc), op.text as PatchObj),
         };
         if (op.alias) el.alias = op.alias;
@@ -524,6 +539,7 @@ class Planner {
         this.assertAsset(op.assetId);
         const el: ImageElement = {
           id, kind: 'image', layerIds: [...layerIds], zIndex: this.nextZ(page), locked: false, hidden: false,
+          ...storedLevel(op.level),
           bounds: { ...op.bounds }, rotationDeg: op.rotationDeg ?? 0, metadata: {}, assetId: op.assetId,
           fit: op.fit ?? 'contain', opacity: op.opacity ?? 1, preserveAspectRatio: op.preserveAspectRatio ?? true,
         };
@@ -548,6 +564,7 @@ class Planner {
         for (const p of waypoints) { this.assertFinite(p.x, 'waypoint.x'); this.assertFinite(p.y, 'waypoint.y'); }
         const el: ConnectorElement = {
           id, kind: 'connector', layerIds: [...layerIds], zIndex: this.nextZ(page), locked: false, hidden: false,
+          ...storedLevel(op.level ?? effectiveLevel(page.elements.find(e => e.id === (from.join?.connectorId ?? from.elementId)) ?? { level: 0 } as Element)),
           bounds: this.connectorBounds(from, to, waypoints), rotationDeg: 0, metadata: {}, from, to,
           route: op.route ?? 'straight', waypoints, style: merge(DEFAULT_LINE_STYLE, (op.style ?? {}) as PatchObj),
         };
@@ -773,9 +790,9 @@ class Planner {
     const gid = this.newElementId(op.id);
     if (op.alias) this.assertAlias(page, op.alias, undefined);
     const byId = this.byIdMap(pageIdx);
-    const z = Math.max(...ids.flatMap(i => leavesUnder(byId, i)).map(l => byId.get(l)!.zIndex));
+    const top = ids.flatMap(i => leavesUnder(byId, i)).map(l => byId.get(l)!).sort(compareElementOrder).at(-1)!;
     const g: GroupElement = {
-      id: gid, kind: 'group', layerIds: [], zIndex: z, locked: false, hidden: false, bounds: { x: 0, y: 0, width: 0, height: 0 },
+      id: gid, kind: 'group', layerIds: [], zIndex: top.zIndex, ...storedLevel(effectiveLevel(top)), locked: false, hidden: false, bounds: { x: 0, y: 0, width: 0, height: 0 },
       rotationDeg: 0, metadata: {}, childIds: [...ids],
     };
     if (op.alias) g.alias = op.alias;
@@ -809,8 +826,21 @@ class Planner {
     for (const id of ids) this.assertSubtreeEditable(pageIdx, id, 'reorder');
     const byId = this.byIdMap(pageIdx);
     const block = new Set(ids.flatMap(i => leavesUnder(byId, i)));
-    const entries = this.pages[pageIdx]!.elements.filter(e => e.kind !== 'group').map((e, order) => ({ id: e.id, z: e.zIndex, order }));
-    const changes = planZ(entries, block, to);
+    const entries = this.pages[pageIdx]!.elements.filter(e => e.kind !== 'group').map((e, order) => ({ id: e.id, z: e.zIndex, order, level: effectiveLevel(e) }));
+    const changes = new Map<string, number>();
+    const pageMin = Math.min(...entries.map(e => e.z)), pageMax = Math.max(...entries.map(e => e.z));
+    const levels = new Set([...block].map(id => effectiveLevel(byId.get(id)!)));
+    for (const level of levels) {
+      const levelEntries = entries.filter(e => e.level === level);
+      const levelBlock = new Set(levelEntries.filter(e => block.has(e.id)).map(e => e.id));
+      if (!levelBlock.size) continue;
+      const scoped = planZ(levelEntries, levelBlock, to);
+      if (to === 'front' && scoped.size) {
+        [...levelBlock].sort((a, b) => byId.get(a)!.zIndex - byId.get(b)!.zIndex).forEach((id, i) => changes.set(id, pageMax + 1 + i));
+      } else if (to === 'back' && scoped.size) {
+        [...levelBlock].sort((a, b) => byId.get(a)!.zIndex - byId.get(b)!.zIndex).forEach((id, i) => changes.set(id, pageMin - levelBlock.size + i));
+      } else for (const [id, z] of scoped) changes.set(id, z);
+    }
     for (const [id, z] of changes) this.put({ ...byId.get(id)!, zIndex: z });
     // a group stacks with its topmost member
     const after = this.byIdMap(pageIdx);
@@ -818,8 +848,8 @@ class Planner {
     for (const id of changes.keys()) for (const a of ancestorsOf(this.parents, id)) groups.add(a);
     for (const gid of groups) {
       const g = after.get(gid) as GroupElement;
-      const top = Math.max(...leavesUnder(after, gid).map(l => after.get(l)!.zIndex));
-      if (top !== g.zIndex) this.put({ ...g, zIndex: top });
+      const top = leavesUnder(after, gid).map(l => after.get(l)!).sort(compareElementOrder).at(-1)!;
+      if (top.zIndex !== g.zIndex || g.level !== storedLevel(effectiveLevel(top)).level) this.put(withStoredLevel({ ...g, zIndex: top.zIndex }, effectiveLevel(top)));
     }
   }
 
@@ -868,7 +898,7 @@ class Planner {
     };
 
     let z = this.nextZ(page);
-    const ordered = source.slice().sort((a, b) => a.zIndex - b.zIndex);
+    const ordered = source.slice().sort(compareElementOrder);
     const zOf = new Map(ordered.filter(e => e.kind !== 'group').map(e => [e.id, z++] as const));
     const copies: Element[] = [];
     const taken = new Set(page.elements.map(e => e.alias).filter((a): a is string => !!a));
@@ -963,6 +993,16 @@ class Planner {
         case 'locked': next.locked = value; break;
         case 'hidden': next.hidden = value; break;
         case 'layerIds': this.assertLayers(page, value as string[]); next.layerIds = [...(value as string[])]; break;
+        case 'level': {
+          const level = value as number;
+          if (!Number.isInteger(level) || level < -127 || level > 127) stop('invalid_request', 'level must be an integer from -127 through 127', { target: element.id, level });
+          if (element.kind !== 'group') {
+            if (level === 0) delete next.level;
+            else next.level = level;
+            if (level !== effectiveLevel(element)) next.zIndex = this.nextZ(page);
+          }
+          break;
+        }
         case 'metadata': next.metadata = { ...element.metadata, ...(value as Record<string, string>) }; break;
         case 'style': {
           need(element.kind === 'shape' || element.kind === 'connector', key);
@@ -1024,8 +1064,22 @@ class Planner {
       const c = next as unknown as ConnectorElement;
       next.bounds = this.connectorBounds(c.from, c.to, c.waypoints);
     }
+    if (element.kind === 'group' && 'level' in patch) this.moveGroupToLevel(pageIdx, element, patch.level as number);
     this.store(pageIdx, index, next as unknown as Element);
     if (routingMode) this.applyRouting(pageIdx, element.id, routingMode);
+  }
+
+  /** Moves every descendant leaf by the same amount, validating the whole subtree before writing any member. */
+  private moveGroupToLevel(pageIdx: number, group: GroupElement, target: number): void {
+    this.assertSubtreeEditable(pageIdx, group.id, 'change its level');
+    const delta = target - effectiveLevel(group);
+    if (delta === 0) return;
+    const byId = this.byIdMap(pageIdx);
+    const leaves = leavesUnder(byId, group.id).map(id => byId.get(id)!);
+    const moved = leaves.map(leaf => ({ leaf, level: effectiveLevel(leaf) + delta }));
+    const invalid = moved.find(x => x.level < -127 || x.level > 127);
+    if (invalid) refuse('level_out_of_range', `moving group ${group.id} would put member ${invalid.leaf.id} outside level -127 through 127`, { groupId: group.id, memberId: invalid.leaf.id, level: invalid.level });
+    for (const { leaf, level } of moved) this.put(withStoredLevel(leaf, level));
   }
 
   // ---------------------------------------------------------------- route modes (R20)

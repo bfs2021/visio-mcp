@@ -13,6 +13,7 @@ public class StructuralTests
         return doc.Descendants().Where(e => e.Name.LocalName == "Shape").First(s => s.Descendants().Any(r => r.Name.LocalName == "Cell" && (string?)r.Attribute("V") == id && (string?)r.Parent?.Attribute("N") == "AgentId"));
     }
     static string? Cell(XElement shape, string n) => shape.Elements().FirstOrDefault(c => c.Name.LocalName == "Cell" && (string?)c.Attribute("N") == n)?.Attribute("V")?.Value;
+    static string? UserValue(XElement shape, string n) => shape.Descendants().FirstOrDefault(r => r.Name.LocalName == "Row" && (string?)r.Attribute("N") == n)?.Elements().FirstOrDefault(c => c.Name.LocalName == "Cell")?.Attribute("V")?.Value;
     static string? CellF(XElement shape, string n) => shape.Elements().FirstOrDefault(c => c.Name.LocalName == "Cell" && (string?)c.Attribute("N") == n)?.Attribute("F")?.Value;
     static void Near(double expected, double? actual, double tol = 0.01) => Assert.True(actual is { } a && Math.Abs(a - expected) <= tol, $"expected {expected} but was {actual}");
 
@@ -285,6 +286,80 @@ public class StructuralTests
         var ids = RT.All(back.Document).OrderBy(e => e["zIndex"]!.GetValue<int>()).Select(e => e["id"]!.GetValue<string>()).ToList();
         Assert.Equal(new[] { Doc.Id(2), Doc.Id(3), Doc.Id(1), Doc.Id(4) }, ids); // back to front
         Assert.Equal(4, RT.All(back.Document).Select(e => e["zIndex"]!.GetValue<int>()).Distinct().Count()); // no ties
+    }
+
+    [Fact]
+    public void NonzeroLevelsRoundTripInEffectiveOrderWithoutChangingSchemaMarker()
+    {
+        var shapes = new object[]
+        {
+            Doc.Shape(1, 100, 100, 100, 60, new { level = 2 }, z: 1),
+            Doc.Shape(2, 220, 100, 100, 60, new { level = -1 }, z: 20),
+            Doc.Shape(3, 340, 100, 100, 60, z: 30),
+        };
+        var (exp, back) = RT.Trip(Doc.Snapshot(Doc.Page(shapes)));
+        var xml = Fx.Part(exp.Package, "visio/pages/page1.xml");
+        var drawnIds = xml.Root!.Element(xml.Root.Name.Namespace + "Shapes")!.Elements()
+            .Select(s => UserValue(s, "AgentId")).Where(s => s is not null).ToList();
+        Assert.Equal(new[] { Doc.Id(2), Doc.Id(3), Doc.Id(1) }, drawnIds);
+        Assert.Equal("-1", UserValue(ShapeByAgentId(exp.Package, Doc.Id(2)), "AgentLevel"));
+        Assert.Null(UserValue(ShapeByAgentId(exp.Package, Doc.Id(3)), "AgentLevel"));
+        Assert.Equal("2", UserValue(ShapeByAgentId(exp.Package, Doc.Id(1)), "AgentLevel"));
+        var marker = Fx.Part(exp.Package, "visio/document.xml").Descendants().First(e => e.Name.LocalName == "Row" && (string?)e.Attribute("N") == "AgentSchemaVersion");
+        Assert.Equal("1", (string?)marker.Elements().First(e => e.Name.LocalName == "Cell").Attribute("V"));
+        var ordered = RT.All(back.Document).OrderBy(e => e["level"]?.GetValue<int>() ?? 0).ThenBy(e => e["zIndex"]!.GetValue<int>()).ToList();
+        Assert.Equal(new[] { Doc.Id(2), Doc.Id(3), Doc.Id(1) }, ordered.Select(e => e["id"]!.GetValue<string>()));
+        Assert.Equal(new[] { -1, 0, 2 }, ordered.Select(e => e["level"]?.GetValue<int>() ?? 0));
+        Assert.Contains(exp.Diagnostics, d => d.Code == "level_not_native" && d.ElementId == Doc.Id(1));
+    }
+
+    [Fact]
+    public void MixedLevelGroupReportsExpectedBlockInterleaving()
+    {
+        var shapes = new object[]
+        {
+            Doc.Shape(1, 100, 100, 60, 40, new { level = -1 }, z: 1),
+            Doc.Shape(2, 300, 100, 60, 40, new { level = 1 }, z: 5),
+            Doc.Shape(3, 200, 100, 60, 40, z: 3),
+            JsonSerializer.SerializeToNode(new { id = Doc.Id(20), kind = "group", layerIds = Array.Empty<string>(), zIndex = 5, level = 1, locked = false, hidden = false, bounds = new { x = 100, y = 100, width = 260, height = 40 }, rotationDeg = 0, metadata = new { }, childIds = new[] { Doc.Id(1), Doc.Id(2) } })!,
+        };
+        var exp = RT.Export(Doc.Snapshot(Doc.Page(shapes)));
+        Assert.Contains(exp.Diagnostics, d => d.Code == "group_stacking_flattened" && d.ElementId == Doc.Id(20));
+    }
+
+    [Fact]
+    public void ConflictingVisioOrderKeepsAgentLevelAndReportsTheResolution()
+    {
+        var exp = RT.Export(Doc.Snapshot(Doc.Page([
+            Doc.Shape(1, 100, 100, 60, 40, new { level = 2 }, z: 1),
+            Doc.Shape(2, 200, 100, 60, 40, new { level = -1 }, z: 2),
+        ])));
+        var conflicted = Fx.Edit(exp.Package, "visio/pages/page1.xml", d =>
+        {
+            var shapes = d.Root!.Element(d.Root.Name.Namespace + "Shapes")!;
+            var nodes = shapes.Elements().ToArray();
+            shapes.ReplaceNodes(nodes.Reverse());
+        });
+        var imported = RT.Import(conflicted);
+        Assert.Contains(imported.Diagnostics, d => d.Code == "level_order_conflict" && d.Severity == "info");
+        var byId = RT.All(imported.Document).ToDictionary(e => e["id"]!.GetValue<string>());
+        Assert.Equal(2, byId[Doc.Id(1)]["level"]!.GetValue<int>());
+        Assert.Equal(-1, byId[Doc.Id(2)]["level"]!.GetValue<int>());
+        Assert.True(byId[Doc.Id(1)]["zIndex"]!.GetValue<int>() > byId[Doc.Id(2)]["zIndex"]!.GetValue<int>());
+    }
+
+    [Fact]
+    public void InvalidAgentLevelFallsBackToZeroWithDiagnostic()
+    {
+        var exp = RT.Export(Doc.Snapshot(Doc.Page([Doc.Shape(1, 100, 100, 60, 40, new { level = 2 })])));
+        var invalid = Fx.Edit(exp.Package, "visio/pages/page1.xml", d =>
+        {
+            var row = d.Descendants().First(e => e.Name.LocalName == "Row" && (string?)e.Attribute("N") == "AgentLevel");
+            row.Elements().First(e => e.Name.LocalName == "Cell")!.SetAttributeValue("V", "128");
+        });
+        var imported = RT.Import(invalid);
+        Assert.Contains(imported.Diagnostics, d => d.Code == "level_invalid" && d.Severity == "warning");
+        Assert.Null(RT.El(imported.Document, Doc.Id(1))["level"]);
     }
 
     [Fact]

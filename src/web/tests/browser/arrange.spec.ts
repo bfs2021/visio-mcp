@@ -301,3 +301,16 @@ test('evidence: a grouped pair aligned with a third shape', async ({ page }) => 
   await page.screenshot({ path: '../../docs/m2/evidence/I20/grouped-and-aligned.png' });
   void b;
 });
+
+test('set level from Arrange preserves zero as the default and is undoable', async ({ page }) => {
+  await openEditor(page);
+  const shape = await placeShape(page, 'shape-rectangle', { x: 240, y: 150 }, 'leveled');
+  await page.mouse.click((await centre(page, shape.id)).x, (await centre(page, shape.id)).y);
+  const r0 = await revision(page);
+  await page.getByTestId('arrange-level-input').fill('3');
+  await page.getByTestId('arrange-level-set').click();
+  await expect.poll(() => revision(page)).toBe(r0 + 1);
+  expect((await get(page, shape.id)).level).toBe(3);
+  await page.keyboard.press('Control+z');
+  await expect.poll(async () => (await get(page, shape.id)).level ?? 0).toBe(0);
+});

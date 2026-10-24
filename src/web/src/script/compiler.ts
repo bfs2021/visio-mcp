@@ -504,12 +504,13 @@ class Compiler {
     if (this.args.pos.length) this.err(`add ${what} takes only name=value fields`, this.args.pos[0]!);
     const pageId = this.pageIdForCreate();
     const { id, alias } = this.identity();
-    const common: { id: string; pageId: string; alias?: string; name?: string; layerIds?: string[]; rotationDeg?: number } = { id, pageId };
+    const common: { id: string; pageId: string; alias?: string; name?: string; layerIds?: string[]; rotationDeg?: number; level?: number } = { id, pageId };
     if (alias) common.alias = alias;
     if (this.has('name')) common.name = this.str(this.raw('name')!);
     if (this.has('layer')) common.layerIds = [this.layerId(this.wordOrString(this.raw('layer')!), this.raw('layer')!.value)];
     if (this.has('rotate')) common.rotationDeg = this.angle(this.raw('rotate')!);
-    const base = ['id', 'uuid', 'x', 'y', 'w', 'h', 'name', 'layer', 'rotate', 'on', 'at', 'offset'];
+    if (this.has('level')) common.level = this.num(this.raw('level')!, -127, 127);
+    const base = ['id', 'uuid', 'x', 'y', 'w', 'h', 'name', 'layer', 'rotate', 'level', 'on', 'at', 'offset'];
 
     if (what === 'shape') {
       this.finish([...base, 'type', 'cornerRadius', 'fill', 'stroke', 'strokeWidth', 'dash', 'lineCap', 'lineJoin', ...Compiler.TEXT_KEYS]);
@@ -615,7 +616,7 @@ class Compiler {
   private cmdConnect(cmd: Command): void {
     this.begin(cmd);
     if (this.args.pos.length) this.err('connect takes only name=value fields', this.args.pos[0]!);
-    this.finish(['id', 'uuid', 'from', 'to', 'fromAlias', 'fromPort', 'toAlias', 'toPort', 'fromX', 'fromY', 'toX', 'toY', 'route', 'name', 'layer',
+    this.finish(['id', 'uuid', 'from', 'to', 'fromAlias', 'fromPort', 'toAlias', 'toPort', 'fromX', 'fromY', 'toX', 'toY', 'route', 'name', 'layer', 'level',
       'stroke', 'strokeWidth', 'dash', 'startArrow', 'endArrow', 'startArrowSize', 'endArrowSize', 'text', 'labelAt', 'labelOffset', 'mode',
       'fromJoin', 'fromAt', 'toJoin', 'toAt', 'fromSide', 'toSide', 'hops']);
     const pageId = this.pageIdForCreate();
@@ -624,6 +625,7 @@ class Compiler {
     if (alias) op.alias = alias;
     if (this.has('name')) op.name = this.str(this.raw('name')!);
     if (this.has('layer')) op.layerIds = [this.layerId(this.wordOrString(this.raw('layer')!), this.raw('layer')!.value)];
+    if (this.has('level')) op.level = this.num(this.raw('level')!, -127, 127);
     if (this.has('route')) op.route = this.enumValue(this.raw('route')!, ['straight', 'orthogonal', 'curved'] as const);
     if (this.has('mode')) op.routing = { mode: this.enumValue(this.raw('mode')!, ['automatic', 'manual', 'frozen', 'guided'] as const) };
     const style = this.lineStyle();
@@ -660,6 +662,7 @@ class Compiler {
     const handled = new Set<string>();
     const take = (key: string, f: (n: Named) => unknown, to: string) => { const n = this.raw(key); if (n) { patch[to] = f(n); handled.add(key); } };
     take('name', n => this.str(n), 'name');
+    take('level', n => this.num(n, -127, 127), 'level');
     take('alias', n => this.str(n), 'alias');
     take('locked', n => this.bool(n), 'locked');
     take('hidden', n => this.bool(n), 'hidden');

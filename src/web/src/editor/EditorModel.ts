@@ -677,6 +677,15 @@ export class EditorModel {
     await this.arrangeWith(targets => ({ op: 'reorder', targets, to }), 1, 'reorder');
   }
 
+  /** Sets the selected objects' logical stacking level in one atomic transaction. */
+  async moveToLevel(level: number): Promise<void> {
+    if (!Number.isInteger(level) || level < -127 || level > 127) { this.say('Level must be an integer from -127 to 127.', 'warning'); return; }
+    const targets = this.targets;
+    if (!targets.length) { this.say('Select an object to change its level.', 'info'); return; }
+    const r = await this.apply('arrange', targets.map(target => ({ op: 'set', target, patch: { level } }) as Operation));
+    if (r.ok) { this.canvas?.setSelection(this.selection); this.say(level === 0 ? 'Returned to level 0.' : `Moved to level ${level}.`, 'info'); }
+  }
+
 
   /** What an arrow key moves the selection by: one grid step (at least 1 pt). */
   get nudgeStepPt(): number { return Math.max(1, this.currentPage.grid.spacingPt); }
