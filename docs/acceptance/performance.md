@@ -69,9 +69,11 @@ A script in the page records every animation frame and, for each pointer move, t
 |---|---|---|---|---|
 | Drag one shape | 15.6 / 15.7 ms (64 fps) | 0 | 10.0 / 16.7 / 17.6 ms (Debug); 9.8 / 18.0 / 19.2 (Release) | 34 / 32 ms |
 | Resize one shape | 15.6 / 15.7 ms (64 fps) | 0 | 13.8 / 16.8 / 17.2; 9.3 / 18.9 / 20.4 | 33 / 27 ms |
-| Select all (Edit > Select all, 500 elements) and drag the whole page | 15.6 ms; **one frame of 656 ms** at release | 1 | 9.2 / 15.7 / 18.8; 7.8 / 15.6 / 16.7 | **189 / 196 ms** |
+| Select all (Edit > Select all, 500 elements) and drag the whole page | 15.6 ms; **one frame of 250 / 266 ms** at release (656 ms before P03) | 1 | 10.3 / 17.6 / 19.4; 6.5 / 13.9 / 17.2 | 25 / 38 ms (189 / 196 before P03) |
 
-Dragging stays at the display's rate with about one frame of input latency. Moving all 500 elements keeps up while the pointer moves, then stalls for about 0.65 s when the gesture is committed; the window is offscreen, so the frame rate is that of this harness.
+Dragging stays at the display's rate with about one frame of input latency. Moving all 500 elements keeps up while the pointer moves, then stalls for about a quarter of a second when the gesture is committed (0.65 s before P03, [#80](https://github.com/rp2839/visio-mcp/issues/80)); the window is offscreen, so the frame rate is that of this harness.
+
+**Where the release time went (P03, Release, CPU profile of the gesture).** The 656 ms frame was three long tasks in a row (494, 164 and 141 ms). About 410 ms of the total was React re-rendering the panels after the commit: `EditorModel.targets` recomputed `collapseToGroups` for the 500 selected ids on every call, and each call rebuilt the page's parent map and id map once per selected id (the Inspector, Layers and Components panels each asked on every render). Those are now built once per page and the answer is kept until the document or selection changes. A further 68 ms was re-selecting the same 500 cells after every projection, which is skipped when the selection is unchanged. What remains is one long task of about 310 ms, of which 250 to 280 ms is maxGraph revalidating and redrawing all 500 moved cells (`CellRenderer.redraw`, dominated by SVG `getBBox` forcing layout). Removing that would mean changing how maxGraph computes bounding boxes, which affects hit-testing and handles, so it is recorded as the limit for this gesture.
 
 ### Large pictures (8 PNG pictures of 2400 x 1600, 5.6 to 5.8 MB each, 45.2 MB in all, on one page)
 | Measurement | Preferred | Debug / Release |
@@ -102,7 +104,7 @@ and nothing is left behind. The 64 MiB budget (`InputLimits.NativeJsonBytes`) is
 ### What these show
 - The ten-page and text-heavy workloads meet every preferred target by a wide margin; opening a file Visio saved is as fast as opening the app's own.
 - **Pictures are the one measured workload above a preferred target:** the page preview with eight 6-megapixel pictures takes 1.4 to 1.5 s (target 1 s). Everything else in the picture workload is fast. Where the time goes was not profiled.
-- Moving everything on a 500-element page stalls the display for about 0.65 s at the moment of release (one frame), though the drag itself keeps up.
+- Moving everything on a 500-element page stalls the display for about 0.25 s at the moment of release (one frame; 0.65 s before P03), though the drag itself keeps up. The remainder is maxGraph redrawing 500 cells.
 - The `.vsdx` export has a hard ceiling of 64 MiB of content and reports it as `internal_error`.
 
 ## Finding: starvation of the thread pool when the process starts a child (A05)
@@ -118,4 +120,4 @@ Full method, 39 probe runs and limits: [shim-startup-pause.md](shim-startup-paus
 4. Pictures are generated (smooth gradients with seeded noise), not photographs, so their compression and decode cost differ from real ones. Memory use of the editor was not measured.
 5. Text-heavy content used a 16-word vocabulary in Latin script; right-to-left and East Asian text were not measured.
 6. Edits on a later page were measured as DrawScript transactions because `apply_operations` cannot name a page.
-7. The cause of the 1.4 to 1.5 s preview with large pictures, and of the 0.65 s frame at the end of a select-all drag, was not profiled.
+7. The cause of the 1.4 to 1.5 s preview with large pictures was not profiled. The select-all release frame was profiled in P03 (above); it was confirmed only in the offscreen harness, not in a visible window with a real pointer (NOT RUN).
