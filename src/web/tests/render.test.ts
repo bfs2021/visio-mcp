@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Projection } from '../src/contracts/generated';
-import { planRender } from '../src/render/SnapshotRenderer';
+import { pictureDrawSize, planRender } from '../src/render/SnapshotRenderer';
 import { createTestEngine } from './support/engine';
 import { id, run } from './support/ops';
 
@@ -84,4 +84,21 @@ it('editor exports use an exact scale and reject oversized output instead of shr
   expect(planRender(t.store.snapshot(),undefined,{scope:'page',scale:0} as never).ok).toBe(false);
   expect(planRender(t.store.snapshot(),undefined,{scope:'page',background:'bad'} as never).ok).toBe(false);
   expect(planRender(t.store.snapshot(),undefined,{scope:'page',format:'jpeg',background:'transparent'} as never).ok).toBe(false);
+});
+
+describe('pictures much larger than their place on the page', () => {
+  it('shrinks to the pixels they cover, keeping their own aspect ratio', () => {
+    // 2400 x 1600 drawn into a 380 x 253 box
+    expect(pictureDrawSize({ width: 2400, height: 1600 }, { width: 380, height: 253 })).toEqual({ width: 380, height: 254 });
+    // a tall box around a wide picture (contain): the picture must still cover the box's longer side, so nothing is upscaled later
+    expect(pictureDrawSize({ width: 2400, height: 1600 }, { width: 200, height: 600 })).toEqual({ width: 900, height: 600 });
+  });
+
+  it('leaves a picture alone unless it is at least twice the size it is drawn at, or the sizes cannot be trusted', () => {
+    expect(pictureDrawSize({ width: 2400, height: 1600 }, { width: 1500, height: 1000 })).toBeUndefined();
+    expect(pictureDrawSize({ width: 2400, height: 1600 }, { width: 1200, height: 800 })).toEqual({ width: 1200, height: 800 });
+    expect(pictureDrawSize({ width: 2400, height: 1600 }, { width: 4000, height: 3000 })).toBeUndefined();
+    expect(pictureDrawSize({ width: 2400, height: 1600 }, { width: Number.NaN, height: 100 })).toBeUndefined();
+    expect(pictureDrawSize({ width: 0, height: 1600 }, { width: 100, height: 100 })).toBeUndefined();
+  });
 });

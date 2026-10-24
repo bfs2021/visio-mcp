@@ -78,16 +78,18 @@ Dragging stays at the display's rate with about one frame of input latency. Movi
 ### Large pictures (8 PNG pictures of 2400 x 1600, 5.6 to 5.8 MB each, 45.2 MB in all, on one page)
 | Measurement | Preferred | Debug / Release |
 |---|---|---|
-| Prepare and import one picture into the library | n/a | 36 / 34 ms |
-| Place all eight with one script | n/a | 240 / 278 ms |
-| Editor decodes and draws all eight | n/a | 174 / 86 ms |
-| Summary | < 250 ms | 3.3 / 2.3 ms |
-| **Preview at 1600 x 1200 (1.15 MB PNG)** | **< 1 s** | **1540 / 1374 ms: not met** |
-| `inspect_layout` | n/a | 14.5 / 3.2 ms |
-| `.vsdx` save (45.2 MB file) | < 3 s | 1283 / 1218 ms |
-| Open that `.vsdx` | n/a | 187 / 212 ms |
+| Prepare and import one picture into the library | n/a | 31 / 29 ms |
+| Place all eight with one script | n/a | 391 / 262 ms |
+| Editor decodes and draws all eight | n/a | 62 / 198 ms |
+| Summary | < 250 ms | 4.0 / 2.7 ms |
+| **Preview at 1600 x 1200 (1.01 MB PNG)** | **< 1 s** | **679 / 681 ms: met** (1540 / 1374 ms before P01) |
+| `inspect_layout` | n/a | 11.7 / 3.4 ms |
+| `.vsdx` save (45.2 MB file) | < 3 s | 1182 / 1074 ms |
+| Open that `.vsdx` | n/a | 163 / 134 ms |
 
-**Limit found.** With four more such pictures (12 in all, 68.5 MB) the `.vsdx` export is **refused after 1.5 / 2.2 s with `internal_error`: "the exported file could not be read back, so it was not saved: the file is larger than 67108864 bytes"**,
+**Where the preview time went (P01, [#78](https://github.com/rp2839/visio-mcp/issues/78); stage timers inside the renderer, Release, per render).** Before the change, of about 1.5 s: fetching the eight pictures and turning 45 MB into base64 data URLs 700 ms, serialising the 60 MB SVG 210 ms, the browser decoding that SVG and all eight pictures again 340 ms, PNG encoding 170 to 300 ms; the project, clone and final base64 steps were under 25 ms together. Every picture crossed all of those stages at 2400 x 1600 although it is drawn at about 380 x 253 pixels. The renderer now loads the pictures side by side and, for a picture at least twice the size it is drawn at, shrinks it to the pixels it covers (`createImageBitmap`, then a high-quality canvas resample, uniformly so letterboxed and stretched fits are unchanged) before inlining it. Smaller pictures, SVG pictures and anything the browser cannot decode keep their own bytes. The preview is no longer byte-identical to the old one (it is resampled once, to its final size), and it is smaller (1.01 MB against 1.15 MB). Re-run of `EightLargePicturesOnOnePageAndTheExportLimit`: 5 renders per configuration, medians 679 ms Debug and 681 ms Release, every sample under 830 ms.
+
+**Limit found.** With four more such pictures (12 in all, 68.5 MB) the `.vsdx` export is **refused after 1.5 / 1.4 s with `internal_error`: "the exported file could not be read back, so it was not saved: the file is larger than 67108864 bytes"**,
 and nothing is left behind. The 64 MiB budget (`InputLimits.NativeJsonBytes`) is applied to what the exporter reads back, so a document whose pictures add up to more than that cannot be saved as `.vsdx`, and the error code does not say so.
 
 ### Text-heavy pages (5 pages; 200 wrapped boxes of 300 characters and 100 labelled shapes; 65,970 characters; summary 112 KB; `.vsdx` 42 KB)
@@ -103,7 +105,7 @@ and nothing is left behind. The 64 MiB budget (`InputLimits.NativeJsonBytes`) is
 
 ### What these show
 - The ten-page and text-heavy workloads meet every preferred target by a wide margin; opening a file Visio saved is as fast as opening the app's own.
-- **Pictures are the one measured workload above a preferred target:** the page preview with eight 6-megapixel pictures takes 1.4 to 1.5 s (target 1 s). Everything else in the picture workload is fast. Where the time goes was not profiled.
+- **Pictures were the one measured workload above a preferred target:** the page preview with eight 6-megapixel pictures took 1.4 to 1.5 s (target 1 s). P01 shrinks each picture to the pixels it covers before it is drawn, and the preview now takes about 0.68 s.
 - Moving everything on a 500-element page stalls the display for about 0.25 s at the moment of release (one frame; 0.65 s before P03), though the drag itself keeps up. The remainder is maxGraph redrawing 500 cells.
 - The `.vsdx` export has a hard ceiling of 64 MiB of content and reports it as `internal_error`.
 
@@ -120,4 +122,4 @@ Full method, 39 probe runs and limits: [shim-startup-pause.md](shim-startup-paus
 4. Pictures are generated (smooth gradients with seeded noise), not photographs, so their compression and decode cost differ from real ones. Memory use of the editor was not measured.
 5. Text-heavy content used a 16-word vocabulary in Latin script; right-to-left and East Asian text were not measured.
 6. Edits on a later page were measured as DrawScript transactions because `apply_operations` cannot name a page.
-7. The cause of the 1.4 to 1.5 s preview with large pictures was not profiled. The select-all release frame was profiled in P03 (above); it was confirmed only in the offscreen harness, not in a visible window with a real pointer (NOT RUN).
+7. The 1.4 to 1.5 s preview with large pictures was profiled and fixed in P01 (above), measured with generated pictures only; real photographs (JPEG, other colour profiles) were not timed. The select-all release frame was profiled in P03 (above); it was confirmed only in the offscreen harness, not in a visible window with a real pointer (NOT RUN).
