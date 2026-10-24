@@ -87,9 +87,9 @@ Error codes: `container_cycle`, `container_split`, `container_member_other_page`
 Intended containment no longer produces warnings. Real defects are still reported.
 
 - No `OVERLAP` between a container and any of its descendants. Members of the same container that overlap each other, and sibling containers that partly overlap, are still reported.
-- No `CONNECTOR_CROSSES_SHAPE` for a connector crossing the boundary of a container that holds one of its ends (transitively). Crossings of containers that hold neither end are reported as they are today, according to the router's policy for that container.
-- New `MEMBER_OUTSIDE_CONTAINER` (warning): a member's visual bounds extend past its container's bounds by more than 1 pt.
-- New `UNLISTED_INSIDE_CONTAINER` (info): an element lies wholly inside a container's bounds but is not a member of it or its descendants. This helps an agent convert a flat drawing such as Lego into real containers.
+- No `CONNECTOR_CROSSES_SHAPE` for a connector crossing the boundary of a container that holds one of its ends (transitively), or that holds the connector itself. A free end belongs to no element, so for this judgement only it counts as held by a container whose bounds it lies inside. Membership itself never changes. Crossings of containers that hold neither end are reported as they are today, according to the router's policy for that container.
+- New `MEMBER_OUTSIDE_CONTAINER` (warning): a member's visual bounds extend past its container's bounds by more than 2 pt. This is the same tolerance as the lane check; imported drawings are rarely exact.
+- New `UNLISTED_INSIDE_CONTAINER` (info): an element lies wholly inside a container's bounds but is not a member of it or its descendants. It is reported once, against the smallest such container. Whole units count: top-level elements, groups, and lines free at both ends; a glued connector follows its shapes anyway. This helps an agent convert a flat drawing such as Lego into real containers.
 - New `CONTAINER_HIDES_MEMBER` (warning), as above.
 - The current geometric heuristic (0.98 containment counts as not a collision) stays for shapes that are not declared containers, so existing documents keep the same reports.
 

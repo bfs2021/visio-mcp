@@ -32,8 +32,33 @@ Issue #12. Design: [docs/design/R17-nested-containers.md](../design/R17-nested-c
 | `dotnet test Diagram.Portable.slnx` | 490/490 pass (contracts 50, host 224, IPC 33, MCP 14, Visio 169) |
 | Manual editor or Visio check | NOT RUN: there is no editor UI until stage 3, and no native export until stage 4 |
 
+## Stage 2: layout inspection and routing
+
+**What it delivers (`layout/inspectLayout.ts`, `layout/routingPolicy.ts`):**
+- **`OVERLAP`:** no longer reported between a container and anything inside it at any depth. Overlapping members and partly overlapping sibling containers are still reported.
+- **`CONNECTOR_CROSSES_SHAPE`:** no longer reported for a container that holds the connector, one of its glued ends, or one of its free end points. Lines through unrelated containers are still reported.
+- **New findings:**
+  - `MEMBER_OUTSIDE_CONTAINER` (warning, more than 2 pt of overhang);
+  - `UNLISTED_INSIDE_CONTAINER` (info, against the smallest container; free lines count, glued connectors do not);
+  - `CONTAINER_HIDES_MEMBER` (warning, when a filled container is drawn in front of its own member).
+- **Routing:** the legacy obstacle guess skips a declared container that has members, so a container whose only member is a text box is passed through as a guessed one is. An explicit `routingPolicy` still decides first. R22 (#61) owns the visible policy.
+
+**Lego acceptance (`tests/legoContainers.test.ts`, on the R15 reproduction in `artifacts/lego-infra/ops.json`):**
+- **Method:** the 24 shapes that wholly hold another shape are declared containers. The inspector's own `UNLISTED_INSIDE_CONTAINER` findings fill them; labels that straddle a frame edge go to the frame they mostly sit in.
+- **Structure:** 132 members, nested four deep (public cloud > tenant > component > contents). Moving the outermost frame carries 102 elements, including 40 free lines, by exactly the same amount.
+- **`CONNECTOR_CROSSES_SHAPE`:** 62 → 28. No remaining crossing involves a container that a line starts or ends inside. The 28 left are free polylines through ordinary shapes, which is the R12 free-line limitation, not containment.
+- **`OVERLAP`:** 29 → 25, plus 3 `MEMBER_OUTSIDE_CONTAINER`. Most of the 25 are real geometry that containment cannot express. For example, the "AWS to Corona Site VPN" box spans two frames, and an element belongs to one container. Labels also overlap icons. These are reported on purpose.
+
+**Verification (fresh):**
+| Check | Result |
+|---|---|
+| `npx vitest run` (web) | 676/676 pass (`containerInspection.test.ts` 7, `legoContainers.test.ts` 1, `containers.test.ts` 20) |
+| Mutation check: disable the overlap skip, the crossing skip, then the router pass-through | 1 inspection test fails for each, then passes again when restored |
+| `npx tsc --noEmit` | pass |
+| `npx playwright test` | 188/188 pass |
+| .NET | not re-run: stage 2 changes no C# |
+
 ## Remaining stages
 
-2. Layout inspection (no false OVERLAP or CROSSES; `MEMBER_OUTSIDE_CONTAINER`, `UNLISTED_INSIDE_CONTAINER`, `CONTAINER_HIDES_MEMBER`) and routing reading the helper module.
 3. Editor commands, inspector and drag-in/drag-out.
 4. Native VSDX export and import, after the Visio feasibility check; the four-level Lego build.
