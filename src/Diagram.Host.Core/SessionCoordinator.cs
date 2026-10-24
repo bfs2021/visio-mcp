@@ -41,7 +41,7 @@ public interface IRasteriser
 /// JSON open and save. A file is a wrapper {format, formatVersion, document, blobs}: the canonical document plus each asset's bytes once, keyed by hash.
 /// Open validates everything before the editor sees it; save never marks newer state or another session clean.
 /// </summary>
-public sealed class SessionCoordinator(IEditorChannel editor, BlobStore blobs, AssetPreparer preparer, AtomicFileWriter writer)
+public sealed class SessionCoordinator(IEditorChannel editor, BlobStore blobs, AssetPreparer preparer, AtomicFileWriter writer, long maxJsonBytes = InputLimits.NativeJsonBytes)
 {
     public const string Format = "native-json";
 
@@ -149,7 +149,7 @@ public sealed class SessionCoordinator(IEditorChannel editor, BlobStore blobs, A
             ["blobs"] = blobMap,
         };
         var bytes = JsonSerializer.SerializeToUtf8Bytes(file);
-        if (bytes.Length > InputLimits.NativeJsonBytes) return Result<SavedFile>.Fail("limit_exceeded", "the document is too large to save as JSON");
+        if (bytes.Length > maxJsonBytes) return SaveSizeLimit.Fail<SavedFile>("native JSON", bytes.Length, maxJsonBytes, snapshot.Document, blobs.SizeOf);
 
         try { await writer.WriteAsync(safe.Value, bytes, ct, expectedDisk is null ? null : async token =>
         {

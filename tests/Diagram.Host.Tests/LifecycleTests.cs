@@ -17,11 +17,11 @@ public class LifecycleTests
         public readonly SessionCoordinator Coordinator;
         public readonly FakeEditor Editor;
 
-        public Env(FakeEditor editor, BlobStore? blobs = null)
+        public Env(FakeEditor editor, BlobStore? blobs = null, long? maxJsonBytes = null)
         {
             Editor = editor;
             Blobs = blobs ?? new BlobStore(Dir.File("blobs"));
-            Coordinator = new SessionCoordinator(editor, Blobs, new AssetPreparer(Blobs), Writer);
+            Coordinator = new SessionCoordinator(editor, Blobs, new AssetPreparer(Blobs), Writer, maxJsonBytes ?? InputLimits.NativeJsonBytes);
         }
         public void Dispose() => Dir.Dispose();
     }
@@ -38,7 +38,36 @@ public class LifecycleTests
 
     static ExpectedState Expect(FakeEditor e) => new() { DocumentId = e.Document.Id, SessionId = e.SessionId, BaseRevision = e.Revision };
 
+
     // ---- save ----------------------------------------------------------------------------------
+
+    [Fact]
+    public async Task ASaveAtTheSizeLimitSucceedsAndOneByteOverSaysWhatIsTooBigAndWritesNothing()
+    {
+        using var env = await WithImage();
+        var probe = env.Dir.File("probe.diagram.json");
+        Assert.True((await env.Coordinator.SaveJsonAsync(probe, env.Editor.Scope, default)).IsOk);
+        var size = new FileInfo(probe).Length;
+
+        using var atLimit = new Env(env.Editor, env.Blobs, maxJsonBytes: size);
+        var ok = await atLimit.Coordinator.SaveJsonAsync(atLimit.Dir.File("at.diagram.json"), env.Editor.Scope, default);
+        Assert.True(ok.IsOk, ok.Error?.Message);
+
+        using var over = new Env(env.Editor, env.Blobs, maxJsonBytes: size - 1);
+        var path = over.Dir.File("over.diagram.json");
+        var refused = await over.Coordinator.SaveJsonAsync(path, env.Editor.Scope, default);
+        Assert.False(refused.IsOk);
+        Assert.Equal("limit_exceeded", refused.Error!.Code);
+        Assert.False(File.Exists(path));
+        var d = refused.Error.Details!;
+        Assert.Equal(size, d["sizeBytes"]!.GetValue<long>());
+        Assert.Equal(size - 1, d["limitBytes"]!.GetValue<long>());
+        Assert.Equal(1, d["overByBytes"]!.GetValue<long>());
+        Assert.Equal(1, d["pictureCount"]!.GetValue<int>());
+        Assert.Equal(Png.Length, d["largestPictures"]![0]!["bytes"]!.GetValue<long>());
+        Assert.Contains("asset:logo", refused.Error.Message); // names the picture to remove
+        Assert.Contains("over the", refused.Error.Message);
+    }
 
     [Fact]
     public async Task SaveRevisionRDoesNotCleanRPlus1()

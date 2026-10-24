@@ -59,6 +59,9 @@ public sealed class BlobStore
 
     public bool Contains(string sha) => File.Exists(PathFor(sha));
 
+    /// <summary>The stored size of a picture, or null if it is not here.</summary>
+    public long? SizeOf(string sha) { var f = new FileInfo(PathFor(sha)); return f.Exists ? f.Length : null; }
+
     /// <summary>Every stored blob, for garbage collection. Temp files from an interrupted write are not blobs and are not listed.</summary>
     public IEnumerable<(string Sha, DateTime LastWriteUtc)> Enumerate() =>
         Directory.EnumerateFiles(directory).Select(f => (Name: Path.GetFileName(f), f))

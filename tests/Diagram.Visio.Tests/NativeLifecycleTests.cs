@@ -61,7 +61,7 @@ public class NativeLifecycleTests : IDisposable
     public void Dispose() { try { Directory.Delete(dir, true); } catch { } }
     string P(string n) => Path.Combine(dir, n);
 
-    NativeFileCoordinator Coordinator(FakeEditor e, IRasteriser? r = null, BlobStore? s = null) => new(e, e, s ?? store, writer, importer, exporter, r);
+    NativeFileCoordinator Coordinator(FakeEditor e, IRasteriser? r = null, BlobStore? s = null, ImportOptions? limits = null) => new(e, e, s ?? store, writer, importer, exporter, r, limits);
 
     static DiagramDocument Plain() => Doc.Make([Doc.Page([Doc.Shape(1, 50, 50, 80, 40, new { alias = "a" }), Doc.Shape(2, 200, 50, 80, 40, new { alias = "b" }), Doc.Connector(10, Doc.Glue(1), Doc.Glue(2))])]);
 
@@ -116,6 +116,35 @@ public class NativeLifecycleTests : IDisposable
     }
 
     // ---- export ----------------------------------------------------------------------------------
+
+    [Fact]
+    public async Task APackageAtTheSizeLimitIsWrittenAndOneByteOverIsRefusedWithTheReasonAndNothingIsWritten()
+    {
+        var png = Fx.Png(40, 40);
+        var sha = await store.PutDurableAsync(png, default);
+        var doc = Doc.Make([Doc.Page([ImageNode(1, "asset:logo")])], [new { id = "asset:logo", name = "logo.png", mimeType = "image/png", sha256 = sha, tags = Array.Empty<string>() }]);
+        var probeEditor = new FakeEditor(doc);
+        var probe = await Coordinator(probeEditor).ExportAsync(P("probe.vsdx"), probeEditor.Scope, false, default);
+        Assert.True(probe.IsOk, probe.Error?.Message);
+        var size = probe.Value.Bytes;
+
+        var atLimit = new FakeEditor(doc);
+        var ok = await Coordinator(atLimit, limits: new ImportOptions(MaxPackageBytes: size)).ExportAsync(P("at.vsdx"), atLimit.Scope, false, default);
+        Assert.True(ok.IsOk, ok.Error?.Message);
+        Assert.True(File.Exists(P("at.vsdx")));
+
+        var overEditor = new FakeEditor(doc);
+        var refused = await Coordinator(overEditor, limits: new ImportOptions(MaxPackageBytes: size - 1)).ExportAsync(P("over.vsdx"), overEditor.Scope, false, default);
+        Assert.False(refused.IsOk);
+        Assert.Equal("limit_exceeded", refused.Error!.Code); // not internal_error
+        Assert.False(File.Exists(P("over.vsdx")));
+        var d = refused.Error.Details!;
+        Assert.Equal(size, d["sizeBytes"]!.GetValue<long>());
+        Assert.Equal(size - 1, d["limitBytes"]!.GetValue<long>());
+        Assert.Equal("logo.png", d["largestPictures"]![0]!["name"]!.GetValue<string>());
+        Assert.Equal(png.Length, d["largestPictures"]![0]!["bytes"]!.GetValue<long>());
+        Assert.Contains("logo.png", refused.Error.Message);
+    }
 
     [Fact]
     public async Task ExportWritesTheDocumentAtTheBarrierRevisionAndDoesNotMarkItSaved()
