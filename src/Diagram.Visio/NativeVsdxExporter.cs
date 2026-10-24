@@ -244,6 +244,8 @@ public sealed class NativeVsdxExporter : IVsdxExporter
                     ConnectorElement connector => connector.RoutingPolicy,
                     _ => null,
                 };
+                if ((Common(element).Level ?? 0) != 0)
+                    Warn("level_not_native", "Visio has no native stacking level; the AgentLevel user cell preserves this level when the file is reopened in the editor.", id, "AgentLevel", "info");
                 void Unsupported(string field) => Warn("ROUTING_POLICY_NOT_NATIVE",
                     $"Visio does not preserve the editor's {field} routing policy; it remains available when the file is reopened in the editor.",
                     id, field, "info");
@@ -282,24 +284,34 @@ public sealed class NativeVsdxExporter : IVsdxExporter
 
             IEnumerable<Element> Flatten(IEnumerable<Element> es) { foreach (var e in es) { yield return e; if (e is GroupElement g) foreach (var c in Flatten(Order(g.ChildIds.Select(i => byId[i]).Where(c => c is not ConnectorElement)))) yield return c; } }
 
-            int TopZ(Element e) => e is GroupElement g ? g.ChildIds.Select(i => TopZ(byId[i])).DefaultIfEmpty(g.ZIndex).Max() : Common(e).Z;
+            Element TopLeaf(Element e) => e is GroupElement g
+                ? Leaves(g).OrderBy(l => Common(l).Level ?? 0).ThenBy(l => Common(l).Z).LastOrDefault() ?? e
+                : e;
+            int TopZ(Element e) => Common(TopLeaf(e)).Z;
+            int TopLevel(Element e) => Common(TopLeaf(e)).Level ?? 0;
 
-            List<Element> Order(IEnumerable<Element> es) => es.Select((e, i) => (e, i)).OrderBy(t => TopZ(t.e)).ThenBy(t => t.i).Select(t => t.e).ToList();
+            List<Element> Order(IEnumerable<Element> es) => es.Select((e, i) => (e, i)).OrderBy(t => TopLevel(t.e)).ThenBy(t => TopZ(t.e)).ThenBy(t => t.i).Select(t => t.e).ToList();
 
             /// <summary>A group is one block in Visio. If other shapes sit between its members in the editor's stacking, say so.</summary>
             void CheckInterleaving(List<Element> ordered)
             {
                 foreach (var g in ordered.OfType<GroupElement>())
                 {
-                    var leaves = Leaves(g).Select(l => Common(l).Z).ToList();
-                    var lo = leaves.Min(); var hi = leaves.Max();
-                    var between = page.Elements.Where(e => e is not GroupElement && !IsUnder(Common(e).Id!, g.Id) && Common(e).Z > lo && Common(e).Z < hi).ToList();
+                    var leaves = Leaves(g).OrderBy(l => Common(l).Level ?? 0).ThenBy(l => Common(l).Z).ToList();
+                    var first = leaves[0]; var last = leaves[^1];
+                    var between = page.Elements.Where(e => e is not GroupElement && !IsUnder(Common(e).Id!, g.Id)
+                        && CompareLevelZ(e, first) > 0 && CompareLevelZ(e, last) < 0).ToList();
                     if (between.Count > 0)
                         Warn("group_stacking_flattened", $"Shapes sit between the members of group {Label(g)} in the editor's stacking order; in Visio the group draws as one block.", g.Id, "group drawn as a block");
                 }
             }
 
             IEnumerable<Element> Leaves(GroupElement g) { foreach (var c in g.ChildIds.Select(i => byId[i])) { if (c is GroupElement cg) foreach (var l in Leaves(cg)) yield return l; else yield return c; } }
+            static int CompareLevelZ(Element a, Element b)
+            {
+                var level = (Common(a).Level ?? 0).CompareTo(Common(b).Level ?? 0);
+                return level != 0 ? level : Common(a).Z.CompareTo(Common(b).Z);
+            }
             bool IsUnder(string id, string groupId) { for (var p = parentOf.GetValueOrDefault(id); p is not null; p = parentOf.GetValueOrDefault(p)) if (p == groupId) return true; return false; }
             static string Label(Element e) { var c = Common(e); return c.Alias ?? c.Name ?? c.Id![..8]; }
 
@@ -384,6 +396,7 @@ public sealed class NativeVsdxExporter : IVsdxExporter
             {
                 var c = Common(e);
                 var rows = new List<XElement> { UserRow("AgentId", c.Id!), UserRow("AgentKind", Kind(e)) };
+                if (c.Level is int level && level != 0) rows.Add(UserRow("AgentLevel", level.ToString(Inv)));
                 if (c.Alias is not null) rows.Add(UserRow("AgentAlias", c.Alias));
                 if (c.Name is not null) rows.Add(UserRow("AgentName", c.Name));
                 if (c.Meta.Count > 0) rows.Add(UserRow("AgentMetadata", JsonSerializer.Serialize(c.Meta)));
