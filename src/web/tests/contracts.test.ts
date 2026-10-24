@@ -26,6 +26,14 @@ describe('R22 routing policy contracts', () => {
     expect(validateOperation({ op: 'set', target: 'shape', patch: { routingPolicy: { obstacle: 'forbidden', clearancePt: 0 } } }).ok).toBe(true);
     expect(validateOperation({ op: 'set', target: 'shape', patch: { routingPolicy: { clearancePt: 2001 } } }).ok).toBe(false);
   });
+  it('transaction_result_accepts_optional_structured_route_findings', () => {
+    expect(validateDef('TransactionResult', {
+      transactionId: U(1), previousRevision: 1, revision: 2, noChange: false,
+      created: [], changed: [U(9)], deleted: [], changedPageIds: [U(3)], changedLayerIds: [], changedAssetIds: [],
+      visuallyAffectedIds: [U(9)], warnings: [], projectionStatus: 'applied',
+      routeFindings: [{ code: 'UNRESOLVED_ROUTE', severity: 'error', message: 'No clear route was found', elementId: U(9), blockerIds: [U(4)] }],
+    }).valid).toBe(true);
+  });
   it('endpoint_preferred_side_is_shape_local_enum', () => {
     for (const preferredSide of ['north', 'east', 'south', 'west']) {
       expect(validateDef('Endpoint', { glue: 'dynamic', preferredSide }).valid, preferredSide).toBe(true);

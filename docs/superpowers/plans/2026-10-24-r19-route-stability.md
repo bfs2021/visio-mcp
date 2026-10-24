@@ -39,15 +39,17 @@
 - Consumes: `settleJoins(before, plan, snapshotProjector, snapshotOf): Plan` and `settleRoutes(before, plan): Plan`.
 - Produces: transaction plans whose route advisory endpoints match their final joined endpoints; `routeChanges` still identifies every changed connector and remains undoable.
 
-- [ ] **Step 1: Write failing regression test** `a joined branch stores the route from the settled join endpoint` in `src/web/tests/joins.test.ts`. Create an orthogonal bus and joined branch with the real test projector; move a bus endpoint shape; assert the branch’s `to.point` equals the settled bus route position, the stored advisory ends at that point, and both affected IDs appear in the transaction result as appropriate.
-- [ ] **Step 2: Run the focused test and confirm failure** with `npm test -- --run src/web/tests/joins.test.ts -t "settled join endpoint"` from `src/web`.
-- [ ] **Step 3: Reorder the phases** in `CommandEngine.execute` so `settleJoins` consumes `planned.value`, `settleRoutes` consumes the joined plan, hard-route preflight evaluates the settled route plan, and `settleAttachments` consumes the routed plan.
-- [ ] **Step 4: Run join and route-mode tests** with `npm test -- --run src/web/tests/joins.test.ts src/web/tests/routeModes.test.ts`; confirm join placement, stored routes, undo/redo, Frozen, hard preflight, and idempotence pass.
-- [ ] **Step 5: Commit** as `fix: route connectors after settling joins`.
+- [x] **Step 1: Write failing regression test** `a joined branch stores the route from the settled join endpoint` in `src/web/tests/routeModes.test.ts`. Create an orthogonal bus and joined branch with the real test projector; move a bus endpoint shape; assert the branch’s `to.point` equals the settled bus route position, the stored advisory ends at that point, and both affected IDs appear in the transaction result as appropriate.
+- [x] **Step 2: Run the focused test and confirm failure**. Observed stale advisory `(400, 130)` versus settled join endpoint `(410, 150)`.
+- [x] **Step 3: Reorder the phases** in `CommandEngine.execute` so `settleJoins` consumes `planned.value`, `settleRoutes` consumes the joined plan, hard-route preflight evaluates the settled route plan, and `settleAttachments` consumes the routed plan.
+- [x] **Step 4: Run join and route-mode tests**; 24/24 passed, covering join placement, stored routes, undo/redo, Frozen, hard preflight, and idempotence.
+- [x] **Step 5: Commit** `4973b7e` (`fix: route connectors after settling joins`).
 
 ### Task 2: Return structured route findings with transactions
 
 **Files:**
+- Modify: `src/web/src/layout/routePlanner.ts`
+- Test: `src/web/tests/routePlanner.test.ts`
 - Modify: `contracts/protocol.schema.json`
 - Generate: `src/web/src/contracts/generated.ts`, `src/Diagram.Core.Contracts/Generated/Contracts.g.cs` via `tools/generate-contracts.mjs`
 - Modify: `src/web/src/commands/CommandEngine.ts`
@@ -58,12 +60,13 @@
 - Consumes: `Plan.routeChanges?: RouteChange[]` and `Plan.routeFindings?: RouteFinding[]`.
 - Produces: optional `TransactionResult.routeFindings?: RouteFinding[]`, carrying structured findings from the committed route plan.
 
-- [ ] **Step 1: Write failing tests** asserting an unresolved route is returned in `TransactionResult.routeFindings` with its `elementId`, `code`, severity, and blocker IDs, and that a successful transaction with no findings omits the optional property.
-- [ ] **Step 2: Run the focused tests and confirm failure** with `npm test -- --run src/web/tests/routeModes.test.ts src/web/tests/contracts.test.ts` from `src/web`.
-- [ ] **Step 3: Add optional `routeFindings` to the `TransactionResult` schema** using the existing `RouteFinding` definition, then run `node tools/generate-contracts.mjs` from the repository root; do not hand-edit generated contracts.
-- [ ] **Step 4: Include findings in `CommandEngine.resultOf`** when present, and include the empty-plan type only if TypeScript requires it.
-- [ ] **Step 5: Run focused tests and generated-contract checks** with `npm test -- --run src/web/tests/routeModes.test.ts src/web/tests/contracts.test.ts` and `npm run check:contracts` from `src/web`.
-- [ ] **Step 6: Commit** as `feat: include route findings in transaction results`.
+- [x] **Step 1: Write failing tests** asserting a Frozen route blocked by a hard obstacle remains stored and is marked unresolved, and a transaction returns that finding with `elementId`, `code`, severity, and blocker IDs.
+- [x] **Step 2: Run focused tests and confirm failure**; planner provenance was `frozen` instead of `unresolved`, transaction results omitted findings, and the schema rejected the new field.
+- [x] **Step 3: Mark blocked Frozen routes unresolved** in `routePlanner.ts` when stored points intersect hard obstacles; retain their exact points and emit the existing structured `UNRESOLVED_ROUTE` finding.
+- [x] **Step 4: Add optional `routeFindings` to the `TransactionResult` schema** and regenerate TypeScript/C# contracts with `tools/generate-contracts.mjs`.
+- [x] **Step 5: Include findings in `CommandEngine.resultOf`** when present.
+- [x] **Step 6: Run focused route/contract tests and generated-contract checks**; 85/85 passed and generated contract check passed.
+- [x] **Step 7: Commit** as `feat: include route findings in transaction results`.
 
 ### Task 3: Expose projection diagnostics in `get_objects`
 

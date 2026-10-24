@@ -265,6 +265,7 @@ export class CommandEngine {
       changedLayerIds: plan.changedLayerIds, changedAssetIds: plan.changedAssetIds, visuallyAffectedIds: plan.visuallyAffectedIds,
       warnings: diagnostic ? [{ severity: 'warning', code: 'DOCUMENT_DEFAULTS_INVALID', message: diagnostic }] : [], projectionStatus,
       ...(plan.routeChanges?.length ? { routeChanges: plan.routeChanges } : {}),
+      ...(plan.routeFindings?.length ? { routeFindings: plan.routeFindings } : {}),
     };
   }
 
@@ -423,7 +424,7 @@ export class CommandEngine {
   }
 }
 
-const emptyPlan = (): { created: string[]; changed: string[]; deleted: string[]; changedPageIds: string[]; changedLayerIds: string[]; changedAssetIds: string[]; visuallyAffectedIds: string[]; routeChanges?: import('../contracts/generated').RouteChange[] } => ({
+const emptyPlan = (): { created: string[]; changed: string[]; deleted: string[]; changedPageIds: string[]; changedLayerIds: string[]; changedAssetIds: string[]; visuallyAffectedIds: string[]; routeChanges?: import('../contracts/generated').RouteChange[]; routeFindings?: import('../contracts/generated').RouteFinding[] } => ({
   created: [] as string[], changed: [] as string[], deleted: [] as string[], changedPageIds: [] as string[],
   changedLayerIds: [] as string[], changedAssetIds: [] as string[], visuallyAffectedIds: [] as string[],
 });

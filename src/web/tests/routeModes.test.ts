@@ -151,8 +151,10 @@ describe('route modes (R20)', () => {
     expect(frozen.routing?.mode).toBe('frozen');
     expect(frozen.waypoints).toEqual([]);
     const stored = frozen.routing!.advisory!.map(p => ({ ...p }));
-    await s.ok([{ op: 'createShape', alias: 'wall', bounds: box(330, 90, 40, 80) }]);
+    const obstacle = await s.ok([{ op: 'createShape', alias: 'wall', bounds: box(330, 90, 40, 80) }]);
     expect(s.conn('ab').routing!.advisory).toEqual(stored); // the obstacle did not move the route
+    expect(obstacle.routeFindings).toContainEqual(expect.objectContaining({ code: 'UNRESOLVED_ROUTE', elementId: s.conn('ab').id, blockerIds: [s.el('wall').id] }));
+    await s.ok([{ op: 'delete', target: 'wall' }]);
     const result = await s.ok([{ op: 'move', target: 'b', delta: { xPt: 0, yPt: 20 } }]);
     const now = s.conn('ab').routing!.advisory!;
     expect(result.changed).toContain(s.conn('ab').id);

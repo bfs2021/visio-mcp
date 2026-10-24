@@ -70,6 +70,20 @@ describe('route planner', () => {
     expect(r.points[0]).toEqual(pts(first, 'ab')[0]);
   });
 
+  it('keeps a frozen route and reports a newly blocking hard obstacle', () => {
+    const a = shape('a', 0, 100), b = shape('b', 700, 100);
+    const initial = conn('ab', 'a', 'b', {}, 'east', 'west');
+    const stored = pts(plan([a, b, initial]), 'ab');
+    const frozen = conn('ab', 'a', 'b', { routing: { mode: 'frozen', advisory: stored } }, 'east', 'west');
+    const wall = shape('wall', 330, 90, 40, 80);
+
+    const result = plan([a, b, wall, frozen]);
+
+    expect(pts(result, 'ab')).toEqual(stored);
+    expect(result.routes.get('ab')!.provenance).toBe('unresolved');
+    expect(result.routeFindings).toContainEqual(expect.objectContaining({ code: 'UNRESOLVED_ROUTE', elementId: 'ab', blockerIds: ['wall'] }));
+  });
+
   it('repairs only the blocked run of a longer route', () => {
     // a to d with a vertical track at x=450; a wall lands on the horizontal run along y=130
     const els = [shape('a', 0, 100), shape('d', 600, 500), conn('ad', 'a', 'd', {}, 'east', 'north')];

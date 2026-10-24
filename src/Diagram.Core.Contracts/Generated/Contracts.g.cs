@@ -865,6 +865,7 @@ public sealed record TransactionResult
     [JsonPropertyName("warnings")] public required IReadOnlyList<Diagnostic> Warnings { get; init; }
     [JsonPropertyName("projectionStatus")] public required string ProjectionStatus { get; init; }
     [JsonPropertyName("routeChanges")] public IReadOnlyList<RouteChange>? RouteChanges { get; init; }
+    [JsonPropertyName("routeFindings")] public IReadOnlyList<RouteFinding>? RouteFindings { get; init; }
 }
 
 public sealed record RouteChange

@@ -365,6 +365,11 @@
           "type": "array",
           "description": "R20. Connectors whose route the router changed or could not resolve in this transaction, with why. Their ids are also in 'changed' when the stored route changed.",
           "items": { "$ref": "#/$defs/RouteChange" }
+        },
+        "routeFindings": {
+          "type": "array",
+          "description": "R19. Structured route findings from the final route plan applied by this transaction.",
+          "items": { "$ref": "#/$defs/RouteFinding" }
         }
       }
     },
