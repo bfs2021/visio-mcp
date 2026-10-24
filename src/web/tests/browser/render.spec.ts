@@ -364,11 +364,20 @@ test('R20: the inspector freezes a route, which then stays put when a shape land
   await page.getByTestId('field-route-mode').selectOption('frozen');
   expect((await conn()).routing.mode).toBe('frozen');
   await expect(page.getByTestId('route-reroute')).toHaveCount(0);
-  await apply(page, [{ op: 'createShape', id: U(83), bounds: box(330, 100, 40, 80), style: { fill: RED, stroke: { kind: 'none' } } }]);
+  const blocked = await apply(page, [{ op: 'createShape', id: U(83), bounds: box(330, 100, 40, 80), style: { fill: RED, stroke: { kind: 'none' } } }]);
+  expect(blocked.ok).toBe(true);
+  expect(blocked.value.routeFindings).toContainEqual(expect.objectContaining({ code: 'UNRESOLVED_ROUTE', elementId: U(82), blockerIds: [U(83)] }));
   const after = (await conn()).routing.advisory;
   expect(after.length).toBe(2); // the frozen route did not detour
   const routes = (await call(page, 'doc.exportSnapshot', {})).result.projection.connectors;
   expect(routes[U(82)].routePoints).toEqual(after);
+  expect(routes[U(82)].routeProvenance).toBe('unresolved');
+  expect(routes[U(82)].routeFindings).toContainEqual(expect.objectContaining({ code: 'UNRESOLVED_ROUTE', elementId: U(82), blockerIds: [U(83)] }));
+  const inspected = (await call(page, 'doc.inspectLayout', {})).result;
+  expect(inspected.issues).toContainEqual(expect.objectContaining({ code: 'UNRESOLVED_ROUTE', elementIds: [U(82), U(83)] }));
+  const objects = (await call(page, 'doc.getObjects', { ids: [U(82)] })).result;
+  expect(objects.revision).toBe((await call(page, 'doc.exportSnapshot', {})).result.revision);
+  expect(objects.routeDiagnostics).toContainEqual(expect.objectContaining({ id: U(82), routeProvenance: 'unresolved', routeFindings: routes[U(82)].routeFindings }));
   await page.getByTestId('field-route-mode').selectOption('automatic');
   expect((await conn()).routing.mode).toBeUndefined();
   expect((await conn()).routing.advisory.length).toBeGreaterThan(2); // now it goes around the shape

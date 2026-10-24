@@ -98,10 +98,10 @@
 - Consumes: route data from `planRoutes`, committed `routeChanges`/`routeFindings`, and revision-bound projection diagnostics.
 - Produces: verified R19 matrix for projection, MCP inspection, export, transaction result, undo/redo, unrelated nudge, and repeat planning.
 
-- [ ] **Step 1: Add missing assertions** that an already-planned document returns no changes, a 1 pt unrelated nudge preserves all unaffected stored routes and IDs, unresolved findings agree across projection/inspection/MCP/transaction response, and export uses the same route points for the same revision.
-- [ ] **Step 2: Run the focused route and surface tests**, confirming exact route-point and changed-ID comparisons.
-- [ ] **Step 3: Run the full web suite, generated contract checks, MCP/.NET suites, `segments.spec.ts` 60/60 routing-latency case, and available Visio checks**; record each exact command and result separately.
-- [ ] **Step 4: Update `docs/m5/R19-route-stability.md`** with fresh results, baseline fixture status, and explicit `NOT RUN` limits for original PSGL/Lego files or manual Visio where unavailable. Check off only criteria supported by evidence.
+- [x] **Step 1: Add missing assertions** that an already-planned document returns no changes, a 1 pt unrelated nudge preserves unaffected stored routes and IDs, unresolved findings agree across projection/inspection/MCP/transaction response, and export uses the same route points for the same revision.
+- [x] **Step 2: Run the focused route and surface tests**; exact route points and changed IDs passed, including transaction/MCP findings and the browser cross-surface check.
+- [x] **Step 3: Run the full web suite, generated contract checks, MCP/.NET suites, `segments.spec.ts` 60/60 routing-latency case, and available Visio checks**; web 632/632, generated contracts passed, portable .NET 479/479, browser diagnostics passed, and segment edit measured 75 ms. Manual Visio was unavailable/not run.
+- [x] **Step 4: Update `docs/m5/R19-route-stability.md`** with fresh results, baseline fixture status, and explicit `NOT RUN` limits for original PSGL/Lego files and manual Visio. The issue remains open only for those evidence items.
 - [ ] **Step 5: Commit** as `test: record R19 route stability evidence`.
 
 ## Coverage gaps to report
