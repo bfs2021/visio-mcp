@@ -1,11 +1,31 @@
 import { describe, expect, it } from 'vitest';
-import type { ConnectorElement, Element, Operation, TransactionResult } from '../src/contracts/generated';
+import type { ConnectorElement, Element, Operation, Projection, Snapshot, TransactionResult } from '../src/contracts/generated';
 import { newDocument } from '../src/model/newDocument';
 import { planRoutes, routeDefects } from '../src/layout/routePlanner';
 import { canonicalSerialize } from '../src/model/canonical';
+import { ok } from '../src/model/result';
 import { createTestEngine } from './support/engine';
 
 const box = (x: number, y: number, width = 100, height = 60) => ({ x, y, width, height });
+
+/** Minimal snapshot projector for join settlement: connectors follow endpoint centers and explicit join points. */
+function joinedRouteProjection(snapshot: Snapshot) {
+  const connectors: Projection['connectors'] = {};
+  for (const page of snapshot.document.pages) {
+    const byId = new Map(page.elements.map(e => [e.id, e] as const));
+    const endpoint = (ep: ConnectorElement['from']) => {
+      if (ep.point) return ep.point;
+      const bounds = byId.get(ep.elementId ?? '')?.bounds;
+      return bounds ? { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 } : { x: 0, y: 0 };
+    };
+    for (const element of page.elements) {
+      if (element.kind !== 'connector') continue;
+      const points = [endpoint(element.from), ...element.waypoints, endpoint(element.to)];
+      connectors[element.id] = { routePoints: points, visualBounds: { x: 0, y: 0, width: 0, height: 0 } };
+    }
+  }
+  return ok({ documentId: snapshot.documentId, sessionId: snapshot.sessionId, revision: snapshot.revision, connectors, groupVisualBounds: {} } as Projection);
+}
 
 async function setup(extra: object[] = []) {
   const t = createTestEngine({ document: newDocument() });
@@ -61,6 +81,27 @@ describe('stored routes (R20)', () => {
     const undo = await s.t.engine.undo({ ...s.t.scope(), transactionId: '00000000-0000-4000-8000-0000000000aa', baseRevision: s.t.engine.revision });
     expect(undo.ok).toBe(true);
     expect(canonicalSerialize(s.doc().pages)).toBe(before);
+  });
+
+  it('a joined branch stores the route from the settled join endpoint', async () => {
+    const s = await setup();
+    s.t.engine.setSnapshotProjector(joinedRouteProjection);
+    await s.ok([{
+      op: 'createConnector', alias: 'branch', route: 'orthogonal',
+      from: { elementId: 'c', glue: 'dynamic' },
+      to: { glue: 'none', join: { connector: 'ab', position: 0.5 } },
+    }]);
+    const before = s.conn('branch').routing!.advisory!;
+
+    const result = await s.ok([{ op: 'move', target: 'b', delta: { xPt: 20, yPt: 40 } }]);
+    const branch = s.conn('branch');
+    const endpoint = branch.to.point!;
+    const stored = branch.routing!.advisory!;
+
+    expect(endpoint).not.toEqual(before[before.length - 1]);
+    expect(stored[stored.length - 1]).toEqual(endpoint);
+    expect(result.changed).toContain(branch.id);
+    expect(result.routeChanges?.some(change => change.id === branch.id)).toBe(true);
   });
 
   it('planning a document again from its stored routes changes nothing', async () => {
