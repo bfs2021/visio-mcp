@@ -1,50 +1,60 @@
 # R29 levels contract and migration proposal
 
-Status: proposed for owner review before implementation  
-Issue: [#69 — R29 levels](https://github.com/rp2839/visio-mcp/issues/69)  
+Status: revised proposal for owner decision before implementation<br>
+Issue: [#69 — R29 levels](https://github.com/rp2839/visio-mcp/issues/69)<br>
 Branch: `codex/r29-levels`
 
-## Decision requested
+## Decisions requested
 
-Adopt document schema version 2 for the canonical level field, with an in-memory version 1 to version 2 migration at every document ingress. The migration adds `level: 0` to every legacy element and does not change revision, geometry, `zIndex`, routes, or the source file until an ordinary save. New and migrated documents use version 2; the schema requires an explicit level on every element kind.
+1. Keep canonical `schemaVersion` at 1 and make `level` optional with semantic default 0, rather than forcing every saved document to version 2. This avoids rewriting otherwise unchanged files and preserves compatibility for older strict readers when no non-default level is used. A file with a nonzero level necessarily contains a newer field and older strict readers will reject it, as they do for other newer fields. A later version bump can introduce the shared migration mechanism when a change actually requires an incompatible document-wide interpretation.
+2. Move an object to the top of a target level by assigning `max(page.zIndex) + 1`; `zIndex` remains page-global and unique. Reorder continues to act only within the selected level, with page-wide renumbering in effective order as needed to preserve uniqueness.
+3. Move a group by the level offset from its current top member, applying that offset to all leaves. This preserves intentional depth differences inside a group; reject the atomic operation if any leaf would exceed -127..+127. A group’s top member is the leaf with the greatest `(level, zIndex)` pair, and the group takes that leaf’s level and zIndex.
+4. On VSDX import, preserve `AgentLevel` as authoritative. If Visio’s stored page order conflicts with the effective order implied by levels, report an informational `level_order_conflict`; same-level order follows the Visio file. This preserves round-trip level and routing/hop semantics while making a manual cross-level reorder visible to the user.
 
-This makes the format change explicit. The current document schema rejects unknown fields and fixes `schemaVersion` at 1, so adding a required field without a version transition would make a saved document claim to be v1 while requiring a newer reader. Older app versions will reject v2 as unsupported; this is consistent with the current strict contract behavior for newer document fields, while giving them an unambiguous version signal.
+The first choice is deliberately conservative about document compatibility. A schema v2 bump would identify unsupported files more clearly, but the current strict v1 contract already rejects unknown fields. The bump would also make every subsequently saved document, including documents whose elements all remain at level 0, unreadable to older installations. Optional `level` plus default-0 semantics localizes that compatibility break to drawings that actually use non-default depth and avoids a broad document rewrite.
 
-## Canonical contract
+## Canonical level contract
 
-- Add `level`, an integer from -127 through +127, to shape, text, image, connector, and group elements. Canonical v2 documents require it; new elements default to 0.
-- Effective front-to-back order is the pair `(level, zIndex)`, compared lexicographically with higher values in front. `zIndex` remains the stable order within a level. Existing reorder operations continue to reorder only within a level.
-- A group stores the level of its top member, as specified by the issue owner. Moving a group to a level moves its leaf members as one selection; group levels are then recalculated from those members. Ungrouping preserves each member's level.
-- A connector created without an explicit level inherits the start object's stored level; a free start or a start object with no level after normalization means level 0. An explicit caller-supplied level wins. Later source moves do not change the connector's stored level or its glue.
-- Junction branches and junction markers inherit the connector level described in the issue. `set` patches may set `level`; the editor exposes a *Move to level* command, while existing front/back commands and `reorder` remain level-local.
-- Hopping connectors compare `level` first, then `zIndex`; the higher pair owns the arc. Recalculate hops whenever either route or either ordering value changes, including after undo/redo.
+- `level` is an integer from -127 through +127, higher values are in front. It is distinct from layer membership. The field is optional in the v1 JSON representation; absence means 0. New objects default to 0 and can omit the field until a nonzero level is assigned. Public read summaries return the effective level, including 0 for legacy elements.
+- Effective front-to-back order for drawable leaf elements is `(level ?? 0, zIndex)`, lexicographically. Leaf `zIndex` values remain unique per page and determine order within a level. Groups are aggregate elements, not separate stacking slots: their level and zIndex mirror their top leaf. Send backward/forward/to back/to front and the existing `reorder` operation act within one level; page-wide renumbering follows effective order when needed to retain unique leaf zIndex values. Moving a leaf to a level places it at that level’s top using the next page-global zIndex.
+- Groups take the greatest `(level, zIndex)` pair among their leaves. Moving a group applies the same level delta to every leaf, preserving internal level offsets and zIndex ordering. If the shift would exceed the level range, fail atomically. Ungrouping preserves each member’s level.
+- A connector created without an explicit level inherits the stored level of its start object. If the start is another connector (including an R16 joined trunk), inherit that connector’s level; a free start has level 0. Explicit operation or DrawScript level takes precedence. Later source moves do not alter the connector’s level or glue.
+- Branch connectors inherit the connector they join; the junction marker is a derived projection primitive and draws at its trunk connector’s level.
+- A `set` patch can assign level. The editor exposes *Move to level* and *Send to level n*. DrawScript `add` accepts `level=`. MCP create operations accept an optional level; `get_objects` and document summaries expose effective level.
+- Copy/paste and duplicate preserve element levels and group offsets. Component-library recipes and hand-built icon-preview elements default to level 0 unless a level is explicitly part of the component. Clipboard payloads retain nonzero levels.
+- Hopping connectors compare level first and zIndex second; the higher pair owns the arc. Pass the two values to the hop renderer and compare them lexicographically rather than packing them into one number, avoiding collisions or precision loss for large zIndex values. Recompute hops whenever either route or either ordering value changes, including after undo/redo.
 
-## Migration and validation
+## Compatibility and validation
 
-1. At document ingress, parse the raw document envelope and inspect its version before strict typed deserialization or canonical validation.
-2. For version 1 only, clone the document, add level 0 to each element that lacks a level, set `schemaVersion` to 2, and run the full v2 schema and semantic checks. Preserve all other fields and values. A valid explicit level already present is preserved; malformed or out-of-range values fail v2 validation. Unknown fields remain errors.
-3. For version 2, do not default or repair missing/invalid levels; fail validation with an element path. Reject unsupported versions with a clear `unsupported_schema_version` diagnostic.
-4. Apply the same normalization before validation for native file open, host/editor document replacement (including MCP), and recovery restore. VSDX import creates canonical v2 documents directly. Do not increment document revision or mark a v1 file dirty merely because it was normalized in memory.
-5. Serialize canonical v2 documents. A later normal save of a migrated document writes v2; merely opening or closing without edits does not rewrite the original file.
+There is no document-wide migration in this design; absence-as-zero is the compatibility migration rule. A v1 document without `level` remains valid and renders at level 0. At each ingress, missing means 0; any supplied value must be an integer in range. V1’s `additionalProperties: false` contract continues to reject unknown fields. New saves need not add `level: 0` to every element; they write the property when it is nonzero. Clearing an element back to 0 may omit the property.
 
-The TypeScript and .NET boundaries must share the same migration rules and contract fixtures. TypeScript-generated contracts/validators and C# contracts remain generated from the canonical schema; the raw-envelope migration runs before their strict v2 deserializers. Migration tests should assert that non-level content is byte/value-equivalent after normalization, besides the version and added fields.
+The document schema and generated TS/.NET contracts add an optional bounded field to each of the five element types. Operations add the field to shape/text/image/connector creation and `ElementPatch`. All validation uses the same -127..+127 bounds. This keeps the current schema version while making nonzero level explicit in saved data and APIs.
 
-## Rendering, routing, and Visio boundary
+The new field must be supported or defaulted consistently at every boundary:
 
-The editor canvas, hit-testing, hidden projection, image/SVG render and native Visio export all sort visible elements by `(level, zIndex)`. Level 0 preserves today's exact ordering. Level ordering is not layer membership and does not affect layer visibility, locking, printing, snapping, or glue.
+- Native file open, MCP/editor document replacement, and recovery restore treat an absent level as 0 and validate a supplied level before strict deserialization.
+- New document creation, `planPatch` create/duplicate/group/ungroup/reorder, paste and clipboard compilation preserve level semantics; UI-only defaults and hand-built elements in the component library and `icons/preview.ts` use level 0.
+- DrawScript add/set and MCP create/set accept level; `readTools.ts` returns it. Contract examples and fixtures cover both omission (0) and nonzero values.
+- The maxGraph editor, hit-testing, hidden projection, canvas snapshot, SVG/PNG/JPEG rendering and native Visio export use the same effective order `(level, zIndex)`.
 
-R29 makes the level available to routing. R23 #62 owns the policy that treats a lower-level shape as pass-through; R29 must not change route planning based on level. This keeps behavior stable for level-0 documents and avoids duplicating R23's obstacle decision.
+## Routing and Visio boundary
 
-VSDX export writes shapes in effective order, adds the portable `AgentLevel` user cell, and emits an informational `level_not_native` diagnostic when non-default levels are present. The importer restores a valid cell in range and assigns level 0 when the cell is absent. Invalid cells produce a diagnostic and fall back to 0. Native Visio has no stacking-level primitive, so the file's visible order is preserved while round-trip semantics rely on that user cell.
+R29 makes levels available to routing but does not change route planning. R23 #62 owns the policy that allows a connector to pass through a lower-level shape. Level 0 therefore retains current routing behavior, and R29 does not duplicate the obstacle decision.
 
-## Tests and acceptance evidence
+VSDX export writes shapes in effective order and adds the `AgentLevel` user cell. Bump the VSDX `AgentSchemaVersion` marker to 2 for files written with this extension; import accepts existing marker 1 and marker 2. Marker 1 or a missing `AgentLevel` means level 0. Marker 2 restores a valid cell in range; an invalid cell falls back to 0 with a diagnostic. If file order conflicts with restored levels, level wins and the importer reports `level_order_conflict`. Non-default levels also emit `level_not_native` because Visio has no native level primitive; the user cell preserves semantics on a round trip.
 
-- Version 1 fixture with every element kind migrates to v2, defaults all absent levels to 0, and keeps `zIndex`, geometry, route and revision unchanged.
-- Version 2 requires level; boundary values -127 and +127 pass, and fractional/out-of-range/missing values fail. Unsupported schema versions fail explicitly.
-- Native file open, MCP replacement, recovery restore, and .NET host ingress all use the same migration behavior; normal save writes v2 and no-edit open/close preserves the original bytes.
-- Level 0 rendering and routing remain unchanged against the PSGL, Lego and existing image/regression fixtures. Mixed-level ordering agrees in the editor, projection, hit-testing, image export and Visio export.
-- Connector creation inheritance, explicit levels, source movement, group move/ungroup, level-local reorder, junction levels, hop tie-breaks, route changes, undo/redo, and VSDX user-cell round trip receive focused tests.
+Mixed-level groups can be interleaved with elements outside the group in effective order. The current exporter’s group interleaving check remains authoritative: report its existing limitation rather than silently flattening or changing the group’s levels.
+
+## Focused tests and acceptance evidence
+
+- Legacy v1 documents with every element kind and no level validate and render as level 0; opening/saving without non-default levels does not add fields or change the schema version. Omitted, -127, 0 and +127 levels are valid; fractional and out-of-range levels fail at every ingress.
+- Moving an element to a populated level gives it page-global `max(zIndex)+1`; same-level reorder changes order only within that level and retains page-global zIndex uniqueness.
+- Moving a mixed-level group preserves level offsets and descendants, recomputes the group from its top `(level, zIndex)` leaf, and atomically rejects a boundary overflow. Ungroup/copy/paste/duplicate preserve the levels.
+- VSDX import/export covers marker 1, marker 2, missing/valid/invalid `AgentLevel`, same-level file order, and cross-level file-order conflict with `level_order_conflict`; `level_not_native` appears for non-default levels.
+- Connectors inherit from shape, text, and connector starts; explicit levels win; moving the start later leaves its connector unchanged; joined branches and derived junction markers use the trunk level.
+- Hop tests cover greater level, equal-level zIndex tie-break, changed route, level/reorder change and undo/redo. Editor, projection, hit-testing, SVG/PNG and VSDX agree on mixed-level order.
+- Level-0 routing remains unchanged against the PSGL, Lego and existing route fixtures. R23 pass-through policy tests remain in #62.
 
 ## Implementation coordination
 
-R21 PRs #75 and #76 currently touch contracts, command planning and canvas ordering. After this proposal is reviewed, coordinate with their owner in #69 and base the code phase on the integrated R21 state (or an explicitly agreed shared-file split). Keep the migration/schema step independently reviewable, then implement commands, rendering and Visio round-trip in small commits. No product code is included in this proposal change.
+The updated `main` at `36ad4e6` includes R21 stage 2 and stage 3 code; PR #75 is merged and the #76 changes are in the main history. The R29 branch is based on that main state. Once this contract is approved, implement schemas/contracts, ingress validation, commands and clipboard, rendering/hops, then Visio round-trip in small reviewable commits. No product code is included in this proposal change.
