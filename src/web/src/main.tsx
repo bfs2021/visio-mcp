@@ -93,7 +93,7 @@ function configure(model: EditorModel, state: DocumentState): void {
     const r = await router.dispatch({ protocolVersion: 1, kind: 'request', requestId: crypto.randomUUID(), ...model.engine.scope(), method: 'components.get', params } as never);
     return r.error ? { ok: false, error: r.error } : { ok: true, value: r.result as unknown as ComponentProposal & { base64: string; mimeType: string } };
   };
-  model.afterRecoveryRestore = () => sessionChanged(state);
+  model.afterRecoveryRestore = () => sessionChanged(state, model.takeRestoredFrom());
   model.renderPreview = async doc => {
     const r = await renderer.render({ documentId: doc.id, sessionId: doc.id, revision: 0, document: doc }, undefined, { scope: 'page', pageId: doc.pages[0]!.id, maxWidth: 280, maxHeight: 200, format: 'png' });
     return r.ok ? `data:${r.value.mimeType};base64,${r.value.base64}` : null;

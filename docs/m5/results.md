@@ -67,7 +67,7 @@ Static guards fail the build if code starts a program, opens its own network con
 ## Known gaps
 1. The consent window and the recovery dialog were exercised through automation (the browser test with a mocked host, and clicks inside the real page); the WPF consent window itself has not been clicked by a person.
 2. Recovery covers the document. Undo history does not survive a crash, as designed.
-3. A recovered session that was not edited since restoring is offered again after another crash (it cannot tell it was restored).
+3. A recovered session that was not edited since restoring is offered again after another crash (it cannot tell it was restored). *Closed by H01 (below): it is offered once, labelled, and never alongside the session it came from.*
 4. Library picture bytes are not garbage-collected automatically; `CollectGarbageAsync` exists and is tested but nothing calls it on a schedule yet. *Addressed by H02 ([#20](https://github.com/rp2839/visio-mcp/issues/20)): see [H02-blob-maintenance.md](../design/H02-blob-maintenance.md).*
 5. The M0 second-Windows-user pipe check remains open.
 
@@ -118,3 +118,36 @@ Recorded 2026-10-23. A04 (inspector controls, #17) added `inspector-styling.spec
 - **A06 (#21):** ten pages, drag and resize traced frame by frame, eight large pictures, five text-heavy pages, and opening a file Visio saved; see [performance.md](../acceptance/performance.md).
   Findings: the preview of a page with eight 6-megapixel pictures takes 1.4 to 1.5 s (target 1 s); `.vsdx` export refuses more than 64 MiB of content with a generic `internal_error`; dragging all 500 elements stalls the display for about 0.65 s at release.
   Everything else measured meets the preferred targets.
+
+---
+
+# H01: a recovered session is recorded as recovered
+
+Recorded 2026-10-23 ([#19](https://github.com/rp2839/visio-mcp/issues/19)). This closes I51 gap 3 and builds on W01 (#23) and W06 (#28).
+
+## The lifecycle
+| State | How it is recorded | What the next start does |
+|---|---|---|
+| **Pending** | A session folder with unsaved work and nothing in `session.json` saying it was recovered. | Offers it (or restores its tab). |
+| **Recovered** | The person recovers it. The page rebuilds the document, which starts a **new session**; the new session's `session.json` carries `restoredFrom` (the old session's id) and `keepUnsaved`. They are written when the session is created, before anything else about it, so a crash at any later moment still shows the lineage. | Offers it once, labelled "Recovered before, and not changed since" or "Recovered before and changed since". |
+| **Superseded** | A session that a listed session was `restoredFrom`, directly or through a chain. Its work is already inside the newer session, which has a durable checkpoint of its own. | Removed (and any remembered tab is pointed at the newer session first); never offered. A newer session with no usable checkpoint supersedes nothing. |
+| **Saved** | Saving clears `keepUnsaved` and records the saved revision. | Removed when the window closes. |
+
+## What each path does
+| Path | Behaviour | Evidence |
+|---|---|---|
+| Recover, no edit, crash again | One offer for the recovered work, labelled as recovered and unchanged; recovering it gives the same objects again; the chain goes on (each recovery replaces the last). | `CrashRecoveryTests.RecoveredWorkThatIsNotEditedBeforeAnotherCrashIsOfferedOnceMoreAndOnlyOnce` |
+| Recover, edit, crash again | One offer, labelled "changed since"; the edit comes back with the recovered objects. | `...RecoveredWorkThatWasEditedBeforeAnotherCrashComesBackWithTheEditAndIsLabelledChanged` |
+| Crash after the new session exists but before the old one was removed | One document, not two: the old session is removed at the next start and the remembered tab restores from the new one; no dialog. Disabling the reconcile step makes the test fail with a second offer. | `...ACrashBeforeTheOldSessionIsRemovedLeavesOneRestoredTabAndNoSecondOffer`, `RecoveryTests.ACrashBeforeTheOldSessionWasRemovedOffersTheWorkOnceAndTellsTheShell` |
+| Discard the recovered work | Its session is removed; nothing is offered on the next start. | `...DiscardingRecoveredWorkLeavesNothingToOfferOnTheNextStart` |
+| Clean close of an unedited recovered session | **Kept** until saved or discarded. Before H01 it counted as untouched and a clean close deleted it. | `RecoveryTests.AnUneditedRestoredSessionSurvivesACleanCloseUntilItIsSaved` |
+| Shell cannot rewrite the tab list when superseding | The old session is hidden from every offer but kept on disk until the shell can be told. | `RecoveryTests.IfTheShellCannotBeToldTheOldSessionIsHiddenButKept` |
+
+## Found while building
+- The first version recorded lineage but left the unedited recovered session eligible for deletion on a clean close; the full-stack test caught it (see "Clean close" above).
+- The page bundle `src/web/dist` must be rebuilt before the Windows tests see page changes.
+
+## Limits
+- A crash in the short interval between the host removing the old session and the page persisting the tab list is covered by the tab being restored from the new session (the lineage is on disk), not by the tab list being right.
+- The label is shown in the recovery dialog only; the automatic tab restore after an unexpected exit reports its usual banner.
+- Not tested: a recovered session whose original file was saved elsewhere in between, and several recovered tabs at once (each follows the same rules; only one chain was exercised per test).

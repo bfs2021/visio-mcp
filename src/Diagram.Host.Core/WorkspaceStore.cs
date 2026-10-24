@@ -46,6 +46,22 @@ public sealed class WorkspaceStore(string file, AtomicFileWriter writer)
         finally { gate.Release(); }
     }
 
+    /// <summary>
+    /// A recovery session was superseded by one rebuilt from it: any remembered tab that named the old session now names the new one. Nothing is written
+    /// when no tab does, and the file is left alone if it cannot be read.
+    /// </summary>
+    public async Task ReplaceSessionAsync(string oldSessionId, string newSessionId, CancellationToken ct = default)
+    {
+        await gate.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            if (await ReadUnlockedAsync(ct).ConfigureAwait(false) is not { } state || !state.Tabs.Any(t => t.SessionId == oldSessionId)) return;
+            var tabs = state.Tabs.Select(t => t.SessionId == oldSessionId ? t with { SessionId = newSessionId } : t).ToList();
+            await writer.WriteAsync(file, JsonSerializer.SerializeToUtf8Bytes(state with { Tabs = tabs }, Json), ct).ConfigureAwait(false);
+        }
+        finally { gate.Release(); }
+    }
+
     /// <summary>The app is closing normally: remember that, so the next start does not report an unexpected exit.</summary>
     public async Task MarkCleanExitAsync(CancellationToken ct = default)
     {

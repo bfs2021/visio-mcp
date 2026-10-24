@@ -38,6 +38,7 @@ public sealed partial class HostServices
             }
             case "host.workspace.load":
             {
+                await window.RecoveryMgr.ReconcileAsync(ct); // a session that a later one was rebuilt from is gone, and the tabs below already name its replacement
                 var state = await window.Workspace.ReadAsync(ct);
                 if (state is null) return Ok(request, new JsonObject { ["found"] = false });
                 lock (reopenable)
