@@ -78,9 +78,9 @@ Deleting a member removes it from `memberIds`. An empty container is valid, unli
 - New `contain { container: Target, add?: Target[], remove?: Target[] }`. Adding an element that already belongs to another container moves it, and both containers appear in `changed`. Removing an element that is not a member is refused.
 - `set` patch `container: { fit?, marginPt? }` changes the settings. `container: null` disbands the container: the shape stays and its members move up, as with `delete members:"keep"` but keeping the frame. Membership lists change only through `contain`, so there is one way to edit them.
 - `move` and `resize` get no new parameters. Their container behaviour follows from the rules above and is described in the MCP tool text.
-- DrawScript: `add ... container fit=grow margin=12`, `contain <container> add a b c`, `contain <container> remove d`.
+- DrawScript: `add shape ... container=grow margin=12pt` (`container=none|grow|fit` makes the shape a container), `set <shape> container=fit margin=4pt`, `contain <container> add a b c`, `contain <container> remove d`, `contain <container> disband`, `delete <container> members=keep|delete`.
 
-Error codes: `container_cycle`, `container_split`, `container_member_other_page`, `container_delete_requires_choice`, `not_a_member`.
+Error codes: `container_cycle`, `container_split`, `container_member_other_page`, `container_delete_requires_choice`, `members_only_for_containers`, `container_must_be_shape`, `already_contained`, `container_rotation`, `not_a_member`.
 
 ## Layout inspection
 
@@ -133,6 +133,15 @@ This section answers the 2026-10-20 comment on #12. R17 provides one read-only h
 2. Inspection and the routing helper.
 3. Editor commands, inspector and drag behaviour.
 4. VSDX export and import with Visio verification; the feasibility check in that section comes first, so the export design can change before code is written.
+
+## Settled during stage 1
+
+- **Rotation:** rotating a container that has members is refused (`container_rotation`). To turn a container and its contents together, group them and rotate the group. Rotating a container's members one at a time is unchanged.
+- **Empty containers:** deleting a container with no members needs no `members` choice.
+- **Margin:** an absent `marginPt` means 0. Fit `none` and margin 0 are not stored, so each setting has a single stored form.
+- **Where the fit settle runs:** at the end of the planned batch, before the engine's join, route and attachment settles. An element that rides a connector (R13) and is also a container member can therefore leave its container's grow bounds one edit behind. Inspection's `MEMBER_OUTSIDE_CONTAINER` reports this, and the next edit catches up.
+- **Copy and paste:** groups are not copied, so a group inside a copied container is listed in the pasted container by its leaves. Membership is restored by `contain` operations at the end of the paste.
+- **Export before stage 4:** a container exports as plain shapes with a `container_not_native` warning, so the membership loss is reported rather than silent.
 
 ## Decisions (owner, 2026-10-24)
 

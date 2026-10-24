@@ -246,6 +246,9 @@ public sealed class NativeVsdxExporter : IVsdxExporter
                 };
                 if ((Common(element).Level ?? 0) != 0)
                     Warn("level_not_native", "Visio has no native stacking level; the AgentLevel user cell preserves this level when the file is reopened in the editor.", id, "AgentLevel", "info");
+                // R17 stage 1: native Visio containers are exported in stage 4. Until then say so rather than drop the membership silently.
+                if (element is ShapeElement { Container: { } container })
+                    Warn("container_not_native", $"This container and its {container.MemberIds.Count} member(s) are exported as separate shapes; the membership is not yet written to the file and is lost when it is reopened.", id, "container exported as plain shapes");
                 void Unsupported(string field) => Warn("ROUTING_POLICY_NOT_NATIVE",
                     $"Visio does not preserve the editor's {field} routing policy; it remains available when the file is reopened in the editor.",
                     id, field, "info");
