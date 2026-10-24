@@ -36,9 +36,9 @@ export function startApp(webview: WebViewLike | undefined, root: HTMLElement | n
   const announce = (name: 'editor.ready' | 'editor.session' | 'editor.document.opened', state: DocumentState, extra: Record<string, unknown> = {}) =>
     client?.sendEvent(name, { protocolVersion: 1, ...state.engine.scope(), revision: state.engine.revision, active: workspace.active === state, ...extra });
   // The one place that reacts to a replaced document, whether the host asked for it (open) or the page did (recovery).
-  const sessionChanged = (state: DocumentState = workspace.active ?? first) => {
+  const sessionChanged = (state: DocumentState = workspace.active ?? first, restoredFrom: string | null = null) => {
     const replaces = workspace.restarted(state);
-    router.cancelGesture(); show(); announce('editor.session', state, { replaces }); hooks.onSessionChanged?.(state);
+    router.cancelGesture(); show(); announce('editor.session', state, { replaces, ...(restoredFrom ? { restoredFrom } : {}) }); hooks.onSessionChanged?.(state);
   };
   // The router exists with or without a host, so a plain browser (tests, development) can exercise the same request path.
   const router = createRequestRouter(workspace.engineOf, {

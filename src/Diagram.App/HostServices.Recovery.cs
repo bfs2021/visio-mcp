@@ -24,6 +24,7 @@ public sealed partial class HostServices
             ["sessionId"] = c.SessionId, ["documentId"] = c.DocumentId, ["originalPath"] = c.OriginalPath, ["title"] = c.Document["title"]?.GetValue<string>(),
             ["pageCount"] = pages?.Count ?? 0, ["objectCount"] = objects, ["checkpointRevision"] = c.CheckpointRevision, ["lastDurableRevision"] = c.LastDurableRevision,
             ["lastWrite"] = c.LastWrite.ToString("O"), ["loss"] = LossJson(c.Loss),
+            ["restoredEarlier"] = c.RestoredFrom is not null, ["unchangedSinceRestore"] = c.RestoredUnedited, // recovered once already; true when nothing has been done to it since
         };
     }
 
@@ -48,6 +49,7 @@ public sealed partial class HostServices
                 {
                     ["found"] = true, ["auto"] = auto, ["others"] = list.Count - 1, ["sessionId"] = c.SessionId, ["originalPath"] = c.OriginalPath,
                     ["checkpointRevision"] = c.CheckpointRevision, ["lastDurableRevision"] = c.LastDurableRevision, ["lastWrite"] = c.LastWrite.ToString("O"), ["loss"] = LossJson(c.Loss),
+                    ["restoredEarlier"] = c.RestoredFrom is not null, ["unchangedSinceRestore"] = c.RestoredUnedited,
                 });
             }
             case "host.recovery.list":

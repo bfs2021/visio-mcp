@@ -145,8 +145,9 @@ public sealed class RecoveryManager : IAsyncDisposable
         var snap = await router.SnapshotAsync(scope, stop.Token).ConfigureAwait(false);
         if (!snap.IsOk) return; // the scope moved on already; the next announcement will begin its own session
         var doc = JsonSerializer.SerializeToNode(snap.Value.Document, ContractJson.Options)!;
-        var next = await store.BeginSessionAsync(snap.Value.DocumentId, snap.Value.SessionId, doc, snap.Value.Revision, documentPath is null ? currentPath() : documentPath(snap.Value.DocumentId), Shas(snap.Value.Document), stop.Token, options.FlushDelay).ConfigureAwait(false);
-        var track = new Track { Session = next, DocumentId = snap.Value.DocumentId, LastCommitted = snap.Value.Revision, StartRevision = snap.Value.Revision };
+        var restoredFrom = router.TakeRestoredFrom(snap.Value.SessionId);
+        var next = await store.BeginSessionAsync(snap.Value.DocumentId, snap.Value.SessionId, doc, snap.Value.Revision, documentPath is null ? currentPath() : documentPath(snap.Value.DocumentId), Shas(snap.Value.Document), stop.Token, options.FlushDelay, restoredFrom).ConfigureAwait(false);
+        var track = new Track { Session = next, DocumentId = snap.Value.DocumentId, LastCommitted = snap.Value.Revision, StartRevision = snap.Value.Revision, KeepUnsaved = restoredFrom is not null };
         List<Track> superseded;
         lock (gate)
         {
@@ -250,7 +251,9 @@ public sealed class RecoveryManager : IAsyncDisposable
     public async Task<IReadOnlyList<RecoveryCandidate>> CandidatesAsync(CancellationToken ct)
     {
         var open = router.Documents.Select(d => d.SessionId).ToHashSet(StringComparer.Ordinal);
-        var all = (await store.ReadRecoveryAsync(null, ct).ConfigureAwait(false)).Where(c => !open.Contains(c.SessionId)).ToList();
+        var onDisk = await store.ReadRecoveryAsync(null, ct).ConfigureAwait(false);
+        var hidden = await RemoveSupersededAsync(onDisk).ConfigureAwait(false);
+        var all = onDisk.Where(c => !open.Contains(c.SessionId) && !hidden.Contains(c.SessionId)).ToList();
         var offer = new List<RecoveryCandidate>();
         foreach (var c in all)
         {
@@ -259,6 +262,34 @@ public sealed class RecoveryManager : IAsyncDisposable
             offer.Add(c);
         }
         return offer;
+    }
+
+    /// <summary>
+    /// Told, before a superseded session is removed, which session replaces it. The shell uses it to point a remembered tab at the new session, so the tab
+    /// is restored from the work that was recovered and not reopened from its file.
+    /// </summary>
+    public Func<string, string, Task>? OnSuperseded { get; set; }
+
+    /// <summary>
+    /// A session that a listed session was rebuilt from is already inside that session, which has a durable checkpoint of its own. A crash between the
+    /// rebuild and the end of the restore leaves both on disk; the old one is removed here (after the shell has been told) so it is never offered, or restored, a second time.
+    /// </summary>
+    /// <summary>Does that clean-up on its own, before anything else reads the remembered tabs.</summary>
+    public async Task ReconcileAsync(CancellationToken ct) => await RemoveSupersededAsync(await store.ReadRecoveryAsync(null, ct).ConfigureAwait(false)).ConfigureAwait(false);
+
+    /// <returns>The superseded sessions: removed from disk, or, when the shell could not be told, left there but not to be offered.</returns>
+    async Task<HashSet<string>> RemoveSupersededAsync(IReadOnlyList<RecoveryCandidate> onDisk)
+    {
+        var removed = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var (old, successor) in RecoveryLineage.Superseded(onDisk))
+        {
+            lock (gate) if (tracks.ContainsKey(old)) continue; // still an open document's own session
+            try { if (OnSuperseded is { } tell) await tell(old, successor).ConfigureAwait(false); }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { removed.Add(old); continue; } // never offered again, but kept on disk until the tab can be pointed at its replacement
+            await store.CompleteAsync(old).ConfigureAwait(false);
+            removed.Add(old);
+        }
+        return removed;
     }
 
     /// <summary>Preserves one explicit unsaved document even at revision zero, after its first checkpoint is durable.</summary>

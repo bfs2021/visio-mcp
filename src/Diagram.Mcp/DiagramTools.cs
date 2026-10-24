@@ -345,7 +345,7 @@ public sealed class DiagramTools(PipeClient app)
             Obj(("ids", new JsonArray(ids.Select(i => (JsonNode)JsonValue.Create(i)!).ToArray())), ("strategy", strategy), ("target", target), ("minFontSizePt", minFontSizePt), ("pageId", pageId)), Read, ct));
     }
 
-    [McpServerTool(Name = "inspect_layout"), Description("Machine-readable layout warnings (outside the page, overlaps, clipped text, unattached connectors, connectors through shapes, stretched pictures, low contrast). Each issue has element ids, page and bounds. For text measurements and fitting proposals, call get_text_layout. " + Identity)]
+    [McpServerTool(Name = "inspect_layout"), Description("Machine-readable layout warnings (outside the page, overlaps, clipped text, unattached connectors, connectors through shapes, stretched pictures, low contrast). A connector running over a shape on a lower level is not a crossing; it is listed as info CONNECTOR_PASSES_OVER_SHAPE. Each issue has element ids, page and bounds. For text measurements and fitting proposals, call get_text_layout. " + Identity)]
     public async Task<CallToolResult> InspectLayout(
         [Description("The document id from get_document_summary.")] string documentId,
         [Description("The session id from get_document_summary.")] string sessionId,

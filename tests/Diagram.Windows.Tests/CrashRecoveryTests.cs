@@ -146,6 +146,180 @@ public class CrashRecoveryTests
         finally { try { Directory.Delete(root, true); } catch { } }
     }
 
+    // ---------------------------------------------------------------- H01: a recovered session is recorded as recovered
+    static string[] SessionDirs(string root) => Directory.Exists(Path.Combine(root, "recovery")) ? Directory.GetDirectories(Path.Combine(root, "recovery")).Select(d => Path.GetFileName(d)!).ToArray() : [];
+    static string? RestoredFrom(string root, string session) => JsonNode.Parse(File.ReadAllText(Path.Combine(root, "recovery", session, "session.json")))?["restoredFrom"]?.GetValue<string>();
+    static async Task<string[]> ElementIds(Harness h) => (await Snap(h)).Document.Pages[0].Elements.Select(e => JsonSerializer.SerializeToNode(e, ContractJson.Options)!["id"]!.GetValue<string>()).OrderBy(x => x).ToArray();
+
+    [Fact]
+    public async Task RecoveredWorkThatIsNotEditedBeforeAnotherCrashIsOfferedOnceMoreAndOnlyOnce()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "diagram-win-h01a-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            string[] ids; string original;
+            await using (var first = await Harness.StartAsync(existingRoot: root))
+            {
+                ids = await Edit(first);
+                original = Assert.Single(SessionDirs(root));
+                await first.Window.RecoveryMgr.DisposeAsync();            // crash 1
+            }
+            File.Delete(Path.Combine(root, "workspace.json"));
+
+            string restoredSession;
+            await using (var second = await Harness.StartAsync(existingRoot: root))
+            {
+                await WaitFor(async () => (await second.Eval("document.querySelector('[data-testid=recovery-offer]') !== null")) == "true", 30);
+                Assert.Equal(1, int.Parse(await second.Eval("document.querySelectorAll('[data-testid=recovery-item]').length")));
+                await second.Eval("document.querySelector('[data-testid=recovery-restore]').click(); true");
+                await WaitFor(async () => await Count(second) == 3, 30);
+                await WaitFor(() => SessionDirs(root).Length == 1 && SessionDirs(root)[0] != original, 30);   // the old session is gone, the new one holds the work
+                restoredSession = Assert.Single(SessionDirs(root));
+                Assert.Equal(original, RestoredFrom(root, restoredSession));                                      // and says what it replaces
+                await second.Window.RecoveryMgr.DisposeAsync();                                                   // crash 2, nothing edited since the restore
+            }
+            File.Delete(Path.Combine(root, "workspace.json"));
+
+            await using (var third = await Harness.StartAsync(existingRoot: root))
+            {
+                await WaitFor(async () => (await third.Eval("document.querySelector('[data-testid=recovery-offer]') !== null")) == "true", 30);
+                Assert.Equal(1, int.Parse(await third.Eval("document.querySelectorAll('[data-testid=recovery-item]').length")));                  // one offer, not two
+                Assert.Contains("not changed since", await third.Eval("document.querySelector('[data-testid=recovery-restored-earlier]')?.textContent ?? ''"));  // and it says so
+                await third.Eval("document.querySelector('[data-testid=recovery-restore]').click(); true");
+                await WaitFor(async () => await Count(third) == 3, 30);
+                Assert.Equal(ids.OrderBy(x => x), await ElementIds(third));                                       // the very same objects, twice recovered
+                await WaitFor(() => SessionDirs(root).Length == 1 && SessionDirs(root)[0] != restoredSession, 30);
+                Assert.Equal(restoredSession, RestoredFrom(root, Assert.Single(SessionDirs(root))));
+                Assert.True((await third.Send("doc.status")).Result!.Value.GetProperty("dirty").GetBoolean());    // still unsaved until it is saved
+            }
+        }
+        finally { try { Directory.Delete(root, true); } catch { } }
+    }
+
+    [Fact]
+    public async Task ACrashBeforeTheOldSessionIsRemovedLeavesOneRestoredTabAndNoSecondOffer()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "diagram-win-h01b-" + Guid.NewGuid().ToString("N"));
+        var backup = Path.Combine(Path.GetTempPath(), "diagram-win-h01b-backup-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            string[] ids; string original;
+            await using (var first = await Harness.StartAsync(existingRoot: root))
+            {
+                ids = await Edit(first);
+                original = Assert.Single(SessionDirs(root));
+                await WaitFor(() => File.Exists(Path.Combine(root, "workspace.json")) && File.ReadAllText(Path.Combine(root, "workspace.json")).Contains(original), 20); // the tab remembers its session
+                await first.Window.RecoveryMgr.DisposeAsync();            // crash 1
+            }
+            CopyDirectory(Path.Combine(root, "recovery", original), backup);
+
+            string restoredSession;
+            await using (var second = await Harness.StartAsync(existingRoot: root))
+            {
+                await WaitFor(async () => await Count(second) == 3, 60);                                          // the remembered tab came back by itself
+                await WaitFor(() => SessionDirs(root).Length == 1 && SessionDirs(root)[0] != original, 30);
+                restoredSession = Assert.Single(SessionDirs(root));
+                Assert.Equal(original, RestoredFrom(root, restoredSession));
+                await WaitFor(() => File.ReadAllText(Path.Combine(root, "workspace.json")).Contains(restoredSession), 20);
+                await second.Window.RecoveryMgr.DisposeAsync();                                                   // crash 2
+            }
+            // as if the crash had come before the old session was removed and before the tab list was rewritten
+            CopyDirectory(backup, Path.Combine(root, "recovery", original));
+            File.WriteAllText(Path.Combine(root, "workspace.json"), File.ReadAllText(Path.Combine(root, "workspace.json")).Replace(restoredSession, original));
+            Assert.Equal(2, SessionDirs(root).Length);
+
+            await using var third = await Harness.StartAsync(existingRoot: root);
+            await WaitFor(async () => await Count(third) == 3, 60);                                               // the tab followed its work to the new session
+            Assert.Equal(ids.OrderBy(x => x), await ElementIds(third));
+            Assert.Equal("false", await third.Eval("document.querySelector('[data-testid=recovery-offer]') !== null"));      // nothing offered a second time
+            await WaitFor(() => SessionDirs(root).Length == 1 && !SessionDirs(root).Contains(original) && !SessionDirs(root).Contains(restoredSession), 30);
+            Assert.Equal(restoredSession, RestoredFrom(root, Assert.Single(SessionDirs(root))));
+            Assert.True((await third.Send("doc.status")).Result!.Value.GetProperty("dirty").GetBoolean());
+        }
+        finally { try { Directory.Delete(root, true); } catch { } try { Directory.Delete(backup, true); } catch { } }
+    }
+
+    /// <summary>Run 1 makes three objects and crashes; run 2 recovers them and, optionally, does something to the recovered document before crashing again.</summary>
+    static async Task<(string[] Ids, string Restored)> CrashRestoreCrash(string root, Func<Harness, Task>? afterRestore = null)
+    {
+        string[] ids;
+        await using (var first = await Harness.StartAsync(existingRoot: root))
+        {
+            ids = await Edit(first);
+            await first.Window.RecoveryMgr.DisposeAsync();
+        }
+        File.Delete(Path.Combine(root, "workspace.json"));
+        await using var second = await Harness.StartAsync(existingRoot: root);
+        await WaitFor(async () => (await second.Eval("document.querySelector('[data-testid=recovery-offer]') !== null")) == "true", 30);
+        await second.Eval("document.querySelector('[data-testid=recovery-restore]').click(); true");
+        await WaitFor(async () => await Count(second) == 3, 30);
+        await WaitFor(() => SessionDirs(root).Length == 1, 30);
+        if (afterRestore is not null) await afterRestore(second);
+        var restored = Assert.Single(SessionDirs(root));
+        await second.Window.RecoveryMgr.DisposeAsync();
+        return (ids, restored);
+    }
+
+    [Fact]
+    public async Task RecoveredWorkThatWasEditedBeforeAnotherCrashComesBackWithTheEditAndIsLabelledChanged()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "diagram-win-h01c-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var (ids, restored) = await CrashRestoreCrash(root, async h =>
+            {
+                var before = (await Snap(h)).Revision;
+                var r = await h.Apply(before, null, Harness.Shape("after-restore", 300, 200));
+                Assert.Null(r.Error);
+                await WaitFor(() => h.Window.RecoveryMgr.Status.LastDurableRevision >= before + 1, 30);          // the edit is on disk
+                await h.Window.RecoveryMgr.DrainAsync();
+            });
+            File.Delete(Path.Combine(root, "workspace.json"));
+            await using var third = await Harness.StartAsync(existingRoot: root);
+            await WaitFor(async () => (await third.Eval("document.querySelector('[data-testid=recovery-offer]') !== null")) == "true", 30);
+            Assert.Equal(1, int.Parse(await third.Eval("document.querySelectorAll('[data-testid=recovery-item]').length")));
+            Assert.Contains("changed since", await third.Eval("document.querySelector('[data-testid=recovery-restored-earlier]')?.textContent ?? ''"));
+            Assert.DoesNotContain("not changed since", await third.Eval("document.querySelector('[data-testid=recovery-restored-earlier]')?.textContent ?? ''"));
+            await third.Eval("document.querySelector('[data-testid=recovery-restore]').click(); true");
+            await WaitFor(async () => await Count(third) == 4, 30);                                        // the three recovered objects and the one added after the restore
+            Assert.Equal(ids.OrderBy(x => x), (await ElementIds(third)).Where(id => ids.Contains(id)).OrderBy(x => x));
+            await WaitFor(() => SessionDirs(root).Length == 1 && SessionDirs(root)[0] != restored, 30);
+            Assert.Equal(restored, RestoredFrom(root, Assert.Single(SessionDirs(root))));                   // the chain goes on: this session replaces the one that was edited
+        }
+        finally { try { Directory.Delete(root, true); } catch { } }
+    }
+
+    [Fact]
+    public async Task DiscardingRecoveredWorkLeavesNothingToOfferOnTheNextStart()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "diagram-win-h01d-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            await CrashRestoreCrash(root);
+            File.Delete(Path.Combine(root, "workspace.json"));
+            await using (var third = await Harness.StartAsync(existingRoot: root))
+            {
+                await WaitFor(async () => (await third.Eval("document.querySelector('[data-testid=recovery-offer]') !== null")) == "true", 30);
+                await third.Eval("document.querySelector('[data-testid=recovery-discard]').click(); true");
+                await WaitFor(async () => (await third.Eval("document.querySelector('[data-testid=recovery-offer]') === null")) == "true", 30);
+                await WaitFor(() => SessionDirs(root).Length <= 1, 30);                                        // only the blank session of this very run may remain
+            }
+            await WaitFor(() => SessionDirs(root).Length == 0, 30);                                            // and a clean close removes that too
+            File.Delete(Path.Combine(root, "workspace.json"));
+            await using var fourth = await Harness.StartAsync(existingRoot: root);
+            await Task.Delay(3000);
+            Assert.Equal("false", await fourth.Eval("document.querySelector('[data-testid=recovery-offer]') !== null"));  // nothing comes back
+        }
+        finally { try { Directory.Delete(root, true); } catch { } }
+    }
+
+    static void CopyDirectory(string from, string to)
+    {
+        Directory.CreateDirectory(to);
+        foreach (var f in Directory.GetFiles(from)) File.Copy(f, Path.Combine(to, Path.GetFileName(f)), true);
+        foreach (var d in Directory.GetDirectories(from)) CopyDirectory(d, Path.Combine(to, Path.GetFileName(d)));
+    }
+
     static Task WaitFor(Func<Task<bool>> condition, int seconds = 30) => WaitForAsync(condition, seconds);
     static async Task WaitForAsync(Func<Task<bool>> condition, int seconds)
     {

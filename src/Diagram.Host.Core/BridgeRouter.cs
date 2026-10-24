@@ -97,6 +97,10 @@ public sealed class BridgeRouter : IEditorChannel, IExportSource, IRasteriser
     /// <summary>Raised when the page announces a session (first ready, or after the document was replaced). The recovery manager starts its own checkpoint here.</summary>
     public event Action<Scope, int>? SessionChanged;
 
+    readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> restoredFrom = new(StringComparer.Ordinal);
+    /// <summary>When the page announced a session it rebuilt from a recovery session, the id of that session. Read once, by whoever begins protecting the new session.</summary>
+    public string? TakeRestoredFrom(string sessionId) => restoredFrom.TryRemove(sessionId, out var from) ? from : null;
+
     /// <summary>True from a renderer failure until someone takes it: the next session is a restart, so unfinished work should be offered back at once.</summary>
     public bool RendererFailedRecently { get; private set; }
     public bool TakeRendererFailure() { lock (gate) { var v = RendererFailedRecently; RendererFailedRecently = false; return v; } }
@@ -176,6 +180,7 @@ public sealed class BridgeRouter : IEditorChannel, IExportSource, IRasteriser
             var replaces = replacesActive ? p["replaces"]?.GetValue<string>() ?? (channel == User ? activeId : null) : null;
             if (replaces is not null && replaces != doc && docs.TryGetValue(replaces, out var old) && old.Channel == channel) { docs.Remove(replaces); replaced = old.Scope; }
             announced = new Scope { DocumentId = doc, SessionId = session };
+            if (replacesActive && p["restoredFrom"]?.GetValue<string>() is { Length: > 0 } rf) restoredFrom[session] = rf; // before the event below, so the recovery session is begun knowing it
             announcedRevision = p["revision"]?.GetValue<int>() ?? 0;
             docs[doc] = (announced, announcedRevision, channel);
             if (channel == User && (p["active"]?.GetValue<bool>() != false || activeId is null || !docs.ContainsKey(activeId))) activeId = doc;

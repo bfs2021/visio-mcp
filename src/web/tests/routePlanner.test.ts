@@ -3,6 +3,9 @@ import type { Element } from '../src/contracts/generated';
 import { planRoutes, routeDefects, type PlanResult } from '../src/layout/routePlanner';
 import { isClear } from '../src/layout/obstacleRoute';
 import { selectObstacles, visualRect } from '../src/layout/obstacles';
+import { compile } from '../src/script/compiler';
+import { createTestEngine, sequenceIds } from './support/engine';
+import { id } from './support/ops';
 
 const solid = { kind: 'solid', colour: '#fff', opacity: 1 } as const;
 const shape = (id: string, x: number, y: number, w = 100, h = 60, extra: object = {}): Element => ({
@@ -266,5 +269,54 @@ describe('route planner on the 60 shape, 60 connector diagram', () => {
     };
     expect(unexpected.filter(c => !near(c.id))).toEqual([]);
     expect(next.changes.length).toBeLessThanOrEqual(attached.size + 6);
+  });
+});
+
+describe('route planner with levels (R23)', () => {
+  // a 200 x 200 frame between the two ends: small enough (4% of the page) that the legacy rules treat it as an obstacle
+  const scene = (frameExtra: object = {}, connExtra: object = {}) => [shape('a', 0, 170), shape('b', 500, 170), shape('frame', 200, 100, 200, 200, frameExtra), conn('ab', 'a', 'b', connExtra, 'east', 'west')];
+  const straight = (r: PlanResult) => pts(r, 'ab').every(p => p.y === 200);
+  const length = (r: PlanResult) => pts(r, 'ab').slice(1).reduce((s, p, i) => s + Math.abs(p.x - pts(r, 'ab')[i]!.x) + Math.abs(p.y - pts(r, 'ab')[i]!.y), 0);
+
+  it('detours around a frame on the same level, as before levels existed', () => {
+    const r = plan(scene());
+    expect(straight(r)).toBe(false);
+    expect(length(r)).toBeGreaterThan(400);
+  });
+
+  it('runs straight over a frame on a lower level', () => {
+    const r = plan(scene({ level: -1 }));
+    expect(pts(r, 'ab')).toEqual([{ x: 100, y: 200 }, { x: 500, y: 200 }]);
+  });
+
+  it('a connector raised above the frame runs over it too', () => {
+    expect(straight(plan(scene({}, { level: 1 })))).toBe(true);
+  });
+
+  it('straightens a kept detour once the frame is sent back, and detours again when it comes forward', () => {
+    const first = plan(scene());
+    const back = plan(scene({ level: -1 }), first.routes);
+    expect(straight(back)).toBe(true);
+    expect(back.changes.map(c => c.id)).toEqual(['ab']);
+    const forward = plan(scene(), back.routes);
+    expect(straight(forward)).toBe(false);
+  });
+
+  it('DrawScript level= sends the frame back and the route straightens', async () => {
+    const doc = structuredClone(createTestEngine().store.snapshot().document);
+    doc.pages[0]!.elements = [];
+    const t = createTestEngine({ document: doc });
+    const exec = (script: string, n: number) => t.engine.executeScript({ ...t.scope(), transactionId: id(n), baseRevision: t.engine.revision, script },
+      (src, snap, c) => compile(src, { snapshot: snap, newUuid: sequenceIds('7'), ...c }));
+    expect((await exec('add shape id=a x=0pt y=170pt w=100pt h=60pt\nadd shape id=b x=500pt y=170pt w=100pt h=60pt\nadd shape id=frame x=200pt y=100pt w=200pt h=200pt\n'
+      + 'connect id=ab fromAlias=a fromPort="east" toAlias=b toPort="west" route=orthogonal', 7400)).ok).toBe(true);
+    const routeOf = () => { const page = t.store.snapshot().document.pages[0]!; const r = planRoutes({ elements: page.elements, layers: page.layers, pageArea: 1_000_000 }); return [...r.routes.values()][0]!.points; };
+    expect(routeOf().every(p => p.y === 200)).toBe(false);
+    expect((await exec('set frame level=-1', 7401)).ok).toBe(true);
+    expect(routeOf().every(p => p.y === 200)).toBe(true);
+  });
+
+  it('a frame below the connector but marked forbidden is still avoided', () => {
+    expect(straight(plan(scene({ level: -1, routingPolicy: { obstacle: 'forbidden' } })))).toBe(false);
   });
 });
