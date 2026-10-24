@@ -145,6 +145,22 @@ describe('inspect layout', () => {
     expect(found(t).some(i => i.code === 'CONNECTOR_CROSSES_SHAPE')).toBe(true);
   });
 
+  it('a shape on a lower level is reported as passed over, not as a crossing (R23)', async () => {
+    const t = await scene([
+      { op: 'createShape', id: id(1), alias: 'a', bounds: box(50, 100) },
+      { op: 'createShape', id: id(2), alias: 'b', bounds: box(450, 100) },
+      { op: 'createShape', id: id(3), alias: 'band', bounds: box(250, 90, 40, 60), level: -2 },
+      { op: 'createShape', id: id(4), alias: 'wall', bounds: box(330, 90, 40, 60) },
+      { op: 'createConnector', id: id(10), from: { elementId: 'a', glue: 'dynamic' }, to: { elementId: 'b', glue: 'dynamic' } },
+    ]);
+    const issues = found(t);
+    expect(issues.find(i => i.code === 'CONNECTOR_CROSSES_SHAPE')?.evidence.crossedElementIds).toEqual([id(4)]);
+    expect(issues).toContainEqual(expect.objectContaining({
+      code: 'CONNECTOR_PASSES_OVER_SHAPE', severity: 'info', elementIds: [id(10), id(3)],
+      evidence: { passedOverElementIds: [id(3)], rule: 'lower_level', connectorLevel: 0, levels: { [id(3)]: -2 } },
+    }));
+  });
+
   it('overlap ignores containment and members of one group', async () => {
     const t = await scene([
       { op: 'createShape', id: id(1), bounds: box(100, 100, 200, 120) },
