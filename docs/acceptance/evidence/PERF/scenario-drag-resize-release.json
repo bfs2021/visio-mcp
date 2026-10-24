@@ -1,5 +1,5 @@
 {
-  "recorded": "2026-10-23T18:29:36.1338663Z",
+  "recorded": "2026-10-24T00:00:15.1371058Z",
   "machine": {
     "os": "Microsoft Windows NT 10.0.26300.0",
     "logicalProcessors": 4,
@@ -10,26 +10,26 @@
   "setup": {
     "shimStartedBeforeEditor": true,
     "quietGateReached": true,
-    "quietGateWaitedMs": 4138,
-    "machineCpuBusyPercentOverall": 78,
+    "quietGateWaitedMs": 5233,
+    "machineCpuBusyPercentOverall": 74,
     "starvedStretchesSeen": [
       {
-        "startMs": 86,
-        "lengthMs": 907,
+        "startMs": 107,
+        "lengthMs": 1289,
         "poolThreadsAtStart": 4,
         "poolThreadsAtEnd": 4,
-        "maxQueued": 1,
-        "machineCpuBusyPercent": 88,
+        "maxQueued": 2,
+        "machineCpuBusyPercent": 87,
         "machineCpuBusyPercentFor2sBefore": 100
       },
       {
-        "startMs": 8889,
-        "lengthMs": 919,
+        "startMs": 10319,
+        "lengthMs": 883,
         "poolThreadsAtStart": 6,
         "poolThreadsAtEnd": 6,
-        "maxQueued": 3,
-        "machineCpuBusyPercent": 66,
-        "machineCpuBusyPercentFor2sBefore": 86
+        "maxQueued": 4,
+        "machineCpuBusyPercent": 63,
+        "machineCpuBusyPercentFor2sBefore": 74
       }
     ],
     "wholeProcessStops": []
@@ -48,13 +48,13 @@
   "method": "A script in the page records requestAnimationFrame timestamps and, for each pointermove, the time from the event to the next frame callback and to the message that follows the frame (an approximation of \u0027painted\u0027). It is not a photon-to-pixel measurement.",
   "gestures": {
     "dragOneShape": {
-      "releaseToCommittedMs": 32,
+      "releaseToCommittedMs": 33,
       "pointerMoves": 41,
-      "wallMs": 2466,
-      "frames": 158,
-      "effectiveFps": 64.1,
+      "wallMs": 2443,
+      "frames": 157,
+      "effectiveFps": 64.3,
       "frameIntervalMs": {
-        "n": 157,
+        "n": 156,
         "p50": 15.6,
         "p95": 15.7,
         "max": 15.7
@@ -64,73 +64,73 @@
       "frameIntervalsOver50ms": 0,
       "inputToNextFrameMs": {
         "n": 41,
-        "p50": 9.8,
-        "p95": 18,
-        "max": 19.2
+        "p50": 6.8,
+        "p95": 16.9,
+        "max": 18.6
       },
       "inputToAfterFrameMs": {
         "n": 41,
-        "p50": 12.8,
-        "p95": 20.6,
-        "max": 22
+        "p50": 9.4,
+        "p95": 19.5,
+        "max": 20.1
       },
       "result": "1 shape(s) moved, revision 1 later"
     },
     "resizeOneShape": {
-      "releaseToCommittedMs": 27,
+      "releaseToCommittedMs": 30,
       "pointerMoves": 41,
-      "wallMs": 1534,
-      "frames": 99,
+      "wallMs": 1473,
+      "frames": 95,
       "effectiveFps": 64.5,
       "frameIntervalMs": {
-        "n": 98,
+        "n": 94,
         "p50": 15.6,
         "p95": 15.7,
-        "max": 15.8
+        "max": 15.7
       },
       "frameIntervalsOver20ms": 0,
       "frameIntervalsOver33ms": 0,
       "frameIntervalsOver50ms": 0,
       "inputToNextFrameMs": {
         "n": 41,
-        "p50": 9.3,
-        "p95": 18.9,
-        "max": 20.4
+        "p50": 10,
+        "p95": 17,
+        "max": 19.6
       },
       "inputToAfterFrameMs": {
         "n": 41,
-        "p50": 12.1,
-        "p95": 22.7,
-        "max": 23.4
+        "p50": 13,
+        "p95": 19.8,
+        "max": 22.5
       },
       "result": "1 shape(s) resized"
     },
     "dragEverythingSelectedWithCtrlA": {
-      "releaseToCommittedMs": 196,
+      "releaseToCommittedMs": 38,
       "pointerMoves": 41,
-      "wallMs": 2112,
-      "frames": 94,
-      "effectiveFps": 44.5,
+      "wallMs": 1625,
+      "frames": 88,
+      "effectiveFps": 54.2,
       "frameIntervalMs": {
-        "n": 93,
+        "n": 87,
         "p50": 15.6,
         "p95": 15.7,
-        "max": 656.2
+        "max": 265.6
       },
       "frameIntervalsOver20ms": 1,
       "frameIntervalsOver33ms": 1,
       "frameIntervalsOver50ms": 1,
       "inputToNextFrameMs": {
         "n": 41,
-        "p50": 7.8,
-        "p95": 15.6,
-        "max": 16.7
+        "p50": 6.5,
+        "p95": 13.9,
+        "max": 17.2
       },
       "inputToAfterFrameMs": {
         "n": 41,
-        "p50": 10.9,
-        "p95": 20.1,
-        "max": 25.3
+        "p50": 9.6,
+        "p95": 20,
+        "max": 21.8
       },
       "result": "460 shapes moved together (460 shapes and 40 glued connectors were selected)"
     }

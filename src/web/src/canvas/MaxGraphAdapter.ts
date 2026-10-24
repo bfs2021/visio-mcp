@@ -279,6 +279,9 @@ export class MaxGraphAdapter implements CanvasAdapter {
   private restoreSelection(ids: string[]): void {
     const model = this.graph.getDataModel();
     const cells = ids.map(id => model.getCell(id)).filter((c): c is Cell => !!c);
+    // Projection updates cells in place, so an unchanged selection is already right; setting it again would rebuild the handlers of every selected cell.
+    const now = this.graph.getSelectionCells() as Cell[];
+    if (now.length === cells.length && now.every((c, i) => c === cells[i])) return;
     this.projecting = true;
     try { this.graph.setSelectionCells(cells); } finally { this.projecting = false; }
   }

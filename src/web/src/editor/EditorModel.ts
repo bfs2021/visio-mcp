@@ -366,8 +366,19 @@ export class EditorModel {
   pageId: string | undefined;
   get currentPage() { return pageOf(this.snapshot, this.pageId); }
   /** What the user has selected, with every complete group standing for its members. The canvas itself only ever holds the members. */
-  get targets(): string[] { return collapseToGroups(this.snapshot, this.selection); }
-  selectedElements(): Element[] { return this.targets.map(id => findElement(this.snapshot, id)).filter((e): e is Element => !!e); }
+  get targets(): string[] { return [...this.collapsed().ids]; }
+  selectedElements(): Element[] { return [...this.collapsed().elements]; }
+  /** Several panels ask for this on every render; the answer only changes with the document or the selection, so it is kept until one of them does. */
+  private collapsedFor?: { document: Snapshot['document']; selection: string[]; ids: string[]; elements: Element[] };
+  private collapsed(): { ids: string[]; elements: Element[] } {
+    const snapshot = this.snapshot, hit = this.collapsedFor;
+    if (hit && hit.document === snapshot.document && hit.selection === this.selection) return hit;
+    const ids = collapseToGroups(snapshot, this.selection);
+    const elements = ids.map(id => findElement(snapshot, id)).filter((e): e is Element => !!e);
+    const fresh = { document: snapshot.document, selection: this.selection, ids, elements };
+    this.collapsedFor = fresh;
+    return fresh;
+  }
 
   /** Picking a member of a group picks the whole group, unless Ctrl was held to reach into it. */
   private handleSelection(ids: string[], subSelect: boolean): void {

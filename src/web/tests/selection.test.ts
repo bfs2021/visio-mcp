@@ -49,3 +49,26 @@ describe('group selection', () => {
     expect((await t.engine.execute(t.request(ops), 'gui')).ok).toBe(true);
   });
 });
+
+describe('selecting a large page', () => {
+  it('collapses 1200 selected shapes in 24 groups to the groups, and leaves an incomplete group as its members', async () => {
+    const { t } = await scene();
+    const base = t.store.snapshot();
+    const page = base.document.pages[0]!;
+    const shape = page.elements.find(e => e.kind === 'shape')!;
+    const leaves = Array.from({ length: 1200 }, (_, i) => ({ ...shape, id: `bulk-${i}` }));
+    const groups = Array.from({ length: 24 }, (_, g) => ({
+      ...page.elements.find(e => e.id === G1)!, id: `bulk-group-${g}`, childIds: leaves.slice(g * 50, g * 50 + 50).map(l => l.id),
+    }));
+    const snapshot = { ...base, document: { ...base.document, pages: [{ ...page, elements: [...leaves, ...groups] }] } };
+
+    const all = leaves.map(l => l.id);
+    expect(collapseToGroups(snapshot, all)).toEqual(groups.map(g => g.id));
+    expect(collapseToGroups(snapshot, all)).toEqual(groups.map(g => g.id)); // the same document asked again gives the same answer
+    // drop one member of the first group: that group falls apart into its 49 remaining members, the other 23 stay whole
+    const partial = collapseToGroups(snapshot, all.filter(id => id !== 'bulk-0'));
+    expect(partial).toEqual([...all.slice(1, 50), ...groups.slice(1).map(g => g.id)]);
+    expect(expandToGroups(snapshot, ['bulk-73'])).toEqual(all.slice(50, 100));
+    expect(leavesOfTargets(snapshot, ['bulk-group-2'])).toEqual(all.slice(100, 150));
+  });
+});
