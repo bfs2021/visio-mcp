@@ -194,10 +194,29 @@ export function createEngineHandler(source: CommandEngine | EngineResolver, opts
       }
       case 'doc.getObjects': {
         if (!Array.isArray(p.ids) || p.ids.length === 0 || p.ids.length > 500 || p.ids.some(i => typeof i !== 'string')) return respond(fail('invalid_request', 'ids must be 1 to 500 strings'));
-        const s = await engine.snapshot(scope);
-        if (!s.ok) return respond(s);
-        const objects = readObjects(s.value, p.ids as string[], typeof p.pageId === 'string' ? p.pageId : undefined);
-        return respond(objects.ok ? ok({ revision: s.value.revision, objects: objects.value }) : objects);
+        const exportSnapshot = await engine.exportSnapshot(scope);
+        if (exportSnapshot.ok) {
+          const objects = readObjects(exportSnapshot.value, p.ids as string[], typeof p.pageId === 'string' ? p.pageId : undefined);
+          if (!objects.ok) return respond(objects);
+          const routeDiagnostics = objects.value.flatMap(element => {
+            if (element.kind !== 'connector') return [];
+            const projection = exportSnapshot.value.projection.connectors[element.id];
+            if (!projection?.routeProvenance && !projection?.routeReason && !projection?.routeFindings?.length) return [];
+            return [{
+              id: element.id,
+              ...(projection.routeProvenance ? { routeProvenance: projection.routeProvenance } : {}),
+              ...(projection.routeReason ? { routeReason: projection.routeReason } : {}),
+              ...(projection.routeFindings?.length ? { routeFindings: projection.routeFindings } : {}),
+            }];
+          });
+          return respond(ok({ revision: exportSnapshot.value.revision, objects: objects.value, routeDiagnostics }));
+        }
+        if (exportSnapshot.error.code !== 'projection_failed' || exportSnapshot.error.message !== 'no snapshot projector is registered') return respond(exportSnapshot);
+        // Keep canonical object reads available in headless/uninitialized sessions; route diagnostics are empty until projection is ready.
+        const snapshot = await engine.snapshot(scope);
+        if (!snapshot.ok) return respond(snapshot);
+        const objects = readObjects(snapshot.value, p.ids as string[], typeof p.pageId === 'string' ? p.pageId : undefined);
+        return respond(objects.ok ? ok({ revision: snapshot.value.revision, objects: objects.value, routeDiagnostics: [] }) : objects);
       }
       case 'assets.list': {
         const s = await engine.snapshot(scope);

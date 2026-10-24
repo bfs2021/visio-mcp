@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { RequestEnvelope } from '../src/contracts/generated';
+import type { Projection, RequestEnvelope, RouteFinding } from '../src/contracts/generated';
 import { createEngineHandler } from '../src/bridge/engineHandlers';
 import { listAssets, readObjects, readSummary } from '../src/bridge/readTools';
+import { ok } from '../src/model/result';
 import { createTestEngine, exactElementHashes } from './support/engine';
 import { id, run } from './support/ops';
 
@@ -108,5 +109,30 @@ describe('request handler: tool methods', () => {
     const ch = (await call(t, 'doc.changes', { sinceRevision: 0 })).result as { transactions: Array<{ changed: string[] }> };
     expect(ch.transactions).toHaveLength(1);
     expect((await call(t, 'doc.getObjects', { ids: [] })).error?.code).toBe('invalid_request');
+  });
+
+  it('get_objects returns route diagnostics from the same read-only revision', async () => {
+    const t = createTestEngine();
+    await run(t, [{
+      op: 'createConnector', id: id(950), from: { elementId: 's0', glue: 'dynamic' },
+      to: { elementId: 's1', glue: 'dynamic' }, route: 'orthogonal',
+    }]);
+    const findings: RouteFinding[] = [{ code: 'UNRESOLVED_ROUTE', severity: 'error', message: 'No clear route was found', elementId: id(950), blockerIds: [id(951)] }];
+    t.engine.setSnapshotProjector(snapshot => ok({
+      documentId: snapshot.documentId, sessionId: snapshot.sessionId, revision: snapshot.revision,
+      connectors: { [id(950)]: { routePoints: [{ x: 100, y: 70 }, { x: 220, y: 70 }], visualBounds: { x: 100, y: 70, width: 120, height: 0 }, routeProvenance: 'unresolved', routeReason: 'No clear route was found', routeFindings: findings } },
+      groupVisualBounds: {},
+    } as Projection));
+    const before = exactElementHashes(t.store.snapshot());
+
+    const response = await call(t, 'doc.getObjects', { ids: [id(950)] });
+
+    expect(response.error).toBeUndefined();
+    expect(response.result).toMatchObject({
+      revision: t.engine.revision,
+      objects: [expect.objectContaining({ id: id(950), route: 'orthogonal' })],
+      routeDiagnostics: [{ id: id(950), routeProvenance: 'unresolved', routeReason: 'No clear route was found', routeFindings: findings }],
+    });
+    expect(exactElementHashes(t.store.snapshot())).toEqual(before);
   });
 });

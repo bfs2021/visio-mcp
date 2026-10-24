@@ -79,11 +79,11 @@
 - Consumes: `CommandEngine.exportSnapshot(scope): Promise<Result<ExportSnapshot>>`, which returns the canonical snapshot and projection tied to the same document, session, and revision. `doc.getObjects` will read canonical objects from this returned snapshot, avoiding a second, potentially newer snapshot.
 - Produces: additive `routeDiagnostics` in `doc.getObjects` responses, containing requested connector IDs with `routeProvenance`, optional `routeReason`, and `routeFindings`; canonical `objects` stay unchanged.
 
-- [ ] **Step 1: Write a failing handler test** that calls `doc.getObjects` for an unresolved connector and asserts the response contains its canonical object plus the matching projection diagnostics at the same revision; also assert the document hash is unchanged.
-- [ ] **Step 2: Run the focused test and confirm failure** with `npm test -- --run src/web/tests/readtools.test.ts -t "route diagnostics"` from `src/web`.
-- [ ] **Step 3: Extend the `doc.getObjects` handler** to obtain the revision-bound export snapshot, read canonical objects from that same snapshot, filter projection diagnostics to requested connector IDs, and add `routeDiagnostics` beside the existing `objects` response.
-- [ ] **Step 4: Update the `get_objects` MCP description** to document the additive diagnostics and their read-only, revision-bound nature.
-- [ ] **Step 5: Run the read-tool and MCP contract tests** with `npm test -- --run src/web/tests/readtools.test.ts` and the repository MCP suite.
+- [x] **Step 1: Write a failing handler test** that calls `doc.getObjects` for an unresolved connector and asserts the response contains its canonical object plus the matching projection diagnostics at the same revision; also assert the document hash is unchanged.
+- [x] **Step 2: Run the focused test and confirm failure**; the response included canonical objects and revision but had no `routeDiagnostics` field.
+- [x] **Step 3: Extend the `doc.getObjects` handler** to obtain the revision-bound export snapshot, read canonical objects from that same snapshot, filter projection diagnostics to requested connector IDs, and add `routeDiagnostics` beside the existing `objects` response. Preserve canonical-only reads when projection is not initialized.
+- [x] **Step 4: Update the `get_objects` MCP description** to document the additive diagnostics and their read-only, revision-bound nature.
+- [x] **Step 5: Run the read-tool suite**; 9/9 passed, including the headless-read fallback. MCP suite verification remains in Task 4.
 - [ ] **Step 6: Commit** as `feat: expose route diagnostics in get_objects`.
 
 ### Task 4: Verify cross-surface stability and record evidence
