@@ -130,6 +130,44 @@ const blobToDataUrl = (blob: Blob): Promise<string> => new Promise((resolve, rej
   r.readAsDataURL(blob);
 });
 
+/**
+ * What a picture needs to be drawn at, when it is far larger than its place on the page: the pixels it will cover, scaled uniformly
+ * (so a picture that is letterboxed, cropped or stretched into its box still fits the same way). Returns nothing when the picture is
+ * less than twice the size it is drawn at, where the saving is not worth a second resampling.
+ */
+export function pictureDrawSize(natural: { width: number; height: number }, box: { width: number; height: number }): { width: number; height: number } | undefined {
+  if (![natural.width, natural.height, box.width, box.height].every(n => Number.isFinite(n) && n > 0)) return undefined;
+  const k = Math.max(box.width / natural.width, box.height / natural.height);
+  if (k > 0.5) return undefined;
+  return { width: Math.max(1, Math.ceil(natural.width * k)), height: Math.max(1, Math.ceil(natural.height * k)) };
+}
+
+/** Bytes small enough that shrinking them cannot pay for decoding them. */
+const SHRINK_FROM_BYTES = 256 * 1024;
+const SHRINKABLE = new Set(['image/png', 'image/jpeg', 'image/webp']);
+
+/** A picture as a data URL, reduced to the pixels it will be drawn at when it is much larger; otherwise its own bytes. */
+async function pictureDataUrl(blob: Blob, boxPx: { width: number; height: number }): Promise<string> {
+  if (blob.size >= SHRINK_FROM_BYTES && SHRINKABLE.has(blob.type) && typeof createImageBitmap === 'function') {
+    try {
+      const bitmap = await createImageBitmap(blob);
+      try {
+        const target = pictureDrawSize(bitmap, boxPx);
+        if (target) {
+          const canvas = document.createElement('canvas');
+          canvas.width = target.width; canvas.height = target.height;
+          const g = canvas.getContext('2d')!;
+          g.imageSmoothingQuality = 'high';
+          g.drawImage(bitmap, 0, 0, target.width, target.height);
+          const small: Blob | null = await new Promise(res => canvas.toBlob(res, 'image/png'));
+          if (small) return await blobToDataUrl(small);
+        }
+      } finally { bitmap.close(); }
+    } catch { /* a picture the browser cannot decode on its own is inlined as it is below */ }
+  }
+  return blobToDataUrl(blob);
+}
+
 export interface RendererDeps {
   assetUrl: (snapshot: Snapshot, assetId: string) => string;
   /** Test seam; defaults to fetch. */
@@ -183,17 +221,22 @@ export function createSnapshotRenderer(deps: RendererDeps) {
         for(const node of Array.from(svg.querySelectorAll('[data-export-element]'))){if(!wanted.has(node.getAttribute('data-export-element')!))node.remove();else node.removeAttribute('data-export-element');}
       }
 
-      // images: inline approved bytes, and fail rather than draw nothing
-      for (const img of Array.from(svg.querySelectorAll('image'))) {
+      // images: inline approved bytes, and fail rather than draw nothing. They load side by side; a picture much larger than its place
+      // on the page is shrunk to the pixels it covers first, so the SVG, its decode and the raster do not carry megapixels nobody sees.
+      const failures = await Promise.all(Array.from(svg.querySelectorAll('image')).map(async (img): Promise<Result<never> | undefined> => {
         const href = img.getAttribute('href') ?? img.getAttribute('xlink:href') ?? '';
-        if (!href || href.startsWith('data:')) { if (!href) return fail('not_found', 'a picture has no approved bytes to draw'); continue; }
+        if (!href || href.startsWith('data:')) { if (!href) return fail('not_found', 'a picture has no approved bytes to draw'); return undefined; }
         let res: Response;
         try { res = await fetchAsset(href); } catch { return fail('not_found', `the picture ${href.split('/').pop()?.slice(0, 12)} could not be loaded`); }
         if (!res.ok) return fail('not_found', `the picture ${href.split('/').pop()?.slice(0, 12)} is not available (${res.status})`);
-        const data = await blobToDataUrl(await res.blob());
+        const box = { width: Number(img.getAttribute('width')) * dims.scale, height: Number(img.getAttribute('height')) * dims.scale };
+        const data = await pictureDataUrl(await res.blob(), box);
         img.setAttribute('href', data);
         img.removeAttribute('xlink:href');
-      }
+        return undefined;
+      }));
+      const failed = failures.find(f => f);
+      if (failed) return failed;
 
       svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
       svg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
