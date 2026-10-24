@@ -1,6 +1,6 @@
 # R17 nested containers: design proposal
 
-Status: **proposed, awaiting owner review**<br>
+Status: **approved for implementation** (owner accepted all four recommendations, 2026-10-24)<br>
 Issue: [#12 — R17 nested containers](https://github.com/rp2839/visio-mcp/issues/12)<br>
 Branch: `claude/r17-nested-containers`<br>
 Evidence that motivates it: [R15 Lego comparison](../m5/R15-lego-infrastructure-comparison.md) (four nesting levels drawn as 14 loose rectangles; 29 OVERLAP and 62 CONNECTOR_CROSSES_SHAPE, mostly false), [R09 swim-lane](../m5/R09-swimlane.md) "Not done".
@@ -29,7 +29,7 @@ The swim-lane component (R09) stays a group in R17. Converting lanes to containe
 ```jsonc
 "container": {
   "memberIds": ["<uuid>", ...],          // direct members only, in order; may be empty
-  "fit": "none" | "grow" | "fit",        // optional; absent = "none" (see decision 1)
+  "fit": "none" | "grow" | "fit",        // optional; absent = "none" (decision 1)
   "marginPt": 0..500                      // optional; inner clearance used by grow/fit
 }
 ```
@@ -114,12 +114,8 @@ This section answers the 2026-10-20 comment on #12. R17 provides one read-only h
 
 - **Container shape:** user cells `msvStructureType = "Container"`, `msvSDContainerResize` (`none`/`grow`/`fit` → 0/1/2) and `msvSDContainerMargin`. Its `Relationships` cell is `DEPENDSON(1, <member sheets>)`.
 - **Member:** its `Relationships` cell is `DEPENDSON(4, <container sheets>)`.
-- **To verify in Visio first (feasibility gate):**
-  - Visio may expect relationships for every enclosing container, not only the direct parent. `CONTAINERCOUNT` counts nested relationships.
-  - Visio may not treat a plain exported shape with these cells as a container without a container master.
-  - The resize and margin cell values have not been checked.
-
-  I'll check these by building a container in Visio, reading back its XML, and opening an exported file in Visio via the existing Visio test harness.
+- **Nesting, from a real Visio file.** `C:\Devsdxpp-service-reference-architectures.vsdx` was saved by Visio with three nested containers, and it shows the relationships are transitive. The outer container's type-1 list names every shape at every depth. Each member's type-4 list names every enclosing container, for example `DEPENDSON(4, Sheet.1000, Sheet.1010, Sheet.1015)`. The exporter therefore writes the full transitive lists, and the importer takes a container's direct members to be its type-1 list minus the members of the containers nested inside it. In that file `msvSDContainerMargin` is in inches (0.125 and 0.25 appear) and `msvSDContainerResize` takes 0 and 1.
+- **Still to verify in Visio (feasibility gate):** every container in that file comes from Visio's container masters, which carry style, heading and category cells. It is not yet known whether Visio treats a plain exported shape that has only these cells as a container. I'll check by opening an exported file through the existing Visio test harness and asking Visio for each container's members. The resize value for `fit` (2) also needs checking.
 - If Visio rejects the native form, the fallback exports plain shapes with `AgentContainer` user cells for round trip, plus a `container_not_native` export warning. Nothing would be silently flattened.
 - **Import (R15 importer):** a shape with `msvStructureType = "Container"` becomes a container. Its type-1 relationships, minus those owned by nested containers, become `memberIds`. Its resize and margin cells map back to `fit` and `marginPt`.
 
@@ -138,9 +134,9 @@ This section answers the 2026-10-20 comment on #12. R17 provides one read-only h
 3. Editor commands, inspector and drag behaviour.
 4. VSDX export and import with Visio verification; the feasibility check in that section comes first, so the export design can change before code is written.
 
-## Decisions requested
+## Decisions (owner, 2026-10-24)
 
-1. **Default `fit` for new containers.** Recommend `"none"` for engine and MCP creation (no surprise resizes for agents), and `"grow"` for the editor's "Make container" (Visio-like).
-2. **Editor Delete key on a container.** Recommend deleting the container with its contents, as Visio does. The engine always requires the explicit `members` choice.
-3. **Drag-in and drag-out membership in the editor.** Recommend yes, in stage 3. Without it, membership changes only through menu commands.
-4. **Lego source file.** The original `Lego Infrastructure - v2.vsdx` is not in the repository. With it, the import side can be verified against real Visio containers. Without it, acceptance uses the reproduction in `artifacts/lego-infra/`.
+1. **Default `fit`:** absent, meaning `"none"`, for engine and MCP creation; `"grow"` for the editor's "Make container".
+2. **Editor Delete key on a container:** deletes the container with its contents. The engine always requires the explicit `members` choice.
+3. **Drag-in and drag-out membership in the editor:** yes, in stage 3, emitted as explicit `contain` operations.
+4. **Lego source file:** `C:\Devsdx\Lego Infrastructure - v2.vsdx`. It contains **no** Visio containers: its frames are plain rectangles and its relationship cells are empty. Import of real containers is therefore verified against the Microsoft sample above. The Lego file stays the target for the four-level build and for a Visio export of it with real containers. Neither customer file is copied into the repository.
