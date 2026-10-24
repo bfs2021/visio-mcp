@@ -222,11 +222,21 @@ export function planRoutes(input: PlanInput): PlanResult {
   /** A frozen route is the stored one. Only its end runs may move, and only to keep the glue; otherwise it stays and is flagged. */
   const frozenRoute = (w: Work, stored: PlannedRoute | undefined): PlannedRoute => {
     if (!stored) return make(w, w.base, 'unresolved', 'a frozen route has no stored route');
-    if (!isClear(stored.points, w.others, w.endRects, CLEARANCE)) return make(w, stored.points, 'unresolved', 'a frozen route crosses a hard obstacle, so it was kept as stored');
-    if (near(stored.ends.a.anchor, w.a.anchor) && near(stored.ends.b.anchor, w.b.anchor) && same(stored.ends.a.dir, w.a.dir) && same(stored.ends.b.dir, w.b.dir)) return make(w, stored.points, 'frozen');
+    const moved = !near(stored.ends.a.anchor, w.a.anchor) || !near(stored.ends.b.anchor, w.b.anchor) || !same(stored.ends.a.dir, w.a.dir) || !same(stored.ends.b.dir, w.b.dir);
+    if (!moved) {
+      return isClear(stored.points, w.others, w.endRects, CLEARANCE)
+        ? make(w, stored.points, 'frozen')
+        : make(w, stored.points, 'unresolved', 'a frozen route crosses a hard obstacle, so it was kept as stored');
+    }
     const follow = elastic(stored.points, w.a, w.b);
-    const safe = follow && isClear(follow, w.others, w.endRects, CLEARANCE);
-    return safe ? make(w, follow, 'frozen', 'an end moved; only its end run followed') : make(w, stored.points, 'unresolved', 'a frozen route cannot follow the moved end safely, so it was kept as stored');
+    const newlyBlocked = !!follow && w.others.some(obstacle =>
+      isClear(stored.points, [obstacle], [], CLEARANCE) && !isClear(follow, [obstacle], [], CLEARANCE));
+    const safe = follow && !newlyBlocked && isClear(follow, [], w.endRects, CLEARANCE);
+    if (!safe) return make(w, stored.points, 'unresolved', 'a frozen route cannot follow the moved end safely, so it was kept as stored');
+    const stillBlocked = !isClear(follow, w.others, w.endRects, CLEARANCE);
+    return stillBlocked
+      ? make(w, follow, 'unresolved', 'a frozen route follows the moved end but still crosses a hard obstacle')
+      : make(w, follow, 'frozen', 'an end moved; only its end run followed');
   };
   const put = (w: Work, r: PlannedRoute) => { routes.set(w.el.id, r); occupied.push(...segmentsOf(r.points)); };
 

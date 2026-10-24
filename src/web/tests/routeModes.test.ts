@@ -154,11 +154,16 @@ describe('route modes (R20)', () => {
     const obstacle = await s.ok([{ op: 'createShape', alias: 'wall', bounds: box(330, 90, 40, 80) }]);
     expect(s.conn('ab').routing!.advisory).toEqual(stored); // the obstacle did not move the route
     expect(obstacle.routeFindings).toContainEqual(expect.objectContaining({ code: 'UNRESOLVED_ROUTE', elementId: s.conn('ab').id, blockerIds: [s.el('wall').id] }));
+    const blockedFollow = await s.ok([{ op: 'move', target: 'b', delta: { xPt: 0, yPt: 20 } }]);
+    const followedAcrossExistingBlocker = s.conn('ab').routing!.advisory!;
+    expect(followedAcrossExistingBlocker.at(-1)!.y).toBe(stored.at(-1)!.y + 20);
+    expect(blockedFollow.routeChanges?.find(c => c.id === s.conn('ab').id)?.provenance).toBe('unresolved');
+    expect(blockedFollow.routeFindings).toContainEqual(expect.objectContaining({ code: 'UNRESOLVED_ROUTE', elementId: s.conn('ab').id, blockerIds: [s.el('wall').id] }));
     await s.ok([{ op: 'delete', target: 'wall' }]);
     const result = await s.ok([{ op: 'move', target: 'b', delta: { xPt: 0, yPt: 20 } }]);
     const now = s.conn('ab').routing!.advisory!;
     expect(result.changed).toContain(s.conn('ab').id);
-    expect(now[now.length - 1]!.y).toBe(stored[stored.length - 1]!.y + 20);
+    expect(now[now.length - 1]!.y).toBe(stored[stored.length - 1]!.y + 40);
     expect(s.conn('ab').routing!.mode).toBe('frozen');
     expect(s.conn('ab').waypoints).toEqual([]);
   });

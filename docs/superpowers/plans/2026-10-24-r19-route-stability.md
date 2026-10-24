@@ -100,7 +100,7 @@
 
 - [x] **Step 1: Add missing assertions** that an already-planned document returns no changes, a 1 pt unrelated nudge preserves unaffected stored routes and IDs, unresolved findings agree across projection/inspection/MCP/transaction response, and export uses the same route points for the same revision.
 - [x] **Step 2: Run the focused route and surface tests**; exact route points and changed IDs passed, including transaction/MCP findings and the browser cross-surface check.
-- [x] **Step 3: Run the full web suite, generated contract checks, MCP/.NET suites, `segments.spec.ts` 60/60 routing-latency case, and available Visio checks**; after integrating current `main`, web 646/646, generated contracts passed, portable .NET 489/489, R19/R20/R23 browser regressions passed, and segment edit measured 60 ms. Manual Visio was unavailable/not run.
+- [x] **Step 3: Run the full web suite, generated contract checks, MCP/.NET suites, `segments.spec.ts` 60/60 routing-latency case, and available Visio checks**; after integrating current `main` and the Frozen follow fix, web 648/648, generated contracts passed, portable .NET 489/489, R19/R20/R23 browser regressions passed, and segment edit measured 60 ms. Manual Visio was unavailable/not run.
 - [x] **Step 4: Update `docs/m5/R19-route-stability.md`** with fresh results, baseline fixture status, and explicit `NOT RUN` limits for original PSGL/Lego files and manual Visio. The issue remains open only for those evidence items.
 - [x] **Step 5: Commit** as `test: record R19 route stability evidence`.
 

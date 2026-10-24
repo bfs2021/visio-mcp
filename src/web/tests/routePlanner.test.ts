@@ -87,6 +87,40 @@ describe('route planner', () => {
     expect(result.routeFindings).toContainEqual(expect.objectContaining({ code: 'UNRESOLVED_ROUTE', elementId: 'ab', blockerIds: ['wall'] }));
   });
 
+  it('follows a moved frozen endpoint through an obstacle the stored route already crosses', () => {
+    const a = shape('a', 0, 100), b = shape('b', 700, 100);
+    const initial = conn('ab', 'a', 'b', {}, 'east', 'west');
+    const stored = pts(plan([a, b, initial]), 'ab');
+    const frozen = conn('ab', 'a', 'b', { routing: { mode: 'frozen', advisory: stored } }, 'east', 'west');
+    const wall = shape('wall', 330, 90, 40, 80);
+    const blocked = plan([a, b, wall, frozen]);
+    const movedB = moveBy([a, b, wall, frozen], 'b', 40, 0);
+
+    const moved = plan(movedB, blocked.routes);
+
+    expect(pts(moved, 'ab')).toEqual([{ x: 100, y: 130 }, { x: 740, y: 130 }]);
+    expect(moved.routes.get('ab')!.provenance).toBe('unresolved');
+    expect(moved.routes.get('ab')!.reason).toMatch(/crosses a hard obstacle/);
+    expect(moved.routeFindings).toContainEqual(expect.objectContaining({ code: 'UNRESOLVED_ROUTE', elementId: 'ab', blockerIds: ['wall'] }));
+  });
+
+  it('does not let an existing frozen crossing authorize a new obstacle crossing while following', () => {
+    const a = shape('a', 0, 100), b = shape('b', 700, 100);
+    const initial = conn('ab', 'a', 'b', {}, 'east', 'west');
+    const stored = pts(plan([a, b, initial]), 'ab');
+    const frozen = conn('ab', 'a', 'b', { routing: { mode: 'frozen', advisory: stored } }, 'east', 'west');
+    const existingWall = shape('existingWall', 330, 90, 40, 80);
+    const newWall = shape('newWall', 710, 90, 20, 80);
+    const blocked = plan([a, b, existingWall, frozen]);
+
+    const moved = plan(moveBy([a, b, existingWall, newWall, frozen], 'b', 40, 0), blocked.routes);
+
+    expect(pts(moved, 'ab')).toEqual(stored);
+    expect(moved.routes.get('ab')!.provenance).toBe('unresolved');
+    expect(moved.routes.get('ab')!.reason).toMatch(/cannot follow the moved end safely/);
+    expect(moved.routeFindings).toContainEqual(expect.objectContaining({ code: 'UNRESOLVED_ROUTE', elementId: 'ab', blockerIds: ['existingWall'] }));
+  });
+
   it('repairs only the blocked run of a longer route', () => {
     // a to d with a vertical track at x=450; a wall lands on the horizontal run along y=130
     const els = [shape('a', 0, 100), shape('d', 600, 500), conn('ad', 'a', 'd', {}, 'east', 'north')];
