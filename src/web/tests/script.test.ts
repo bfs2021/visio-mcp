@@ -66,6 +66,13 @@ describe('lexer and parser', () => {
 });
 
 describe('compiler: every source command family', () => {
+  it('compiles bounded levels on add, connect and set', async () => {
+    const t = await scene();
+    expect(ops(t, 'add shape id=raised x=1mm y=1mm w=5mm h=5mm level=4\nset logo level=-2\nconnect id=wire from=logo to=logoimg level=3'))
+      .toMatchObject([{ op: 'createShape', level: 4 }, { op: 'set', patch: { level: -2 } }, { op: 'createConnector', level: 3 }]);
+    expect(bad(t, 'add shape id=bad x=1mm y=1mm w=5mm h=5mm level=128').message).toMatch(/outside -127\.\.127/);
+  });
+
   it('page use, add shape/text/image, set and connect from the specification example', async () => {
     const t = await scene();
     await run(t, [{ op: 'addPage', id: id(800), name: 'Architecture' }, { op: 'registerAsset', asset: { id: 'asset:corona-energy-logo', name: 'Corona', mimeType: 'image/png', sha256: 'e'.repeat(64), tags: [] } }]);

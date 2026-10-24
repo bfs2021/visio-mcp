@@ -199,6 +199,7 @@ public sealed record ShapeElement : Element
     [JsonPropertyName("routingPolicy")] public RoutingPolicy? RoutingPolicy { get; init; }
     [JsonPropertyName("layerIds")] public required IReadOnlyList<string> LayerIds { get; init; }
     [JsonPropertyName("zIndex")] public required int ZIndex { get; init; }
+    [JsonPropertyName("level")] public int? Level { get; init; }
     [JsonPropertyName("locked")] public required bool Locked { get; init; }
     [JsonPropertyName("hidden")] public required bool Hidden { get; init; }
     [JsonPropertyName("bounds")] public required Bounds Bounds { get; init; }
@@ -219,6 +220,7 @@ public sealed record TextElement : Element
     [JsonPropertyName("routingPolicy")] public RoutingPolicy? RoutingPolicy { get; init; }
     [JsonPropertyName("layerIds")] public required IReadOnlyList<string> LayerIds { get; init; }
     [JsonPropertyName("zIndex")] public required int ZIndex { get; init; }
+    [JsonPropertyName("level")] public int? Level { get; init; }
     [JsonPropertyName("locked")] public required bool Locked { get; init; }
     [JsonPropertyName("hidden")] public required bool Hidden { get; init; }
     [JsonPropertyName("bounds")] public required Bounds Bounds { get; init; }
@@ -235,6 +237,7 @@ public sealed record ImageElement : Element
     [JsonPropertyName("name")] public string? Name { get; init; }
     [JsonPropertyName("layerIds")] public required IReadOnlyList<string> LayerIds { get; init; }
     [JsonPropertyName("zIndex")] public required int ZIndex { get; init; }
+    [JsonPropertyName("level")] public int? Level { get; init; }
     [JsonPropertyName("locked")] public required bool Locked { get; init; }
     [JsonPropertyName("hidden")] public required bool Hidden { get; init; }
     [JsonPropertyName("bounds")] public required Bounds Bounds { get; init; }
@@ -253,6 +256,7 @@ public sealed record ConnectorElement : Element
     [JsonPropertyName("name")] public string? Name { get; init; }
     [JsonPropertyName("layerIds")] public required IReadOnlyList<string> LayerIds { get; init; }
     [JsonPropertyName("zIndex")] public required int ZIndex { get; init; }
+    [JsonPropertyName("level")] public int? Level { get; init; }
     [JsonPropertyName("locked")] public required bool Locked { get; init; }
     [JsonPropertyName("hidden")] public required bool Hidden { get; init; }
     [JsonPropertyName("bounds")] public required Bounds Bounds { get; init; }
@@ -284,6 +288,7 @@ public sealed record GroupElement : Element
     [JsonPropertyName("name")] public string? Name { get; init; }
     [JsonPropertyName("layerIds")] public required IReadOnlyList<string> LayerIds { get; init; }
     [JsonPropertyName("zIndex")] public required int ZIndex { get; init; }
+    [JsonPropertyName("level")] public int? Level { get; init; }
     [JsonPropertyName("locked")] public required bool Locked { get; init; }
     [JsonPropertyName("hidden")] public required bool Hidden { get; init; }
     [JsonPropertyName("bounds")] public required Bounds Bounds { get; init; }
@@ -398,6 +403,7 @@ public sealed record ElementPatch
     [JsonPropertyName("locked")] public bool? Locked { get; init; }
     [JsonPropertyName("hidden")] public bool? Hidden { get; init; }
     [JsonPropertyName("layerIds")] public IReadOnlyList<string>? LayerIds { get; init; }
+    [JsonPropertyName("level")] public int? Level { get; init; }
     [JsonPropertyName("metadata")] public IReadOnlyDictionary<string, string>? Metadata { get; init; }
     [JsonPropertyName("style")] public StylePatch? Style { get; init; }
     [JsonPropertyName("text")] public TextBlockPatch? Text { get; init; }
@@ -425,6 +431,7 @@ public sealed record CreateShapeOp : Operation
     [JsonPropertyName("name")] public string? Name { get; init; }
     [JsonPropertyName("pageId")] public string? PageId { get; init; }
     [JsonPropertyName("layerIds")] public IReadOnlyList<string>? LayerIds { get; init; }
+    [JsonPropertyName("level")] public int? Level { get; init; }
     [JsonPropertyName("bounds")] public required Bounds Bounds { get; init; }
     [JsonPropertyName("rotationDeg")] public double? RotationDeg { get; init; }
     [JsonPropertyName("geometry")] public GeometryPatch? Geometry { get; init; }
@@ -441,6 +448,7 @@ public sealed record CreateTextOp : Operation
     [JsonPropertyName("name")] public string? Name { get; init; }
     [JsonPropertyName("pageId")] public string? PageId { get; init; }
     [JsonPropertyName("layerIds")] public IReadOnlyList<string>? LayerIds { get; init; }
+    [JsonPropertyName("level")] public int? Level { get; init; }
     [JsonPropertyName("bounds")] public required Bounds Bounds { get; init; }
     [JsonPropertyName("rotationDeg")] public double? RotationDeg { get; init; }
     [JsonPropertyName("text")] public required TextBlockPatch Text { get; init; }
@@ -454,6 +462,7 @@ public sealed record CreateImageOp : Operation
     [JsonPropertyName("name")] public string? Name { get; init; }
     [JsonPropertyName("pageId")] public string? PageId { get; init; }
     [JsonPropertyName("layerIds")] public IReadOnlyList<string>? LayerIds { get; init; }
+    [JsonPropertyName("level")] public int? Level { get; init; }
     [JsonPropertyName("bounds")] public required Bounds Bounds { get; init; }
     [JsonPropertyName("rotationDeg")] public double? RotationDeg { get; init; }
     [JsonPropertyName("assetId")] public required string AssetId { get; init; }
@@ -469,6 +478,7 @@ public sealed record CreateConnectorOp : Operation
     [JsonPropertyName("name")] public string? Name { get; init; }
     [JsonPropertyName("pageId")] public string? PageId { get; init; }
     [JsonPropertyName("layerIds")] public IReadOnlyList<string>? LayerIds { get; init; }
+    [JsonPropertyName("level")] public int? Level { get; init; }
     [JsonPropertyName("from")] public required EndpointInput From { get; init; }
     [JsonPropertyName("to")] public required EndpointInput To { get; init; }
     [JsonPropertyName("route")] public string? Route { get; init; }

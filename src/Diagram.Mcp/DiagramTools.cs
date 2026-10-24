@@ -149,7 +149,7 @@ public sealed class DiagramTools(PipeClient app)
         return new JsonArray(objects.Select(o => Brief(o!)).ToArray());
     }
 
-    [McpServerTool(Name = "get_document_summary"), Description("Compact semantic context for the open document: ids, revision, pages, layers and every element with its alias or name, type, bounds, text and connections. Call this first; it also returns the documentId and sessionId the other tools need.")]
+    [McpServerTool(Name = "get_document_summary"), Description("Compact semantic context for the open document: ids, revision, pages, layers and every element with its alias or name, type, bounds, text, connections and effective stacking level (missing level is 0). Call this first; it also returns the documentId and sessionId the other tools need.")]
     public async Task<CallToolResult> GetDocumentSummary(
         [Description("Limit the summary to one page.")] string? pageId = null,
         [Description("Include element bounds (default true).")] bool includeGeometry = true,
@@ -196,7 +196,7 @@ public sealed class DiagramTools(PipeClient app)
         return Finish(await Send("docs.show", null, null, Obj(("documentId", documentId)), Render, ct));
     }
 
-    [McpServerTool(Name = "get_objects"), Description("Complete canonical objects for the given ids (UUIDs, or aliases when the document has one page). " + Identity)]
+    [McpServerTool(Name = "get_objects"), Description("Complete canonical objects for the given ids (UUIDs, or aliases when the document has one page), including optional stacking level (missing means 0). " + Identity)]
     public async Task<CallToolResult> GetObjects(
         [Description("The document id from get_document_summary.")] string documentId,
         [Description("The session id from get_document_summary.")] string sessionId,

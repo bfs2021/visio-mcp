@@ -1,7 +1,16 @@
 import { ConnectorShape, Point, type AbstractCanvas2D, type CellState } from '@maxgraph/core';
 
 /** R16: style keys the adapter sets on a connector that hops. Sizes are in points; the shape scales them with the view. */
-export interface HopStyle { hopSize?: number; hopOrder?: number; hopIgnore?: string }
+export interface HopStyle { hopSize?: number; hopLevel?: number; hopOrder?: number; hopIgnore?: string }
+
+/** Compares the two independent stacking values without packing them into one scalar. */
+export function compareHopOrder(a: Pick<HopStyle, 'hopLevel' | 'hopOrder'>, b: Pick<HopStyle, 'hopLevel' | 'hopOrder'>): number {
+  const levelA = a.hopLevel ?? 0, levelB = b.hopLevel ?? 0;
+  if (levelA !== levelB) return levelA < levelB ? -1 : 1;
+  const orderA = a.hopOrder ?? 0, orderB = b.hopOrder ?? 0;
+  if (orderA === orderB) return 0;
+  return orderA < orderB ? -1 : 1;
+}
 
 const EPS = 1e-6;
 
@@ -57,7 +66,7 @@ export class HopConnectorShape extends ConnectorShape {
         if (cell === state.cell || !other.cell.isEdge() || !other.cell.isVisible()) continue;
         if (ignore.has(other.cell.getId() ?? '')) continue;
         const o = (other.style ?? {}) as HopStyle;
-        if (o.hopSize !== undefined && (o.hopOrder ?? 0) > (style.hopOrder ?? 0)) continue;       // two hoppers at one crossing: the one on top hops, the other stays straight
+        if (o.hopSize !== undefined && compareHopOrder(o, style) > 0) continue;       // two hoppers at one crossing: the one on top hops, the other stays straight
         const route = (other.absolutePoints ?? []).filter((p): p is Point => !!p);
         if (route.length > 1) others.push(route);
       }

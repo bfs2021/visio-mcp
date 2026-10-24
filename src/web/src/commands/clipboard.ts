@@ -1,4 +1,5 @@
 import type { ConnectorElement, Element, Endpoint, Operation, Page, Snapshot } from '../contracts/generated';
+import { compareElementOrder } from '../model/elementOrder';
 
 export interface ClipboardData { pageId: string; elements: Element[] }
 
@@ -8,7 +9,8 @@ export function copyElements(snapshot: Snapshot, ids: string[]): ClipboardData |
   if (!page) return null;
   const wanted = new Set(ids);
   const elements = page.elements.filter(e => wanted.has(e.id) && e.kind !== 'group').filter(e =>
-    e.kind !== 'connector' || [e.from, e.to].every(ep => ep.glue === 'none' || (ep.elementId && wanted.has(ep.elementId))));
+    e.kind !== 'connector' || [e.from, e.to].every(ep => ep.glue === 'none' || (ep.elementId && wanted.has(ep.elementId))))
+    .sort(compareElementOrder);
   return elements.length ? { pageId: page.id, elements: structuredClone(elements) as Element[] } : null;
 }
 
@@ -30,7 +32,8 @@ export function pasteOperations(clip: ClipboardData, target: Page, offsetPt: num
   const layerOk = (ids: string[]) => ids.filter(id => target.layers.some(l => l.id === id));
   const operations: Operation[] = [];
   const base = (e: Element) => {
-    const o: { id: string; pageId: string; layerIds: string[]; name?: string; alias?: string } = { id: idMap.get(e.id)!, pageId: target.id, layerIds: layerOk(e.layerIds) };
+    const o: { id: string; pageId: string; layerIds: string[]; name?: string; alias?: string; level?: number } = { id: idMap.get(e.id)!, pageId: target.id, layerIds: layerOk(e.layerIds) };
+    if (e.level !== undefined && e.level !== 0) o.level = e.level;
     if (e.name !== undefined) o.name = e.name;
     if (e.alias) { const a = uniqueAlias(e.alias, taken); taken.add(a); o.alias = a; }
     return o;
@@ -60,7 +63,7 @@ export function pasteOperations(clip: ClipboardData, target: Page, offsetPt: num
     const ids = [c.from, c.to].map(ep => ep.join?.connectorId).filter((id): id is string => !!id && byId.has(id) && !seen.has(id));
     return ids.length ? 1 + Math.max(...ids.map(id => depth(byId.get(id)!, new Set(seen)))) : 0;
   };
-  for (const c of connectors.map(c => [depth(c), c] as const).sort((a, b) => a[0] - b[0]).map(x => x[1])) {
+  for (const c of connectors.map(c => [depth(c), c] as const).sort((a, b) => a[0] - b[0] || compareElementOrder(a[1], b[1])).map(x => x[1])) {
     const remap = (ep: Endpoint) => ep.join && idMap.has(ep.join.connectorId)
       ? { glue: 'none' as const, join: { connector: idMap.get(ep.join.connectorId)!, position: ep.join.position } }
       : ep.glue === 'none'

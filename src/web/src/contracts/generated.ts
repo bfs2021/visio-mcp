@@ -166,6 +166,7 @@ export interface ShapeElement {
   kind: "shape";
   layerIds: Uuid[];
   zIndex: number;
+  level?: number;
   locked: boolean;
   hidden: boolean;
   bounds: Bounds;
@@ -186,6 +187,7 @@ export interface TextElement {
   kind: "text";
   layerIds: Uuid[];
   zIndex: number;
+  level?: number;
   locked: boolean;
   hidden: boolean;
   bounds: Bounds;
@@ -202,6 +204,7 @@ export interface ImageElement {
   kind: "image";
   layerIds: Uuid[];
   zIndex: number;
+  level?: number;
   locked: boolean;
   hidden: boolean;
   bounds: Bounds;
@@ -220,6 +223,7 @@ export interface ConnectorElement {
   kind: "connector";
   layerIds: Uuid[];
   zIndex: number;
+  level?: number;
   locked: boolean;
   hidden: boolean;
   bounds: Bounds;
@@ -254,6 +258,7 @@ export interface GroupElement {
   kind: "group";
   layerIds: Uuid[];
   zIndex: number;
+  level?: number;
   locked: boolean;
   hidden: boolean;
   bounds: Bounds;
@@ -354,6 +359,7 @@ export interface ElementPatch {
   locked?: boolean;
   hidden?: boolean;
   layerIds?: Uuid[];
+  level?: number;
   metadata?: Record<string, string>;
   style?: StylePatch;
   text?: TextBlockPatch;
@@ -390,6 +396,7 @@ export interface CreateShapeOp {
   name?: string;
   pageId?: Uuid;
   layerIds?: Uuid[];
+  level?: number;
   bounds: Bounds;
   rotationDeg?: number;
   geometry?: GeometryPatch;
@@ -406,6 +413,7 @@ export interface CreateTextOp {
   name?: string;
   pageId?: Uuid;
   layerIds?: Uuid[];
+  level?: number;
   bounds: Bounds;
   rotationDeg?: number;
   text: TextBlockPatch;
@@ -419,6 +427,7 @@ export interface CreateImageOp {
   name?: string;
   pageId?: Uuid;
   layerIds?: Uuid[];
+  level?: number;
   bounds: Bounds;
   rotationDeg?: number;
   assetId: string;
@@ -434,6 +443,7 @@ export interface CreateConnectorOp {
   name?: string;
   pageId?: Uuid;
   layerIds?: Uuid[];
+  level?: number;
   from: EndpointInput;
   to: EndpointInput;
   route?: "straight" | "orthogonal" | "curved";

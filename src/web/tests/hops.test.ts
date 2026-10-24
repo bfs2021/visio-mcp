@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Point } from '@maxgraph/core';
-import { hopCrossings } from '../src/canvas/hopShape';
+import { compareHopOrder, hopCrossings } from '../src/canvas/hopShape';
 
 const P = (x: number, y: number) => new Point(x, y);
 
@@ -35,5 +35,13 @@ describe('where a connector hops', () => {
     expect(out[0]).toHaveLength(1);
     expect(out[1]).toHaveLength(1);
     expect(out[1]![0]!.point.y).toBeCloseTo(60);
+  });
+});
+
+describe('which connector owns a hop', () => {
+  it('compares_level_before_z_index_and_keeps_the_values_separate', () => {
+    expect(compareHopOrder({ hopLevel: 2, hopOrder: 1 }, { hopLevel: 1, hopOrder: Number.MAX_SAFE_INTEGER })).toBeGreaterThan(0);
+    expect(compareHopOrder({ hopLevel: 2, hopOrder: 5 }, { hopLevel: 2, hopOrder: 6 })).toBeLessThan(0);
+    expect(compareHopOrder({ hopLevel: 2, hopOrder: Number.MAX_SAFE_INTEGER }, { hopLevel: 2, hopOrder: Number.MAX_SAFE_INTEGER - 1 })).toBeGreaterThan(0);
   });
 });

@@ -13,6 +13,7 @@ const SHORT: Record<string, string> = {
 export function ArrangePanel({ model }: { model: EditorModel }) {
   useModel(model);
   const [gap, setGap] = useState('10');
+  const [level, setLevel] = useState('');
   const actions = arrangeActions(model);
   const btn = (id: string) => {
     const a = actions.find(x => x.id === id)!;
@@ -21,12 +22,20 @@ export function ArrangePanel({ model }: { model: EditorModel }) {
   const n = model.targets.length;
   const gapPt = model.fromUnit(Number(gap));
   const canGap = n >= 2 && gap.trim() !== '' && Number.isFinite(gapPt) && gapPt >= 0;
+  const levelValue = Number(level);
+  const canSetLevel = n > 0 && level.trim() !== '' && Number.isInteger(levelValue) && levelValue >= -127 && levelValue <= 127;
   return (
     <section className="arrange-panel" aria-label="Arrange" data-testid="arrange-panel">
       <h3>Arrange</h3>
       <div className="row wrap">{btn('group')}{btn('ungroup')}</div>
       <h4>Order</h4>
       <div className="row wrap">{['front', 'forward', 'backward', 'back'].map(btn)}</div>
+      <div className="row wrap">
+        <label className="field inline"><span>Level</span>
+          <input type="number" min={-127} max={127} step="1" value={level} data-testid="arrange-level-input" onChange={e => setLevel(e.target.value)} />
+        </label>
+        <button type="button" data-testid="arrange-level-set" disabled={!canSetLevel} title="Set the selected objects' stacking level" onClick={() => void model.moveToLevel(levelValue)}>Move to level</button>
+      </div>
       <h4>Align</h4>
       <div className="row wrap">{['align-left', 'align-center', 'align-right', 'align-top', 'align-middle', 'align-bottom'].map(btn)}</div>
       <h4>Space evenly</h4>

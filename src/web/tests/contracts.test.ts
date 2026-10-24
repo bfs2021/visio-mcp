@@ -155,6 +155,33 @@ describe('document validation', () => {
     const b = doc(); b.pages[0]!.elements.push(shape(10, { bounds: { x: NaN, y: 0, width: 10, height: 10 } }));
     expect(validateDocument(b).ok).toBe(false);
   });
+
+  it('accepts_optional_bounded_level_on_each_element_kind_and_rejects_invalid_values', () => {
+    const source = structuredClone(fixture('samples.json').DiagramDocument);
+    const elements = source.pages.flatMap((p: any) => p.elements);
+    expect(elements.map((e: any) => e.kind).sort()).toEqual(['connector', 'group', 'image', 'shape', 'text']);
+    for (const level of [-127, 0, 127]) {
+      const candidate = structuredClone(source);
+      for (const p of candidate.pages) for (const element of p.elements) element.level = level;
+      expect(validateDef('DiagramDocument', candidate).valid, `level ${level}`).toBe(true);
+    }
+    for (const level of [-128, 1.5, 128]) {
+      const candidate = structuredClone(source);
+      candidate.pages[0].elements[0].level = level;
+      expect(validateDef('DiagramDocument', candidate).valid, `level ${level}`).toBe(false);
+    }
+  });
+
+  it('accepts_level_on_create_and_set_operations_with_the_same_bounds', () => {
+    const examples = fixture('operation-examples.json');
+    for (const name of ['createShape', 'createText', 'createImage', 'createConnector']) {
+      expect(validateOperation({ ...examples[name], level: -127 }).ok, `${name} minimum`).toBe(true);
+      expect(validateOperation({ ...examples[name], level: 127 }).ok, `${name} maximum`).toBe(true);
+      for (const level of [-128, 1.5, 128]) expect(validateOperation({ ...examples[name], level }).ok, `${name} ${level}`).toBe(false);
+    }
+    expect(validateOperation({ ...examples.set, patch: { level: 0 } }).ok).toBe(true);
+    for (const level of [-128, 1.5, 128]) expect(validateOperation({ ...examples.set, patch: { level } }).ok, `set ${level}`).toBe(false);
+  });
 });
 
 import { samples } from './support/samples';

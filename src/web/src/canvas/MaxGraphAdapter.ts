@@ -8,6 +8,7 @@ import { canonicalSerialize } from '../model/canonical';
 import { ok, type Result } from '../model/result';
 import type { AdapterCallbacks, CanvasAdapter, Tool, ViewportInfo } from './CanvasAdapter';
 import { findJoinTarget, type DrawnRoute } from './joinTarget';
+import { compareElementOrder } from '../model/elementOrder';
 import { edgeStyle, effectiveState, labelOf, registerCustomShapes, vertexStyle } from './cellMapping';
 import { planRoutes, type PlannedRoute, type RouteChange } from '../layout/routePlanner';
 import { installGestureHooks } from './gestureHooks';
@@ -246,12 +247,12 @@ export class MaxGraphAdapter implements CanvasAdapter {
         const id = child.getId();
         if (id && !wanted.has(id)) { model.remove(child); this.shown.delete(id); }
       }
-      const byZ = [...wanted.values()].sort((a, b) => a.zIndex - b.zIndex);
-      for (const el of byZ) if (el.kind !== 'connector' && el.kind !== 'group') this.upsertVertex(el, page.layers);
-      for (const el of byZ) if (el.kind === 'connector') this.upsertEdge(el, page.layers);
+      const byOrder = [...wanted.values()].sort(compareElementOrder);
+      for (const el of byOrder) if (el.kind !== 'connector' && el.kind !== 'group') this.upsertVertex(el, page.layers);
+      for (const el of byOrder) if (el.kind === 'connector') this.upsertEdge(el, page.layers);
 
-      // Stacking follows zIndex: vertices and connectors are interleaved by it.
-      byZ.forEach((el, i) => {
+      // Stacking follows the shared (level, zIndex) order: vertices and connectors are interleaved.
+      byOrder.forEach((el, i) => {
         const cell = model.getCell(el.id);
         if (cell && parent.getChildAt(i) !== cell) model.add(parent, cell, i);
       });

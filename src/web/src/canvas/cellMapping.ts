@@ -212,7 +212,7 @@ export function edgeStyle(c: ConnectorElement, locked: boolean, hopIgnore: reado
   if (c.route === 'orthogonal') style.edgeStyle = 'elbowEdgeStyle';
   if (c.route === 'curved') style.curved = true;
   if (c.hops === 'arc' && c.route !== 'curved') { // a curved route is drawn by maxGraph's own curve, which has no hops
-    Object.assign(style, { shape: 'hop-connector', hopSize: HOP_SIZE_PT, hopOrder: c.zIndex, hopIgnore: hopIgnore.join(',') });
+    Object.assign(style, { shape: 'hop-connector', hopSize: HOP_SIZE_PT, hopLevel: c.level ?? 0, hopOrder: c.zIndex, hopIgnore: hopIgnore.join(',') });
   }
   if (c.label) textStyle(style, c.label);
   for (const [ep, x, y] of [[c.from, 'exitX', 'exitY'], [c.to, 'entryX', 'entryY']] as const) {

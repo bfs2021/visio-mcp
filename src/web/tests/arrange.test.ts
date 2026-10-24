@@ -69,6 +69,45 @@ describe('align', () => {
   });
 });
 
+describe('level changes', () => {
+  it('setting_an_absent_level_to_zero_is_a_noop', async () => {
+    const t = createTestEngine();
+    const target = s(t, 0);
+    const before = t.store.snapshot();
+    const result = await run(t, [{ op: 'set', target, patch: { level: 0 } }]);
+    expect(result.changed).toEqual([]);
+    expect(result.revision).toBe(before.revision);
+    expect(byId(t, target)).not.toHaveProperty('level');
+    expect(exactElementHashes(t.store.snapshot())).toEqual(exactElementHashes(before));
+  });
+
+  it('create_and_set_store_only_nonzero_levels', async () => {
+    const t = createTestEngine();
+    const created = await run(t, [{ op: 'createShape', id: G1, level: 3, bounds: { x: 5, y: 5, width: 20, height: 20 } }]);
+    expect(byId(t, G1)).toMatchObject({ level: 3 });
+    await run(t, [{ op: 'set', target: G1, patch: { level: 0 } }]);
+    expect(byId(t, G1)).not.toHaveProperty('level');
+    expect(created.created).toEqual([G1]);
+  });
+
+  it('moving_to_a_new_level_uses_global_z_top_and_reorders_only_within_that_level', async () => {
+    const t = createTestEngine();
+    await run(t, [
+      { op: 'set', target: s(t, 0), patch: { level: 2 } },
+      { op: 'set', target: s(t, 1), patch: { level: 2 } },
+      { op: 'set', target: s(t, 2), patch: { level: 1 } },
+    ]);
+    const before = t.store.snapshot().document.pages[0]!.elements.filter(e => e.kind !== 'group');
+    await run(t, [{ op: 'reorder', targets: [s(t, 0)], to: 'front' }]);
+    const after = t.store.snapshot().document.pages[0]!.elements.filter(e => e.kind !== 'group');
+    const picked = after.find(e => e.id === s(t, 0))!;
+    expect(picked.zIndex).toBe(Math.max(...before.map(e => e.zIndex)) + 1);
+    expect(after.map(e => e.zIndex).sort((a, b) => a - b)).toEqual([...new Set(after.map(e => e.zIndex))].sort((a, b) => a - b));
+    expect(byId(t, s(t, 1)).level).toBe(2);
+    expect(byId(t, s(t, 2)).zIndex).toBe(before.find(e => e.id === s(t, 2))!.zIndex);
+  });
+});
+
 describe('distribute and gap', () => {
   it('distribute_preserves_ends', async () => {
     const t = await row();
