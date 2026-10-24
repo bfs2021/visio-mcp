@@ -37,7 +37,7 @@
 - Modify `src/web/src/layout/inspectRoutes.ts`: adapt shared contacts to existing stable diagnostics and evidence.
 - Create `src/web/src/layout/routeQuality.ts`: the R24 score types, constants, deterministic metrics and score function.
 - Modify `src/web/src/layout/obstacleRoute.ts` and `routePlanner.ts`: opt-in search costs and target-only Beautify planning; leave normal no-policy behavior unchanged.
-- Modify `contracts/document.schema.json` and `contracts/operations.schema.json`: optional document/connector crossing policy, routing priority, required side, defaults operation and Beautify operation; regenerate TS/C# DTOs.
+- Modify `contracts/document.schema.json` and `contracts/operations.schema.json`: optional document/connector crossing policy, routing priority, required side, defaults operation and Beautify operation. Modify `contracts/protocol.schema.json` for the required-side route finding; regenerate TS/C# DTOs.
 - Modify `src/web/src/commands/planPatch.ts`, `CommandEngine.ts`, and `commands/routes.ts`: validate policy and required-side requests, build and apply a route-hash-bound atomic Beautify plan, and bypass broad hard-route preflight only for target failures that were skipped without mutation.
 - Create `src/web/src/editor/beautifyPreview.ts` and `src/web/src/components/BeautifyDialog.tsx`; modify `EditorModel.ts`, `components/PageCanvas.tsx`, and `editor/appCommands.ts` for preview overlay, stale state, accept/cancel and menu entry.
 - Add focused tests beside route planner, operations, editor and browser behavior; update `docs/m5/R24-aesthetic-routing.md` with exact results and remaining limits.
@@ -54,7 +54,7 @@
 - Consumes: routes `{ connectorId: string; points: readonly Point[]; mode: RouteMode; joinConnectorIds: readonly string[] }[]`.
 - Produces: `classifyRouteContacts(routes): RouteContact[]`; each contact has sorted connector IDs, both segment indices, `classification`, and a point, overlap interval or gap as appropriate. R26 maps these values to its existing finding codes/evidence.
 
-- [ ] Add `routeContacts.test.ts` cases for perpendicular/hopped crossings, collinear overlap, T-join, endpoint contact, shared-end overlap, near miss at 5.99 pt, not-near-miss at 6 pt, endpoint tolerance, and declared R16 joins; verify stable output under input order reversal.
+- [ ] Add `routeContacts.test.ts` cases for perpendicular crossings regardless of hop rendering, collinear overlap, T-join, endpoint contact, shared-end overlap, near miss at 5.99 pt, not-near-miss at 6 pt, endpoint tolerance, declared R16 joins, and adjacent segments that touch only at a route vertex; verify stable output under input order reversal.
 - [ ] Run `npm --prefix src/web test -- tests/routeContacts.test.ts` and confirm the new classifier tests fail before the module exists.
 - [ ] Move only pure segment/contact geometry from R26 `inspectRoutes.ts` to `routeContacts.ts`; export shared constants `TRACK_SPACING_PT=6`, `OVERLAP_PT=0.5`, `ALONGSIDE_PT=10`, and retain `SHORT_PT=2` for route-shape diagnostics.
 - [ ] Adapt `inspectRoutes` to map returned contacts to unchanged R26 codes and evidence; update the R26 expected fixture only for the 4-to-6 pt near-miss threshold, and document the exact changed findings.
@@ -88,6 +88,7 @@
 **Files:**
 - Modify: `contracts/document.schema.json`
 - Modify: `contracts/operations.schema.json`
+- Modify: `contracts/protocol.schema.json`
 - Generate: `src/web/src/contracts/generated.ts`, `src/Diagram.Core.Contracts/Generated/Contracts.g.cs`
 - Modify: `src/web/src/commands/planPatch.ts`
 - Modify: `src/web/src/commands/CommandEngine.ts`
@@ -98,9 +99,9 @@
 - Consumes: `routingDefaults.crossing?: 'avoid'|'allow'`, connector `routingPolicy.crossing?: 'avoid'|'allow'`, `routingPolicy.priority?: -100..100`, endpoint `requiredSide?: north|east|south|west`.
 - Produces: `setRoutingDefaults` and `beautify` operation DTOs. Static ports on a contradictory required side fail `invalid_request` with `details.reason='routing_side_conflict'`, connector ID and endpoint. An unreachable required side returns `ROUTE_REQUIRED_SIDE_UNRESOLVED`.
 
-- [ ] Add contract tests for valid defaults, overrides, priorities at -100/100, rejected out-of-range values, required sides and invalid static-port conflicts.
+- [ ] Add contract tests for valid defaults, overrides, priorities at -100/100, rejected out-of-range values, required sides, invalid static-port conflicts, and rejection of connector-only policy fields on shapes/text.
 - [ ] Run focused schema/operation tests and confirm the new fields/operations are rejected before schema edits.
-- [ ] Extend JSON schemas with optional fields and required operation inputs (`beautify` exact target list, `includeManual`, expected route hash); regenerate TS/C# contracts using `npm --prefix src/web run generate`.
+- [ ] Split shared element `RoutingPolicy` from connector-only `ConnectorRoutingPolicy`; extend document/connector/endpoint schemas and add `ROUTE_REQUIRED_SIDE_UNRESOLVED` to `contracts/protocol.schema.json`. Add `setRoutingDefaults` and required-hash `beautify` operation schemas; regenerate TS/C# contracts using `npm --prefix src/web run generate`.
 - [ ] Implement `setRoutingDefaults` as one document diff and validate `requiredSide` against fixed ports during operation planning; make `requestsHardRoutePreflight` recognize this operation and reject a newly unreachable default.
 - [ ] Add UI-accessible connector fields later in Task 5; do not change line style/colour semantics.
 - [ ] Run `npm --prefix src/web test -- tests/contracts.test.ts tests/routePlanner.test.ts`, `npm --prefix src/web run generate:check`, and `npm --prefix src/web run typecheck`; expect all pass.
