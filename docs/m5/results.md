@@ -68,7 +68,7 @@ Static guards fail the build if code starts a program, opens its own network con
 1. The consent window and the recovery dialog were exercised through automation (the browser test with a mocked host, and clicks inside the real page); the WPF consent window itself has not been clicked by a person.
 2. Recovery covers the document. Undo history does not survive a crash, as designed.
 3. A recovered session that was not edited since restoring is offered again after another crash (it cannot tell it was restored).
-4. Library picture bytes are not garbage-collected automatically; `CollectGarbageAsync` exists and is tested but nothing calls it on a schedule yet.
+4. Library picture bytes are not garbage-collected automatically; `CollectGarbageAsync` exists and is tested but nothing calls it on a schedule yet. *Addressed by H02 ([#20](https://github.com/rp2839/visio-mcp/issues/20)): see [H02-blob-maintenance.md](../design/H02-blob-maintenance.md).*
 5. The M0 second-Windows-user pipe check remains open.
 
 ---

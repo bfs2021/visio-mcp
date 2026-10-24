@@ -245,14 +245,14 @@ public partial class RecoveryTests
 
         // documents, the library, undo and recovery each name what they need; GC keeps the union
         var live = new[] { kept }.Concat(env.Store.ReferencedBlobs()).Concat([inUndo]);
-        var removed = BlobGc.Collect(env.Blobs, live, TimeSpan.Zero);
-        Assert.Equal(1, removed);
+        var removed = await BlobGc.CollectAsync(env.Blobs, live, TimeSpan.Zero);
+        Assert.Equal(1, removed.Removed);
         Assert.False(env.Blobs.Contains(orphan));
         foreach (var sha in new[] { kept, inJournal, inCheckpoint, inUndo }) Assert.True(env.Blobs.Contains(sha));
 
         // once the session is finished, its pictures can go
         await env.Store.CompleteAsync(Sess);
-        Assert.Equal(2, BlobGc.Collect(env.Blobs, new[] { kept, inUndo }, TimeSpan.Zero));
+        Assert.Equal(2, (await BlobGc.CollectAsync(env.Blobs, new[] { kept, inUndo }, TimeSpan.Zero)).Removed);
         Assert.False(env.Blobs.Contains(inJournal));
         Assert.False(env.Blobs.Contains(inCheckpoint));
     }
@@ -262,7 +262,7 @@ public partial class RecoveryTests
     {
         using var env = new Env();
         var fresh = await env.Blobs.PutDurableAsync("fresh"u8.ToArray(), default); // an upload that is prepared but not yet registered
-        Assert.Equal(0, BlobGc.Collect(env.Blobs, [], TimeSpan.FromHours(1)));
+        Assert.Equal(BlobGcResult.None, await BlobGc.CollectAsync(env.Blobs, [], TimeSpan.FromHours(1)));
         Assert.True(env.Blobs.Contains(fresh));
     }
 
