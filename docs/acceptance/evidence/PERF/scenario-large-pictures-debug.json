@@ -1,5 +1,5 @@
 {
-  "recorded": "2026-10-24T00:08:30.2811844Z",
+  "recorded": "2026-10-24T01:17:35.1500717Z",
   "machine": {
     "os": "Microsoft Windows NT 10.0.26300.0",
     "logicalProcessors": 4,
@@ -10,26 +10,17 @@
   "setup": {
     "shimStartedBeforeEditor": true,
     "quietGateReached": true,
-    "quietGateWaitedMs": 7373,
-    "machineCpuBusyPercentOverall": 85,
+    "quietGateWaitedMs": 3102,
+    "machineCpuBusyPercentOverall": 90,
     "starvedStretchesSeen": [
       {
-        "startMs": 45,
-        "lengthMs": 959,
+        "startMs": 78,
+        "lengthMs": 1404,
         "poolThreadsAtStart": 4,
-        "poolThreadsAtEnd": 4,
+        "poolThreadsAtEnd": 5,
         "maxQueued": 2,
-        "machineCpuBusyPercent": 78,
-        "machineCpuBusyPercentFor2sBefore": 0
-      },
-      {
-        "startMs": 16087,
-        "lengthMs": 941,
-        "poolThreadsAtStart": 12,
-        "poolThreadsAtEnd": 12,
-        "maxQueued": 1,
         "machineCpuBusyPercent": 87,
-        "machineCpuBusyPercentFor2sBefore": 98
+        "machineCpuBusyPercentFor2sBefore": 100
       }
     ],
     "wholeProcessStops": []
@@ -38,9 +29,9 @@
     "picturesInDocument": 12,
     "pngBytesInDocument": 68545319,
     "refused": true,
-    "errorCode": "internal_error",
-    "errorMessage": "the exported file could not be read back, so it was not saved: the file is larger than 67108864 bytes",
-    "msToRefusal": 1496,
+    "errorCode": "limit_exceeded",
+    "errorMessage": "the document would be 65.4 MiB as Visio (.vsdx), which is 1.4 MiB over the 64 MiB limit, so it was not saved. Its 12 pictures hold 65.4 MiB; the largest are pic09.png (5.6 MiB), pic10.png (5.6 MiB), pic08.png (5.6 MiB), pic11.png (5.6 MiB), pic07.png (5.4 MiB). Remove or replace some pictures with smaller ones, or split the document, and save again.",
+    "msToRefusal": 1353,
     "fileLeftBehind": false,
     "note": "A document whose pictures add up to more than the 64 MiB the exporter will read back cannot be saved as .vsdx; the application refuses and writes nothing. Native JSON has the same 64 MiB budget."
   },
@@ -60,44 +51,45 @@
     ],
     "pngBytesTotal": 45179051,
     "previewBytes": 1007630,
-    "vsdxBytes": 45200528
+    "vsdxBytes": 45200531
   },
   "prepareAndImportToLibrary": {
     "all": {
       "runs": 8,
       "samplesMs": [
-        34.2,
-        31.2,
-        30.4,
-        33,
-        26.6,
-        27.2,
-        25.1,
-        37.1
+        36,
+        29.5,
+        35.2,
+        29.9,
+        29.5,
+        31.3,
+        39.5,
+        34.5
       ],
-      "minMs": 25.1,
-      "medianMs": 31.2,
-      "p95Ms": 37.1,
-      "maxMs": 37.1,
+      "minMs": 29.5,
+      "medianMs": 34.5,
+      "p95Ms": 39.5,
+      "maxMs": 39.5,
       "preferredMs": null,
       "meetsPreferred": null
     },
-    "contaminatedRuns": 1,
+    "contaminatedRuns": 0,
     "clean": {
-      "runs": 7,
+      "runs": 8,
       "samplesMs": [
-        34.2,
-        31.2,
-        33,
-        26.6,
-        27.2,
-        25.1,
-        37.1
+        36,
+        29.5,
+        35.2,
+        29.9,
+        29.5,
+        31.3,
+        39.5,
+        34.5
       ],
-      "minMs": 25.1,
-      "medianMs": 31.2,
-      "p95Ms": 37.1,
-      "maxMs": 37.1,
+      "minMs": 29.5,
+      "medianMs": 34.5,
+      "p95Ms": 39.5,
+      "maxMs": 39.5,
       "preferredMs": null,
       "meetsPreferred": null
     }
@@ -106,12 +98,12 @@
     "all": {
       "runs": 1,
       "samplesMs": [
-        391.4
+        356.6
       ],
-      "minMs": 391.4,
-      "medianMs": 391.4,
-      "p95Ms": 391.4,
-      "maxMs": 391.4,
+      "minMs": 356.6,
+      "medianMs": 356.6,
+      "p95Ms": 356.6,
+      "maxMs": 356.6,
       "preferredMs": null,
       "meetsPreferred": null
     },
@@ -119,12 +111,12 @@
     "clean": {
       "runs": 1,
       "samplesMs": [
-        391.4
+        356.6
       ],
-      "minMs": 391.4,
-      "medianMs": 391.4,
-      "p95Ms": 391.4,
-      "maxMs": 391.4,
+      "minMs": 356.6,
+      "medianMs": 356.6,
+      "p95Ms": 356.6,
+      "maxMs": 356.6,
       "preferredMs": null,
       "meetsPreferred": null
     }
@@ -133,12 +125,12 @@
     "all": {
       "runs": 1,
       "samplesMs": [
-        62.3
+        52.1
       ],
-      "minMs": 62.3,
-      "medianMs": 62.3,
-      "p95Ms": 62.3,
-      "maxMs": 62.3,
+      "minMs": 52.1,
+      "medianMs": 52.1,
+      "p95Ms": 52.1,
+      "maxMs": 52.1,
       "preferredMs": null,
       "meetsPreferred": null
     },
@@ -146,12 +138,12 @@
     "clean": {
       "runs": 1,
       "samplesMs": [
-        62.3
+        52.1
       ],
-      "minMs": 62.3,
-      "medianMs": 62.3,
-      "p95Ms": 62.3,
-      "maxMs": 62.3,
+      "minMs": 52.1,
+      "medianMs": 52.1,
+      "p95Ms": 52.1,
+      "maxMs": 52.1,
       "preferredMs": null,
       "meetsPreferred": null
     }
@@ -160,16 +152,16 @@
     "all": {
       "runs": 5,
       "samplesMs": [
-        4.3,
-        4,
-        6.7,
-        2.2,
-        2
+        3.6,
+        2.5,
+        5.3,
+        2.4,
+        2.4
       ],
-      "minMs": 2,
-      "medianMs": 4,
-      "p95Ms": 6.7,
-      "maxMs": 6.7,
+      "minMs": 2.4,
+      "medianMs": 2.5,
+      "p95Ms": 5.3,
+      "maxMs": 5.3,
       "preferredMs": 250,
       "meetsPreferred": true
     },
@@ -177,16 +169,16 @@
     "clean": {
       "runs": 5,
       "samplesMs": [
-        4.3,
-        4,
-        6.7,
-        2.2,
-        2
+        3.6,
+        2.5,
+        5.3,
+        2.4,
+        2.4
       ],
-      "minMs": 2,
-      "medianMs": 4,
-      "p95Ms": 6.7,
-      "maxMs": 6.7,
+      "minMs": 2.4,
+      "medianMs": 2.5,
+      "p95Ms": 5.3,
+      "maxMs": 5.3,
       "preferredMs": 250,
       "meetsPreferred": true
     }
@@ -195,16 +187,16 @@
     "all": {
       "runs": 5,
       "samplesMs": [
-        533.3,
-        679,
-        710.4,
-        701.1,
-        673.1
+        579.6,
+        748.6,
+        744.1,
+        740.1,
+        636.5
       ],
-      "minMs": 533.3,
-      "medianMs": 679,
-      "p95Ms": 710.4,
-      "maxMs": 710.4,
+      "minMs": 579.6,
+      "medianMs": 740.1,
+      "p95Ms": 748.6,
+      "maxMs": 748.6,
       "preferredMs": 1000,
       "meetsPreferred": true
     },
@@ -212,16 +204,16 @@
     "clean": {
       "runs": 5,
       "samplesMs": [
-        533.3,
-        679,
-        710.4,
-        701.1,
-        673.1
+        579.6,
+        748.6,
+        744.1,
+        740.1,
+        636.5
       ],
-      "minMs": 533.3,
-      "medianMs": 679,
-      "p95Ms": 710.4,
-      "maxMs": 710.4,
+      "minMs": 579.6,
+      "medianMs": 740.1,
+      "p95Ms": 748.6,
+      "maxMs": 748.6,
       "preferredMs": 1000,
       "meetsPreferred": true
     }
@@ -230,14 +222,14 @@
     "all": {
       "runs": 3,
       "samplesMs": [
-        235.7,
-        4.3,
-        11.7
+        253.1,
+        5.1,
+        1.8
       ],
-      "minMs": 4.3,
-      "medianMs": 11.7,
-      "p95Ms": 235.7,
-      "maxMs": 235.7,
+      "minMs": 1.8,
+      "medianMs": 5.1,
+      "p95Ms": 253.1,
+      "maxMs": 253.1,
       "preferredMs": null,
       "meetsPreferred": null
     },
@@ -245,14 +237,14 @@
     "clean": {
       "runs": 3,
       "samplesMs": [
-        235.7,
-        4.3,
-        11.7
+        253.1,
+        5.1,
+        1.8
       ],
-      "minMs": 4.3,
-      "medianMs": 11.7,
-      "p95Ms": 235.7,
-      "maxMs": 235.7,
+      "minMs": 1.8,
+      "medianMs": 5.1,
+      "p95Ms": 253.1,
+      "maxMs": 253.1,
       "preferredMs": null,
       "meetsPreferred": null
     }
@@ -261,14 +253,14 @@
     "all": {
       "runs": 3,
       "samplesMs": [
-        1133.7,
-        1086.2,
-        1181.5
+        1190.2,
+        1060.2,
+        1075.6
       ],
-      "minMs": 1086.2,
-      "medianMs": 1133.7,
-      "p95Ms": 1181.5,
-      "maxMs": 1181.5,
+      "minMs": 1060.2,
+      "medianMs": 1075.6,
+      "p95Ms": 1190.2,
+      "maxMs": 1190.2,
       "preferredMs": 3000,
       "meetsPreferred": true
     },
@@ -276,13 +268,13 @@
     "clean": {
       "runs": 2,
       "samplesMs": [
-        1086.2,
-        1181.5
+        1060.2,
+        1075.6
       ],
-      "minMs": 1086.2,
-      "medianMs": 1181.5,
-      "p95Ms": 1181.5,
-      "maxMs": 1181.5,
+      "minMs": 1060.2,
+      "medianMs": 1075.6,
+      "p95Ms": 1075.6,
+      "maxMs": 1075.6,
       "preferredMs": 3000,
       "meetsPreferred": true
     }
@@ -291,14 +283,14 @@
     "all": {
       "runs": 3,
       "samplesMs": [
-        171.3,
-        162.9,
-        148.9
+        158.6,
+        166.9,
+        137.4
       ],
-      "minMs": 148.9,
-      "medianMs": 162.9,
-      "p95Ms": 171.3,
-      "maxMs": 171.3,
+      "minMs": 137.4,
+      "medianMs": 158.6,
+      "p95Ms": 166.9,
+      "maxMs": 166.9,
       "preferredMs": null,
       "meetsPreferred": null
     },
@@ -306,14 +298,14 @@
     "clean": {
       "runs": 3,
       "samplesMs": [
-        171.3,
-        162.9,
-        148.9
+        158.6,
+        166.9,
+        137.4
       ],
-      "minMs": 148.9,
-      "medianMs": 162.9,
-      "p95Ms": 171.3,
-      "maxMs": 171.3,
+      "minMs": 137.4,
+      "medianMs": 158.6,
+      "p95Ms": 166.9,
+      "maxMs": 166.9,
       "preferredMs": null,
       "meetsPreferred": null
     }

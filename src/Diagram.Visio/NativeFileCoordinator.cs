@@ -45,8 +45,10 @@ public sealed class StoreBlobSource(BlobStore store, IRasteriser? rasteriser) : 
 /// image is durable before the document is published, the document is replaced only if the editor is still where the open started, and an
 /// export is a barrier snapshot at one revision. Exporting never marks the document saved (the editor keeps what a Visio file cannot hold).
 /// </summary>
-public sealed class NativeFileCoordinator(IEditorChannel editor, IExportSource source, BlobStore blobs, AtomicFileWriter writer, IVsdxImporter importer, IVsdxExporter exporter, IRasteriser? rasteriser = null)
+public sealed class NativeFileCoordinator(IEditorChannel editor, IExportSource source, BlobStore blobs, AtomicFileWriter writer, IVsdxImporter importer, IVsdxExporter exporter, IRasteriser? rasteriser = null, ImportOptions? limits = null)
 {
+    readonly ImportOptions limits = limits ?? new ImportOptions();
+
     /// <summary>
     /// Reads and imports a .vsdx without opening it anywhere: the limits of <see cref="ImportOptions"/> apply, and every picture is durable in the
     /// blob store before the result is returned, so a document built from it can never point at a missing image.
@@ -57,7 +59,7 @@ public sealed class NativeFileCoordinator(IEditorChannel editor, IExportSource s
         var safe = PathPolicy.Validate(path);
         if (!safe.IsOk) return Result<ImportResult>.Fail(safe.Error!);
         if (!string.Equals(Path.GetExtension(safe.Value), ".vsdx", StringComparison.OrdinalIgnoreCase)) return Result<ImportResult>.Fail("invalid_request", "this is not a Visio drawing (.vsdx)");
-        var options = new ImportOptions();
+        var options = limits;
         byte[] bytes;
         try
         {
@@ -105,6 +107,10 @@ public sealed class NativeFileCoordinator(IEditorChannel editor, IExportSource s
         if (report.IsLossy && !acceptLoss)
             return Result<NativeExported>.Fail("compatibility_loss", report.Summary + " Nothing was written.", details: new JsonObject { ["diagnostics"] = report.ToJson(), ["revision"] = snap.Value.Revision });
 
+        // Whatever this writes must open again under the same limit, so a package over it is refused here, with the reason, rather than after reading it back.
+        if (exported.Value.Package.Length > limits.MaxPackageBytes)
+            return SaveSizeLimit.Fail<NativeExported>("Visio (.vsdx)", exported.Value.Package.Length, limits.MaxPackageBytes, snap.Value.Document, blobs.SizeOf);
+
         var check = await Verify(snap.Value, exported.Value, ct);
         if (!check.IsOk) return Result<NativeExported>.Fail(check.Error!);
 
@@ -120,7 +126,7 @@ public sealed class NativeFileCoordinator(IEditorChannel editor, IExportSource s
     /// <summary>Reads the package back before it is saved: the same elements, ids, pages and references must come out as went in.</summary>
     async Task<Result<Unit>> Verify(ExportSnapshot snapshot, ExportResult exported, CancellationToken ct)
     {
-        var back = await importer.ImportAsync(new MemoryStream(exported.Package), new ImportOptions(), ct);
+        var back = await importer.ImportAsync(new MemoryStream(exported.Package), limits, ct);
         if (!back.IsOk) return Result<Unit>.Fail("internal_error", "the exported file could not be read back, so it was not saved: " + back.Error!.Message);
         var skipped = exported.Diagnostics.Where(d => d.Code == "svg_picture_not_exported").Select(d => d.ElementId).ToHashSet();
         string[] Ids(DiagramDocument d) => d.Pages.SelectMany(p => p.Elements).Select(e => System.Text.Json.JsonSerializer.SerializeToNode(e, ContractJson.Options)!["id"]!.GetValue<string>()).OrderBy(x => x, StringComparer.Ordinal).ToArray();
